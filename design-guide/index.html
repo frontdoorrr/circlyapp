@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circly - 익명 칭찬 투표</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 헤더 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-heart"></i>
+                    <span>Circly</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content" id="mainContent">
+            <!-- Home 탭 -->
+            <div class="tab-content active" id="homeTab">
+                <!-- 환영 섹션 -->
+                <div class="welcome-section">
+                    <h1>안녕하세요! ✨</h1>
+                    <p>진행 중인 투표에 참여해보세요</p>
+                    <div class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </div>
+                </div>
+
+                <!-- 코드 참여 카드 -->
+                <div class="invite-card">
+                    <div class="invite-content">
+                        <h3>친구의 Circle에 참여하기</h3>
+                        <p>6자리 코드를 입력해주세요</p>
+                    </div>
+                    <button class="btn-secondary">코드 입력</button>
+                </div>
+
+                <!-- 투표 리스트 -->
+                <section class="poll-section">
+                    <h2>진행 중인 투표 🗳️</h2>
+                    
+                    <div class="poll-card" onclick="openPollModal(1)">
+                        <div class="poll-header">
+                            <div class="poll-info">
+                                <h3>가장 잘생긴 사람은?</h3>
+                                <span class="circle-name">3학년 2반</span>
+                            </div>
+                            <div class="time-badge active">
+                                <i class="fas fa-clock"></i>
+                                2시간 30분
+                            </div>
+                        </div>
+                        <div class="poll-footer">
+                            <span class="vote-count">18명이 참여했어요</span>
+                            <button class="btn-vote">
+                                투표하기 <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="poll-card completed">
+                        <div class="poll-header">
+                            <div class="poll-info">
+                                <h3>가장 친절한 사람은?</h3>
+                                <span class="circle-name">3학년 2반</span>
+                            </div>
+                            <div class="time-badge completed">완료</div>
+                        </div>
+                        <div class="poll-footer">
+                            <span class="vote-count">22명이 참여했어요</span>
+                            <button class="btn-result" onclick="showResultCard()">결과 보기</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Create 탭 -->
+            <div class="tab-content" id="createTab">
+                <div class="create-header">
+                    <h1>투표 만들기 🎨</h1>
+                    <p>친구들에게 물어보고 싶은 것이 있나요?</p>
+                </div>
+
+                <!-- Circle 선택 -->
+                <section class="circle-selection">
+                    <h3>어떤 Circle에서 투표할까요?</h3>
+                    <div class="circle-list">
+                        <div class="circle-item">
+                            <div class="circle-info">
+                                <h4>3학년 2반</h4>
+                                <p>25명</p>
+                            </div>
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="circle-item">
+                            <div class="circle-info">
+                                <h4>축구부</h4>
+                                <p>12명</p>
+                            </div>
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <button class="btn-primary full-width" onclick="showInviteModal()">
+                        <i class="fas fa-plus"></i>
+                        새 Circle 만들기
+                    </button>
+                </section>
+
+                <!-- 질문 카테고리 -->
+                <section class="category-section">
+                    <h3>어떤 질문을 할까요?</h3>
+                    <div class="category-grid">
+                        <button class="category-card" onclick="showQuestions('외모')">
+                            <span class="category-emoji">😊</span>
+                            <span class="category-label">외모</span>
+                        </button>
+                        <button class="category-card" onclick="showQuestions('성격')">
+                            <span class="category-emoji">💝</span>
+                            <span class="category-label">성격</span>
+                        </button>
+                        <button class="category-card" onclick="showQuestions('재능')">
+                            <span class="category-emoji">🌟</span>
+                            <span class="category-label">재능</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Profile 탭 -->
+            <div class="tab-content" id="profileTab">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h1>내 프로필</h1>
+                </div>
+
+                <!-- 내 Circle들 -->
+                <section class="my-circles">
+                    <h3><i class="fas fa-users"></i> 내 Circle</h3>
+                    <div class="my-circle-item">
+                        <div class="circle-info">
+                            <h4>3학년 2반</h4>
+                            <p>25명 참여 중</p>
+                        </div>
+                        <button class="btn-link">초대하기</button>
+                    </div>
+                    <div class="my-circle-item">
+                        <div class="circle-info">
+                            <h4>축구부</h4>
+                            <p>12명 참여 중</p>
+                        </div>
+                        <button class="btn-link">초대하기</button>
+                    </div>
+                </section>
+
+                <!-- 설정 메뉴 -->
+                <section class="settings-section">
+                    <h3><i class="fas fa-cog"></i> 설정</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <i class="fas fa-bell"></i>
+                            <span>알림 설정</span>
+                        </div>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <i class="fas fa-star"></i>
+                            <span>내가 만든 투표</span>
+                        </div>
+                        <div class="setting-badge">3개</div>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <i class="fas fa-heart"></i>
+                            <span>좋아하는 질문</span>
+                        </div>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <i class="fas fa-share"></i>
+                            <span>친구 초대하기</span>
+                        </div>
+                        <div class="setting-badge new">New</div>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- 하단 네비게이션 -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('home')">
+                <div class="nav-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <span class="nav-label">홈</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('create')">
+                <div class="nav-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <span class="nav-label">만들기</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('profile')">
+                <div class="nav-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="nav-label">프로필</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- 투표 상세 모달 -->
+    <div class="modal" id="pollModal">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <h2>가장 잘생긴 사람은?</h2>
+                <p>3학년 2반</p>
+                <div class="time-info">
+                    <i class="fas fa-clock"></i>
+                    <span>2시간 30분 남음</span>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="option-list">
+                    <button class="option-item">
+                        <span>민수</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="option-item">
+                        <span>지훈</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="option-item">
+                        <span>태현</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="option-item">
+                        <span>승호</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="btn-cancel" onclick="closePollModal()">닫기</button>
+        </div>
+    </div>
+
+    <!-- 초대 모달 -->
+    <div class="modal" id="inviteModal">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <div class="modal-avatar">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h2>3학년 2반 초대</h2>
+                <p>친구들을 Circle에 초대해보세요!</p>
+            </div>
+            <div class="modal-body">
+                <div class="invite-option">
+                    <div class="invite-info">
+                        <i class="fas fa-link"></i>
+                        <span>초대 링크</span>
+                        <button class="copy-btn">
+                            <i class="fas fa-copy"></i>
+                            복사
+                        </button>
+                    </div>
+                    <p class="invite-url">https://circly.app/join/A1B2C3</p>
+                </div>
+                <div class="invite-option">
+                    <div class="invite-info">
+                        <span>6자리 코드</span>
+                        <button class="copy-btn">
+                            <i class="fas fa-copy"></i>
+                            복사
+                        </button>
+                    </div>
+                    <p class="invite-code">A1B2C3</p>
+                </div>
+                <div class="share-buttons">
+                    <button class="share-btn kakao">
+                        <i class="fas fa-comment"></i>
+                        카카오톡
+                    </button>
+                    <button class="share-btn instagram">
+                        <i class="fab fa-instagram"></i>
+                        스토리
+                    </button>
+                </div>
+            </div>
+            <button class="btn-cancel" onclick="closeInviteModal()">닫기</button>
+        </div>
+    </div>
+
+    <!-- 결과 카드 모달 -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content result-modal">
+            <div class="result-card">
+                <h3>가장 친절한 사람은?</h3>
+                <div class="winner">
+                    <i class="fas fa-crown"></i>
+                    <span class="winner-name">서연</span>
+                    <span class="winner-percentage">(55%)</span>
+                </div>
+                <div class="result-chart">
+                    <div class="chart-item">
+                        <span class="name">서연</span>
+                        <div class="bar-container">
+                            <div class="bar" style="width: 55%; background: var(--pink-400);"></div>
+                        </div>
+                        <span class="percentage">55%</span>
+                    </div>
+                    <div class="chart-item">
+                        <span class="name">미나</span>
+                        <div class="bar-container">
+                            <div class="bar" style="width: 27%; background: var(--purple-400);"></div>
+                        </div>
+                        <span class="percentage">27%</span>
+                    </div>
+                    <div class="chart-item">
+                        <span class="name">은지</span>
+                        <div class="bar-container">
+                            <div class="bar" style="width: 18%; background: var(--blue-400);"></div>
+                        </div>
+                        <span class="percentage">18%</span>
+                    </div>
+                </div>
+                <div class="result-footer">
+                    총 22명 참여 • circly.app
+                </div>
+            </div>
+            <div class="share-actions">
+                <button class="btn-primary full-width">
+                    <i class="fab fa-instagram"></i>
+                    인스타 스토리에 공유
+                </button>
+                <div class="action-buttons">
+                    <button class="btn-secondary">
+                        <i class="fas fa-download"></i>
+                        저장
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fas fa-share"></i>
+                        공유
+                    </button>
+                </div>
+            </div>
+            <button class="btn-cancel" onclick="closeResultModal()">닫기</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

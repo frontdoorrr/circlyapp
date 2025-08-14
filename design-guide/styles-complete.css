@@ -1,0 +1,248 @@
+/* Circly App Styles - 완성본 */
+
+/* 이전 내용에 이어서... */
+
+.share-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.share-btn {
+    border: none;
+    border-radius: var(--radius-2xl);
+    padding: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all var(--transition-normal);
+}
+
+.share-btn.kakao {
+    background: #fee500;
+    color: #191600;
+}
+
+.share-btn.instagram {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* 결과 카드 모달 */
+.result-modal {
+    max-height: 90vh;
+}
+
+.result-card {
+    background: linear-gradient(135deg, var(--purple-50), var(--pink-50));
+    border-radius: var(--radius-2xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--purple-200);
+}
+
+.result-card h3 {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--gray-800);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.winner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--purple-600);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.winner i {
+    color: #fbbf24;
+    font-size: 1.25rem;
+}
+
+.result-chart {
+    margin-bottom: 1rem;
+}
+
+.chart-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.chart-item .name {
+    flex-shrink: 0;
+    width: 3rem;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.bar-container {
+    flex: 1;
+    height: 0.5rem;
+    background: var(--gray-200);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    border-radius: var(--radius-sm);
+    transition: width 1s ease-out;
+}
+
+.chart-item .percentage {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.result-footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+.share-actions {
+    margin-bottom: 1rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 375px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .poll-card {
+        padding: 1rem;
+    }
+    
+    .invite-card {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 애니메이션 효과 */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+        transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+        animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+        transform: translate3d(0, -8px, 0);
+    }
+    70% {
+        animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+        transform: translate3d(0, -4px, 0);
+    }
+    90% {
+        transform: translate3d(0, -2px, 0);
+    }
+}
+
+.notification-badge {
+    animation: pulse 2s infinite;
+}
+
+/* 성공/에러 상태 피드백 */
+.success-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--gradient-primary);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-2xl);
+    z-index: 2000;
+    animation: slideInScale 0.3s ease-out;
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* 로딩 상태 */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gray-50);
+    border-radius: inherit;
+    opacity: 0.8;
+}
+
+/* 추가 유틸리티 클래스 */
+.text-center {
+    text-align: center;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.pointer-events-none {
+    pointer-events: none;
+}
