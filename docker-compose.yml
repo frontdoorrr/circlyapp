@@ -59,6 +59,20 @@ services:
       - REDIS_URL=redis://redis:6379/0
     command: celery -A app.tasks worker --loglevel=info
 
+  # Test database
+  test-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=test_circly_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data  # Use tmpfs for faster test database
+    profiles:
+      - test
+
 volumes:
   postgres_data:
   redis_data:
