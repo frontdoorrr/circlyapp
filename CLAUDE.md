@@ -55,8 +55,8 @@ Circly is an anonymous voting mobile app targeting Korean middle/high school stu
 docker-compose up --build
 
 # Start specific services
-docker-compose up backend db redis     # Backend only
-docker-compose up frontend             # Frontend only
+docker-compose up backend worker db redis  # Backend with worker
+docker-compose up frontend                 # Frontend only
 
 # Run in background
 docker-compose up -d
@@ -66,7 +66,8 @@ docker-compose logs -f backend
 docker-compose logs -f frontend
 
 # Execute commands in containers
-docker-compose exec backend bash              # Access backend container
+docker-compose exec backend bash                         # Access backend container
+docker-compose exec worker bash                          # Access worker container
 docker-compose exec db psql -U circly_user -d circly_db  # Access database
 docker-compose exec backend alembic upgrade head         # Run migrations
 docker-compose exec backend pytest                       # Run backend tests
@@ -91,13 +92,17 @@ npm run test               # Run tests
 npm run lint               # Lint code
 npm run type-check         # TypeScript type checking
 
-# Backend (FastAPI)
+# Backend (FastAPI) - Using uv
 cd backend
-python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
-pip install -r requirements.txt         # Install backend dependencies
-uvicorn app.main:app --reload           # Start development server
-pytest                                  # Run backend tests
+uv venv                     # Create virtual environment
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+uv pip install -r requirements.txt     # Install backend dependencies
+uv run uvicorn app.main:app --reload   # Start development server
+uv run pytest                          # Run backend tests
+
+# Alternative: Direct execution with uv
+uv run uvicorn app.main:app --reload   # No venv activation needed
+uv run pytest                          # Direct test execution
 ```
 
 ## Core Features (MVP Priority)
@@ -169,11 +174,16 @@ Prefer TDD approach where possible:
 
 ### Testing Commands (will be available after setup)
 ```bash
-# Backend Testing
+# Backend Testing (using uv)
 cd backend
-pytest --cov=app --cov-report=html  # Run tests with coverage
-pytest tests/unit/                  # Unit tests only
-pytest tests/integration/           # Integration tests only
+uv run pytest --cov=app --cov-report=html  # Run tests with coverage
+uv run pytest tests/unit/                  # Unit tests only
+uv run pytest tests/integration/           # Integration tests only
+
+# Code quality checks
+uv run black .                      # Format code
+uv run ruff check .                 # Lint code
+uv run mypy .                       # Type checking
 
 # Frontend Testing  
 cd circly-app
