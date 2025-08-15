@@ -48,10 +48,42 @@ Circly is an anonymous voting mobile app targeting Korean middle/high school stu
 
 ## Development Commands
 
-**Note**: This project is in early planning stage. When code is implemented, common commands will likely include:
+### 🐳 Docker Development (Recommended)
+
+```bash
+# Start entire development environment
+docker-compose up --build
+
+# Start specific services
+docker-compose up backend db redis     # Backend only
+docker-compose up frontend             # Frontend only
+
+# Run in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Execute commands in containers
+docker-compose exec backend bash              # Access backend container
+docker-compose exec db psql -U circly_user -d circly_db  # Access database
+docker-compose exec backend alembic upgrade head         # Run migrations
+docker-compose exec backend pytest                       # Run backend tests
+docker-compose exec frontend npm test                    # Run frontend tests
+
+# Stop all services
+docker-compose down
+
+# Remove volumes (reset data)
+docker-compose down -v
+```
+
+### 💻 Local Development (Alternative)
 
 ```bash
 # Frontend (React Native/Expo)
+cd circly-app
 npm install                 # Install frontend dependencies
 npm start                   # Start Expo development server
 npm run build              # Build for production
@@ -60,9 +92,12 @@ npm run lint               # Lint code
 npm run type-check         # TypeScript type checking
 
 # Backend (FastAPI)
-pip install -r backend/requirements.txt  # Install backend dependencies
-uvicorn app.main:app --reload            # Start development server
-pytest                                   # Run backend tests
+cd backend
+python -m venv venv
+source venv/bin/activate    # Windows: venv\Scripts\activate
+pip install -r requirements.txt         # Install backend dependencies
+uvicorn app.main:app --reload           # Start development server
+pytest                                  # Run backend tests
 ```
 
 ## Core Features (MVP Priority)
@@ -106,3 +141,43 @@ The app targets Korean students, so ensure proper Korean language support in:
 - Push notification messages
 - Question templates and suggestions
 - Error messages and validation text
+
+## 🧪 Testing Requirements
+
+**ALL feature development must include comprehensive test code.**
+
+### Required Test Coverage
+- **Backend**: 90% minimum coverage required
+- **Frontend**: 80% minimum coverage required
+- **E2E Tests**: Core user flows must be covered
+
+### Test Guidelines
+**Always refer to `TESTING_GUIDE.md` when writing test code.**
+
+This document provides comprehensive testing strategies for:
+- Unit testing (services, components, utilities)
+- Integration testing (API endpoints, database interactions)
+- E2E testing (complete user flows)
+- Security testing (authentication, data privacy)
+- Performance testing (response times, concurrent users)
+
+### Test-Driven Development (TDD)
+Prefer TDD approach where possible:
+1. Write failing tests first
+2. Implement minimum code to pass tests
+3. Refactor while keeping tests green
+
+### Testing Commands (will be available after setup)
+```bash
+# Backend Testing
+cd backend
+pytest --cov=app --cov-report=html  # Run tests with coverage
+pytest tests/unit/                  # Unit tests only
+pytest tests/integration/           # Integration tests only
+
+# Frontend Testing  
+cd circly-app
+npm test                            # Run all tests
+npm run test:coverage               # Run with coverage report
+npm run test:e2e                    # Run E2E tests
+```
