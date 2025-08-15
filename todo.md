@@ -32,7 +32,7 @@
   ```
 
 ### 1.2 Docker 환경 설정
-- [ ] **프로젝트 루트에 Docker 파일들 생성**
+- [x] **프로젝트 루트에 Docker 파일들 생성** ✅
   ```bash
   # docker-compose.yml 생성
   cat > docker-compose.yml << EOF
@@ -106,13 +106,13 @@
   ```
 
 ### 1.3 백엔드 Docker 설정
-- [ ] **백엔드 디렉터리 생성**
+- [x] **백엔드 디렉터리 생성** ✅
   ```bash
   mkdir backend
   cd backend
   ```
 
-- [ ] **pyproject.toml 생성** (uv 패키지 매니저 사용)
+- [x] **pyproject.toml 생성** (uv 패키지 매니저 사용) ✅
   ```bash
   # backend/pyproject.toml 파일 생성
   cat > pyproject.toml << EOF
@@ -189,7 +189,7 @@
   EOF
   ```
 
-- [ ] **Dockerfile 생성** (backend/Dockerfile)
+- [x] **Dockerfile 생성** (backend/Dockerfile) ✅
   ```bash
   cat > Dockerfile << EOF
   FROM python:3.13-slim
@@ -222,7 +222,7 @@
   EOF
   ```
 
-- [ ] **.dockerignore 생성** (backend/.dockerignore)
+- [x] **.dockerignore 생성** (backend/.dockerignore) ✅
   ```bash
   cat > .dockerignore << EOF
   __pycache__
@@ -250,7 +250,7 @@
   EOF
   ```
 
-- [ ] **백엔드 폴더 구조 생성**
+- [x] **백엔드 폴더 구조 생성** ✅
   ```bash
   mkdir -p app/{api/v1,models,schemas,services,utils,tasks}
   mkdir -p tests/{unit,integration,e2e,fixtures}
@@ -270,7 +270,7 @@
   touch tests/conftest.py
   ```
 
-- [ ] **테스트 설정 파일 생성**
+- [x] **테스트 설정 파일 생성** ✅
   ```python
   # tests/conftest.py
   import pytest
@@ -288,21 +288,21 @@
   ```
 
 ### 1.4 프론트엔드 Docker 설정
-- [ ] **프론트엔드 디렉터리 생성**
+- [x] **프론트엔드 디렉터리 생성** ✅
   ```bash
   cd ..  # 프로젝트 루트로 이동
   npx create-expo-app@latest circly-app --template blank-typescript
   cd circly-app
   ```
 
-- [ ] **package.json 패키지 추가**
+- [x] **package.json 패키지 추가** ✅
   ```bash
   npm install @expo/vector-icons @react-navigation/native @react-navigation/bottom-tabs @react-navigation/stack expo-linear-gradient expo-notifications expo-linking expo-clipboard expo-sharing expo-image-picker expo-font
   npx expo install react-native-screens react-native-safe-area-context react-native-paper zustand @tanstack/react-query axios react-native-svg
   npm install -D @types/react @types/react-native typescript eslint prettier jest @testing-library/react-native @testing-library/jest-native detox @detox/test-runner
   ```
 
-- [ ] **Dockerfile 생성** (circly-app/Dockerfile)
+- [x] **Dockerfile 생성** (circly-app/Dockerfile) ✅
   ```bash
   cat > Dockerfile << EOF
   FROM node:23-alpine
@@ -329,7 +329,7 @@
   EOF
   ```
 
-- [ ] **.dockerignore 생성** (circly-app/.dockerignore)
+- [x] **.dockerignore 생성** (circly-app/.dockerignore) ✅
   ```bash
   cat > .dockerignore << EOF
   node_modules
@@ -347,7 +347,7 @@
   EOF
   ```
 
-- [ ] **프론트엔드 테스트 설정**
+- [x] **프론트엔드 테스트 설정** ✅
   ```bash
   # jest.config.js 생성
   # __tests__ 폴더 구조 생성
@@ -356,13 +356,13 @@
   ```
 
 ### 1.5 Docker 실행 및 테스트
-- [ ] **전체 환경 실행**
+- [x] **전체 환경 실행** ✅
   ```bash
   # 프로젝트 루트에서
   docker-compose up --build
   ```
 
-- [ ] **개별 서비스 실행** (선택사항)
+- [x] **개별 서비스 실행** (선택사항) ✅
   ```bash
   # 백엔드만 실행 (worker 포함)
   docker-compose up backend worker db redis
@@ -374,7 +374,7 @@
   docker-compose up db redis
   ```
 
-- [ ] **서비스 확인**
+- [x] **서비스 확인** ✅
   ```bash
   # 백엔드 API 확인
   curl http://localhost:8000/health
@@ -387,7 +387,7 @@
   ```
 
 ### 1.6 환경 변수 설정
-- [ ] **백엔드 .env 파일 생성** (로컬 개발용)
+- [x] **백엔드 .env 파일 생성** (로컬 개발용) ✅
   ```bash
   # backend/.env 파일 생성 (Docker 환경에서는 docker-compose.yml에서 설정)
   cat > backend/.env << EOF
@@ -422,7 +422,7 @@
   EOF
   ```
 
-- [ ] **프론트엔드 .env 파일 생성**
+- [x] **프론트엔드 .env 파일 생성** ✅
   ```bash
   # circly-app/.env 파일 생성
   cat > circly-app/.env << EOF
@@ -435,7 +435,7 @@
   EOF
   ```
 
-- [ ] **.env.example 파일들 생성** (Git 커밋용)
+- [x] **.env.example 파일들 생성** (Git 커밋용) ✅
   ```bash
   # backend/.env.example
   cp backend/.env backend/.env.example
