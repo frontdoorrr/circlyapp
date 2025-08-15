@@ -6,27 +6,44 @@
 
 #### 1.1 Python 버전 및 핵심 패키지
 ```
-Python 3.11+
+Python 3.13.3
+uv (패키지 매니저)
 ```
 
-```txt
-# requirements.txt
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-sqlalchemy==2.0.23
-alembic==1.12.1
-asyncpg==0.29.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-httpx==0.25.2
-celery[redis]==5.3.4
-redis==5.0.1
-supabase==2.0.2
-pydantic-settings==2.1.0
-pytest==7.4.3
-pytest-asyncio==0.21.1
+```toml
+# pyproject.toml
+[project]
+name = "circly-backend"
+version = "1.0.0"
+description = "Circly Backend API"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "sqlalchemy>=2.0.23",
+    "alembic>=1.12.1",
+    "asyncpg>=0.29.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.6",
+    "httpx>=0.25.2",
+    "celery[redis]>=5.3.4",
+    "redis>=5.0.1",
+    "supabase>=2.0.2",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
 ```
 
 #### 1.2 프로젝트 구조
@@ -87,7 +104,9 @@ backend/
 ├── docker/                  # Docker 설정
 ├── scripts/                 # 유틸리티 스크립트
 ├── requirements.txt
+├── requirements-dev.txt     # 개발용 추가 패키지
 ├── Dockerfile
+├── Dockerfile.prod          # 프로덕션용 Dockerfile
 └── docker-compose.yml
 ```
 
