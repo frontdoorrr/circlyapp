@@ -453,7 +453,7 @@
 ## Phase 2: 데이터베이스 설정 (Week 1-2)
 
 ### 2.1 Docker 데이터베이스 설정
-- [ ] **PostgreSQL 컨테이너 실행 확인**
+- [x] **PostgreSQL 컨테이너 실행 확인** ✅
   ```bash
   # PostgreSQL 서비스 시작
   docker-compose up db
@@ -470,7 +470,7 @@
 - [ ] **Database URL 복사**
 
 ### 2.3 데이터베이스 연결 설정
-- [ ] **백엔드 database.py 생성**
+- [x] **백엔드 database.py 생성** ✅
   ```python
   # backend/app/database.py
   from sqlalchemy import create_engine
@@ -494,7 +494,7 @@
           yield session
   ```
 
-- [ ] **config.py 생성**
+- [x] **config.py 생성** ✅
   ```python
   # backend/app/config.py
   from pydantic_settings import BaseSettings
@@ -524,10 +524,10 @@
   ```
 
 ### 2.4 데이터베이스 모델 생성
-- [ ] **Base 모델들 생성** (user.py, circle.py, poll.py 등)
+- [x] **Base 모델들 생성** (user.py, circle.py, poll.py 등) ✅
   - 참고: `trd/03-database-design.md` 문서 참조
 
-- [ ] **Docker 환경에서 Alembic 초기화**
+- [x] **Docker 환경에서 Alembic 초기화** ✅
   ```bash
   # Docker 컨테이너 내에서 실행
   docker-compose exec backend alembic init migrations
@@ -537,14 +537,14 @@
   alembic init migrations
   ```
 
-- [ ] **alembic.ini 설정 편집**
+- [x] **alembic.ini 설정 편집** ✅
   ```ini
   # migrations/alembic.ini에서 sqlalchemy.url 주석 해제
   # Docker 환경에서는 환경변수 사용
   # sqlalchemy.url = postgresql://circly_user:circly_password@db:5432/circly_db
   ```
 
-- [ ] **env.py 설정**
+- [x] **env.py 설정** ✅
   ```python
   # migrations/env.py 편집
   from app.database import Base
@@ -552,7 +552,7 @@
   target_metadata = Base.metadata
   ```
 
-- [ ] **첫 마이그레이션 파일 생성**
+- [x] **첫 마이그레이션 파일 생성** ✅
   ```bash
   # Docker 환경에서
   docker-compose exec backend alembic revision --autogenerate -m "Initial migration"
@@ -569,7 +569,7 @@
 ## Phase 3: 백엔드 기본 구조 구현 (Week 2)
 
 ### 3.1 FastAPI 앱 설정
-- [ ] **main.py 기본 구조 생성**
+- [x] **main.py 기본 구조 생성** ✅
   ```python
   # backend/app/main.py
   from fastapi import FastAPI
@@ -607,10 +607,10 @@
   ```
 
 ### 3.2 인증 시스템 구현
-- [ ] **JWT 토큰 유틸리티 생성** (`app/utils/security.py`)
-- [ ] **인증 종속성 생성** (`app/dependencies.py`)
-- [ ] **사용자 스키마 생성** (`app/schemas/user.py`)
-- [ ] **인증 API 생성** (`app/api/v1/auth.py`)
+- [x] **JWT 토큰 유틸리티 생성** (`app/utils/security.py`) ✅
+- [x] **인증 종속성 생성** (`app/dependencies.py`) ✅
+- [x] **사용자 스키마 생성** (`app/schemas/user.py`) ✅
+- [x] **인증 API 생성** (`app/api/v1/auth.py`) ✅
 - [ ] **인증 시스템 테스트 작성** (`tests/test_auth.py`)
   ```python
   # 테스트 항목
@@ -621,9 +621,9 @@
   ```
 
 ### 3.3 기본 CRUD 서비스 구현
-- [ ] **사용자 서비스** (`app/services/user_service.py`)
-- [ ] **Circle 서비스** (`app/services/circle_service.py`)
-- [ ] **투표 서비스** (`app/services/poll_service.py`)
+- [x] **사용자 API** (`app/api/v1/users.py`) ✅
+- [x] **Circle API** (`app/api/v1/circles.py`) ✅
+- [x] **투표 API** (`app/api/v1/polls.py`) ✅
 - [ ] **서비스 레이어 테스트 작성**
   ```python
   # tests/services/test_user_service.py
@@ -635,7 +635,7 @@
   ```
 
 ### 3.4 서버 실행 테스트
-- [ ] **Docker 환경에서 서버 실행**
+- [x] **Docker 환경에서 서버 실행** ✅
   ```bash
   # 백엔드 서비스 시작 (worker 포함)
   docker-compose up backend worker db redis
@@ -644,8 +644,8 @@
   docker-compose up --build
   ```
 
-- [ ] **API 문서 확인** (http://localhost:8000/docs)
-- [ ] **헬스체크 테스트** (http://localhost:8000/health)
+- [x] **API 문서 확인** (http://localhost:8000/docs) ✅
+- [x] **헬스체크 테스트** (http://localhost:8000/health) ✅
 
 #### 로컬 개발 환경 (선택사항)
 - [ ] **로컬 서버 실행** (Docker 없이 개발 시)
