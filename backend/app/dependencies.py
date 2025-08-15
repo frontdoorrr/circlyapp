@@ -1,18 +1,20 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
 from app.utils.security import verify_token
+import inspect
 
 security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    db = Depends(get_db)
 ) -> User:
-    """Get current authenticated user"""
+    """Get current authenticated user (supports both sync and async DB sessions)"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -28,9 +30,14 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
     
-    # Get user
-    result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
-    user = result.scalar_one_or_none()
+    # Get user - handle both sync and async sessions
+    if isinstance(db, AsyncSession):
+        # Async session
+        result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))
+        user = result.scalar_one_or_none()
+    else:
+        # Sync session (for tests)
+        user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     
     if user is None:
         raise credentials_exception
