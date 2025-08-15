@@ -9,33 +9,26 @@
 ## Phase 1: 프로젝트 초기 셋업 (Week 1)
 
 ### 1.1 환경 설정
-- [ ] **Docker 설치 및 설정**
+- [x] **Docker 설치 및 설정** ✅ 이미 설치됨
   ```bash
-  # Docker Desktop 설치 (https://www.docker.com/products/docker-desktop)
-  # 설치 확인
-  docker --version
-  docker-compose --version
+  # 현재 설치된 버전 확인
+  docker --version           # Docker version 27.5.1
+  docker-compose --version   # Docker Compose version v2.32.4
   ```
 
 #### 로컬 개발 환경 (선택사항)
-- [ ] **Node.js 설치** (v18.17.0 이상) - Docker 없이 개발 시에만 필요
+- [x] **Node.js 설치** ✅ 이미 설치됨 (v23.9.0 > v18.17.0 요구사항 충족)
   ```bash
-  # nvm 사용 권장
-  nvm install 18.17.0
-  nvm use 18.17.0
+  # 현재 설치된 버전 확인
+  node --version  # v23.9.0
+  npm --version   # 10.9.2
   ```
 
-- [ ] **Python 환경 설치** (v3.13.3) - Docker 없이 개발 시에만 필요
+- [x] **Python 환경 설치** ✅ 이미 설치됨 (v3.13.3)
   ```bash
-  # Python 3.13.3 확인
-  python --version  # Python 3.13.3 확인
-  
-  # uv 패키지 매니저 설치
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  # 또는 brew install uv (macOS)
-  
-  # uv 설치 확인
-  uv --version
+  # 현재 설치된 버전 확인
+  python3 --version  # Python 3.13.3
+  uv --version       # uv 0.6.17 (Homebrew 2025-04-25)
   ```
 
 ### 1.2 Docker 환경 설정
@@ -298,7 +291,7 @@
 - [ ] **프론트엔드 디렉터리 생성**
   ```bash
   cd ..  # 프로젝트 루트로 이동
-  npx create-expo-app circly-app --template blank-typescript
+  npx create-expo-app@latest circly-app --template blank-typescript
   cd circly-app
   ```
 
@@ -312,7 +305,7 @@
 - [ ] **Dockerfile 생성** (circly-app/Dockerfile)
   ```bash
   cat > Dockerfile << EOF
-  FROM node:18-alpine
+  FROM node:23-alpine
 
   WORKDIR /app
 
