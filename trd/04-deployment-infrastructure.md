@@ -59,65 +59,73 @@ graph TB
 
 #### 2.1 개발 환경 (Development)
 ```yaml
-# docker-compose.dev.yml
+# docker-compose.yml - 통합 개발 환경
 version: '3.8'
 services:
   backend:
-    build: 
-      context: .
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./backend:/app
-      - ./backend/app:/app/app
+    build: ./backend
     ports:
       - "8000:8000"
     environment:
-      - ENV=development
-      - DATABASE_URL=postgresql://dev_user:dev_pass@postgres:5432/circly_dev
+      - DATABASE_URL=postgresql://circly_user:circly_password@db:5432/circly_db
+      - SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
+      - DEBUG=True
       - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
     depends_on:
-      - postgres
+      - db
       - redis
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-  
-  postgres:
+
+  frontend:
+    build: ./circly-app
+    ports:
+      - "19006:19006"  # Expo Metro
+      - "8081:8081"    # Expo dev tools
+    environment:
+      - EXPO_PUBLIC_API_URL=http://localhost:8000/v1
+    volumes:
+      - ./circly-app:/app
+      - frontend_node_modules:/app/node_modules
+    command: npx expo start --web
+
+  db:
     image: postgres:15
     environment:
-      POSTGRES_DB: circly_dev
-      POSTGRES_USER: dev_user
-      POSTGRES_PASSWORD: dev_pass
+      - POSTGRES_DB=circly_db
+      - POSTGRES_USER=circly_user
+      - POSTGRES_PASSWORD=circly_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-  
+
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-  
+
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    build: ./backend
     volumes:
       - ./backend:/app
     depends_on:
-      - postgres
+      - db
       - redis
     environment:
-      - ENV=development
-      - DATABASE_URL=postgresql://dev_user:dev_pass@postgres:5432/circly_dev
+      - DATABASE_URL=postgresql://circly_user:circly_password@db:5432/circly_db
       - REDIS_URL=redis://redis:6379/0
     command: celery -A app.tasks worker --loglevel=info
 
 volumes:
   postgres_data:
   redis_data:
+  backend_node_modules:
+  frontend_node_modules:
 ```
 
 #### 2.2 스테이징 환경 (Staging)
@@ -165,16 +173,70 @@ services:
 
 ### 3. 컨테이너화 (Docker)
 
-#### 3.1 Backend Dockerfile
+#### 3.1 Backend Dockerfile (개발/프로덕션)
 ```dockerfile
-# Dockerfile
+# backend/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
 # 시스템 의존성 설치
 RUN apt-get update && apt-get install -y \
-    gcc \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 의존성 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# 포트 노출
+EXPOSE 8000
+
+# 애플리케이션 실행
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+#### 3.2 Frontend Dockerfile
+```dockerfile
+# circly-app/Dockerfile  
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Expo CLI 설치
+RUN npm install -g @expo/cli
+
+# package.json과 package-lock.json 복사
+COPY package*.json ./
+
+# 의존성 설치
+RUN npm ci
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# 포트 노출
+EXPOSE 19006 8081
+
+# 애플리케이션 실행
+CMD ["npx", "expo", "start", "--web"]
+```
+
+#### 3.3 프로덕션용 Dockerfile
+```dockerfile
+# backend/Dockerfile.prod
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 프로덕션용 시스템 패키지 설치
+RUN apt-get update && apt-get install -y \
+    build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -182,12 +244,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 앱 코드 복사
-COPY ./app /app/app
-COPY alembic.ini .
-COPY ./migrations /app/migrations
+# 애플리케이션 코드 복사
+COPY . .
 
-# 비루트 유저 생성
+# 비root 사용자 생성 (보안)
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
 USER appuser
@@ -196,34 +256,11 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
+# 포트 노출
 EXPOSE 8000
 
+# 애플리케이션 실행
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-#### 3.2 개발용 Dockerfile
-```dockerfile
-# Dockerfile.dev
-FROM python:3.11-slim
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-COPY requirements-dev.txt .
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-# 개발 도구 설치
-RUN pip install watchdog[watchmedo]
-
-EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 ```
 
 ### 4. CI/CD 파이프라인
@@ -638,8 +675,61 @@ if __name__ == "__main__":
         time.sleep(300)  # 5분마다 체크
 ```
 
+### 9. Docker 개발 워크플로우
+
+#### 9.1 개발 환경 시작
+```bash
+# 전체 스택 실행
+docker-compose up --build
+
+# 개별 서비스 실행
+docker-compose up backend db redis  # 백엔드만
+docker-compose up frontend          # 프론트엔드만
+
+# 백그라운드 실행
+docker-compose up -d
+
+# 로그 확인
+docker-compose logs -f backend
+docker-compose logs -f frontend
+```
+
+#### 9.2 개발 중 유용한 명령어
+```bash
+# 컨테이너 내부 접속
+docker-compose exec backend bash
+docker-compose exec db psql -U circly_user -d circly_db
+
+# 데이터베이스 마이그레이션
+docker-compose exec backend alembic upgrade head
+
+# 테스트 실행
+docker-compose exec backend pytest
+docker-compose exec frontend npm test
+
+# 의존성 설치 (새 패키지 추가 시)
+docker-compose exec backend pip install <package>
+docker-compose exec frontend npm install <package>
+
+# 빌드 캐시 제거 (문제 발생 시)
+docker-compose build --no-cache
+docker system prune -f
+```
+
+#### 9.3 환경별 Docker Compose 파일
+```bash
+# 개발 환경
+docker-compose.yml                    # 기본 개발 환경
+
+# 테스트 환경  
+docker-compose -f docker-compose.test.yml up
+
+# 프로덕션 환경
+docker-compose -f docker-compose.prod.yml up
+```
+
 ## 개발 우선순위
-1. **Phase 1**: Docker 개발 환경 및 기본 CI/CD 설정
-2. **Phase 2**: Railway 프로덕션 배포 및 모니터링
-3. **Phase 3**: 자동 스케일링 및 캐싱 시스템
-4. **Phase 4**: 고가용성 및 재해복구 시스템
+1. **Phase 1**: Docker 개발 환경 구축 및 기본 설정
+2. **Phase 2**: 로컬 개발 워크플로우 최적화
+3. **Phase 3**: Railway 프로덕션 배포 및 CI/CD 설정
+4. **Phase 4**: 모니터링, 스케일링 및 보안 강화
