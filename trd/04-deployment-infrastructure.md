@@ -176,9 +176,12 @@ services:
 #### 3.1 Backend Dockerfile (개발/프로덕션)
 ```dockerfile
 # backend/Dockerfile
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
+
+# uv 설치
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # 시스템 의존성 설치
 RUN apt-get update && apt-get install -y \
@@ -187,9 +190,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 의존성 설치
+# Python 의존성 설치 (uv 사용)
+COPY pyproject.toml .
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # 애플리케이션 코드 복사
 COPY . .
@@ -230,19 +234,24 @@ CMD ["npx", "expo", "start", "--web"]
 #### 3.3 프로덕션용 Dockerfile
 ```dockerfile
 # backend/Dockerfile.prod
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
+
+# uv 설치
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # 프로덕션용 시스템 패키지 설치
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 의존성 설치
+# Python 의존성 설치 (uv 사용)
+COPY pyproject.toml .
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 # 애플리케이션 코드 복사
 COPY . .
