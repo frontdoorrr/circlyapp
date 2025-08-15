@@ -9,41 +9,95 @@
 ## Phase 1: 프로젝트 초기 셋업 (Week 1)
 
 ### 1.1 환경 설정
-- [ ] **Node.js 설치** (v18.17.0 이상)
+- [ ] **Docker 설치 및 설정**
+  ```bash
+  # Docker Desktop 설치 (https://www.docker.com/products/docker-desktop)
+  # 설치 확인
+  docker --version
+  docker-compose --version
+  ```
+
+#### 로컬 개발 환경 (선택사항)
+- [ ] **Node.js 설치** (v18.17.0 이상) - Docker 없이 개발 시에만 필요
   ```bash
   # nvm 사용 권장
   nvm install 18.17.0
   nvm use 18.17.0
   ```
 
-- [ ] **Python 환경 설치** (v3.11 이상)
+- [ ] **Python 환경 설치** (v3.11 이상) - Docker 없이 개발 시에만 필요
   ```bash
   # pyenv 사용 권장
   pyenv install 3.11.6
   pyenv global 3.11.6
   ```
 
-- [ ] **Git 저장소 초기화**
+### 1.2 Docker 환경 설정
+- [ ] **프로젝트 루트에 Docker 파일들 생성**
   ```bash
-  git init
-  git add .
-  git commit -m "Initial commit with documentation"
-  git branch -M main
-  git remote add origin <your-repo-url>
-  git push -u origin main
+  # docker-compose.yml 생성
+  cat > docker-compose.yml << EOF
+  version: '3.8'
+  services:
+    backend:
+      build: ./backend
+      ports:
+        - "8000:8000"
+      environment:
+        - DATABASE_URL=postgresql://circly_user:circly_password@db:5432/circly_db
+        - SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
+        - DEBUG=True
+      volumes:
+        - ./backend:/app
+        - backend_node_modules:/app/node_modules
+      depends_on:
+        - db
+        - redis
+      command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+    frontend:
+      build: ./circly-app
+      ports:
+        - "19006:19006"  # Expo Metro
+        - "8081:8081"    # Expo dev tools
+      environment:
+        - EXPO_PUBLIC_API_URL=http://localhost:8000/v1
+      volumes:
+        - ./circly-app:/app
+        - frontend_node_modules:/app/node_modules
+      command: npx expo start --web
+
+    db:
+      image: postgres:15
+      environment:
+        - POSTGRES_DB=circly_db
+        - POSTGRES_USER=circly_user
+        - POSTGRES_PASSWORD=circly_password
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+    redis:
+      image: redis:7-alpine
+      ports:
+        - "6379:6379"
+      volumes:
+        - redis_data:/data
+
+  volumes:
+    postgres_data:
+    redis_data:
+    backend_node_modules:
+    frontend_node_modules:
+  EOF
   ```
 
-### 1.2 백엔드 프로젝트 셋업
+### 1.3 백엔드 Docker 설정
 - [ ] **백엔드 디렉터리 생성**
   ```bash
   mkdir backend
   cd backend
-  ```
-
-- [ ] **Python 가상환경 설치**
-  ```bash
-  python -m venv venv
-  source venv/bin/activate  # Windows: venv\Scripts\activate
   ```
 
 - [ ] **requirements.txt 생성**
@@ -68,14 +122,66 @@
   EOF
   ```
 
-- [ ] **패키지 설치**
+- [ ] **Dockerfile 생성** (backend/Dockerfile)
   ```bash
-  pip install -r requirements.txt
+  cat > Dockerfile << EOF
+  FROM python:3.11-slim
+
+  WORKDIR /app
+
+  # 시스템 의존성 설치
+  RUN apt-get update && apt-get install -y \\
+      build-essential \\
+      libpq-dev \\
+      && rm -rf /var/lib/apt/lists/*
+
+  # Python 의존성 설치
+  COPY requirements.txt .
+  RUN pip install --no-cache-dir -r requirements.txt
+
+  # 애플리케이션 코드 복사
+  COPY . .
+
+  # 포트 노출
+  EXPOSE 8000
+
+  # 애플리케이션 실행
+  CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+  EOF
+  ```
+
+- [ ] **.dockerignore 생성** (backend/.dockerignore)
+  ```bash
+  cat > .dockerignore << EOF
+  __pycache__
+  *.pyc
+  *.pyo
+  *.pyd
+  .Python
+  env
+  pip-log.txt
+  pip-delete-this-directory.txt
+  .tox
+  .coverage
+  .coverage.*
+  .cache
+  nosetests.xml
+  coverage.xml
+  *.cover
+  *.log
+  .git
+  .mypy_cache
+  .pytest_cache
+  .hypothesis
+  .venv
+  venv/
+  EOF
   ```
 
 - [ ] **백엔드 폴더 구조 생성**
   ```bash
   mkdir -p app/{api/v1,models,schemas,services,utils,tasks}
+  mkdir -p tests/{unit,integration,e2e,fixtures}
   touch app/__init__.py
   touch app/main.py
   touch app/config.py
@@ -88,52 +194,152 @@
   touch app/services/__init__.py
   touch app/utils/__init__.py
   touch app/tasks/__init__.py
+  touch tests/__init__.py
+  touch tests/conftest.py
   ```
 
-### 1.3 프론트엔드 프로젝트 셋업
-- [ ] **Expo CLI 설치**
-  ```bash
-  npm install -g @expo/cli
+- [ ] **테스트 설정 파일 생성**
+  ```python
+  # tests/conftest.py
+  import pytest
+  from fastapi.testclient import TestClient
+  from app.main import app
+  
+  @pytest.fixture
+  def client():
+      return TestClient(app)
+  
+  @pytest.fixture
+  def db_session():
+      # 테스트용 DB 세션 설정
+      pass
   ```
 
-- [ ] **React Native 프로젝트 생성**
+### 1.4 프론트엔드 Docker 설정
+- [ ] **프론트엔드 디렉터리 생성**
   ```bash
   cd ..  # 프로젝트 루트로 이동
   npx create-expo-app circly-app --template blank-typescript
   cd circly-app
   ```
 
-- [ ] **필요 패키지 설치**
+- [ ] **package.json 패키지 추가**
   ```bash
   npm install @expo/vector-icons @react-navigation/native @react-navigation/bottom-tabs @react-navigation/stack expo-linear-gradient expo-notifications expo-linking expo-clipboard expo-sharing expo-image-picker expo-font
   npx expo install react-native-screens react-native-safe-area-context react-native-paper zustand @tanstack/react-query axios react-native-svg
+  npm install -D @types/react @types/react-native typescript eslint prettier jest @testing-library/react-native @testing-library/jest-native detox @detox/test-runner
   ```
 
-- [ ] **개발 도구 설치**
+- [ ] **Dockerfile 생성** (circly-app/Dockerfile)
   ```bash
-  npm install -D @types/react @types/react-native typescript eslint prettier
+  cat > Dockerfile << EOF
+  FROM node:18-alpine
+
+  WORKDIR /app
+
+  # Expo CLI 설치
+  RUN npm install -g @expo/cli
+
+  # package.json과 package-lock.json 복사
+  COPY package*.json ./
+
+  # 의존성 설치
+  RUN npm ci
+
+  # 애플리케이션 코드 복사
+  COPY . .
+
+  # 포트 노출
+  EXPOSE 19006 8081
+
+  # 애플리케이션 실행
+  CMD ["npx", "expo", "start", "--web"]
+  EOF
   ```
 
-### 1.4 환경 변수 설정
-- [ ] **백엔드 .env 파일 생성**
+- [ ] **.dockerignore 생성** (circly-app/.dockerignore)
   ```bash
-  # backend/.env 파일 생성
+  cat > .dockerignore << EOF
+  node_modules
+  npm-debug.log
+  .git
+  .gitignore
+  .DS_Store
+  .expo
+  .expo-shared
+  *.log
+  *.tgz
+  .cache
+  dist
+  web-build
+  EOF
+  ```
+
+- [ ] **프론트엔드 테스트 설정**
+  ```bash
+  # jest.config.js 생성
+  # __tests__ 폴더 구조 생성
+  mkdir -p __tests__/{components,screens,services,utils}
+  mkdir -p e2e
+  ```
+
+### 1.5 Docker 실행 및 테스트
+- [ ] **전체 환경 실행**
+  ```bash
+  # 프로젝트 루트에서
+  docker-compose up --build
+  ```
+
+- [ ] **개별 서비스 실행** (선택사항)
+  ```bash
+  # 백엔드만 실행
+  docker-compose up backend db redis
+
+  # 프론트엔드만 실행
+  docker-compose up frontend
+
+  # 데이터베이스만 실행
+  docker-compose up db
+  ```
+
+- [ ] **서비스 확인**
+  ```bash
+  # 백엔드 API 확인
+  curl http://localhost:8000/health
+
+  # 프론트엔드 확인
+  # 브라우저에서 http://localhost:19006 접속
+
+  # 데이터베이스 확인
+  docker-compose exec db psql -U circly_user -d circly_db
+  ```
+
+### 1.6 환경 변수 설정
+- [ ] **백엔드 .env 파일 생성** (로컬 개발용)
+  ```bash
+  # backend/.env 파일 생성 (Docker 환경에서는 docker-compose.yml에서 설정)
   cat > backend/.env << EOF
-  # Database
-  DATABASE_URL=postgresql://username:password@localhost:5432/circly_dev
+  # Database (Docker 환경)
+  DATABASE_URL=postgresql://circly_user:circly_password@db:5432/circly_db
+  
+  # Database (로컬 환경)
+  # DATABASE_URL=postgresql://username:password@localhost:5432/circly_dev
   
   # JWT
   SECRET_KEY=your-super-secret-jwt-key-here-change-in-production
   ALGORITHM=HS256
   ACCESS_TOKEN_EXPIRE_MINUTES=10080
   
+  # Redis (Docker 환경)
+  REDIS_URL=redis://redis:6379/0
+  
+  # Redis (로컬 환경)
+  # REDIS_URL=redis://localhost:6379/0
+  
   # Supabase (추후 설정)
   SUPABASE_URL=
   SUPABASE_ANON_KEY=
   SUPABASE_SERVICE_KEY=
-  
-  # Redis
-  REDIS_URL=redis://localhost:6379/0
   
   # Expo Push
   EXPO_ACCESS_TOKEN=
@@ -148,24 +354,50 @@
   ```bash
   # circly-app/.env 파일 생성
   cat > circly-app/.env << EOF
+  # API URL (Docker 환경)
   EXPO_PUBLIC_API_URL=http://localhost:8000/v1
+  
+  # App Settings
   EXPO_PUBLIC_APP_NAME=Circly
   EXPO_PUBLIC_APP_VERSION=1.0.0
   EOF
+  ```
+
+- [ ] **.env.example 파일들 생성** (Git 커밋용)
+  ```bash
+  # backend/.env.example
+  cp backend/.env backend/.env.example
+  
+  # circly-app/.env.example  
+  cp circly-app/.env circly-app/.env.example
+  
+  # .env 파일들 gitignore에 추가
+  echo "backend/.env" >> .gitignore
+  echo "circly-app/.env" >> .gitignore
   ```
 
 ---
 
 ## Phase 2: 데이터베이스 설정 (Week 1-2)
 
-### 2.1 Supabase 프로젝트 설정
+### 2.1 Docker 데이터베이스 설정
+- [ ] **PostgreSQL 컨테이너 실행 확인**
+  ```bash
+  # PostgreSQL 서비스 시작
+  docker-compose up db
+  
+  # 데이터베이스 연결 테스트
+  docker-compose exec db psql -U circly_user -d circly_db -c "SELECT version();"
+  ```
+
+### 2.2 Supabase 프로젝트 설정 (선택사항 - 프로덕션용)
 - [ ] **Supabase 계정 생성** (https://supabase.com)
 - [ ] **새 프로젝트 생성** ("circly-dev")
 - [ ] **데이터베이스 접속정보 설정**
 - [ ] **API Keys 복사** (anon key, service key)
 - [ ] **Database URL 복사**
 
-### 2.2 데이터베이스 연결 설정
+### 2.3 데이터베이스 연결 설정
 - [ ] **백엔드 database.py 생성**
   ```python
   # backend/app/database.py
@@ -219,12 +451,16 @@
   settings = Settings()
   ```
 
-### 2.3 데이터베이스 모델 생성
+### 2.4 데이터베이스 모델 생성
 - [ ] **Base 모델들 생성** (user.py, circle.py, poll.py 등)
   - 참고: `trd/03-database-design.md` 문서 참조
 
-- [ ] **Alembic 초기화**
+- [ ] **Docker 환경에서 Alembic 초기화**
   ```bash
+  # Docker 컨테이너 내에서 실행
+  docker-compose exec backend alembic init migrations
+  
+  # 또는 로컬에서 실행 (백엔드 컨테이너가 실행 중일 때)
   cd backend
   alembic init migrations
   ```
@@ -232,7 +468,8 @@
 - [ ] **alembic.ini 설정 편집**
   ```ini
   # migrations/alembic.ini에서 sqlalchemy.url 주석 해제
-  # sqlalchemy.url = driver://user:pass@localhost/dbname
+  # Docker 환경에서는 환경변수 사용
+  # sqlalchemy.url = postgresql://circly_user:circly_password@db:5432/circly_db
   ```
 
 - [ ] **env.py 설정**
@@ -245,6 +482,12 @@
 
 - [ ] **첫 마이그레이션 파일 생성**
   ```bash
+  # Docker 환경에서
+  docker-compose exec backend alembic revision --autogenerate -m "Initial migration"
+  docker-compose exec backend alembic upgrade head
+  
+  # 또는 로컬에서
+  cd backend
   alembic revision --autogenerate -m "Initial migration"
   alembic upgrade head
   ```
@@ -296,21 +539,51 @@
 - [ ] **인증 종속성 생성** (`app/dependencies.py`)
 - [ ] **사용자 스키마 생성** (`app/schemas/user.py`)
 - [ ] **인증 API 생성** (`app/api/v1/auth.py`)
+- [ ] **인증 시스템 테스트 작성** (`tests/test_auth.py`)
+  ```python
+  # 테스트 항목
+  - 디바이스 로그인 성공/실패
+  - JWT 토큰 생성/검증
+  - 토큰 갱신 기능
+  - 인증 미들웨어 동작
+  ```
 
 ### 3.3 기본 CRUD 서비스 구현
 - [ ] **사용자 서비스** (`app/services/user_service.py`)
 - [ ] **Circle 서비스** (`app/services/circle_service.py`)
 - [ ] **투표 서비스** (`app/services/poll_service.py`)
+- [ ] **서비스 레이어 테스트 작성**
+  ```python
+  # tests/services/test_user_service.py
+  # tests/services/test_circle_service.py  
+  # tests/services/test_poll_service.py
+  - CRUD 기본 동작 테스트
+  - 비즈니스 로직 검증
+  - 에러 핸들링 테스트
+  ```
 
 ### 3.4 서버 실행 테스트
-- [ ] **로컬 서버 실행**
+- [ ] **Docker 환경에서 서버 실행**
   ```bash
-  cd backend
-  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  # 백엔드 서비스 시작
+  docker-compose up backend db redis
+  
+  # 또는 전체 서비스 시작
+  docker-compose up --build
   ```
 
 - [ ] **API 문서 확인** (http://localhost:8000/docs)
 - [ ] **헬스체크 테스트** (http://localhost:8000/health)
+
+#### 로컬 개발 환경 (선택사항)
+- [ ] **로컬 서버 실행** (Docker 없이 개발 시)
+  ```bash
+  cd backend
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  ```
 
 ---
 
@@ -351,6 +624,15 @@
   - Button, Input, LoadingSpinner
 - [ ] **기본 화면 구현**
   - HomeScreen, CreateScreen, ProfileScreen
+- [ ] **프론트엔드 컴포넌트 테스트 작성**
+  ```typescript
+  // __tests__/components/Button.test.tsx
+  // __tests__/components/Input.test.tsx
+  // __tests__/screens/HomeScreen.test.tsx
+  - 컴포넌트 렌더링 테스트
+  - 사용자 인터랙션 테스트
+  - Props 전달 테스트
+  ```
 
 ---
 
@@ -360,17 +642,39 @@
 - [ ] **디바이스 기반 로그인 구현**
 - [ ] **토큰 관리 시스템**
 - [ ] **사용자 로그인 기능**
+- [ ] **인증 통합 테스트**
+  ```python
+  # tests/integration/test_auth_integration.py
+  - 로그인 플로우 end-to-end 테스트
+  - 토큰 만료 시나리오 테스트
+  - 인증 실패 케이스 테스트
+  ```
 
 ### 5.2 Circle 관리 기능
 - [ ] **Circle 생성 API 및 UI**
 - [ ] **초대 코드/링크 생성**
 - [ ] **Circle 참여 기능**
 - [ ] **멤버 관리 기능**
+- [ ] **Circle 기능 테스트**
+  ```python
+  # tests/test_circle.py
+  - Circle 생성/수정/삭제 테스트
+  - 초대 코드 생성/검증 테스트
+  - 멤버 초대/퇴출 테스트
+  - 권한 관리 테스트
+  ```
 
 ### 5.3 질문 템플릿 시스템
 - [ ] **템플릿 데이터베이스 구축**
 - [ ] **템플릿 조회 API**
 - [ ] **카테고리별 템플릿 UI**
+- [ ] **템플릿 시스템 테스트**
+  ```python
+  # tests/test_templates.py
+  - 템플릿 조회/필터링 테스트
+  - 카테고리별 분류 테스트
+  - 인기 템플릿 정렬 테스트
+  ```
 
 ### 5.4 투표 시스템
 - [ ] **투표 생성 기능**
@@ -383,10 +687,28 @@
   - 익명 투표 참여
   - 결과 실시간 업데이트
 
+- [ ] **투표 시스템 핵심 테스트**
+  ```python
+  # tests/test_polls.py
+  - 투표 생성/수정/삭제 테스트
+  - 투표 참여 및 중복 방지 테스트
+  - 마감 시간 검증 테스트
+  - 익명성 보장 테스트
+  - 결과 집계 정확성 테스트
+  ```
+
 ### 5.5 실시간 결과 시스템
 - [ ] **투표 결과 집계 구현**
 - [ ] **실시간 업데이트 (WebSocket/SSE)**
 - [ ] **결과 카드 생성 기능**
+- [ ] **실시간 시스템 테스트**
+  ```python
+  # tests/test_realtime.py
+  - WebSocket 연결 테스트
+  - 실시간 업데이트 전송 테스트
+  - 동시 접속자 처리 테스트
+  - 네트워크 중단 복구 테스트
+  ```
 
 ---
 
@@ -397,17 +719,43 @@
 - [ ] **백엔드 알림 서비스 구현**
 - [ ] **알림 스케줄러 (Celery/Background Tasks)**
 - [ ] **사용자별 알림 설정**
+- [ ] **푸시 알림 테스트**
+  ```python
+  # tests/test_notifications.py
+  - 푸시 토큰 등록/해제 테스트
+  - 알림 발송 성공/실패 테스트
+  - 스케줄링 정확성 테스트
+  - 알림 설정 반영 테스트
+  - 배치 처리 성능 테스트
+  ```
 
 ### 6.2 결과 카드 & 공유 기능
 - [ ] **카드 생성 라이브러리 설정**
 - [ ] **결과 카드 템플릿 구현**
 - [ ] **SNS 공유 기능**
 - [ ] **저장 관리 기능**
+- [ ] **카드 생성 & 공유 테스트**
+  ```python
+  # tests/test_result_cards.py
+  - 카드 이미지 생성 테스트
+  - 템플릿 렌더링 테스트
+  - 공유 링크 생성 테스트
+  - 파일 저장/삭제 테스트
+  - 이미지 품질 검증 테스트
+  ```
 
 ### 6.3 통계 시스템
 - [ ] **개인 통계 구현**
 - [ ] **Circle 분석정보**
 - [ ] **사용 패턴 분석**
+- [ ] **통계 시스템 테스트**
+  ```python
+  # tests/test_analytics.py
+  - 통계 집계 정확성 테스트
+  - 데이터 익명화 검증 테스트
+  - 성능 지표 계산 테스트
+  - 대용량 데이터 처리 테스트
+  ```
 
 ---
 
@@ -417,36 +765,135 @@
 - [ ] **컬러 시스템 적용**
 - [ ] **타이포그래피 적용**
 - [ ] **컴포넌트 표준화**
+- [ ] **디자인 시스템 테스트**
+  ```typescript
+  // __tests__/design-system/Colors.test.ts
+  // __tests__/design-system/Typography.test.ts
+  - 색상 일관성 테스트
+  - 폰트 크기/무게 적용 테스트
+  - 반응형 디자인 테스트
+  ```
 
 ### 7.2 애니메이션 구현
 - [ ] **페이지 전환 애니메이션**
 - [ ] **투표 인터랙션**
 - [ ] **로딩 애니메이션**
 - [ ] **투표 결과 애니메이션**
+- [ ] **애니메이션 성능 테스트**
+  ```typescript
+  // __tests__/animations/Performance.test.ts
+  - 애니메이션 실행 성능 테스트
+  - 메모리 사용량 측정 테스트
+  - 60fps 유지 검증 테스트
+  ```
 
 ### 7.3 접근성 구현
 - [ ] **스크린 리더 대응**
 - [ ] **키보드 조작 지원**
 - [ ] **색상 대비도**
+- [ ] **접근성 준수 테스트**
+  ```typescript
+  // __tests__/accessibility/A11y.test.ts
+  - 스크린 리더 호환성 테스트
+  - 키보드 네비게이션 테스트
+  - WCAG 2.1 AA 기준 검증
+  - 색상 대비 자동 검사
+  ```
 
 ---
 
 ## Phase 8: 테스트 및 품질 보증 (Week 6-7)
 
-### 8.1 백엔드 테스트
-- [ ] **단위 테스트 작성** (pytest)
+### 8.1 백엔드 테스트 강화
+- [ ] **테스트 환경 구성**
+  ```bash
+  # backend/conftest.py 설정
+  pytest --cov=app --cov-report=html
+  pytest-xdist  # 병렬 테스트 실행
+  ```
+- [ ] **단위 테스트 완료** (pytest)
+  - 모든 서비스 레이어 90% 이상 커버리지
+  - 유틸리티 함수 100% 커버리지
 - [ ] **API 통합 테스트**
+  ```python
+  # tests/integration/test_api_integration.py
+  - 전체 API 플로우 테스트
+  - 에러 케이스 시나리오 테스트
+  - 성능 임계값 검증 테스트
+  ```
 - [ ] **데이터베이스 테스트**
+  ```python
+  # tests/database/test_db.py
+  - 트랜잭션 롤백 테스트
+  - 동시성 처리 테스트
+  - 데이터 무결성 검증 테스트
+  ```
 
-### 8.2 프론트엔드 테스트
-- [ ] **컴포넌트 테스트** (Jest)
+### 8.2 프론트엔드 테스트 강화
+- [ ] **테스트 라이브러리 설정**
+  ```bash
+  npm install -D @testing-library/react-native @testing-library/jest-native
+  npm install -D detox @detox/test-runner
+  ```
+- [ ] **컴포넌트 테스트** (Jest + Testing Library)
+  ```typescript
+  // 모든 컴포넌트 80% 이상 커버리지
+  - 렌더링 테스트
+  - 상태 변화 테스트  
+  - 사용자 이벤트 테스트
+  ```
 - [ ] **E2E 테스트** (Detox)
+  ```typescript
+  // e2e/firstTest.e2e.js
+  - 사용자 회원가입 플로우
+  - Circle 생성부터 투표까지 전체 플로우
+  - 오프라인/온라인 전환 시나리오
+  ```
 - [ ] **성능 테스트**
+  ```typescript
+  // __tests__/performance/Performance.test.ts
+  - 앱 실행 시간 측정
+  - 메모리 사용량 모니터링
+  - 네트워크 요청 최적화 검증
+  ```
 
-### 8.3 보안 검증
+### 8.3 보안 검증 강화
 - [ ] **API 보안 취약점 검증**
+  ```python
+  # tests/security/test_security.py
+  - SQL Injection 방어 테스트
+  - XSS 공격 방어 테스트
+  - CSRF 토큰 검증 테스트
+  - Rate Limiting 동작 테스트
+  ```
 - [ ] **앱 보안 로직 검증**
+  ```typescript
+  // __tests__/security/AppSecurity.test.ts
+  - 로컬 저장소 암호화 검증
+  - API 키 노출 방지 검증
+  - 디버그 정보 제거 확인
+  ```
 - [ ] **개인정보 처리 검증**
+  ```python
+  # tests/privacy/test_privacy.py
+  - 데이터 익명화 검증
+  - 개인정보 삭제 프로세스 테스트
+  - 로그 개인정보 마스킹 테스트
+  ```
+
+### 8.4 테스트 자동화 및 CI/CD
+- [ ] **GitHub Actions 테스트 워크플로우**
+  ```yaml
+  # .github/workflows/test.yml
+  - PR 생성 시 자동 테스트 실행
+  - 테스트 커버리지 리포트 생성
+  - 실패 시 배포 중단
+  ```
+- [ ] **코드 품질 검사**
+  ```bash
+  # 백엔드: Black, Flake8, mypy
+  # 프론트엔드: ESLint, Prettier, TypeScript
+  ```
 
 ---
 
@@ -455,7 +902,71 @@
 ### 9.1 백엔드 배포 설정
 - [ ] **Railway 계정 설정**
 - [ ] **프로덕션 환경 변수 설정**
-- [ ] **Docker 설정** (선택사항)
+- [ ] **프로덕션용 Dockerfile 최적화**
+  ```bash
+  # backend/Dockerfile.prod 생성
+  cat > backend/Dockerfile.prod << EOF
+  FROM python:3.11-slim
+
+  WORKDIR /app
+
+  # 프로덕션용 시스템 패키지 설치
+  RUN apt-get update && apt-get install -y \\
+      build-essential \\
+      libpq-dev \\
+      && rm -rf /var/lib/apt/lists/*
+
+  # Python 의존성 설치
+  COPY requirements.txt .
+  RUN pip install --no-cache-dir -r requirements.txt
+
+  # 애플리케이션 코드 복사
+  COPY . .
+
+  # 비root 사용자 생성
+  RUN adduser --disabled-password --gecos '' appuser
+  RUN chown -R appuser:appuser /app
+  USER appuser
+
+  # 포트 노출
+  EXPOSE 8000
+
+  # 애플리케이션 실행
+  CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+  EOF
+  ```
+- [ ] **프로덕션용 docker-compose 설정**
+  ```bash
+  # docker-compose.prod.yml 생성
+  cat > docker-compose.prod.yml << EOF
+  version: '3.8'
+  services:
+    backend:
+      build:
+        context: ./backend
+        dockerfile: Dockerfile.prod
+      ports:
+        - "8000:8000"
+      environment:
+        - DATABASE_URL=\${DATABASE_URL}
+        - SECRET_KEY=\${SECRET_KEY}
+        - DEBUG=False
+        - ENVIRONMENT=production
+      restart: unless-stopped
+
+    nginx:
+      image: nginx:alpine
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf
+        - ./ssl:/etc/nginx/ssl
+      depends_on:
+        - backend
+      restart: unless-stopped
+  EOF
+  ```
 - [ ] **CI/CD 파이프라인 구성**
 
 ### 9.2 모바일 앱 빌드
@@ -463,6 +974,14 @@
 - [ ] **앱 아이콘 및 스플래시 스크린**
 - [ ] **앱 버전 설정**
 - [ ] **프로덕션 빌드 테스트**
+- [ ] **배포 전 테스트**
+  ```bash
+  # 프로덕션 빌드 검증
+  eas build --platform all --clear-cache
+  # 빌드된 앱 수동 테스트
+  # 성능 벤치마크 테스트
+  # 메모리 누수 검사
+  ```
 
 ### 9.3 스토어 등록 준비
 - [ ] **Apple Developer 계정**
@@ -478,6 +997,14 @@
 - [ ] **TestFlight 배포** (iOS)
 - [ ] **Internal Testing** (Android)
 - [ ] **베타 테스터들과 피드백 수집**
+- [ ] **베타 테스트 모니터링**
+  ```bash
+  # 베타 테스트 지표 수집
+  - 크래시 리포트 분석
+  - 사용자 행동 패턴 분석
+  - 성능 지표 모니터링
+  - 피드백 분류 및 우선순위 설정
+  ```
 
 ### 10.2 모니터링 시스템
 - [ ] **에러 모니터링** (Sentry)
@@ -517,6 +1044,10 @@
 3. **데이터베이스 백업**: 정기적 백업 시스템 구축 필요
 4. **버전 관리**: 각 단계별 Git 태그 생성 권장
 5. **문서 업데이트**: 개발 중 발생한 문제와 해결 방법 기록
+6. **테스트 커버리지**: 모든 기능 개발 시 테스트 코드 필수 작성
+   - 백엔드: 90% 이상 커버리지 목표
+   - 프론트엔드: 80% 이상 커버리지 목표
+7. **TDD 적용**: 가능한 한 테스트 주도 개발 방식 권장
 
 ---
 
@@ -526,5 +1057,21 @@
 - **기술 구현**: `trd/` 폴더의 모든 문서들  
 - **디자인**: `design-guide/` 폴더의 모든 문서들
 - **API 명세**: `trd/05-api-specification.md`
+- **🧪 테스트 지침서**: `TESTING_GUIDE.md` (모든 테스트 코드 작성 시 필수 참고)
+
+## 🧪 테스트 코드 작성 필수 사항
+
+**모든 기능 개발 시 `TESTING_GUIDE.md`를 참고하여 테스트 코드를 작성해야 합니다.**
+
+### 테스트 작성 순서
+1. **기능 구현 전**: 테스트 케이스 설계 (TDD 권장)
+2. **기능 구현 중**: 단위 테스트 작성
+3. **기능 완료 후**: 통합 테스트 및 E2E 테스트 작성
+4. **각 단계 완료 시**: 테스트 커버리지 검증
+
+### 테스트 품질 기준
+- **백엔드**: 90% 이상 커버리지 필수
+- **프론트엔드**: 80% 이상 커버리지 필수
+- **모든 테스트**: 빠르고(< 5초), 독립적이고, 반복 가능해야 함
 
 이 Todo List를 순서대로 진행하면 Circly 앱을 성공적으로 완성할 수 있습니다! 🚀
