@@ -9,7 +9,7 @@ RUN npm install -g @expo/cli
 COPY package*.json ./
 
 # 의존성 설치
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # 애플리케이션 코드 복사
 COPY . .
