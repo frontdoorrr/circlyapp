@@ -18,6 +18,13 @@ jest.mock('expo-device', () => ({
   modelName: 'iPhone',
 }));
 
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
 describe('LoginScreen', () => {
   const mockLogin = jest.fn();
   const mockAuthStore = {
@@ -63,7 +70,7 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith(
         expect.objectContaining({
-          device_id: expect.stringMatching(/^device_\d+_[a-z0-9]+$/)
+          device_id: expect.stringMatching(/^quick_\d+_[a-z0-9]+$/)
         })
       );
     });
@@ -78,7 +85,7 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith(
         expect.objectContaining({
-          device_id: expect.stringMatching(/^iOS_iPhone_\d+$/)
+          device_id: expect.stringMatching(/^ios_iphone_\d+_[a-z0-9]+$/)
         })
       );
     });
@@ -122,7 +129,11 @@ describe('LoginScreen', () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Login Failed', 
-        'Network error'
+        'Network error',
+        expect.arrayContaining([
+          expect.objectContaining({ text: 'OK' }),
+          expect.objectContaining({ text: 'Try Quick Login' })
+        ])
       );
     });
   });

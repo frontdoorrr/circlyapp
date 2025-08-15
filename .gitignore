@@ -207,3 +207,8 @@ marimo/_lsp/
 __marimo__/
 backend/.env
 circly-app/.env
+
+# Test databases
+test.db
+*.test.db
+backend/test.db

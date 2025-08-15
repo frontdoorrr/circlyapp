@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, UserResponse, LoginRequest, UserUpdate } from '../types';
 import { authApi } from '../services/api';
+import { apiClient } from '../services/api/client';
 
 interface AuthStore extends AuthState {
   // Actions
@@ -10,6 +11,7 @@ interface AuthStore extends AuthState {
   logout: () => Promise<void>;
   getCurrentUser: () => Promise<void>;
   updateProfile: (updateData: UserUpdate) => Promise<void>;
+  restoreAuth: () => Promise<void>;
   setUser: (user: UserResponse) => void;
   setToken: (token: string) => void;
   clearAuth: () => void;
@@ -35,6 +37,9 @@ export const useAuthStore = create<AuthStore>()(
           const authResponse = await authApi.login(loginData);
           
           if (authResponse) {
+            // Update API client token
+            apiClient.setToken(authResponse.access_token);
+            
             set({
               isAuthenticated: true,
               user: authResponse.user,
@@ -43,6 +48,9 @@ export const useAuthStore = create<AuthStore>()(
             });
           }
         } catch (error: any) {
+          // Clear API client token on error
+          apiClient.clearToken();
+          
           set({
             loading: false,
             error: error.message || 'Login failed',
@@ -62,6 +70,9 @@ export const useAuthStore = create<AuthStore>()(
           // Continue with logout even if API call fails
           console.warn('Logout API call failed:', error);
         } finally {
+          // Clear API client token
+          apiClient.clearToken();
+          
           set({
             isAuthenticated: false,
             user: null,
@@ -124,15 +135,67 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      restoreAuth: async () => {
+        const state = get();
+        
+        // Set API client token if we have one
+        if (state.token) {
+          apiClient.setToken(state.token);
+        }
+        
+        // Only try to restore if we have a token but no current user info
+        if (state.token && !state.user) {
+          try {
+            set({ loading: true, error: null });
+            
+            // Try to get current user with existing token
+            const user = await authApi.getCurrentUser();
+            
+            if (user) {
+              set({
+                user,
+                isAuthenticated: true,
+                loading: false,
+              });
+            } else {
+              // Token is invalid, clear auth state
+              apiClient.clearToken();
+              set({
+                isAuthenticated: false,
+                user: null,
+                token: null,
+                loading: false,
+              });
+            }
+          } catch (error: any) {
+            // Token is invalid or expired, clear auth state
+            console.warn('Failed to restore auth:', error);
+            apiClient.clearToken();
+            set({
+              isAuthenticated: false,
+              user: null,
+              token: null,
+              loading: false,
+              error: null, // Don't show error for silent auth restoration
+            });
+          }
+        } else if (state.token && state.user) {
+          // We have both token and user, just verify we're authenticated
+          set({ isAuthenticated: true });
+        }
+      },
+
       setUser: (user: UserResponse) => {
         set({ user, isAuthenticated: true });
       },
 
       setToken: (token: string) => {
+        apiClient.setToken(token);
         set({ token, isAuthenticated: true });
       },
 
       clearAuth: () => {
+        apiClient.clearToken();
         set({
           isAuthenticated: false,
           user: null,

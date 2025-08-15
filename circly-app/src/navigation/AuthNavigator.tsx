@@ -1,24 +1,42 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store';
 import AppNavigator from './AppNavigator';
 import LoginScreen from '../screens/auth/LoginScreen';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 
 export default function AuthNavigator() {
-  const { isAuthenticated, loading, token, getCurrentUser } = useAuthStore();
+  const { isAuthenticated, loading, restoreAuth } = useAuthStore();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // If we have a token but no current user, try to get user info
-    if (token && !loading) {
-      getCurrentUser();
-    }
-  }, [token]);
+    const initializeAuth = async () => {
+      try {
+        // Try to restore authentication state
+        await restoreAuth();
+      } catch (error) {
+        console.warn('Failed to initialize auth:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
 
-  if (loading) {
+    initializeAuth();
+  }, []);
+
+  // Show splash screen while initializing
+  if (isInitializing || loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingTitle}>Circly</Text>
+        <ActivityIndicator 
+          size="large" 
+          color="#007AFF" 
+          style={styles.loadingIndicator}
+        />
+        <Text style={styles.loadingText}>
+          {isInitializing ? 'Starting up...' : 'Authenticating...'}
+        </Text>
       </View>
     );
   }
@@ -29,3 +47,27 @@ export default function AuthNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 20,
+  },
+  loadingTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 40,
+  },
+  loadingIndicator: {
+    marginBottom: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+});
