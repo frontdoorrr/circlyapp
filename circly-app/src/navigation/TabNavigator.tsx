@@ -11,6 +11,8 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
+  console.log('📱 [TabNavigator] Component rendering started');
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

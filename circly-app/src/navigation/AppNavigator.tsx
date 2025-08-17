@@ -14,8 +14,11 @@ import PollDetailScreen from '../screens/poll/PollDetailScreen';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+  console.log('🏠 [AppNavigator] Component rendering started');
+  
   return (
     <Stack.Navigator
+      initialRouteName="Main"
       screenOptions={{
         headerStyle: {
           backgroundColor: '#007AFF',
@@ -26,13 +29,6 @@ export default function AppNavigator() {
         },
       }}
     >
-      <Stack.Screen 
-        name="Login" 
-        component={LoginScreen}
-        options={{ 
-          headerShown: false,
-        }}
-      />
       <Stack.Screen 
         name="Main" 
         component={TabNavigator}
