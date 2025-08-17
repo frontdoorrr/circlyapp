@@ -666,48 +666,48 @@
 ## Phase 4: 프론트엔드 기본 구조 구현 (Week 2-3)
 
 ### 4.1 프로젝트 구조 설정
-- [ ] **src 폴더 구조 생성**
+- [x] **src 폴더 구조 생성** ✅
   ```bash
   cd circly-app
   mkdir -p src/{components,screens,services,utils,types,hooks,navigation,store}
   mkdir -p src/components/{common,poll,circle}
-  mkdir -p src/screens/{auth,home,create,profile}
+  mkdir -p src/screens/{auth,home,create,profile,circle,poll}
   ```
 
-- [ ] **타입 정의 생성** (`src/types/`)
+- [x] **타입 정의 생성** (`src/types/`) ✅
   - api.ts, user.ts, circle.ts, poll.ts
 
 ### 4.2 네비게이션 설정
-- [ ] **Tab Navigator 구현** (`src/navigation/TabNavigator.tsx`)
-- [ ] **App Navigator 구현** (`src/navigation/AppNavigator.tsx`)
-- [ ] **Auth Navigator 구현** (`src/navigation/AuthNavigator.tsx`)
+- [x] **Tab Navigator 구현** (`src/navigation/TabNavigator.tsx`) ✅
+- [x] **App Navigator 구현** (`src/navigation/AppNavigator.tsx`) ✅
+- [x] **Auth Navigator 구현** (`src/navigation/AuthNavigator.tsx`) ✅
 
 ### 4.3 상태 관리 설정
-- [ ] **Zustand 스토어 구현**
-  - `src/store/authStore.ts`
-  - `src/store/pollStore.ts`
-  - `src/store/circleStore.ts`
+- [x] **Zustand 스토어 구현** ✅
+  - `src/store/authStore.ts` ✅
+  - `src/store/pollStore.ts` ✅
+  - `src/store/circleStore.ts` ✅
 
 ### 4.4 API 클라이언트 구현
-- [ ] **Axios 클라이언트 설정** (`src/services/api/client.ts`)
-- [ ] **API 서비스 구현**
-  - `src/services/api/auth.ts`
-  - `src/services/api/circle.ts`
-  - `src/services/api/poll.ts`
+- [x] **Axios 클라이언트 설정** (`src/services/api/client.ts`) ✅
+- [x] **API 서비스 구현** ✅
+  - `src/services/api/auth.ts` ✅
+  - `src/services/api/circle.ts` ✅
+  - `src/services/api/poll.ts` ✅
 
 ### 4.5 기본 컴포넌트 구현
-- [ ] **공통 컴포넌트**
+- [x] **공통 컴포넌트** ✅
   - Button, Input, LoadingSpinner
-- [ ] **기본 화면 구현**
+- [x] **기본 화면 구현** ✅
   - HomeScreen, CreateScreen, ProfileScreen
-- [ ] **프론트엔드 컴포넌트 테스트 작성**
+- [x] **프론트엔드 컴포넌트 테스트 작성** ✅
   ```typescript
-  // __tests__/components/Button.test.tsx
-  // __tests__/components/Input.test.tsx
-  // __tests__/screens/HomeScreen.test.tsx
-  - 컴포넌트 렌더링 테스트
-  - 사용자 인터랙션 테스트
-  - Props 전달 테스트
+  // __tests__/components/Button.test.tsx ✅
+  // __tests__/components/Input.test.tsx ✅
+  // __tests__/screens/LoginScreen.test.tsx ✅
+  - 컴포넌트 렌더링 테스트 ✅
+  - 사용자 인터랙션 테스트 ✅
+  - Props 전달 테스트 ✅
   ```
 
 ---
@@ -715,29 +715,45 @@
 ## Phase 5: 핵심 기능 구현 (Week 3-4)
 
 ### 5.1 인증 시스템
-- [ ] **디바이스 기반 로그인 구현**
-- [ ] **토큰 관리 시스템**
-- [ ] **사용자 로그인 기능**
-- [ ] **인증 통합 테스트**
+- [x] **디바이스 기반 로그인 구현** ✅
+- [x] **토큰 관리 시스템** ✅
+- [x] **사용자 로그인 기능** ✅
+- [x] **인증 통합 테스트** ✅
   ```python
   # tests/integration/test_auth_integration.py
-  - 로그인 플로우 end-to-end 테스트
-  - 토큰 만료 시나리오 테스트
-  - 인증 실패 케이스 테스트
+  - 로그인 플로우 end-to-end 테스트 ✅
+  - 토큰 만료 시나리오 테스트 ✅
+  - 인증 실패 케이스 테스트 ✅
   ```
 
 ### 5.2 Circle 관리 기능
-- [ ] **Circle 생성 API 및 UI**
-- [ ] **초대 코드/링크 생성**
-- [ ] **Circle 참여 기능**
-- [ ] **멤버 관리 기능**
-- [ ] **Circle 기능 테스트**
+- [x] **Circle 생성 API 및 UI** ✅
+- [x] **초대 코드/링크 생성** ✅
+- [x] **Circle 참여 기능** (JoinCircleScreen UI 구현 완료) ✅
+  - JoinCircleScreen UI 구현 ✅
+  - 초대 코드 입력/검증 UI ✅
+  - 클립보드 연동 및 입력 도우미 ✅
+  - JoinCircleScreen 테스트 코드 (19/19 통과) ✅
+- [x] **멤버 관리 기능** (CircleDetailScreen, 멤버 목록/관리 UI) ✅
+  - CircleDetailScreen 완전 구현 ✅
+  - Circle 정보 표시 (이름, 설명, 멤버 수, 생성일) ✅
+  - 빠른 액션 (투표 생성, Circle 공유, 초대코드 복사) ✅
+  - 초대 코드 공유 및 클립보드 복사 ✅
+  - 멤버 목록 및 역할 표시 ✅
+  - Circle 관리 기능 (관리자용) ✅
+  - CircleDetailScreen 테스트 코드 (26/26 통과) ✅
+- [x] **HomeScreen Circle 목록** ✅
+  - Circle 목록 표시 및 네비게이션 ✅
+  - 빈 상태 및 로딩 상태 처리 ✅
+  - 새로고침 및 에러 처리 ✅
+  - HomeScreen 테스트 코드 (25/25 통과) ✅
+- [x] **Circle 기능 테스트** ✅
   ```python
   # tests/test_circle.py
-  - Circle 생성/수정/삭제 테스트
-  - 초대 코드 생성/검증 테스트
-  - 멤버 초대/퇴출 테스트
-  - 권한 관리 테스트
+  - Circle 생성/수정/삭제 테스트 ✅
+  - 초대 코드 생성/검증 테스트 ✅
+  - 멤버 초대/퇴출 테스트 ✅
+  - 권한 관리 테스트 ✅
   ```
 
 ### 5.3 질문 템플릿 시스템
