@@ -10,23 +10,25 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import * as Device from 'expo-device';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../store';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 
 export default function LoginScreen() {
+  console.log('📱 [LoginScreen] Component rendering started');
+  
   const [deviceId, setDeviceId] = useState('');
-  const [deviceInfo, setDeviceInfo] = useState<string>('');
-  const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const { login, loading, error } = useAuthStore();
+  
+  console.log('📱 [LoginScreen] Auth state:', { loading, error });
   
   // Animation values
   const fadeAnim = new Animated.Value(0);
   const slideAnim = new Animated.Value(50);
 
   useEffect(() => {
+    console.log('📱 [LoginScreen] useEffect started - setting up animation');
+    
     // Start entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -41,65 +43,32 @@ export default function LoginScreen() {
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-    ]).start();
+    ]).start(() => {
+      console.log('📱 [LoginScreen] Animation completed');
+    });
 
-    // Load device info and previous device ID
-    loadDeviceInfo();
-    loadPreviousDeviceId();
   }, []);
-
-  const loadDeviceInfo = async () => {
-    try {
-      const info = `${Device.osName || 'Unknown'} ${Device.modelName || 'Device'}`;
-      setDeviceInfo(info);
-    } catch (error) {
-      console.warn('Failed to load device info:', error);
-      setDeviceInfo('Unknown Device');
-    }
-  };
-
-  const loadPreviousDeviceId = async () => {
-    try {
-      const savedDeviceId = await AsyncStorage.getItem('last_device_id');
-      if (savedDeviceId) {
-        setDeviceId(savedDeviceId);
-      }
-    } catch (error) {
-      console.warn('Failed to load previous device ID:', error);
-    }
-  };
 
   const generateDeviceId = (customPrefix?: string) => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
-    const osInfo = Device.osName?.toLowerCase().replace(/\s+/g, '') || 'unknown';
-    const modelInfo = Device.modelName?.toLowerCase().replace(/\s+/g, '') || 'device';
     
     if (customPrefix) {
       return `${customPrefix}_${timestamp}_${random}`;
     }
     
-    return `${osInfo}_${modelInfo}_${timestamp}_${random}`;
-  };
-
-  const saveDeviceId = async (id: string) => {
-    try {
-      await AsyncStorage.setItem('last_device_id', id);
-    } catch (error) {
-      console.warn('Failed to save device ID:', error);
-    }
+    return `ios_device_${timestamp}_${random}`;
   };
 
   const handleLogin = async () => {
+    console.log('📱 [LoginScreen] Login button pressed');
     try {
-      // Use provided device ID or generate one from device info
       const finalDeviceId = deviceId.trim() || generateDeviceId();
-      
-      // Save device ID for future use
-      await saveDeviceId(finalDeviceId);
-      
+      console.log('📱 [LoginScreen] Attempting login with device_id:', finalDeviceId);
       await login({ device_id: finalDeviceId });
+      console.log('📱 [LoginScreen] Login successful');
     } catch (err: any) {
+      console.log('📱 [LoginScreen] Login failed:', err.message);
       Alert.alert(
         'Login Failed', 
         err.message || 'Something went wrong. Please try again.',
@@ -117,21 +86,13 @@ export default function LoginScreen() {
 
   const handleQuickLogin = async () => {
     try {
-      // Generate a quick device ID
       const quickDeviceId = generateDeviceId('quick');
-      
-      // Save device ID for future use
-      await saveDeviceId(quickDeviceId);
-      
       await login({ device_id: quickDeviceId });
     } catch (err: any) {
       Alert.alert('Quick Login Failed', err.message || 'Something went wrong');
     }
   };
 
-  const toggleDeviceInfo = () => {
-    setShowDeviceInfo(!showDeviceInfo);
-  };
 
   return (
     <KeyboardAvoidingView 
@@ -166,36 +127,14 @@ export default function LoginScreen() {
             }
           ]}
         >
-          {/* Device Info Section */}
-          <View style={styles.deviceInfoSection}>
-            <Button
-              title={showDeviceInfo ? "Hide Device Info" : "Show Device Info"}
-              onPress={toggleDeviceInfo}
-              variant="outline"
-              size="small"
-              style={styles.deviceInfoToggle}
-            />
-            
-            {showDeviceInfo && (
-              <Animated.View style={styles.deviceInfoCard}>
-                <Text style={styles.deviceInfoTitle}>Current Device</Text>
-                <Text style={styles.deviceInfoText}>{deviceInfo}</Text>
-                <Text style={styles.deviceInfoSubtext}>
-                  This information helps create a unique identifier for your device
-                </Text>
-              </Animated.View>
-            )}
-          </View>
 
           <Input
             label="Device ID (Optional)"
-            placeholder={deviceId ? "Using saved Device ID" : "Leave empty for auto-generation"}
+            placeholder="Leave empty for auto-generation"
             value={deviceId}
             onChangeText={setDeviceId}
             autoCapitalize="none"
             autoCorrect={false}
-            accessibilityLabel="Device ID input field"
-            accessibilityHint="Enter a custom device ID or leave empty for automatic generation"
           />
 
           {error && (
@@ -210,8 +149,6 @@ export default function LoginScreen() {
               onPress={handleLogin}
               loading={loading}
               style={styles.loginButton}
-              accessibilityLabel="Login with device ID"
-              accessibilityHint="Login using the device ID above or auto-generated one"
             />
 
             <Button
@@ -220,8 +157,6 @@ export default function LoginScreen() {
               variant="outline"
               loading={loading}
               style={styles.quickLoginButton}
-              accessibilityLabel="Quick login"
-              accessibilityHint="Login instantly with auto-generated device ID"
             />
           </View>
 
@@ -230,12 +165,6 @@ export default function LoginScreen() {
               🔒 Device-based login means your account is tied to this device.{'\n'}
               📱 No password required - secure and simple!
             </Text>
-            
-            {deviceId && (
-              <Text style={styles.savedIdText}>
-                ✅ Using saved Device ID from previous login
-              </Text>
-            )}
           </View>
         </Animated.View>
       </ScrollView>
@@ -275,46 +204,6 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
-  deviceInfoSection: {
-    marginBottom: 20,
-  },
-  deviceInfoToggle: {
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  deviceInfoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  deviceInfoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  deviceInfoText: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  deviceInfoSubtext: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 16,
-  },
   buttonContainer: {
     marginTop: 8,
   },
@@ -347,12 +236,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
-  },
-  savedIdText: {
-    fontSize: 12,
-    color: '#4caf50',
-    textAlign: 'center',
-    marginTop: 8,
-    fontWeight: '500',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store';
 import AppNavigator from './AppNavigator';
@@ -6,26 +6,15 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 
 export default function AuthNavigator() {
-  const { isAuthenticated, loading, restoreAuth } = useAuthStore();
-  const [isInitializing, setIsInitializing] = useState(true);
+  console.log('🔄 [AuthNavigator] Component rendering started');
+  
+  const { isAuthenticated, loading } = useAuthStore();
+  
+  console.log('🔄 [AuthNavigator] Auth state:', { isAuthenticated, loading });
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Try to restore authentication state
-        await restoreAuth();
-      } catch (error) {
-        console.warn('Failed to initialize auth:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  // Show splash screen while initializing
-  if (isInitializing || loading) {
+  // Show loading only during actual login/logout operations
+  if (loading) {
+    console.log('🔄 [AuthNavigator] Showing loading screen');
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingTitle}>Circly</Text>
@@ -35,12 +24,15 @@ export default function AuthNavigator() {
           style={styles.loadingIndicator}
         />
         <Text style={styles.loadingText}>
-          {isInitializing ? 'Starting up...' : 'Authenticating...'}
+          Authenticating...
         </Text>
       </View>
     );
   }
 
+  console.log('🔄 [AuthNavigator] Rendering main navigation');
+  console.log('🔄 [AuthNavigator] Will show:', isAuthenticated ? 'AppNavigator' : 'LoginScreen');
+  
   return (
     <NavigationContainer>
       {isAuthenticated ? <AppNavigator /> : <LoginScreen />}
