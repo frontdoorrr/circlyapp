@@ -1,21 +1,18 @@
 import pytest
-import pytest_asyncio
 import asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from typing import AsyncGenerator
+from sqlalchemy import text
 import os
+from typing import AsyncGenerator
 
 from app.main import app
 from app.database import get_db, Base
 from app.models.user import User
 from app.utils.security import create_access_token
 
-# Test database URL - use PostgreSQL test database  
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", 
-    "postgresql+asyncpg://test_user:test_password@test-db:5432/test_circly_db"
-)
+# Test database URL - SQLite for async testing
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 # Create async test engine
 test_engine = create_async_engine(
@@ -39,7 +36,7 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Async test database session"""
     # Create tables
@@ -47,18 +44,15 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         await conn.run_sync(Base.metadata.create_all)
     
     # Create session
-    session = TestAsyncSessionLocal()
-    try:
+    async with TestAsyncSessionLocal() as session:
         yield session
-    finally:
-        await session.close()
-        
-        # Clean up tables after each test
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+    
+    # Clean up
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Test client with database dependency override"""
     async def override_get_db():
@@ -87,13 +81,13 @@ async def get_auth_headers(device_id: str = "test_device_123") -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def test_user(db_session: AsyncSession) -> User:
     """Create test user fixture"""
     return await create_test_user(db_session)
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def auth_headers(test_user: User) -> dict:
     """Authorization headers fixture"""
     return await get_auth_headers(test_user.device_id)

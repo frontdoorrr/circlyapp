@@ -1,232 +1,246 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
-from typing import List
-from datetime import datetime
+from typing import Optional
 from app.database import get_db
 from app.models.user import User
-from app.models.circle import Circle, CircleMember
-from app.models.poll import Poll, PollOption, Vote
-from app.schemas.poll import PollCreate, PollUpdate, PollResponse, VoteCreate
-from app.dependencies import get_current_active_user
+from app.services.poll_service import PollService
+from app.schemas.poll import (
+    PollCreate, 
+    PollUpdate, 
+    PollResponse, 
+    PollListResponse,
+    VoteCreate, 
+    VoteResponse,
+    PollResultResponse,
+    PollWithUserStatus
+)
+from app.dependencies import get_current_user
 
-router = APIRouter()
+router = APIRouter(prefix="/polls", tags=["polls"])
 
-@router.post("/polls", response_model=PollResponse)
+
+@router.post("/", response_model=PollResponse)
 async def create_poll(
     poll_data: PollCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """투표 생성"""
-    # Circle 멤버인지 확인
-    result = await db.execute(
-        select(CircleMember).where(
-            CircleMember.circle_id == poll_data.circle_id,
-            CircleMember.user_id == current_user.id
-        )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Not a member of this circle")
-    
-    # Poll 생성
-    poll = Poll(
-        title=poll_data.title,
-        description=poll_data.description,
-        question_template=poll_data.question_template,
-        circle_id=poll_data.circle_id,
-        creator_id=current_user.id,
-        expires_at=poll_data.expires_at,
-        is_anonymous=poll_data.is_anonymous
-    )
-    db.add(poll)
-    await db.commit()
-    await db.refresh(poll)
-    
-    # 옵션 생성
-    for idx, option_data in enumerate(poll_data.options):
-        option = PollOption(
-            poll_id=poll.id,
-            text=option_data.text,
-            user_id=option_data.user_id,
-            order_index=idx
-        )
-        db.add(option)
-    
-    await db.commit()
-    
-    # 응답 데이터 구성
-    return await get_poll_response(poll.id, current_user.id, db)
+    """새 투표 생성"""
+    try:
+        service = PollService(db)
+        poll = await service.create_poll(poll_data, current_user.id)
+        return PollResponse.model_validate(poll.to_dict())
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 생성에 실패했습니다: {str(e)}")
 
-@router.get("/circles/{circle_id}/polls", response_model=List[PollResponse])
-async def get_circle_polls(
-    circle_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
+@router.get("/", response_model=PollListResponse)
+async def get_polls(
+    circle_id: Optional[int] = Query(None, description="Circle ID 필터"),
+    status: Optional[str] = Query(None, description="투표 상태 필터 (active, completed, expired)"),
+    limit: int = Query(20, ge=1, le=100, description="조회할 투표 수"),
+    offset: int = Query(0, ge=0, description="건너뛸 투표 수"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Circle의 투표 목록 조회"""
-    # Circle 멤버인지 확인
-    result = await db.execute(
-        select(CircleMember).where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == current_user.id
+    """투표 목록 조회"""
+    try:
+        service = PollService(db)
+        
+        # Circle ID가 지정된 경우 멤버십 확인
+        if circle_id:
+            is_member = await service.check_circle_membership(circle_id, current_user.id)
+            if not is_member:
+                raise HTTPException(status_code=403, detail="Circle 멤버가 아닙니다")
+        
+        polls, total = await service.get_polls(
+            circle_id=circle_id,
+            user_id=current_user.id,
+            status=status,
+            limit=limit,
+            offset=offset
         )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Not a member of this circle")
-    
-    # 투표 목록 조회
-    result = await db.execute(
-        select(Poll).where(
-            Poll.circle_id == circle_id,
-            Poll.is_active == True
-        ).order_by(Poll.created_at.desc())
-    )
-    polls = result.scalars().all()
-    
-    poll_responses = []
-    for poll in polls:
-        poll_response = await get_poll_response(poll.id, current_user.id, db)
-        poll_responses.append(poll_response)
-    
-    return poll_responses
+        
+        poll_responses = []
+        for poll in polls:
+            poll_dict = poll.to_dict()
+            
+            # 사용자 투표 여부 확인
+            user_vote = await service.get_user_vote_for_poll(poll.id, current_user.id)
+            poll_dict['user_voted'] = user_vote is not None
+            poll_dict['user_vote_option_id'] = user_vote.option_id if user_vote else None
+            
+            # 옵션 정보 포함
+            poll_dict['options'] = [option.to_dict() for option in poll.options]
+            
+            poll_responses.append(PollWithUserStatus.model_validate(poll_dict))
+        
+        return PollListResponse(
+            polls=poll_responses,
+            total=total,
+            limit=limit,
+            offset=offset
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 목록 조회에 실패했습니다: {str(e)}")
 
-@router.get("/polls/{poll_id}", response_model=PollResponse)
-async def get_poll(
-    poll_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
+
+@router.get("/{poll_id}", response_model=PollWithUserStatus)
+async def get_poll_by_id(
+    poll_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """투표 상세 조회"""
-    # 투표 존재 확인
-    result = await db.execute(select(Poll).where(Poll.id == poll_id))
-    poll = result.scalar_one_or_none()
-    
-    if not poll:
-        raise HTTPException(status_code=404, detail="Poll not found")
-    
-    # Circle 멤버인지 확인
-    result = await db.execute(
-        select(CircleMember).where(
-            CircleMember.circle_id == poll.circle_id,
-            CircleMember.user_id == current_user.id
-        )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Not a member of this circle")
-    
-    return await get_poll_response(poll_id, current_user.id, db)
+    """특정 투표 상세 조회"""
+    try:
+        service = PollService(db)
+        poll = await service.get_poll_by_id(poll_id)
+        
+        if not poll:
+            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
+        
+        # Circle 멤버십 확인
+        is_member = await service.check_circle_membership(poll.circle_id, current_user.id)
+        if not is_member:
+            raise HTTPException(status_code=403, detail="Circle 멤버가 아닙니다")
+        
+        # 사용자 투표 여부 확인
+        user_vote = await service.get_user_vote_for_poll(poll_id, current_user.id)
+        
+        poll_dict = poll.to_dict()
+        poll_dict['user_voted'] = user_vote is not None
+        poll_dict['user_vote_option_id'] = user_vote.option_id if user_vote else None
+        poll_dict['options'] = [option.to_dict() for option in poll.options]
+        
+        return PollWithUserStatus.model_validate(poll_dict)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 조회에 실패했습니다: {str(e)}")
 
-@router.post("/polls/{poll_id}/vote")
-async def vote_poll(
-    poll_id: int,
+
+@router.post("/{poll_id}/vote", response_model=VoteResponse)
+async def vote_on_poll(
+    poll_id: str,
     vote_data: VoteCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """투표 참여"""
-    # 투표 존재 및 활성 상태 확인
-    result = await db.execute(
-        select(Poll).where(
-            Poll.id == poll_id,
-            Poll.is_active == True
-        )
-    )
-    poll = result.scalar_one_or_none()
-    
-    if not poll:
-        raise HTTPException(status_code=404, detail="Poll not found or inactive")
-    
-    # 만료 시간 확인
-    if poll.expires_at and poll.expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Poll has expired")
-    
-    # Circle 멤버인지 확인
-    result = await db.execute(
-        select(CircleMember).where(
-            CircleMember.circle_id == poll.circle_id,
-            CircleMember.user_id == current_user.id
-        )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=403, detail="Not a member of this circle")
-    
-    # 옵션 존재 확인
-    result = await db.execute(
-        select(PollOption).where(
-            PollOption.id == vote_data.option_id,
-            PollOption.poll_id == poll_id
-        )
-    )
-    if not result.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Option not found")
-    
-    # 이미 투표했는지 확인
-    result = await db.execute(
-        select(Vote).where(
-            Vote.poll_id == poll_id,
-            Vote.user_id == current_user.id
-        )
-    )
-    existing_vote = result.scalar_one_or_none()
-    
-    if existing_vote:
-        # 기존 투표 수정
-        existing_vote.option_id = vote_data.option_id
-        existing_vote.voted_at = datetime.utcnow()
-    else:
-        # 새 투표 생성
-        vote = Vote(
-            poll_id=poll_id,
-            option_id=vote_data.option_id,
-            user_id=current_user.id
-        )
-        db.add(vote)
-    
-    await db.commit()
-    
-    return {"message": "Vote recorded successfully"}
+    try:
+        service = PollService(db)
+        vote = await service.vote_on_poll(poll_id, vote_data, current_user.id)
+        return VoteResponse.model_validate(vote.to_dict())
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 참여에 실패했습니다: {str(e)}")
 
-async def get_poll_response(poll_id: int, user_id: int, db: AsyncSession) -> PollResponse:
-    """투표 응답 데이터 구성"""
-    # 투표 정보 조회
-    result = await db.execute(
-        select(Poll).options(selectinload(Poll.options)).where(Poll.id == poll_id)
-    )
-    poll = result.scalar_one()
-    
-    # 각 옵션별 투표 수 조회
-    vote_counts = {}
-    for option in poll.options:
-        result = await db.execute(
-            select(func.count(Vote.id)).where(Vote.option_id == option.id)
-        )
-        vote_counts[option.id] = result.scalar() or 0
-    
-    # 사용자 투표 여부 확인
-    result = await db.execute(
-        select(Vote).where(Vote.poll_id == poll_id, Vote.user_id == user_id)
-    )
-    user_voted = result.scalar_one_or_none() is not None
-    
-    # 전체 투표 수
-    result = await db.execute(
-        select(func.count(Vote.id)).where(Vote.poll_id == poll_id)
-    )
-    total_votes = result.scalar() or 0
-    
-    # 옵션 데이터 구성
-    options_data = []
-    for option in poll.options:
-        option_dict = option.__dict__.copy()
-        option_dict['vote_count'] = vote_counts.get(option.id, 0)
-        options_data.append(option_dict)
-    
-    # 응답 구성
-    poll_dict = poll.__dict__.copy()
-    poll_dict['options'] = options_data
-    poll_dict['total_votes'] = total_votes
-    poll_dict['user_voted'] = user_voted
-    
-    return PollResponse(**poll_dict)
+
+@router.get("/{poll_id}/results", response_model=PollResultResponse)
+async def get_poll_results(
+    poll_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """투표 결과 조회"""
+    try:
+        service = PollService(db)
+        poll = await service.get_poll_by_id(poll_id)
+        
+        if not poll:
+            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
+        
+        # Circle 멤버십 확인
+        is_member = await service.check_circle_membership(poll.circle_id, current_user.id)
+        if not is_member:
+            raise HTTPException(status_code=403, detail="Circle 멤버가 아닙니다")
+        
+        results = await service.get_poll_results(poll_id)
+        if not results:
+            raise HTTPException(status_code=404, detail="투표 결과를 찾을 수 없습니다")
+        
+        return PollResultResponse.model_validate(results)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 결과 조회에 실패했습니다: {str(e)}")
+
+
+@router.put("/{poll_id}", response_model=PollResponse)
+async def update_poll(
+    poll_id: str,
+    update_data: PollUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """투표 정보 수정 (생성자만 가능)"""
+    try:
+        service = PollService(db)
+        poll = await service.get_poll_by_id(poll_id)
+        
+        if not poll:
+            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
+        
+        if poll.creator_id != current_user.id:
+            raise HTTPException(status_code=403, detail="투표 생성자만 수정할 수 있습니다")
+        
+        # TODO: PollService에 update_poll 메서드 추가 필요
+        raise HTTPException(status_code=501, detail="투표 수정 기능은 아직 구현되지 않았습니다")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 수정에 실패했습니다: {str(e)}")
+
+
+@router.delete("/{poll_id}")
+async def delete_poll(
+    poll_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """투표 삭제 (생성자만, 생성 후 24시간 이내)"""
+    try:
+        service = PollService(db)
+        success = await service.delete_poll(poll_id, current_user.id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
+        
+        return {"message": "투표가 성공적으로 삭제되었습니다"}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 삭제에 실패했습니다: {str(e)}")
+
+
+@router.post("/{poll_id}/close")
+async def close_poll(
+    poll_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """투표 마감 (생성자만 가능)"""
+    try:
+        service = PollService(db)
+        success = await service.close_poll(poll_id, current_user.id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
+        
+        return {"message": "투표가 성공적으로 마감되었습니다"}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"투표 마감에 실패했습니다: {str(e)}")

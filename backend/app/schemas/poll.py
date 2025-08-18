@@ -1,80 +1,108 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
-from .user import UserResponse
+
 
 class PollOptionBase(BaseModel):
-    text: str = Field(..., max_length=200)
-    user_id: Optional[int] = None
-    order_index: int = Field(default=0)
+    member_id: int
+    member_nickname: str
+    display_order: int
+
 
 class PollOptionCreate(PollOptionBase):
     pass
 
-class PollOption(PollOptionBase):
-    id: int
-    poll_id: int
-    user: Optional[UserResponse] = None
-    vote_count: Optional[int] = 0
+
+class PollOptionResponse(PollOptionBase):
+    id: str
+    poll_id: str
+    vote_count: int
+    created_at: datetime
 
     class Config:
         from_attributes = True
+
 
 class PollBase(BaseModel):
-    title: str = Field(..., max_length=200)
-    description: Optional[str] = None
-    question_template: str = Field(..., max_length=500)
-    expires_at: Optional[datetime] = None
-    is_anonymous: bool = Field(default=True)
+    question_text: str = Field(..., min_length=5, max_length=500)
+    deadline: datetime
+
 
 class PollCreate(PollBase):
+    template_id: str
     circle_id: int
-    options: List[PollOptionCreate] = []
+    
+    @validator('deadline')
+    def deadline_must_be_future(cls, v):
+        if v <= datetime.now():
+            raise ValueError('마감 시간은 현재 시간보다 미래여야 합니다')
+        return v
+
 
 class PollUpdate(BaseModel):
-    title: Optional[str] = Field(None, max_length=200)
-    description: Optional[str] = None
-    expires_at: Optional[datetime] = None
+    question_text: Optional[str] = None
+    deadline: Optional[datetime] = None
     is_active: Optional[bool] = None
 
-class Poll(PollBase):
-    id: int
+
+class PollResponse(PollBase):
+    id: str
     circle_id: int
     creator_id: int
-    is_active: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-class PollResponse(BaseModel):
-    id: int
-    title: str
-    description: Optional[str]
-    question_template: str
-    circle_id: int
-    creator_id: int
-    expires_at: Optional[datetime]
-    is_active: bool
+    template_id: Optional[str]
     is_anonymous: bool
+    max_votes_per_user: int
+    is_active: bool
+    is_closed: bool
+    total_votes: int
+    total_participants: int
     created_at: datetime
-    options: List[PollOption] = []
-    total_votes: Optional[int] = 0
-    user_voted: Optional[bool] = False
+    options: List[PollOptionResponse] = []
 
     class Config:
         from_attributes = True
+
+
+class PollListResponse(BaseModel):
+    polls: List[PollResponse]
+    total: int
+    limit: int
+    offset: int
+
 
 class VoteCreate(BaseModel):
-    option_id: int
+    option_id: str
 
-class Vote(BaseModel):
-    id: int
-    poll_id: int
-    option_id: int
-    user_id: int
-    voted_at: datetime
+
+class VoteResponse(BaseModel):
+    id: str
+    poll_id: str
+    option_id: str
+    created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class PollResultOption(BaseModel):
+    option_id: str
+    member_nickname: str
+    vote_count: int
+    percentage: float
+    rank: int
+
+
+class PollResultResponse(BaseModel):
+    poll_id: str
+    question_text: str
+    total_votes: int
+    total_participants: int
+    is_closed: bool
+    deadline: datetime
+    results: List[PollResultOption]
+    winner: Optional[PollResultOption] = None
+
+
+class PollWithUserStatus(PollResponse):
+    user_voted: bool
+    user_vote_option_id: Optional[str] = None
