@@ -39,15 +39,13 @@ export default function JoinCircleScreen() {
     if (!code.trim()) {
       return 'Invite code is required';
     }
-    if (code.length < 6) {
-      return 'Invite code must be at least 6 characters';
+    // PRD: 6자리 코드 시스템
+    if (code.length !== 6) {
+      return 'Invite code must be exactly 6 characters';
     }
-    if (code.length > 20) {
-      return 'Invite code must be less than 20 characters';
-    }
-    // Check if code contains only alphanumeric characters
-    if (!/^[A-Z0-9]+$/i.test(code)) {
-      return 'Invite code can only contain letters and numbers';
+    // PRD: 숫자+영문 대문자 조합 (예: A1B2C3)
+    if (!/^[A-Z0-9]{6}$/i.test(code)) {
+      return 'Invite code must contain only letters and numbers';
     }
     return '';
   };
@@ -101,9 +99,19 @@ export default function JoinCircleScreen() {
   };
 
   const handleInputChange = (value: string) => {
-    setInviteCode(value);
-    // Clear validation error when user starts typing
-    if (validationError) {
+    // PRD: 숫자/영문 자동 대문자 변환, 실시간 입력 검증
+    const processedValue = value
+      .toUpperCase() // 자동 대문자 변환
+      .replace(/[^A-Z0-9]/g, '') // 영문/숫자만 허용
+      .slice(0, 6); // 6자리 제한
+    
+    setInviteCode(processedValue);
+    
+    // 실시간 입력 검증
+    if (processedValue.length > 0) {
+      const validationResult = validateInviteCode(processedValue);
+      setValidationError(validationResult);
+    } else {
       setValidationError('');
     }
   };
@@ -152,10 +160,11 @@ export default function JoinCircleScreen() {
               <Input
                 value={inviteCode}
                 onChangeText={handleInputChange}
-                placeholder="Enter invite code (e.g., ABC12345)"
-                maxLength={20}
+                placeholder="Enter 6-digit code (e.g., A1B2C3)"
+                maxLength={6}
                 autoCapitalize="characters"
                 autoCorrect={false}
+                keyboardType="default"
                 error={validationError}
                 style={styles.input}
               />
