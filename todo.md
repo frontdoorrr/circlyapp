@@ -757,15 +757,26 @@
   ```
 
 ### 5.3 질문 템플릿 시스템
-- [ ] **템플릿 데이터베이스 구축**
-- [ ] **템플릿 조회 API**
-- [ ] **카테고리별 템플릿 UI**
-- [ ] **템플릿 시스템 테스트**
-  ```python
-  # tests/test_templates.py
-  - 템플릿 조회/필터링 테스트
-  - 카테고리별 분류 테스트
-  - 인기 템플릿 정렬 테스트
+- [x] **템플릿 데이터베이스 구축** ✅
+- [x] **템플릿 조회 API** ✅
+- [x] **카테고리별 템플릿 UI 구현** ✅
+  - CategoryTab 컴포넌트 (카테고리 선택 탭) ✅
+  - TemplateCard 컴포넌트 (개별 템플릿 카드) ✅
+  - TemplateList 컴포넌트 (템플릿 목록) ✅
+  - TemplateSelectionScreen (메인 템플릿 선택 화면) ✅
+  - 검색 기능 및 키보드 이벤트 처리 ✅
+  - 선택된 템플릿 미리보기 및 네비게이션 ✅
+- [x] **템플릿 시스템 테스트** ✅
+  ```typescript
+  # __tests__/components/template/ ✅
+  - CategoryTab.test.tsx (21/21 통과) ✅
+  - TemplateCard.test.tsx (10/10 통과) ✅
+  - TemplateList.test.tsx (11/11 통과) ✅
+  # __tests__/screens/poll/ ✅
+  - TemplateSelectionScreen.test.tsx (8/8 통과) ✅
+  - 템플릿 조회/필터링 테스트 ✅
+  - 카테고리별 분류 테스트 ✅
+  - 사용자 상호작용 테스트 ✅
   ```
 
 ### 5.4 투표 시스템
@@ -778,7 +789,7 @@
   - 투표 목록 표시
   - 익명 투표 참여
   - 결과 실시간 업데이트
-
+ 
 - [ ] **투표 시스템 핵심 테스트**
   ```python
   # tests/test_polls.py
