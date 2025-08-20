@@ -2,7 +2,9 @@ import { apiClient } from './client';
 import { 
   PollResponse, 
   PollCreate, 
-  VoteCreate 
+  VoteCreate,
+  PollParticipation,
+  VoteResult
 } from '../../types';
 
 export const pollApi = {
@@ -81,6 +83,56 @@ export const pollApi = {
    */
   async deletePoll(pollId: number): Promise<void> {
     const response = await apiClient.delete(`/v1/polls/${pollId}`);
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+  },
+
+  /**
+   * Get active polls for a circle (for participation)
+   */
+  async getActivePolls(circleId: number): Promise<PollResponse[]> {
+    const response = await apiClient.get<PollResponse[]>(`/v1/circles/${circleId}/polls?status=active`);
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data || [];
+  },
+
+  /**
+   * Check user's participation status for a poll
+   */
+  async getPollParticipation(pollId: number): Promise<PollParticipation | null> {
+    const response = await apiClient.get<PollParticipation>(`/v1/polls/${pollId}/participation`);
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data || null;
+  },
+
+  /**
+   * Get detailed vote results for a poll
+   */
+  async getVoteResults(pollId: number): Promise<VoteResult[]> {
+    const response = await apiClient.get<VoteResult[]>(`/v1/polls/${pollId}/results`);
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    return response.data || [];
+  },
+
+  /**
+   * Remove vote from a poll (if allowed)
+   */
+  async removeVote(pollId: number): Promise<void> {
+    const response = await apiClient.delete(`/v1/polls/${pollId}/vote`);
     
     if (response.error) {
       throw new Error(response.error);

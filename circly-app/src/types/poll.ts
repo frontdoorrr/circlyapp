@@ -78,6 +78,20 @@ export interface VoteCreate {
   option_id: number;
 }
 
+export interface VoteResult {
+  option_id: number;
+  vote_count: number;
+  percentage: number;
+}
+
+// Poll participation types
+export interface PollParticipation {
+  poll_id: number;
+  has_voted: boolean;
+  selected_option_id?: number;
+  voted_at?: string;
+}
+
 // Poll state
 export interface PollState {
   polls: PollResponse[];
