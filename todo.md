@@ -611,7 +611,14 @@
 - [x] **인증 종속성 생성** (`app/dependencies.py`) ✅
 - [x] **사용자 스키마 생성** (`app/schemas/user.py`) ✅
 - [x] **인증 API 생성** (`app/api/v1/auth.py`) ✅
-- [ ] **인증 시스템 테스트 작성** (`tests/test_auth.py`)
+- [x] **인증 시스템 테스트 작성** (`tests/test_auth.py`) ✅
+- [x] **확장 인증 시스템 구현** ✅
+  - 디바이스 기반 인증 모델 ✅
+  - 이메일/비밀번호 인증 시스템 ✅
+  - 계정 마이그레이션 기능 ✅
+  - JWT 토큰 및 세션 관리 ✅
+  - 인증 서비스 계층 구조화 ✅
+  - 데이터베이스 마이그레이션 ✅
   ```python
   # 테스트 항목
   - 디바이스 로그인 성공/실패
@@ -719,6 +726,12 @@
 - [x] **토큰 관리 시스템** ✅
 - [x] **사용자 로그인 기능** ✅
 - [x] **인증 통합 테스트** ✅
+- [x] **확장 인증 시스템 완료** ✅
+  - 이메일/비밀번호 회원가입 및 로그인 ✅
+  - 계정 마이그레이션 (디바이스 → 이메일 계정) ✅
+  - 비밀번호 찾기 및 재설정 기능 ✅
+  - 인증 플로우 UI (Login/Register/Migration/ForgotPassword) ✅
+  - AuthStackNavigator 구현 ✅
   ```python
   # tests/integration/test_auth_integration.py
   - 로그인 플로우 end-to-end 테스트 ✅
