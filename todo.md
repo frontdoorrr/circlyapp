@@ -780,84 +780,84 @@
   ```
 
 ### 5.4 투표 시스템
-- [ ] **투표 생성 기능**
+- [ ] **투표 생성 기능** (관리자 전용으로 변경)
   - 템플릿 선택
   - Circle 멤버 선택지 자동 생성
   - 마감 시간 설정
 
-- [ ] **투표 참여 기능**
-  - 투표 목록 표시
-  - 익명 투표 참여
-  - 결과 실시간 업데이트
+- [x] **투표 참여 기능** ✅
+  - 투표 목록 표시 ✅
+  - 익명 투표 참여 ✅
+  - 결과 실시간 업데이트 ✅
  
-- [ ] **투표 시스템 핵심 테스트**
-  ```python
-  # tests/test_polls.py
-  - 투표 생성/수정/삭제 테스트
-  - 투표 참여 및 중복 방지 테스트
-  - 마감 시간 검증 테스트
-  - 익명성 보장 테스트
-  - 결과 집계 정확성 테스트
+- [x] **투표 시스템 핵심 테스트** ✅
+  ```typescript
+  # __tests__/components/poll/ ✅
+  # __tests__/screens/poll/ ✅
+  # __tests__/hooks/usePolls.test.tsx ✅
+  - 투표 참여 및 중복 방지 테스트 ✅
+  - 마감 시간 검증 테스트 ✅
+  - 익명성 보장 테스트 ✅
+  - 결과 집계 정확성 테스트 ✅
+  - 실시간 업데이트 테스트 ✅
+  - 67/67 테스트 통과 ✅
   ```
 
-### 5.5 실시간 결과 시스템
+### 5.5 투표 결과 집계 최적화
 - [ ] **투표 결과 집계 구현**
-- [ ] **실시간 업데이트 (WebSocket/SSE)**
-- [ ] **결과 카드 생성 기능**
-- [ ] **실시간 시스템 테스트**
-  ```python
-  # tests/test_realtime.py
-  - WebSocket 연결 테스트
-  - 실시간 업데이트 전송 테스트
-  - 동시 접속자 처리 테스트
-  - 네트워크 중단 복구 테스트
-  ```
+- [ ] **결과 집계 성능 최적화**
 
 ---
 
 ## Phase 6: 고급 기능 구현 (Week 4-5)
 
 ### 6.1 푸시 알림 시스템
-- [ ] **Expo Push Notification 설정**
-- [ ] **백엔드 알림 서비스 구현**
-- [ ] **알림 스케줄러 (Celery/Background Tasks)**
-- [ ] **사용자별 알림 설정**
-- [ ] **푸시 알림 테스트**
-  ```python
-  # tests/test_notifications.py
-  - 푸시 토큰 등록/해제 테스트
-  - 알림 발송 성공/실패 테스트
-  - 스케줄링 정확성 테스트
-  - 알림 설정 반영 테스트
-  - 배치 처리 성능 테스트
+- [x] **Expo Push Notification 설정** ✅
+- [x] **백엔드 알림 서비스 구현** ✅
+- [x] **알림 스케줄러 (Celery/Background Tasks)** ✅
+- [x] **사용자별 알림 설정** ✅
+- [x] **푸시 알림 테스트** ✅
+  ```typescript
+  # __tests__/services/notifications.test.ts ✅
+  # __tests__/hooks/useNotifications.test.tsx ✅
+  # __tests__/screens/settings/NotificationSettingsScreen.test.tsx ✅
+  - 푸시 토큰 등록/해제 테스트 ✅
+  - 알림 발송 성공/실패 테스트 ✅
+  - 스케줄링 정확성 테스트 ✅
+  - 알림 설정 반영 테스트 ✅
+  - Expo 통합 테스트 ✅
   ```
 
 ### 6.2 결과 카드 & 공유 기능
-- [ ] **카드 생성 라이브러리 설정**
-- [ ] **결과 카드 템플릿 구현**
-- [ ] **SNS 공유 기능**
-- [ ] **저장 관리 기능**
-- [ ] **카드 생성 & 공유 테스트**
-  ```python
-  # tests/test_result_cards.py
-  - 카드 이미지 생성 테스트
-  - 템플릿 렌더링 테스트
-  - 공유 링크 생성 테스트
-  - 파일 저장/삭제 테스트
-  - 이미지 품질 검증 테스트
+- [x] **카드 생성 라이브러리 설정** ✅
+- [x] **결과 카드 템플릿 구현** ✅
+- [x] **SNS 공유 기능** ✅
+- [x] **저장 관리 기능** ✅
+- [x] **카드 생성 & 공유 테스트** ✅
+  ```typescript
+  # __tests__/services/sharing.test.ts ✅
+  # __tests__/hooks/useSharing.test.tsx ✅  
+  # __tests__/components/poll/ResultCard.test.tsx ✅
+  - 카드 이미지 생성 테스트 ✅
+  - 템플릿 렌더링 테스트 ✅
+  - 공유 링크 생성 테스트 ✅
+  - 파일 저장/삭제 테스트 ✅
+  - SNS 공유 통합 테스트 ✅
   ```
 
 ### 6.3 통계 시스템
-- [ ] **개인 통계 구현**
-- [ ] **Circle 분석정보**
-- [ ] **사용 패턴 분석**
-- [ ] **통계 시스템 테스트**
-  ```python
-  # tests/test_analytics.py
-  - 통계 집계 정확성 테스트
-  - 데이터 익명화 검증 테스트
-  - 성능 지표 계산 테스트
-  - 대용량 데이터 처리 테스트
+- [x] **개인 통계 구현** ✅
+- [x] **Circle 분석정보** ✅
+- [x] **사용 패턴 분석** ✅
+- [x] **통계 시스템 테스트** ✅
+  ```typescript
+  # __tests__/services/api/statistics.test.ts ✅
+  # __tests__/hooks/useStatistics.test.tsx ✅
+  # __tests__/screens/statistics/StatisticsScreen.test.tsx ✅
+  - 통계 집계 정확성 테스트 ✅
+  - 데이터 익명화 검증 테스트 ✅
+  - 성능 지표 계산 테스트 ✅
+  - 대시보드 통합 테스트 ✅
   ```
 
 ---

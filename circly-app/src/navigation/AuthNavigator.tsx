@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store';
 import AppNavigator from './AppNavigator';
-import LoginScreen from '../screens/auth/LoginScreen';
+import AuthStackNavigator from './AuthStackNavigator';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 
 export default function AuthNavigator() {
@@ -35,7 +35,7 @@ export default function AuthNavigator() {
   
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AppNavigator /> : <LoginScreen />}
+      {isAuthenticated ? <AppNavigator /> : <AuthStackNavigator />}
     </NavigationContainer>
   );
 }

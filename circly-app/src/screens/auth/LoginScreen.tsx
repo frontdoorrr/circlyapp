@@ -14,7 +14,11 @@ import { useAuthStore } from '../../store';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+  navigation?: any;
+}
+
+export default function LoginScreen({ navigation }: LoginScreenProps) {
   console.log('📱 [LoginScreen] Component rendering started');
   
   const [deviceId, setDeviceId] = useState('');
@@ -51,7 +55,7 @@ export default function LoginScreen() {
 
   const generateDeviceId = (customPrefix?: string) => {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9);
+    const random = Math.random().toString(36).substring(2, 11);
     
     if (customPrefix) {
       return `${customPrefix}_${timestamp}_${random}`;
@@ -158,6 +162,19 @@ export default function LoginScreen() {
               loading={loading}
               style={styles.quickLoginButton}
             />
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>또는</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Button
+              title="이메일로 로그인/회원가입"
+              onPress={() => navigation?.navigate('EmailLogin')}
+              variant="outline"
+              style={styles.emailLoginButton}
+            />
           </View>
 
           <View style={styles.helpSection}>
@@ -236,5 +253,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: '#666',
+  },
+  emailLoginButton: {
+    marginBottom: 12,
   },
 });

@@ -1,16 +1,28 @@
 import { create } from 'zustand';
-import { AuthState, UserResponse, LoginRequest, UserUpdate } from '../types';
+import { 
+  AuthState, 
+  UserResponse, 
+  LoginRequest, 
+  UserUpdate,
+  EmailLoginRequest,
+  RegisterRequest,
+  AccountMigrationRequest,
+  ExtendedUserResponse
+} from '../types';
 import { authApi } from '../services/api';
 import { apiClient } from '../services/api/client';
 
 interface AuthStore extends AuthState {
   // Actions
   login: (loginData: LoginRequest) => Promise<void>;
+  emailLogin: (loginData: EmailLoginRequest) => Promise<void>;
+  register: (registerData: RegisterRequest) => Promise<void>;
+  migrateAccount: (migrationData: AccountMigrationRequest) => Promise<void>;
   logout: () => Promise<void>;
   getCurrentUser: () => Promise<void>;
   updateProfile: (updateData: UserUpdate) => Promise<void>;
   restoreAuth: () => Promise<void>;
-  setUser: (user: UserResponse) => void;
+  setUser: (user: UserResponse | ExtendedUserResponse) => void;
   setToken: (token: string) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
@@ -141,7 +153,107 @@ export const useAuthStore = create<AuthStore>()((set) => {
     console.log('Restore auth called - no persistence active');
   },
 
-  setUser: (user: UserResponse) => {
+  emailLogin: async (loginData: EmailLoginRequest) => {
+    console.log('🏪 [AuthStore] Email login started with data:', loginData);
+    try {
+      set({ loading: true, error: null });
+      console.log('🏪 [AuthStore] Set loading to true');
+    
+      const authResponse = await authApi.emailLogin(loginData);
+      
+      if (authResponse) {
+        // Update API client token
+        apiClient.setToken(authResponse.access_token);
+        
+        set({
+          isAuthenticated: true,
+          user: authResponse.user,
+          token: authResponse.access_token,
+          loading: false,
+        });
+      }
+    } catch (error: any) {
+      // Clear API client token on error
+      apiClient.clearToken();
+      
+      set({
+        loading: false,
+        error: error.message || 'Email login failed',
+        isAuthenticated: false,
+        user: null,
+        token: null,
+      });
+      throw error;
+    }
+  },
+
+  register: async (registerData: RegisterRequest) => {
+    console.log('🏪 [AuthStore] Registration started with data:', registerData);
+    try {
+      set({ loading: true, error: null });
+      
+      const authResponse = await authApi.register(registerData);
+      
+      if (authResponse) {
+        // Update API client token
+        apiClient.setToken(authResponse.access_token);
+        
+        set({
+          isAuthenticated: true,
+          user: authResponse.user,
+          token: authResponse.access_token,
+          loading: false,
+        });
+      }
+    } catch (error: any) {
+      // Clear API client token on error
+      apiClient.clearToken();
+      
+      set({
+        loading: false,
+        error: error.message || 'Registration failed',
+        isAuthenticated: false,
+        user: null,
+        token: null,
+      });
+      throw error;
+    }
+  },
+
+  migrateAccount: async (migrationData: AccountMigrationRequest) => {
+    console.log('🏪 [AuthStore] Account migration started with data:', migrationData);
+    try {
+      set({ loading: true, error: null });
+      
+      const authResponse = await authApi.migrateAccount(migrationData);
+      
+      if (authResponse) {
+        // Update API client token
+        apiClient.setToken(authResponse.access_token);
+        
+        set({
+          isAuthenticated: true,
+          user: authResponse.user,
+          token: authResponse.access_token,
+          loading: false,
+        });
+      }
+    } catch (error: any) {
+      // Clear API client token on error
+      apiClient.clearToken();
+      
+      set({
+        loading: false,
+        error: error.message || 'Account migration failed',
+        isAuthenticated: false,
+        user: null,
+        token: null,
+      });
+      throw error;
+    }
+  },
+
+  setUser: (user: UserResponse | ExtendedUserResponse) => {
     set({ user, isAuthenticated: true });
   },
 

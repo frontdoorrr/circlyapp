@@ -2,9 +2,14 @@
 export interface User {
   id: number;
   device_id: string;
+  email?: string;
   username?: string;
   display_name?: string;
   profile_emoji: string;
+  account_type?: 'device' | 'email' | 'social';
+  email_verified?: boolean;
+  email_verified_at?: string;
+  last_login_at?: string;
   is_active: boolean;
   created_at: string;
   updated_at?: string;
@@ -12,9 +17,15 @@ export interface User {
 
 export interface UserResponse {
   id: number;
+  device_id?: string;
+  email?: string;
   username?: string;
   display_name?: string;
   profile_emoji: string;
+  account_type?: 'device' | 'email' | 'social';
+  email_verified?: boolean;
+  email_verified_at?: string;
+  last_login_at?: string;
   is_active: boolean;
   created_at: string;
 }

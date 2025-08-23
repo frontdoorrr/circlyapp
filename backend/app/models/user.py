@@ -15,7 +15,25 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # 관계 설정
+    # 확장된 인증 필드
+    email = Column(String(255), unique=True, index=True, nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    email_verified = Column(Boolean, default=False)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    account_type = Column(String(20), default="device")  # device, email, social
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+    
+    # 기존 관계 설정
     circles = relationship("CircleMember", back_populates="user")
     created_polls = relationship("Poll", back_populates="creator")
     votes = relationship("Vote", back_populates="user")
+    
+    # 새로운 관계 설정
+    social_accounts = relationship("UserSocialAccount", back_populates="user", cascade="all, delete-orphan")
+    two_factor_auth = relationship("UserTwoFactorAuth", back_populates="user", cascade="all, delete-orphan")
+    devices = relationship("UserDevice", back_populates="user", cascade="all, delete-orphan")
+    login_logs = relationship("UserLoginLog", back_populates="user", cascade="all, delete-orphan")
+    email_verifications = relationship("EmailVerification", back_populates="user", cascade="all, delete-orphan")
+    password_reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")

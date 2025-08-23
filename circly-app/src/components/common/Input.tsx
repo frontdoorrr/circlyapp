@@ -41,6 +41,8 @@ export default function Input({
           inputStyle,
         ]}
         placeholderTextColor="#999"
+        autoComplete="off"
+        spellCheck={false}
         {...textInputProps}
       />
       {error && (
