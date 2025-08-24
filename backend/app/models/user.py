@@ -37,3 +37,8 @@ class User(Base):
     login_logs = relationship("UserLoginLog", back_populates="user", cascade="all, delete-orphan")
     email_verifications = relationship("EmailVerification", back_populates="user", cascade="all, delete-orphan")
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    
+    # 푸시 알림 관계 설정
+    push_tokens = relationship("PushToken", back_populates="user", cascade="all, delete-orphan")
+    notification_settings = relationship("NotificationSetting", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    notification_logs = relationship("NotificationLog", back_populates="user", cascade="all, delete-orphan")

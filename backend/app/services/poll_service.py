@@ -88,6 +88,21 @@ class PollService:
         await self.db.commit()
         await self.db.refresh(poll)
         
+        # 🆕 알림 발송 및 스케줄링
+        try:
+            # 1. 즉시 투표 시작 알림 발송 (백그라운드 작업)
+            from app.tasks.notification_tasks import send_poll_start_notification_task, schedule_poll_notifications
+            send_poll_start_notification_task.delay(str(poll.id))
+            
+            # 2. 마감 관련 알림들 스케줄링
+            schedule_poll_notifications(str(poll.id), poll.deadline)
+            
+            print(f"✅ Notifications scheduled for poll {poll.id}")
+            
+        except Exception as e:
+            print(f"❌ Failed to schedule notifications for poll {poll.id}: {e}")
+            # 알림 실패해도 투표 생성은 성공으로 처리
+        
         # options 관계 로드
         poll_with_options = await self.get_poll_by_id(poll.id)
         return poll_with_options
