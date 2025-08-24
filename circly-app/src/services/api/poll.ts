@@ -45,7 +45,7 @@ export const pollApi = {
   /**
    * Get poll details by ID
    */
-  async getPoll(pollId: number): Promise<PollResponse | null> {
+  async getPoll(pollId: string): Promise<PollResponse | null> {
     const response = await apiClient.get<PollResponse>(`/v1/polls/${pollId}`);
     
     if (response.error) {
@@ -58,7 +58,7 @@ export const pollApi = {
   /**
    * Vote on a poll
    */
-  async votePoll(pollId: number, voteData: VoteCreate): Promise<void> {
+  async votePoll(pollId: string, voteData: VoteCreate): Promise<void> {
     const response = await apiClient.post(`/v1/polls/${pollId}/vote`, voteData);
     
     if (response.error) {
@@ -69,14 +69,14 @@ export const pollApi = {
   /**
    * Get poll results (same as getPoll but emphasizes results)
    */
-  async getPollResults(pollId: number): Promise<PollResponse | null> {
+  async getPollResults(pollId: string): Promise<PollResponse | null> {
     return this.getPoll(pollId);
   },
 
   /**
    * Update poll (if implemented in backend)
    */
-  async updatePoll(pollId: number, updateData: any): Promise<PollResponse | null> {
+  async updatePoll(pollId: string, updateData: any): Promise<PollResponse | null> {
     const response = await apiClient.put<PollResponse>(`/v1/polls/${pollId}`, updateData);
     
     if (response.error) {
@@ -89,7 +89,7 @@ export const pollApi = {
   /**
    * Delete poll (if implemented in backend)
    */
-  async deletePoll(pollId: number): Promise<void> {
+  async deletePoll(pollId: string): Promise<void> {
     const response = await apiClient.delete(`/v1/polls/${pollId}`);
     
     if (response.error) {
@@ -123,7 +123,7 @@ export const pollApi = {
   /**
    * Check user's participation status for a poll
    */
-  async getPollParticipation(pollId: number): Promise<PollParticipation | null> {
+  async getPollParticipation(pollId: string): Promise<PollParticipation | null> {
     // 투표 상세 정보에서 사용자 참여 상태 추출
     const response = await apiClient.get<any>(`/v1/polls/${pollId}`);
     
@@ -146,7 +146,7 @@ export const pollApi = {
   /**
    * Get detailed vote results for a poll
    */
-  async getVoteResults(pollId: number): Promise<VoteResult[]> {
+  async getVoteResults(pollId: string): Promise<VoteResult[]> {
     const response = await apiClient.get<VoteResult[]>(`/v1/polls/${pollId}/results`);
     
     if (response.error) {
@@ -159,7 +159,7 @@ export const pollApi = {
   /**
    * Remove vote from a poll (if allowed)
    */
-  async removeVote(pollId: number): Promise<void> {
+  async removeVote(pollId: string): Promise<void> {
     const response = await apiClient.delete(`/v1/polls/${pollId}/vote`);
     
     if (response.error) {

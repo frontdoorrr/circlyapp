@@ -21,7 +21,7 @@ export const PollCard: React.FC<PollCardProps> = ({
   showStatus = true
 }) => {
   // 투표 마감 시간 확인
-  const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
+  const isExpired = poll.deadline ? new Date(poll.deadline) < new Date() : false;
   const isActive = poll.is_active && !isExpired;
 
   // 투표 상태에 따른 색상
@@ -41,10 +41,10 @@ export const PollCard: React.FC<PollCardProps> = ({
 
   // 시간 포맷팅
   const formatTimeRemaining = () => {
-    if (!poll.expires_at || isExpired) return null;
+    if (!poll.deadline || isExpired) return null;
     
     const now = new Date();
-    const expiresAt = new Date(poll.expires_at);
+    const expiresAt = new Date(poll.deadline);
     const diffMs = expiresAt.getTime() - now.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -90,16 +90,8 @@ export const PollCard: React.FC<PollCardProps> = ({
               styles.title,
               !isActive && styles.inactiveText
             ]}>
-              {poll.title}
+              {poll.question_text}
             </Text>
-            {poll.description && (
-              <Text style={[
-                styles.description,
-                !isActive && styles.inactiveText
-              ]}>
-                {poll.description}
-              </Text>
-            )}
           </View>
 
           {/* 상태 배지 */}
@@ -115,13 +107,14 @@ export const PollCard: React.FC<PollCardProps> = ({
           )}
         </View>
 
-        {/* 질문 템플릿 */}
-        <View style={styles.questionContainer}>
+        {/* 투표 옵션 미리보기 */}
+        <View style={styles.optionsPreview}>
           <Text style={[
-            styles.questionText,
+            styles.optionsText,
             !isActive && styles.inactiveText
           ]}>
-            {poll.question_template}
+            {poll.options.slice(0, 2).map(option => option.member_nickname).join(', ')}
+            {poll.options.length > 2 && ` 외 ${poll.options.length - 2}명`}
           </Text>
         </View>
 
@@ -261,17 +254,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  questionContainer: {
+  optionsPreview: {
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     marginBottom: 16,
   },
-  questionText: {
-    fontSize: 16,
-    fontWeight: '600',
+  optionsText: {
+    fontSize: 14,
+    fontWeight: '500',
     color: '#495057',
-    lineHeight: 24,
     textAlign: 'center',
   },
   footer: {

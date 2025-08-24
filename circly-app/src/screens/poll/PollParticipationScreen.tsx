@@ -25,7 +25,7 @@ import type { PollOption } from '../../types/poll';
 const { width: screenWidth } = Dimensions.get('window');
 
 interface RouteParams {
-  pollId: number;
+  pollId: string; // UUID
   circleId: number;
   circleName: string;
 }
@@ -36,7 +36,7 @@ export const PollParticipationScreen: React.FC = () => {
   const { pollId, circleId, circleName } = route.params as RouteParams;
 
   // 상태 관리
-  const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [shuffledOptions, setShuffledOptions] = useState<PollOption[]>([]);
   const [isVoting, setIsVoting] = useState(false);
   const [showingAnimation, setShowingAnimation] = useState(false);

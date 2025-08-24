@@ -39,7 +39,7 @@ export const PollList: React.FC<PollListProps> = ({
   ), [onPollPress, showStatus]);
 
   // 키 추출 함수
-  const keyExtractor = useCallback((item: PollResponse) => item.id.toString(), []);
+  const keyExtractor = useCallback((item: PollResponse) => item.id, []);
 
   // 구분자 렌더링
   const renderSeparator = useCallback(() => (

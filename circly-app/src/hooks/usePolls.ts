@@ -15,11 +15,11 @@ import type {
 // Query keys for React Query
 export const POLL_QUERY_KEYS = {
   polls: 'polls',
-  poll: (id: number) => ['poll', id],
+  poll: (id: string) => ['poll', id],
   circlePolls: (circleId: number) => ['polls', 'circle', circleId],
   activePolls: (circleId: number) => ['polls', 'active', circleId],
-  participation: (pollId: number) => ['polls', 'participation', pollId],
-  results: (pollId: number) => ['polls', 'results', pollId],
+  participation: (pollId: string) => ['polls', 'participation', pollId],
+  results: (pollId: string) => ['polls', 'results', pollId],
 } as const;
 
 /**
@@ -52,13 +52,13 @@ export const useActivePolls = (
  * Get specific poll details
  */
 export const usePoll = (
-  pollId: number,
+  pollId: string,
   enabled: boolean = true
 ): UseQueryResult<PollResponse | null, Error> => {
   return useQuery({
     queryKey: POLL_QUERY_KEYS.poll(pollId),
     queryFn: () => pollApi.getPoll(pollId),
-    enabled: enabled && pollId > 0,
+    enabled: enabled && Boolean(pollId),
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 3 * 60 * 1000, // 3 minutes
   });
@@ -68,13 +68,13 @@ export const usePoll = (
  * Get user's participation status for a poll
  */
 export const usePollParticipation = (
-  pollId: number,
+  pollId: string,
   enabled: boolean = true
 ): UseQueryResult<PollParticipation | null, Error> => {
   return useQuery({
     queryKey: POLL_QUERY_KEYS.participation(pollId),
     queryFn: () => pollApi.getPollParticipation(pollId),
-    enabled: enabled && pollId > 0,
+    enabled: enabled && Boolean(pollId),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -84,13 +84,13 @@ export const usePollParticipation = (
  * Get detailed vote results for a poll
  */
 export const useVoteResults = (
-  pollId: number,
+  pollId: string,
   enabled: boolean = true
 ): UseQueryResult<VoteResult[], Error> => {
   return useQuery({
     queryKey: POLL_QUERY_KEYS.results(pollId),
     queryFn: () => pollApi.getVoteResults(pollId),
-    enabled: enabled && pollId > 0,
+    enabled: enabled && Boolean(pollId),
     staleTime: 15 * 1000, // 15 seconds (for real-time feel)
     gcTime: 1 * 60 * 1000, // 1 minute
     refetchInterval: 30 * 1000, // Auto-refetch every 30 seconds for real-time updates
@@ -104,7 +104,7 @@ export const useVotePoll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ pollId, voteData }: { pollId: number; voteData: VoteCreate }) => 
+    mutationFn: ({ pollId, voteData }: { pollId: string; voteData: VoteCreate }) => 
       pollApi.votePoll(pollId, voteData),
     onSuccess: (_, variables) => {
       // Invalidate related queries to refresh data
@@ -133,7 +133,7 @@ export const useRemoveVote = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (pollId: number) => pollApi.removeVote(pollId),
+    mutationFn: (pollId: string) => pollApi.removeVote(pollId),
     onSuccess: (_, pollId) => {
       // Invalidate related queries to refresh data
       queryClient.invalidateQueries({

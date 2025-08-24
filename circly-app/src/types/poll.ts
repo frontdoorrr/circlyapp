@@ -78,18 +78,18 @@ export interface Vote {
 }
 
 export interface VoteCreate {
-  option_id: number;
+  option_id: string; // UUID
 }
 
 export interface VoteResult {
-  option_id: number;
+  option_id: string; // UUID
   vote_count: number;
   percentage: number;
 }
 
 // Poll participation types
 export interface PollParticipation {
-  poll_id: number;
+  poll_id: string; // UUID
   has_voted: boolean;
   selected_option_id?: string;
   voted_at?: string;
