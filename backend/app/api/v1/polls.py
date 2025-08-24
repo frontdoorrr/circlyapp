@@ -16,7 +16,7 @@ from app.schemas.poll import (
 )
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/polls", tags=["polls"])
+router = APIRouter(tags=["polls"])
 
 
 @router.post("/", response_model=PollResponse)
@@ -25,16 +25,12 @@ async def create_poll(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """새 투표 생성"""
-    try:
-        service = PollService(db)
-        poll = await service.create_poll(poll_data, current_user.id)
-        return PollResponse.model_validate(poll.to_dict())
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"투표 생성에 실패했습니다: {str(e)}")
+    """새 투표 생성 - 관리자 전용"""
+    # 사용자는 투표 생성 불가
+    raise HTTPException(
+        status_code=403, 
+        detail="투표 생성은 관리자만 가능합니다. 현재 사용자는 투표에 참여만 할 수 있습니다."
+    )
 
 @router.get("/", response_model=PollListResponse)
 async def get_polls(
@@ -46,6 +42,8 @@ async def get_polls(
     current_user: User = Depends(get_current_user)
 ):
     """투표 목록 조회"""
+    print(f"🚀 [get_polls] Function called with params: circle_id={circle_id}, status={status}, limit={limit}, offset={offset}")
+    print(f"👤 [get_polls] Current user: id={current_user.id if current_user else 'None'}, username={getattr(current_user, 'username', 'Unknown') if current_user else 'None'}")
     try:
         service = PollService(db)
         
@@ -182,24 +180,12 @@ async def update_poll(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """투표 정보 수정 (생성자만 가능)"""
-    try:
-        service = PollService(db)
-        poll = await service.get_poll_by_id(poll_id)
-        
-        if not poll:
-            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
-        
-        if poll.creator_id != current_user.id:
-            raise HTTPException(status_code=403, detail="투표 생성자만 수정할 수 있습니다")
-        
-        # TODO: PollService에 update_poll 메서드 추가 필요
-        raise HTTPException(status_code=501, detail="투표 수정 기능은 아직 구현되지 않았습니다")
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"투표 수정에 실패했습니다: {str(e)}")
+    """투표 정보 수정 - 관리자 전용"""
+    # 사용자는 투표 수정 불가
+    raise HTTPException(
+        status_code=403, 
+        detail="투표 수정은 관리자만 가능합니다."
+    )
 
 
 @router.delete("/{poll_id}")
@@ -208,20 +194,12 @@ async def delete_poll(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """투표 삭제 (생성자만, 생성 후 24시간 이내)"""
-    try:
-        service = PollService(db)
-        success = await service.delete_poll(poll_id, current_user.id)
-        
-        if not success:
-            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
-        
-        return {"message": "투표가 성공적으로 삭제되었습니다"}
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"투표 삭제에 실패했습니다: {str(e)}")
+    """투표 삭제 - 관리자 전용"""
+    # 사용자는 투표 삭제 불가
+    raise HTTPException(
+        status_code=403, 
+        detail="투표 삭제는 관리자만 가능합니다."
+    )
 
 
 @router.post("/{poll_id}/close")
@@ -230,17 +208,9 @@ async def close_poll(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """투표 마감 (생성자만 가능)"""
-    try:
-        service = PollService(db)
-        success = await service.close_poll(poll_id, current_user.id)
-        
-        if not success:
-            raise HTTPException(status_code=404, detail="투표를 찾을 수 없습니다")
-        
-        return {"message": "투표가 성공적으로 마감되었습니다"}
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"투표 마감에 실패했습니다: {str(e)}")
+    """투표 마감 - 관리자 전용"""
+    # 사용자는 투표 마감 불가
+    raise HTTPException(
+        status_code=403, 
+        detail="투표 마감은 관리자만 가능합니다."
+    )

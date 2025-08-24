@@ -6,7 +6,8 @@ from app.api.v1 import auth, users, circles, polls, templates
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    debug=settings.debug
+    debug=settings.debug,
+    redirect_slashes=False  # 307 redirect 방지
 )
 
 app.add_middleware(
@@ -21,7 +22,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/v1", tags=["auth"])
 app.include_router(users.router, prefix="/v1", tags=["users"])
 app.include_router(circles.router, prefix="/v1", tags=["circles"])
-app.include_router(polls.router, prefix="/v1", tags=["polls"])
+app.include_router(polls.router, prefix="/v1/polls", tags=["polls"])
 app.include_router(templates.router, prefix="/v1", tags=["templates"])
 
 @app.get("/")
