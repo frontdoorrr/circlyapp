@@ -31,10 +31,20 @@ export const useActivePolls = (
 ): UseQueryResult<PollResponse[], Error> => {
   return useQuery({
     queryKey: POLL_QUERY_KEYS.activePolls(circleId),
-    queryFn: () => pollApi.getActivePolls(circleId),
+    queryFn: async () => {
+      console.log('🔄 [useActivePolls] Fetching active polls for circleId:', circleId);
+      try {
+        const result = await pollApi.getActivePolls(circleId);
+        console.log('✅ [useActivePolls] Success:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ [useActivePolls] Error:', error);
+        throw error;
+      }
+    },
     enabled: enabled && circleId > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -50,7 +60,7 @@ export const usePoll = (
     queryFn: () => pollApi.getPoll(pollId),
     enabled: enabled && pollId > 0,
     staleTime: 1 * 60 * 1000, // 1 minute
-    cacheTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 3 * 60 * 1000, // 3 minutes
   });
 };
 
@@ -66,7 +76,7 @@ export const usePollParticipation = (
     queryFn: () => pollApi.getPollParticipation(pollId),
     enabled: enabled && pollId > 0,
     staleTime: 30 * 1000, // 30 seconds
-    cacheTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 2 * 60 * 1000, // 2 minutes
   });
 };
 
@@ -82,7 +92,7 @@ export const useVoteResults = (
     queryFn: () => pollApi.getVoteResults(pollId),
     enabled: enabled && pollId > 0,
     staleTime: 15 * 1000, // 15 seconds (for real-time feel)
-    cacheTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 1 * 60 * 1000, // 1 minute
     refetchInterval: 30 * 1000, // Auto-refetch every 30 seconds for real-time updates
   });
 };
@@ -156,6 +166,6 @@ export const useCirclePolls = (
     queryFn: () => pollApi.getCirclePolls(circleId),
     enabled: enabled && circleId > 0,
     staleTime: 3 * 60 * 1000, // 3 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };

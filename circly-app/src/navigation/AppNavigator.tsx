@@ -10,6 +10,9 @@ import CreateCircleScreen from '../screens/circle/CreateCircleScreen';
 import JoinCircleScreen from '../screens/circle/JoinCircleScreen';
 import CreatePollScreen from '../screens/poll/CreatePollScreen';
 import PollDetailScreen from '../screens/poll/PollDetailScreen';
+import { PollListScreen } from '../screens/poll/PollListScreen';
+import { PollParticipationScreen } from '../screens/poll/PollParticipationScreen';
+import { PollResultsScreen } from '../screens/poll/PollResultsScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -73,6 +76,30 @@ export default function AppNavigator() {
         component={PollDetailScreen}
         options={{
           title: 'Poll Details',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen 
+        name="PollList" 
+        component={PollListScreen}
+        options={({ route }) => ({
+          title: `${route.params?.circleName} 투표`,
+          headerBackTitleVisible: false,
+        })}
+      />
+      <Stack.Screen 
+        name="PollParticipation" 
+        component={PollParticipationScreen}
+        options={{
+          title: '투표 참여',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="PollResults" 
+        component={PollResultsScreen}
+        options={{
+          title: '투표 결과',
           headerBackTitleVisible: false,
         }}
       />

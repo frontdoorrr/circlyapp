@@ -8,9 +8,15 @@ import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 export default function AuthNavigator() {
   console.log('🔄 [AuthNavigator] Component rendering started');
   
-  const { isAuthenticated, loading } = useAuthStore();
+  const { isAuthenticated, loading, restoreAuth } = useAuthStore();
   
   console.log('🔄 [AuthNavigator] Auth state:', { isAuthenticated, loading });
+
+  // Restore authentication on app start
+  React.useEffect(() => {
+    console.log('🔄 [AuthNavigator] Restoring auth on app start');
+    restoreAuth();
+  }, [restoreAuth]);
 
   // Show loading only during actual login/logout operations
   if (loading) {

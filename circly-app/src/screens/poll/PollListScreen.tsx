@@ -16,6 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { PollList } from '../../components/poll/PollList';
 import { useActivePolls } from '../../hooks/usePolls';
 import type { PollResponse } from '../../types/poll';
+import { apiClient } from '../../services/api/client';
 
 interface RouteParams {
   circleId: number;
@@ -40,6 +41,22 @@ export const PollListScreen: React.FC = () => {
     refetch, 
     isRefetching 
   } = useActivePolls(circleId);
+
+  // 디버깅: 인증 상태 확인
+  React.useEffect(() => {
+    console.log('🔍 [PollListScreen] Debug info:', {
+      circleId,
+      circleName,
+      pollsLength: polls.length,
+      isLoading,
+      error: error?.message
+    });
+
+    // 인증 테스트
+    apiClient.testAuth().then(isValid => {
+      console.log('🔐 [PollListScreen] Auth test result:', isValid);
+    });
+  }, [circleId, circleName, polls.length, isLoading, error]);
 
   // 필터링된 투표 목록
   const filteredPolls = polls.filter(poll => {

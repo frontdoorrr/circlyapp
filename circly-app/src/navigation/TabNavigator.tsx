@@ -3,9 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { TabParamList } from '../types';
 
-// Import screens (to be created)
+// Import screens
 import HomeScreen from '../screens/home/HomeScreen';
-import CreateScreen from '../screens/create/CreateScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -21,8 +20,6 @@ export default function TabNavigator() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Create') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -53,14 +50,6 @@ export default function TabNavigator() {
         options={{
           title: 'Circles',
           headerTitle: 'My Circles',
-        }}
-      />
-      <Tab.Screen 
-        name="Create" 
-        component={CreateScreen}
-        options={{
-          title: 'Create',
-          headerTitle: 'Create Poll',
         }}
       />
       <Tab.Screen 

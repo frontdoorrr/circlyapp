@@ -9,6 +9,7 @@ class ApiClient {
     this.instance = axios.create({
       baseURL: config.baseURL,
       timeout: config.timeout,
+      maxRedirects: 5,
       headers: {
         'Content-Type': 'application/json',
         ...config.headers,
@@ -22,12 +23,18 @@ class ApiClient {
     // Request interceptor to add auth token
     this.instance.interceptors.request.use(
       (config) => {
+        console.log('🔧 [ApiClient] Request interceptor - token exists:', !!this.token);
         if (this.token) {
           config.headers.Authorization = `Bearer ${this.token}`;
+          console.log('🔧 [ApiClient] Added Authorization header:', config.headers.Authorization?.substring(0, 30) + '...');
+        } else {
+          console.log('⚠️ [ApiClient] No token available for request');
         }
+        console.log('🔧 [ApiClient] Final request headers:', config.headers);
         return config;
       },
       (error) => {
+        console.error('🚨 [ApiClient] Request interceptor error:', error);
         return Promise.reject(error);
       }
     );
@@ -56,13 +63,53 @@ class ApiClient {
     this.token = null;
   }
 
+  async testAuth(): Promise<boolean> {
+    try {
+      console.log('🧪 [ApiClient] Testing authentication...');
+      console.log('🔑 [ApiClient] Current token:', this.token ? `${this.token.substring(0, 30)}...` : 'null');
+      
+      // Test with a simple endpoint first
+      const response = await this.instance.get('/v1/users/me');
+      console.log('✅ [ApiClient] Auth test successful:', response.status);
+      console.log('📄 [ApiClient] Auth test response:', response.data);
+      return true;
+    } catch (error: any) {
+      console.error('❌ [ApiClient] Auth test failed:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      return false;
+    }
+  }
+
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log('🌐 [ApiClient] GET request:', url);
+      console.log('🔑 [ApiClient] Auth token:', this.token ? `✅ Present (${this.token.substring(0, 20)}...)` : '❌ Missing');
+      
       const response = await this.instance.get(url, config);
+      console.log('📥 [ApiClient] GET response status:', response.status);
+      console.log('📊 [ApiClient] GET response data:', response.data);
+      
       return {
         data: response.data,
       };
     } catch (error: any) {
+      console.error('🚨 [ApiClient] GET error:', {
+        url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
       return {
         error: error.response?.data?.detail || error.message || 'An error occurred',
       };

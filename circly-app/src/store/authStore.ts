@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   AuthState, 
   UserResponse, 
@@ -37,7 +38,7 @@ export const useAuthStore = create<AuthStore>()((set) => {
     isAuthenticated: false,
     user: null,
     token: null,
-    loading: false,
+    loading: true, // Start with loading true to restore auth
     error: null,
 
     // Actions
@@ -52,6 +53,10 @@ export const useAuthStore = create<AuthStore>()((set) => {
       if (authResponse) {
         // Update API client token
         apiClient.setToken(authResponse.access_token);
+        
+        // Store token and user in AsyncStorage
+        await AsyncStorage.setItem('auth_token', authResponse.access_token);
+        await AsyncStorage.setItem('auth_user', JSON.stringify(authResponse.user));
         
         set({
           isAuthenticated: true,
@@ -85,6 +90,9 @@ export const useAuthStore = create<AuthStore>()((set) => {
     } finally {
       // Clear API client token
       apiClient.clearToken();
+      
+      // Clear stored auth data
+      await AsyncStorage.multiRemove(['auth_token', 'auth_user']);
       
       set({
         isAuthenticated: false,
@@ -149,8 +157,58 @@ export const useAuthStore = create<AuthStore>()((set) => {
   },
 
   restoreAuth: async () => {
-    // Simplified - no persistence for now
-    console.log('Restore auth called - no persistence active');
+    console.log('🔄 [AuthStore] Restoring authentication...');
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      const userStr = await AsyncStorage.getItem('auth_user');
+      
+      console.log('🔍 [AuthStore] Found stored data:', {
+        hasToken: !!token,
+        hasUser: !!userStr,
+        tokenPrefix: token?.substring(0, 20)
+      });
+      
+      if (token && userStr) {
+        const user = JSON.parse(userStr);
+        
+        // Update API client with token
+        apiClient.setToken(token);
+        
+        // Test if token is still valid
+        const isValid = await apiClient.testAuth();
+        console.log('🔐 [AuthStore] Token validation result:', isValid);
+        
+        if (isValid) {
+          set({
+            isAuthenticated: true,
+            user,
+            token,
+            loading: false,
+          });
+          console.log('✅ [AuthStore] Authentication restored successfully');
+        } else {
+          // Token expired, clear stored data
+          console.log('❌ [AuthStore] Token expired, clearing stored data');
+          await AsyncStorage.multiRemove(['auth_token', 'auth_user']);
+          apiClient.clearToken();
+          set({
+            isAuthenticated: false,
+            user: null,
+            token: null,
+            loading: false,
+          });
+        }
+      } else {
+        console.log('📭 [AuthStore] No stored authentication data');
+        set({ loading: false });
+      }
+    } catch (error: any) {
+      console.error('🚨 [AuthStore] Error restoring auth:', error);
+      set({ 
+        loading: false,
+        error: 'Failed to restore authentication'
+      });
+    }
   },
 
   emailLogin: async (loginData: EmailLoginRequest) => {
@@ -164,6 +222,10 @@ export const useAuthStore = create<AuthStore>()((set) => {
       if (authResponse) {
         // Update API client token
         apiClient.setToken(authResponse.access_token);
+        
+        // Store token and user in AsyncStorage
+        await AsyncStorage.setItem('auth_token', authResponse.access_token);
+        await AsyncStorage.setItem('auth_user', JSON.stringify(authResponse.user));
         
         set({
           isAuthenticated: true,
@@ -198,6 +260,10 @@ export const useAuthStore = create<AuthStore>()((set) => {
         // Update API client token
         apiClient.setToken(authResponse.access_token);
         
+        // Store token and user in AsyncStorage
+        await AsyncStorage.setItem('auth_token', authResponse.access_token);
+        await AsyncStorage.setItem('auth_user', JSON.stringify(authResponse.user));
+        
         set({
           isAuthenticated: true,
           user: authResponse.user,
@@ -230,6 +296,10 @@ export const useAuthStore = create<AuthStore>()((set) => {
       if (authResponse) {
         // Update API client token
         apiClient.setToken(authResponse.access_token);
+        
+        // Store token and user in AsyncStorage
+        await AsyncStorage.setItem('auth_token', authResponse.access_token);
+        await AsyncStorage.setItem('auth_user', JSON.stringify(authResponse.user));
         
         set({
           isAuthenticated: true,

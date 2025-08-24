@@ -100,11 +100,6 @@ export default function CircleDetailScreen() {
     }
   };
 
-  const navigateToCreatePoll = () => {
-    if (currentCircle) {
-      (navigation as any).navigate('CreatePoll', { circleId: currentCircle.id });
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -202,11 +197,17 @@ export default function CircleDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionGrid}>
-          <TouchableOpacity style={styles.actionItem} onPress={navigateToCreatePoll}>
+          <TouchableOpacity 
+            style={styles.actionItem} 
+            onPress={() => navigation.navigate('PollList', {
+              circleId: currentCircle.id,
+              circleName: currentCircle.name
+            })}
+          >
             <View style={styles.actionIcon}>
-              <Ionicons name="add-circle" size={24} color="#007AFF" />
+              <Ionicons name="bar-chart" size={24} color="#007AFF" />
             </View>
-            <Text style={styles.actionText}>Create Poll</Text>
+            <Text style={styles.actionText}>View Polls</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionItem} onPress={shareInviteCode}>
@@ -423,6 +424,8 @@ const styles = StyleSheet.create({
   actionGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   actionItem: {
     alignItems: 'center',

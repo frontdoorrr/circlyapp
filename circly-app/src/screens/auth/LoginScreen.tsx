@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   Animated,
   Easing,
+  TouchableOpacity,
+  KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -19,20 +21,17 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
-  console.log('📱 [LoginScreen] Component rendering started');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const { emailLogin, loading, error } = useAuthStore();
   
-  const [deviceId, setDeviceId] = useState('');
-  const { login, loading, error } = useAuthStore();
-  
-  console.log('📱 [LoginScreen] Auth state:', { loading, error });
-  
-  // Animation values
-  const fadeAnim = new Animated.Value(0);
-  const slideAnim = new Animated.Value(50);
+  // Animation values - useRef to prevent recreation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    console.log('📱 [LoginScreen] useEffect started - setting up animation');
-    
     // Start entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -47,66 +46,62 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      console.log('📱 [LoginScreen] Animation completed');
-    });
-
+    ]).start();
   }, []);
 
-  const generateDeviceId = (customPrefix?: string) => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 11);
-    
-    if (customPrefix) {
-      return `${customPrefix}_${timestamp}_${random}`;
-    }
-    
-    return `ios_device_${timestamp}_${random}`;
-  };
+  const handleInputChange = useCallback((field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const handleLogin = async () => {
-    console.log('📱 [LoginScreen] Login button pressed');
+    if (!formData.email.trim() || !formData.password) {
+      Alert.alert('오류', '이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    
     try {
-      const finalDeviceId = deviceId.trim() || generateDeviceId();
-      console.log('📱 [LoginScreen] Attempting login with device_id:', finalDeviceId);
-      await login({ device_id: finalDeviceId });
-      console.log('📱 [LoginScreen] Login successful');
+      await emailLogin({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
     } catch (err: any) {
-      console.log('📱 [LoginScreen] Login failed:', err.message);
       Alert.alert(
-        'Login Failed', 
-        err.message || 'Something went wrong. Please try again.',
+        '로그인 실패', 
+        err.message || '로그인에 실패했습니다.',
         [
-          { text: 'OK', style: 'default' },
+          { text: '확인', style: 'default' },
           { 
-            text: 'Try Quick Login', 
+            text: '비밀번호 찾기', 
             style: 'default', 
-            onPress: handleQuickLogin 
+            onPress: () => navigation?.navigate('ForgotPassword')
           }
         ]
       );
     }
   };
 
-  const handleQuickLogin = async () => {
-    try {
-      const quickDeviceId = generateDeviceId('quick');
-      await login({ device_id: quickDeviceId });
-    } catch (err: any) {
-      Alert.alert('Quick Login Failed', err.message || 'Something went wrong');
-    }
+  const handleRegister = () => {
+    navigation?.navigate('Register');
   };
 
+  const handleForgotPassword = () => {
+    navigation?.navigate('ForgotPassword');
+  };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+        >
         <Animated.View 
           style={[
             styles.header,
@@ -118,7 +113,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         >
           <Text style={styles.title}>Welcome to Circly</Text>
           <Text style={styles.subtitle}>
-            Create polls and gather opinions from your circle
+            이메일로 로그인하거나 새 계정을 만드세요
           </Text>
         </Animated.View>
 
@@ -131,14 +126,27 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             }
           ]}
         >
-
           <Input
-            label="Device ID (Optional)"
-            placeholder="Leave empty for auto-generation"
-            value={deviceId}
-            onChangeText={setDeviceId}
+            label="이메일"
+            placeholder="your@email.com"
+            value={formData.email}
+            onChangeText={(value) => handleInputChange('email', value)}
+            keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+          />
+
+          <Input
+            label="비밀번호"
+            placeholder="비밀번호를 입력하세요"
+            value={formData.password}
+            onChangeText={(value) => handleInputChange('password', value)}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            passwordRules=""
           />
 
           {error && (
@@ -147,45 +155,40 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             </Animated.View>
           )}
 
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Login with Device ID"
-              onPress={handleLogin}
-              loading={loading}
-              style={styles.loginButton}
-            />
+          <Button
+            title="로그인"
+            onPress={handleLogin}
+            loading={loading}
+            style={styles.loginButton}
+          />
 
-            <Button
-              title="Quick Login"
-              onPress={handleQuickLogin}
-              variant="outline"
-              loading={loading}
-              style={styles.quickLoginButton}
-            />
+          <TouchableOpacity 
+            style={styles.forgotPassword}
+            onPress={handleForgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>
+              비밀번호를 잊으셨나요?
+            </Text>
+          </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <Button
-              title="이메일로 로그인/회원가입"
-              onPress={() => navigation?.navigate('EmailLogin')}
-              variant="outline"
-              style={styles.emailLoginButton}
-            />
-          </View>
+          <TouchableOpacity 
+            style={styles.registerLink}
+            onPress={handleRegister}
+          >
+            <Text style={styles.registerLinkText}>
+              계정이 없으신가요? 회원가입하기
+            </Text>
+          </TouchableOpacity>
 
           <View style={styles.helpSection}>
             <Text style={styles.helpText}>
-              🔒 Device-based login means your account is tied to this device.{'\n'}
-              📱 No password required - secure and simple!
+              🔐 안전한 이메일 인증으로 여러 기기에서 사용하세요
             </Text>
           </View>
         </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -194,11 +197,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 40,
+    paddingBottom: 120,
   },
   header: {
     alignItems: 'center',
@@ -221,14 +230,27 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
-  buttonContainer: {
-    marginTop: 8,
-  },
   loginButton: {
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 16,
   },
-  quickLoginButton: {
+  forgotPassword: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  registerLink: {
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  registerLinkText: {
+    fontSize: 14,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
   },
   errorContainer: {
     backgroundColor: '#ffebee',
@@ -253,23 +275,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 16,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: '#666',
-  },
-  emailLoginButton: {
-    marginBottom: 12,
   },
 });
