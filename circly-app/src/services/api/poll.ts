@@ -7,6 +7,14 @@ import {
   VoteResult
 } from '../../types';
 
+// 백엔드 API 응답 구조
+interface PollListResponse {
+  polls: PollResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export const pollApi = {
   /**
    * Create a new poll
@@ -93,18 +101,23 @@ export const pollApi = {
    * Get active polls for a circle (for participation)
    */
   async getActivePolls(circleId: number): Promise<PollResponse[]> {
-    const url = `/v1/polls?circle_id=${circleId}&status=active`;
+    const url = `/v1/polls/?circle_id=${circleId}&status=active`;
     console.log('🌐 [pollApi.getActivePolls] Making request to:', url);
     
-    const response = await apiClient.get<PollResponse[]>(url);
-    console.log('📥 [pollApi.getActivePolls] Response:', { error: response.error, dataLength: response.data?.length });
+    const response = await apiClient.get<PollListResponse>(url);
+    console.log('📥 [pollApi.getActivePolls] Response:', { 
+      error: response.error, 
+      pollsLength: response.data?.polls?.length,
+      total: response.data?.total 
+    });
     
     if (response.error) {
       console.error('🚨 [pollApi.getActivePolls] API Error:', response.error);
       throw new Error(response.error);
     }
     
-    return response.data || [];
+    // PollListResponse에서 polls 배열만 추출
+    return response.data?.polls || [];
   },
 
   /**
@@ -124,7 +137,6 @@ export const pollApi = {
     // 백엔드 응답을 PollParticipation 형식으로 변환
     return {
       poll_id: pollId,
-      user_id: 1, // TODO: 실제 사용자 ID
       has_voted: poll.user_voted || false,
       selected_option_id: poll.user_vote_option_id || null,
       voted_at: undefined // 백엔드에서 제공되지 않음

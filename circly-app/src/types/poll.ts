@@ -1,14 +1,14 @@
-import { UserResponse } from './user';
+// Removed UserResponse import as it's not used
 
 // Poll Option types
 export interface PollOption {
-  id: number;
-  poll_id: number;
-  text: string;
-  user_id?: number;
-  order_index: number;
-  user?: UserResponse;
+  id: string; // UUID
+  poll_id: string;
+  member_id: number;
+  member_nickname: string;
+  display_order: number;
   vote_count: number;
+  created_at: string;
 }
 
 export interface PollOptionCreate {
@@ -33,19 +33,22 @@ export interface Poll {
 }
 
 export interface PollResponse {
-  id: number;
-  title: string;
-  description?: string;
-  question_template: string;
+  id: string; // UUID
+  question_text: string; // 백엔드의 question_text
   circle_id: number;
   creator_id: number;
-  expires_at?: string;
+  template_id?: string;
+  deadline: string; // 백엔드의 deadline
   is_active: boolean;
   is_anonymous: boolean;
+  is_closed: boolean;
+  max_votes_per_user: number;
+  total_votes: number;
+  total_participants: number;
   created_at: string;
   options: PollOption[];
-  total_votes: number;
   user_voted: boolean;
+  user_vote_option_id?: string;
 }
 
 export interface PollCreate {
@@ -88,7 +91,7 @@ export interface VoteResult {
 export interface PollParticipation {
   poll_id: number;
   has_voted: boolean;
-  selected_option_id?: number;
+  selected_option_id?: string;
   voted_at?: string;
 }
 

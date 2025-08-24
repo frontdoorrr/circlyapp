@@ -75,6 +75,12 @@ async def get_polls(
             
             poll_responses.append(PollWithUserStatus.model_validate(poll_dict))
         
+        print(PollListResponse(
+            polls=poll_responses,
+            total=total,
+            limit=limit,
+            offset=offset
+        ))
         return PollListResponse(
             polls=poll_responses,
             total=total,

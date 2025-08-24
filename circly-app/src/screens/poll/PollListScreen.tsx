@@ -47,7 +47,7 @@ export const PollListScreen: React.FC = () => {
     console.log('🔍 [PollListScreen] Debug info:', {
       circleId,
       circleName,
-      pollsLength: polls.length,
+      pollsLength: polls?.length || 0,
       isLoading,
       error: error?.message
     });
@@ -59,10 +59,10 @@ export const PollListScreen: React.FC = () => {
   }, [circleId, circleName, polls.length, isLoading, error]);
 
   // 필터링된 투표 목록
-  const filteredPolls = polls.filter(poll => {
+  const filteredPolls = (polls || []).filter(poll => {
     switch (filter) {
       case 'active':
-        const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
+        const isExpired = poll.deadline ? new Date(poll.deadline) < new Date() : false;
         return poll.is_active && !isExpired && !poll.user_voted;
       case 'participated':
         return poll.user_voted;
@@ -133,12 +133,12 @@ export const PollListScreen: React.FC = () => {
   };
 
   // 각 필터별 개수 계산
-  const activePollsCount = polls.filter(poll => {
+  const activePollsCount = (polls || []).filter(poll => {
     const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
     return poll.is_active && !isExpired && !poll.user_voted;
   }).length;
   
-  const participatedPollsCount = polls.filter(poll => poll.user_voted).length;
+  const participatedPollsCount = (polls || []).filter(poll => poll.user_voted).length;
 
   // 필터별 빈 메시지
   const getEmptyMessage = () => {
@@ -189,7 +189,7 @@ export const PollListScreen: React.FC = () => {
         <View style={styles.filterTabs}>
           {renderFilterButton('active', '참여 가능', activePollsCount)}
           {renderFilterButton('participated', '참여 완료', participatedPollsCount)}
-          {renderFilterButton('all', '전체', polls.length)}
+          {renderFilterButton('all', '전체', polls?.length || 0)}
         </View>
       </View>
 
