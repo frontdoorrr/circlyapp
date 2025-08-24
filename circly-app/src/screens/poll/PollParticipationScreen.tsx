@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { usePoll, usePollParticipation, useVotePoll } from '../../hooks/usePolls';
 import type { PollOption } from '../../types/poll';
+import { tokens } from '../../styles/tokens';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -525,34 +526,34 @@ export const PollParticipationScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa', // --gray-50
+    backgroundColor: tokens.colors.gray[50],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'white',
+    paddingHorizontal: tokens.spacing[4],
+    paddingVertical: tokens.spacing[3],
+    backgroundColor: tokens.colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5', // --gray-200
+    borderBottomColor: tokens.colors.gray[200],
   },
   headerButton: {
-    padding: 8,
+    padding: tokens.spacing[2],
   },
   headerContent: {
     flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#171717', // --gray-900
+    fontSize: tokens.typography.fontSize.lg,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.gray[900],
   },
   headerSubtitle: {
-    fontSize: 14,
-    color: '#525252', // --gray-600
-    fontWeight: '500',
-    marginTop: 2,
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.gray[600],
+    fontWeight: tokens.typography.fontWeight.medium,
+    marginTop: tokens.spacing[1],
   },
   content: {
     flex: 1,
@@ -560,96 +561,92 @@ const styles = StyleSheet.create({
   
   // Gas 앱 스타일 질문 섹션
   questionSection: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-    borderRadius: 24, // --radius-2xl
+    backgroundColor: tokens.colors.white,
+    marginHorizontal: tokens.spacing[4],
+    marginTop: tokens.spacing[4],
+    paddingVertical: tokens.spacing[10],
+    paddingHorizontal: tokens.spacing[6],
+    borderRadius: tokens.borderRadius['2xl'],
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    ...tokens.shadows.base,
   },
   questionEmojiContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f3f4ff', // --primary-50
+    backgroundColor: tokens.colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: tokens.spacing[5],
   },
   questionEmoji: {
     fontSize: 40,
   },
   questionTitle: {
-    fontSize: 24, // --text-2xl
-    fontWeight: '700', // --font-bold
-    color: '#171717', // --gray-900
+    fontSize: tokens.typography.fontSize['2xl'],
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.gray[900],
     textAlign: 'center',
     lineHeight: 32,
-    marginBottom: 24,
+    marginBottom: tokens.spacing[6],
   },
   questionMeta: {
     alignItems: 'center',
-    gap: 12,
+    gap: tokens.spacing[3],
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20, // --radius-full
-    backgroundColor: '#f0fdf4', // --success-50
-    gap: 6,
+    paddingHorizontal: tokens.spacing[3],
+    paddingVertical: tokens.spacing[2],
+    borderRadius: tokens.borderRadius.full,
+    backgroundColor: tokens.colors.success[50],
+    gap: tokens.spacing[2],
   },
   expiredBadge: {
-    backgroundColor: '#fef2f2', // --error-50
+    backgroundColor: tokens.colors.error[50],
   },
   activeBadge: {
-    backgroundColor: '#f3f4ff', // --primary-50
+    backgroundColor: tokens.colors.primary[50],
   },
   statusText: {
-    fontSize: 14, // --text-sm
-    fontWeight: '600', // --font-semibold
-    color: '#22c55e', // --success-500
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.success[500],
   },
   expiredText: {
-    color: '#ef4444', // --error-500
+    color: tokens.colors.error[500],
   },
   activeText: {
-    color: '#667eea', // --primary-500
+    color: tokens.colors.primary[500],
   },
   voteMetaText: {
-    fontSize: 14, // --text-sm
-    color: '#737373', // --gray-500
-    fontWeight: '500', // --font-medium
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.gray[500],
+    fontWeight: tokens.typography.fontWeight.medium,
   },
   
   // Skip/Shuffle 버튼
   actionButtonsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
+    gap: tokens.spacing[3],
+    marginTop: tokens.spacing[6],
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16, // --radius-lg
-    backgroundColor: 'white',
+    paddingHorizontal: tokens.spacing[4],
+    paddingVertical: tokens.spacing[2],
+    borderRadius: tokens.borderRadius.lg,
+    backgroundColor: tokens.colors.white,
     borderWidth: 2,
-    borderColor: '#e5e5e5', // --gray-200
-    gap: 6,
+    borderColor: tokens.colors.gray[200],
+    gap: tokens.spacing[2],
   },
   actionButtonText: {
-    fontSize: 14, // --text-sm
-    fontWeight: '600', // --font-semibold
-    color: '#667eea', // --primary-500
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.primary[500],
   },
   
   // 옵션 카드 그리드

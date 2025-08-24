@@ -7,134 +7,250 @@ import {
   TextStyle,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { tokens } from '../../styles/tokens';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonSize = 'small' | 'medium' | 'large';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'small' | 'medium' | 'large';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconPosition?: 'left' | 'right';
   style?: ViewStyle;
   textStyle?: TextStyle;
+  testID?: string;
 }
 
-export default function Button({
+export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
   size = 'medium',
   disabled = false,
   loading = false,
+  icon,
+  iconPosition = 'right',
   style,
   textStyle,
-}: ButtonProps) {
-  const isDisabled = disabled || loading;
+  testID,
+}) => {
+  const buttonStyle = [
+    styles.base,
+    styles[variant],
+    styles[size],
+    disabled && styles.disabled,
+    style,
+  ];
+
+  const textBaseStyle = [
+    styles.textBase,
+    styles[`${variant}Text` as keyof typeof styles],
+    styles[`${size}Text` as keyof typeof styles],
+    disabled && styles.disabledText,
+    textStyle,
+  ];
+
+  const renderContent = () => {
+    const iconSize = getIconSize(size);
+    const iconColor = getIconColor(variant, disabled);
+
+    return (
+      <>
+        {loading && (
+          <ActivityIndicator
+            size={size === 'large' ? 'small' : 'small'}
+            color={iconColor}
+            style={styles.loader}
+          />
+        )}
+        
+        {!loading && icon && iconPosition === 'left' && (
+          <Ionicons
+            name={icon}
+            size={iconSize}
+            color={iconColor}
+            style={styles.iconLeft}
+          />
+        )}
+        
+        <Text style={textBaseStyle}>
+          {loading ? 'Loading...' : title}
+        </Text>
+        
+        {!loading && icon && iconPosition === 'right' && (
+          <Ionicons
+            name={icon}
+            size={iconSize}
+            color={iconColor}
+            style={styles.iconRight}
+          />
+        )}
+      </>
+    );
+  };
+
+  if (variant === 'primary') {
+    return (
+      <TouchableOpacity
+        style={buttonStyle}
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.8}
+        testID={testID}
+      >
+        <LinearGradient
+          colors={tokens.gradients.primary}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        {renderContent()}
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        styles[variant],
-        styles[size],
-        isDisabled && styles.disabled,
-        style,
-      ]}
+      style={buttonStyle}
       onPress={onPress}
-      disabled={isDisabled}
+      disabled={disabled || loading}
       activeOpacity={0.8}
+      testID={testID}
     >
-      {loading ? (
-        <ActivityIndicator 
-          color={variant === 'outline' ? '#007AFF' : '#fff'} 
-          size="small" 
-        />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            styles[`${variant}Text`],
-            styles[`${size}Text`],
-            isDisabled && styles.disabledText,
-            textStyle,
-          ]}
-        >
-          {title}
-        </Text>
-      )}
+      {renderContent()}
     </TouchableOpacity>
   );
-}
+};
+
+const getIconSize = (size: ButtonSize): number => {
+  switch (size) {
+    case 'small': return 16;
+    case 'medium': return 18;
+    case 'large': return 20;
+  }
+};
+
+const getIconColor = (variant: ButtonVariant, disabled: boolean): string => {
+  if (disabled) {
+    return tokens.colors.gray[400];
+  }
+
+  switch (variant) {
+    case 'primary':
+      return tokens.colors.white;
+    case 'secondary':
+      return tokens.colors.primary[500];
+    case 'outline':
+      return tokens.colors.primary[600];
+    case 'ghost':
+      return tokens.colors.gray[600];
+    default:
+      return tokens.colors.white;
+  }
+};
 
 const styles = StyleSheet.create({
-  button: {
-    borderRadius: 8,
+  base: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderRadius: tokens.borderRadius.xl,
+    borderWidth: 0,
+    overflow: 'hidden',
   },
-  
+
   // Variants
   primary: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    ...tokens.shadows.primary,
   },
   secondary: {
-    backgroundColor: '#6c757d',
-    borderColor: '#6c757d',
+    backgroundColor: tokens.colors.white,
+    borderWidth: 2,
+    borderColor: tokens.colors.gray[200],
   },
   outline: {
-    backgroundColor: 'transparent',
-    borderColor: '#007AFF',
+    backgroundColor: tokens.colors.transparent,
+    borderWidth: 2,
+    borderColor: tokens.colors.primary[500],
   },
-  
+  ghost: {
+    backgroundColor: tokens.colors.transparent,
+  },
+
   // Sizes
   small: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    minHeight: 36,
+    paddingHorizontal: tokens.spacing[3],
+    paddingVertical: tokens.spacing[2],
+    borderRadius: tokens.borderRadius.lg,
   },
   medium: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    minHeight: 44,
+    paddingHorizontal: tokens.spacing[4],
+    paddingVertical: tokens.spacing[3],
   },
   large: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    minHeight: 52,
+    paddingHorizontal: tokens.spacing[6],
+    paddingVertical: tokens.spacing[4],
   },
-  
+
   // States
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
-  
-  // Text styles
-  text: {
-    fontWeight: '600',
+
+  // Text Base
+  textBase: {
+    fontFamily: tokens.typography.fontFamily.primary,
+    textAlign: 'center',
+    fontWeight: tokens.typography.fontWeight.semibold,
   },
+
+  // Text Variants
   primaryText: {
-    color: '#fff',
+    color: tokens.colors.white,
   },
   secondaryText: {
-    color: '#fff',
+    color: tokens.colors.primary[500],
   },
   outlineText: {
-    color: '#007AFF',
+    color: tokens.colors.primary[600],
   },
-  disabledText: {
-    opacity: 0.6,
+  ghostText: {
+    color: tokens.colors.gray[600],
   },
-  
-  // Text sizes
+
+  // Text Sizes
   smallText: {
-    fontSize: 14,
+    fontSize: tokens.typography.fontSize.sm,
   },
   mediumText: {
-    fontSize: 16,
+    fontSize: tokens.typography.fontSize.base,
   },
   largeText: {
-    fontSize: 18,
+    fontSize: tokens.typography.fontSize.lg,
+  },
+
+  disabledText: {
+    color: tokens.colors.gray[400],
+  },
+
+  // Icons
+  loader: {
+    marginRight: tokens.spacing[2],
+  },
+  iconLeft: {
+    marginRight: tokens.spacing[2],
+  },
+  iconRight: {
+    marginLeft: tokens.spacing[2],
   },
 });
+
+// 기존 호환성을 위한 default export
+export default Button;
