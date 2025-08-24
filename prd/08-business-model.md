@@ -36,31 +36,73 @@ const freeFeatures = {
 - **파트너십**: 교육 기관과의 비영리 협력
 
 ### Phase 2: 프리미엄 모델 도입 (12-24개월)
-**목표**: 5% 사용자의 유료 전환, ARR $500K 달성
+**목표**: 15% 사용자의 유료 전환, ARR $1.2M 달성
 
-#### Circly Pro 구독 서비스
+#### 🎯 핵심 수익 모델: "God Mode" 호기심 기반 결제
 ```javascript
-const proFeatures = {
+const godModeRevenue = {
+  core_concept: {
+    trigger: '투표에서 선택받은 사용자에게 "누가 나를 선택했을까?" 호기심 유발',
+    monetization: '익명성 부분 해제를 통한 단계별 유료 힌트 제공',
+    psychology: 'FOMO + 호기심 + 사회적 승인 욕구',
+    target_emotion: '궁금증과 설렘'
+  },
+  
+  pricing_tiers: {
+    hint_level_1: {
+      price: 0.99,           // $0.99 (1,300원)
+      reveal: '첫 글자 힌트',
+      example: '"ㄱ"씨가 당신을 선택했어요!'
+    },
+    hint_level_2: {
+      price: 1.99,           // $1.99 (2,600원)  
+      reveal: '성별 + 학년',
+      example: '2학년 남학생이 당신을 선택했어요!'
+    },
+    hint_level_3: {
+      price: 2.99,           // $2.99 (3,900원)
+      reveal: '이니셜 + 추가 힌트',
+      example: 'K.H씨 (같은 반 친구)가 당신을 선택했어요!'
+    },
+    full_reveal: {
+      price: 4.99,           // $4.99 (6,500원)
+      reveal: '완전한 신원 공개',
+      example: '김현수가 당신을 선택했어요!'
+    }
+  },
+  
+  conversion_funnel: {
+    notification_trigger: '🔥 누군가 당신을 선택했어요!',
+    curiosity_button: '"누가 선택했는지 궁금하다면?" 버튼',
+    pricing_screen: '단계별 힌트 가격 제시',
+    impulse_purchase: '즉시 결제 유도',
+    satisfaction: '힌트 공개 + 더 알고 싶은 욕구 자극'
+  },
+  
+  revenue_projection: {
+    target_users: '월 50만명 활성 사용자',
+    selection_rate: 0.3,     // 30% 사용자가 월 1회 이상 선택받음
+    curiosity_rate: 0.4,     // 40%가 "누구인지 궁금해함" 
+    conversion_rate: 0.25,   // 25%가 실제 결제
+    average_purchase: 2.49,  // 평균 $2.49 결제
+    monthly_revenue: 37350   // $37,350/월 = $448K/년
+  }
+};
+
+const proSubscription = {
   pricing: {
-    monthly: 2.99,    // $2.99/월
-    annual: 29.99,    // $29.99/년 (17% 할인)
+    monthly: 4.99,    // $4.99/월 (God Mode 무제한 + 추가 기능)
+    annual: 49.99,    // $49.99/년 (17% 할인)
   },
   
   enhanced_features: {
-    unlimited_polls: '무제한 투표 생성',
-    premium_templates: '50+ 프리미엄 질문 템플릿',
+    unlimited_god_mode: '무제한 God Mode 사용',
+    premium_templates: '50+ 프리미엄 질문 템플릿', 
     advanced_cards: '10가지 결과 카드 디자인',
-    custom_themes: '개인 맞춤 테마 설정',
+    secret_messaging: '익명 메시지 발송 기능',
     priority_support: '우선 고객 지원',
     detailed_analytics: '개인 활동 통계',
-    larger_circles: 'Circle당 최대 100명',
-    multiple_circles: '최대 10개 Circle 참여'
-  },
-  
-  exclusive_content: {
-    seasonal_templates: '계절별 특별 질문',
-    celebrity_questions: '연예인/인플루언서 협업 질문',
-    school_event_packs: '학교 행사 맞춤 템플릿'
+    larger_circles: 'Circle당 최대 100명'
   }
 };
 ```
@@ -164,40 +206,61 @@ const competitiveAdvantage = {
 
 ## 📊 수익 예측 모델
 
-### 3년 재무 전망
+### 3년 재무 전망 (God Mode 중심 수익 모델)
 ```javascript
 const financialProjection = {
   year1: {
-    users: 100000,
-    paying_users: 0,
-    revenue: 0,
-    costs: 500000,      // 개발/운영 비용
+    total_users: 100000,
+    active_monthly_users: 60000,
+    god_mode_buyers: 0,              // 베타 테스트 기간
+    subscribers: 0,
+    revenue: {
+      god_mode: 0,
+      subscriptions: 0,
+      total: 0
+    },
+    costs: 500000,                   // 개발/운영 비용
     net_income: -500000
   },
   
   year2: {
-    users: 500000,
-    paying_users: 15000,    // 3% 전환율
-    revenue: 450000,        // $30 ARPU * 15K users
+    total_users: 500000,
+    active_monthly_users: 300000,
+    god_mode_buyers: 22500,          // 15% 월간 전환율 (300K * 0.3 * 0.4 * 0.25)
+    subscribers: 2500,               // 0.5% 구독 전환율
+    revenue: {
+      god_mode: 673500,              // $22.5K buyers * $2.49 avg * 12 months
+      subscriptions: 149700,         // 2.5K * $49.99 annual
+      total: 823200
+    },
     costs: 800000,
-    net_income: -350000
+    net_income: 23200
   },
   
   year3: {
-    users: 1200000,
-    paying_users: 60000,    // 5% 전환율  
-    revenue: 1800000,       // $30 ARPU * 60K users
-    costs: 1200000,
-    net_income: 600000
+    total_users: 1200000,
+    active_monthly_users: 720000,
+    god_mode_buyers: 54000,          // 더 높은 참여율
+    subscribers: 12000,              // 1% 구독 전환율
+    revenue: {
+      god_mode: 1616400,             // $54K buyers * $2.49 avg * 12 months  
+      subscriptions: 599880,         // 12K * $49.99 annual
+      total: 2216280
+    },
+    costs: 1400000,
+    net_income: 816280
   }
 };
 
 const keyMetrics = {
-  customer_acquisition_cost: 5,     // $5 CAC
-  lifetime_value: 120,              // $120 LTV  
-  ltv_cac_ratio: 24,               // 24:1 (건강한 수준)
-  monthly_churn_rate: 0.05,        // 5% 월간 이탈률
-  average_revenue_per_user: 30     // $30 연간 ARPU
+  customer_acquisition_cost: 3,        // $3 CAC (바이럴 효과로 낮음)
+  god_mode_ltv: 85,                    // God Mode 사용자 $85 LTV
+  subscription_ltv: 180,               // 구독자 $180 LTV  
+  blended_ltv: 95,                     // 혼합 LTV
+  ltv_cac_ratio: 32,                   // 32:1 (매우 건강한 수준)
+  monthly_churn_rate: 0.03,            // 3% (중독성 높은 콘텐츠)
+  god_mode_conversion_rate: 0.25,      // 25% (매우 높은 충동구매율)
+  average_god_mode_purchase: 2.49     // $2.49 평균 구매
 };
 ```
 
@@ -279,6 +342,106 @@ const globalizationPlan = {
     timeline: '24-36 months',
     target_countries: ['싱가포르', '말레이시아', '태국'],
     target_users: 500000
+  }
+};
+```
+
+## 💡 God Mode 구현 가이드
+
+### UX/UI 설계 원칙
+```javascript
+const godModeUX = {
+  notification_timing: {
+    trigger_moment: '투표 결과 발표 직후',
+    notification_text: '🔥 누군가 당신을 "[질문내용]"에서 선택했어요!',
+    call_to_action: '누가 선택했는지 궁금하다면?',
+    urgency_factor: '24시간 한정 할인!'
+  },
+  
+  reveal_screen_design: {
+    mystery_card: '블러 처리된 프로필 실루엣',
+    pricing_ladder: '단계별 힌트 가격 (저렴한 것부터)',
+    social_proof: '"124명이 이미 확인했어요!"',
+    time_pressure: '⏰ 특가는 6시간 후 종료',
+    one_click_purchase: 'Apple Pay/Google Pay 원터치 결제'
+  },
+  
+  psychological_triggers: {
+    scarcity: '이 기회는 다시 오지 않아요',
+    social_validation: '친구들이 나를 어떻게 생각할까?',
+    fomo: '다른 사람들은 이미 알고 있을지도...',
+    curiosity_gap: '99% 확신하지만 1% 궁금해...',
+    instant_gratification: '지금 바로 알 수 있어요!'
+  }
+};
+
+const implementationPhases = {
+  phase1_basic: {
+    features: ['기본 힌트 시스템', '단순 결제 플로우'],
+    timeline: '2 weeks',
+    revenue_target: '$10K/month'
+  },
+  
+  phase2_advanced: {
+    features: ['A/B 테스트', '개인화된 가격', '번들 할인'],
+    timeline: '1 month', 
+    revenue_target: '$25K/month'
+  },
+  
+  phase3_optimized: {
+    features: ['ML 기반 가격 최적화', '구독 연동', '소셜 기능'],
+    timeline: '2 months',
+    revenue_target: '$50K/month'
+  }
+};
+```
+
+### 데이터베이스 설계
+```sql
+-- God Mode 구매 내역
+CREATE TABLE god_mode_purchases (
+    id UUID PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    poll_id STRING REFERENCES polls(id), 
+    voter_id INTEGER REFERENCES users(id),  -- 투표한 사람
+    hint_level INTEGER,  -- 1,2,3,4 (힌트 단계)
+    price_paid DECIMAL(5,2),
+    purchased_at TIMESTAMP,
+    revealed_info JSONB  -- 공개된 힌트 정보
+);
+
+-- 가격 A/B 테스트
+CREATE TABLE pricing_experiments (
+    id UUID PRIMARY KEY,
+    experiment_name STRING,
+    user_id INTEGER REFERENCES users(id),
+    price_variant STRING,  -- 'control', 'variant_a', 'variant_b' 
+    conversion_achieved BOOLEAN DEFAULT FALSE
+);
+```
+
+### 수익 최적화 전략
+```javascript
+const revenueOptimization = {
+  dynamic_pricing: {
+    peak_hours: '방과 후 4-8PM 시간대 20% 할증',
+    weekend_boost: '주말 특별 번들 할인',
+    friend_proximity: '같은 반 친구일 때 가격 상승',
+    popularity_premium: '인기 많은 사용자 선택 시 프리미엄 가격'
+  },
+  
+  bundle_strategies: {
+    curiosity_pack: '3개 힌트 패키지 30% 할인',
+    monthly_unlimited: '월 무제한 God Mode $9.99',
+    friend_group_deal: '친구와 함께 구매 시 50% 할인',
+    seasonal_special: '시험기간/방학 특가 패키지'
+  },
+  
+  retention_mechanics: {
+    hint_addiction: '첫 구매 후 24시간 내 50% 할인',
+    loyalty_program: '구매 횟수별 등급 시스템',
+    exclusive_preview: 'VIP 사용자 신기능 먼저 체험',
+    social_status: 'God Mode 사용자 전용 배지/아이콘'
   }
 };
 ```
