@@ -146,14 +146,14 @@ export const pollApi = {
   /**
    * Get detailed vote results for a poll
    */
-  async getVoteResults(pollId: string): Promise<VoteResult[]> {
-    const response = await apiClient.get<VoteResult[]>(`/v1/polls/${pollId}/results`);
+  async getVoteResults(pollId: string): Promise<any> {
+    const response = await apiClient.get<any>(`/v1/polls/${pollId}/results`);
     
     if (response.error) {
       throw new Error(response.error);
     }
     
-    return response.data || [];
+    return response.data || null;
   },
 
   /**

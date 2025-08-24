@@ -145,6 +145,7 @@ async def vote_on_poll(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        print(f"🚀 [vote_on_poll] Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"투표 참여에 실패했습니다: {str(e)}")
 
 

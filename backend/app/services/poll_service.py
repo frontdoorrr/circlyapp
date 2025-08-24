@@ -3,6 +3,7 @@ from sqlalchemy import select, func, and_, or_, update
 from sqlalchemy.orm import selectinload
 from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import hashlib
 import secrets
 
@@ -114,12 +115,12 @@ class PollService:
             conditions.append(Poll.circle_id == circle_id)
             
         if status == 'active':
-            conditions.append(Poll.deadline > datetime.now())
+            conditions.append(Poll.deadline > datetime.now(ZoneInfo("UTC")))
             conditions.append(Poll.is_closed == False)
         elif status == 'completed':
             conditions.append(Poll.is_closed == True)
         elif status == 'expired':
-            conditions.append(Poll.deadline <= datetime.now())
+            conditions.append(Poll.deadline <= datetime.now(ZoneInfo("UTC")))
             conditions.append(Poll.is_closed == False)
 
         if conditions:
@@ -165,7 +166,7 @@ class PollService:
         if poll.is_closed:
             raise ValueError("마감된 투표입니다")
             
-        if poll.deadline <= datetime.now():
+        if poll.deadline <= datetime.now(ZoneInfo("UTC")):
             raise ValueError("투표 마감 시간이 지났습니다")
 
         # 2. Circle 멤버십 확인
@@ -282,7 +283,7 @@ class PollService:
             "question_text": poll.question_text,
             "total_votes": poll.total_votes,
             "total_participants": poll.total_participants,
-            "is_closed": poll.is_closed or poll.deadline <= datetime.now(),
+            "is_closed": poll.is_closed or poll.deadline <= datetime.now(ZoneInfo("UTC")),
             "deadline": poll.deadline,
             "results": results,
             "winner": winner
@@ -319,7 +320,7 @@ class PollService:
             raise ValueError("투표 생성자만 삭제할 수 있습니다")
         
         # 생성 후 24시간 이내만 삭제 가능
-        if datetime.now() - poll.created_at > timedelta(hours=24):
+        if datetime.now(ZoneInfo("UTC")) - poll.created_at > timedelta(hours=24):
             raise ValueError("투표 생성 후 24시간이 지나면 삭제할 수 없습니다")
 
         await self.db.execute(

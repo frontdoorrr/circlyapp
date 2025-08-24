@@ -12,9 +12,9 @@ export type RootStackParamList = {
   CreateCircle: undefined;
   JoinCircle: undefined;
   CreatePoll: { circleId: number };
-  PollDetail: { pollId: number };
-  PollParticipation: { pollId: number; circleId: number; circleName: string };
-  PollResults: { pollId: number; circleId: number; circleName: string };
+  PollDetail: { pollId: string };
+  PollParticipation: { pollId: string; circleId: number; circleName: string };
+  PollResults: { pollId: string; circleId: number; circleName: string };
   PollList: { circleId: number; circleName: string };
   Profile: undefined;
 };

@@ -17,10 +17,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { usePoll, usePollParticipation, useVoteResults } from '../../hooks/usePolls';
-import type { PollOption, VoteResult } from '../../types/poll';
+import type { PollOption } from '../../types/poll';
 
 interface RouteParams {
-  pollId: number;
+  pollId: string;
   circleId: number;
   circleName: string;
 }
@@ -71,7 +71,7 @@ export const PollResultsScreen: React.FC = () => {
   // 데이터 페칭
   const { data: poll, isLoading: pollLoading, error: pollError } = usePoll(pollId);
   const { data: participation, isLoading: participationLoading } = usePollParticipation(pollId);
-  const { data: voteResults = [], isLoading: resultsLoading } = useVoteResults(pollId);
+  const { data: voteResults, isLoading: resultsLoading } = useVoteResults(pollId);
 
   // 뒤로가기
   const handleGoBack = useCallback(() => {
@@ -109,15 +109,22 @@ export const PollResultsScreen: React.FC = () => {
     );
   }
 
-  // 결과 데이터 처리
-  const processedOptions = poll.options.map((option: PollOption) => {
-    const result = voteResults.find(r => r.option_id === option.id);
-    return {
-      ...option,
-      vote_count: result?.vote_count || option.vote_count || 0,
-      percentage: result?.percentage || 0,
-    };
-  });
+  // 결과 데이터 처리 - voteResults에서 결과 데이터 사용하거나 poll.options 사용
+  const processedOptions = voteResults?.results ? 
+    voteResults.results.map((result: any) => ({
+      id: result.option_id,
+      member_nickname: result.member_nickname,
+      vote_count: result.vote_count,
+      percentage: result.percentage,
+      rank: result.rank
+    })) :
+    poll.options.map((option: PollOption) => {
+      const percentage = poll.total_votes > 0 ? (option.vote_count / poll.total_votes) * 100 : 0;
+      return {
+        ...option,
+        percentage: parseFloat(percentage.toFixed(1)),
+      };
+    });
 
   // 가장 많이 받은 투표 수
   const maxVotes = Math.max(...processedOptions.map(o => o.vote_count));
@@ -126,7 +133,7 @@ export const PollResultsScreen: React.FC = () => {
   const colors = ['#007AFF', '#28A745', '#FF6B6B', '#FFC107', '#17A2B8', '#6F42C1'];
 
   // 투표 마감 시간 확인
-  const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false;
+  const isExpired = poll.deadline ? new Date(poll.deadline) < new Date() : false;
   const isActive = poll.is_active && !isExpired;
 
   return (
@@ -158,15 +165,12 @@ export const PollResultsScreen: React.FC = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* 투표 정보 */}
         <View style={styles.pollInfo}>
-          <Text style={styles.pollTitle}>{poll.title}</Text>
-          {poll.description && (
-            <Text style={styles.pollDescription}>{poll.description}</Text>
-          )}
+          <Text style={styles.pollTitle}>{poll.question_text}</Text>
         </View>
 
         {/* 질문 */}
         <View style={styles.questionContainer}>
-          <Text style={styles.questionText}>{poll.question_template}</Text>
+          <Text style={styles.questionText}>{poll.question_text}</Text>
         </View>
 
         {/* 투표 통계 */}
@@ -233,7 +237,7 @@ export const PollResultsScreen: React.FC = () => {
                       isUserVoted && styles.userVotedOptionText,
                       isWinner && styles.winnerOptionText
                     ]}>
-                      {option.text}
+                      {option.member_nickname}
                     </Text>
                     
                     <View style={styles.resultStats}>
@@ -282,11 +286,11 @@ export const PollResultsScreen: React.FC = () => {
             </Text>
           </View>
           
-          {poll.expires_at && (
+          {poll.deadline && (
             <View style={styles.infoItem}>
               <Ionicons name="alarm-outline" size={16} color="#6C757D" />
               <Text style={styles.infoText}>
-                {new Date(poll.expires_at).toLocaleString('ko-KR')} 마감
+                {new Date(poll.deadline).toLocaleString('ko-KR')} 마감
               </Text>
             </View>
           )}

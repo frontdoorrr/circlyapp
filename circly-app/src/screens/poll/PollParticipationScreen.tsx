@@ -57,7 +57,7 @@ export const PollParticipationScreen: React.FC = () => {
   const voteMutation = useVotePoll();
 
   // 투표 마감 시간 확인
-  const isExpired = poll?.expires_at ? new Date(poll.expires_at) < new Date() : false;
+  const isExpired = poll?.deadline ? new Date(poll.deadline) < new Date() : false;
   const canVote = poll?.is_active && !isExpired && !participation?.has_voted;
 
   // 옵션 섞기 함수
@@ -98,7 +98,7 @@ export const PollParticipationScreen: React.FC = () => {
   }, [navigation]);
 
   // 선택지 선택 처리
-  const handleOptionSelect = useCallback((optionId: number) => {
+  const handleOptionSelect = useCallback((optionId: string) => {
     if (!canVote) return;
     setSelectedOptionId(optionId);
   }, [canVote]);
@@ -223,7 +223,7 @@ export const PollParticipationScreen: React.FC = () => {
   const handleViewResults = useCallback(() => {
     if (!poll) return;
     
-    navigation.navigate('PollResults', {
+    navigation.navigate('PollResults' as any, {
       pollId: poll.id,
       circleId,
       circleName
@@ -257,10 +257,10 @@ export const PollParticipationScreen: React.FC = () => {
 
   // 시간 포맷팅
   const formatTimeRemaining = () => {
-    if (!poll.expires_at || isExpired) return null;
+    if (!poll.deadline || isExpired) return null;
     
     const now = new Date();
-    const expiresAt = new Date(poll.expires_at);
+    const expiresAt = new Date(poll.deadline);
     const diffMs = expiresAt.getTime() - now.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -311,7 +311,7 @@ export const PollParticipationScreen: React.FC = () => {
           <View style={styles.questionEmojiContainer}>
             <Text style={styles.questionEmoji}>❓</Text>
           </View>
-          <Text style={styles.questionTitle}>{poll.question_template}</Text>
+          <Text style={styles.questionTitle}>{poll.question_text}</Text>
           
           {/* 상태 및 시간 정보 */}
           <View style={styles.questionMeta}>
@@ -419,7 +419,7 @@ export const PollParticipationScreen: React.FC = () => {
                     isUserVoted && styles.votedCardText,
                     !canVote && styles.disabledCardText
                   ]} numberOfLines={3}>
-                    {option.text}
+                    {option.member_nickname}
                   </Text>
 
                   {/* 선택/투표 상태 표시 */}

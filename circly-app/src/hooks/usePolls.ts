@@ -86,7 +86,7 @@ export const usePollParticipation = (
 export const useVoteResults = (
   pollId: string,
   enabled: boolean = true
-): UseQueryResult<VoteResult[], Error> => {
+): UseQueryResult<any, Error> => {
   return useQuery({
     queryKey: POLL_QUERY_KEYS.results(pollId),
     queryFn: () => pollApi.getVoteResults(pollId),
