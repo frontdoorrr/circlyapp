@@ -798,11 +798,38 @@
   - Circle 멤버 선택지 자동 생성
   - 마감 시간 설정
 
-- [x] **투표 참여 기능** ✅
-  - 투표 목록 표시 ✅
-  - 익명 투표 참여 ✅
-  - 결과 실시간 업데이트 ✅
- 
+- [ ] **투표 참여 기능 PRD 명세서 대비 개선 필요** ⚠️
+  **현재 상태**: 기본적인 CRUD 동작 완료, 하지만 PRD 요구사항 대비 부족
+  **참고 문서**: `prd/10-core-ux-guide.md`, `prd/11-interaction-animation-guide.md`, `prd/12-ui-design-system.md`, `prd/13-user-flow-guide.md`, `prd/14-voting-feature-spec.md`
+  
+  **완료된 부분**:
+  - [x] 투표 목록 표시 ✅
+  - [x] 기본적인 익명 투표 참여 ✅  
+  - [x] 결과 실시간 업데이트 ✅
+  - [x] API 연동 및 에러 처리 ✅
+  
+  **긴급히 개선 필요한 부분**:
+  - [ ] **Gas 앱 스타일 UI 리디자인** (참고: `prd/12-ui-design-system.md`)
+    - 현재: 기본적인 카드 레이아웃
+    - 필요: 중앙 질문 + 이모지, 4개 카드형 선택지
+  - [ ] **Skip/Shuffle 기능 추가** (참고: `prd/13-user-flow-guide.md`)
+    - 현재: 없음
+    - 필요: 건너뛰기, 선택지 섞기 버튼
+  - [ ] **인터랙션 및 애니메이션 구현** (참고: `prd/11-interaction-animation-guide.md`)
+    - 현재: Alert으로 간단한 완료 메시지
+    - 필요: 하트 날아가는 애니메이션, 햅틱 피드백, 부드러운 전환
+  - [ ] **디자인 시스템 적용** (참고: `prd/12-ui-design-system.md`)
+    - 현재: 하드코딩된 스타일
+    - 필요: 디자인 토큰 기반 스타일링
+  - [ ] **사용자 플로우 개선** (참고: `prd/13-user-flow-guide.md`)
+    - 현재: PollListScreen → PollParticipationScreen
+    - 필요: HomeScreen에서 직접 [투표하기] 버튼으로 진입
+  - [ ] **투표 완료 후 애니메이션 시스템** (참고: `prd/14-voting-feature-spec.md`)
+    - 현재: 한 화면에서 모든 것 처리
+    - 필요: 선택 → 확인 → 제출 → 애니메이션 → 결과의 단계적 플로우
+  
+  **구현 진척도**: 프로토타입 수준 (60%), PRD 완전 구현까지 대대적인 리팩토링 필요
+
 - [x] **투표 시스템 핵심 테스트** ✅
   ```typescript
   # __tests__/components/poll/ ✅
@@ -878,9 +905,19 @@
 ## Phase 7: UI/UX 완성 (Week 5-6)
 
 ### 7.1 디자인 시스템 적용
+**참고 문서**: `prd/12-ui-design-system.md`
 - [ ] **컬러 시스템 적용**
+  - CSS 디자인 토큰 구현 (--primary-500, --gradient-primary 등)
+  - 컬러 변수를 활용한 기존 스타일 교체
+  - 다크모드 지원 색상 시스템
 - [ ] **타이포그래피 적용**
+  - Pretendard 폰트 시스템 적용
+  - 한국어 최적화된 폰트 스택 구현
+  - 텍스트 크기 및 가중치 토큰화
 - [ ] **컴포넌트 표준화**
+  - Gas 앱 스타일 버튼 컴포넌트 (Primary/Secondary)
+  - Vote Option Card 디자인 시스템 적용
+  - 모바일 특화 컴포넌트 (Tab Bar, Progress Indicator)
 - [ ] **디자인 시스템 테스트**
   ```typescript
   // __tests__/design-system/Colors.test.ts
@@ -891,10 +928,27 @@
   ```
 
 ### 7.2 애니메이션 구현
+**참고 문서**: `prd/11-interaction-animation-guide.md`, `prd/14-voting-feature-spec.md`
+- [ ] **투표 선택 애니메이션** (최우선)
+  - 카드 선택 시 햅틱 피드백 + 스케일 애니메이션
+  - 선택된 카드 하이라이트 및 체크마크 표시
+  - Continue 버튼 등장 애니메이션 (spring 효과)
+- [ ] **투표 완료 애니메이션** (핵심 기능)
+  - 하트 날아가는 애니메이션 시퀀스 구현
+  - 투표 완료 오버레이 화면 (2초간 표시)
+  - 자동 결과 화면 전환
+- [ ] **Skip/Shuffle 인터랙션**
+  - 섞기 기능의 순차적 카드 애니메이션
+  - Skip 버튼 피드백 애니메이션
 - [ ] **페이지 전환 애니메이션**
-- [ ] **투표 인터랙션**
-- [ ] **로딩 애니메이션**
-- [ ] **투표 결과 애니메이션**
+  - 질문 간 카드 플립 효과
+  - 화면 간 슬라이드 & 페이드 전환
+- [ ] **로딩 및 스켈레톤 애니메이션**
+  - 투표 데이터 로딩 중 스켈레톤 UI
+  - 제출 중 로딩 스피너 애니메이션
+- [ ] **실시간 결과 애니메이션**
+  - 막대 그래프 실시간 업데이트 애니메이션
+  - 새로운 투표 시 pulse-glow 효과
 - [ ] **애니메이션 성능 테스트**
   ```typescript
   // __tests__/animations/Performance.test.ts
@@ -903,10 +957,32 @@
   - 60fps 유지 검증 테스트
   ```
 
-### 7.3 접근성 구현
-- [ ] **스크린 리더 대응**
-- [ ] **키보드 조작 지원**
-- [ ] **색상 대비도**
+### 7.3 사용자 플로우 개선
+**참고 문서**: `prd/13-user-flow-guide.md`, `prd/10-core-ux-guide.md`
+- [ ] **HomeScreen → 투표 참여 직접 연결**
+  - 현재: HomeScreen → CircleDetail → PollList → PollParticipation
+  - 개선: HomeScreen에서 [투표하기] 버튼으로 직접 진입
+- [ ] **Gas 앱 스타일 3-Tab 구조 완성**
+  - Home Tab: 진행중인 투표 목록 + 직접 투표 참여
+  - Create Tab: 질문 템플릿 선택 → 투표 생성
+  - Profile Tab: 받은 하트, 통계, Circle 관리
+- [ ] **단계별 투표 플로우 구현**
+  - 1단계: 질문 화면 (중앙 질문 + 이모지)
+  - 2단계: 선택지 선택 (4개 카드 + Skip/Shuffle)
+  - 3단계: 확인 화면 (Continue 버튼)
+  - 4단계: 제출 애니메이션 (하트 날아가기)
+  - 5단계: 결과 화면 자동 전환
+
+### 7.4 접근성 구현
+- [ ] **스크린 리더 대응** (VoiceOver, TalkBack)
+  - 투표 카드 접근성 레이블 구현
+  - 진행 상황 음성 안내
+- [ ] **터치 영역 최적화**
+  - 최소 44px 터치 타겟 보장
+  - 엄지 영역 최적화 배치
+- [ ] **색상 대비도** (WCAG 2.1 AA 기준)
+  - 선택된/비선택된 카드 구분 가능
+  - 텍스트 가독성 보장
 - [ ] **접근성 준수 테스트**
   ```typescript
   // __tests__/accessibility/A11y.test.ts
