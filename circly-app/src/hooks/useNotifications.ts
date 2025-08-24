@@ -5,20 +5,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { notificationService, NotificationData } from '../services/notifications';
+import { notificationService, NotificationData, NotificationSettings } from '../services/notifications';
 import * as Notifications from 'expo-notifications';
 
 export interface NotificationPermissionStatus {
   granted: boolean;
   canAskAgain: boolean;
   status: string;
-}
-
-export interface NotificationSettings {
-  poll_created: boolean;
-  poll_deadline: boolean;
-  poll_results: boolean;
-  circle_invites: boolean;
 }
 
 export interface UseNotificationsReturn {
@@ -62,14 +55,8 @@ export const useNotifications = (): UseNotificationsReturn => {
   // 알림 설정 조회
   const { data: settings } = useQuery({
     queryKey: [NOTIFICATION_QUERY_KEYS.settings],
-    queryFn: async (): Promise<NotificationSettings> => {
-      // TODO: API에서 사용자 알림 설정 조회
-      return {
-        poll_created: true,
-        poll_deadline: true,
-        poll_results: true,
-        circle_invites: true,
-      };
+    queryFn: async (): Promise<NotificationSettings | null> => {
+      return await notificationService.getNotificationSettings();
     },
     staleTime: 5 * 60 * 1000, // 5분
   });
@@ -136,15 +123,13 @@ export const useNotifications = (): UseNotificationsReturn => {
 
   // 설정 업데이트 뮤테이션
   const updateSettingsMutation = useMutation({
-    mutationFn: async (newSettings: NotificationSettings): Promise<NotificationSettings> => {
-      // TODO: API로 설정 업데이트
-      console.log('Updating notification settings:', newSettings);
-      
-      // 임시로 로컬 스토리지 사용
-      return newSettings;
+    mutationFn: async (newSettings: Partial<NotificationSettings>): Promise<NotificationSettings | null> => {
+      return await notificationService.updateNotificationSettings(newSettings);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData([NOTIFICATION_QUERY_KEYS.settings], data);
+      if (data) {
+        queryClient.setQueryData([NOTIFICATION_QUERY_KEYS.settings], data);
+      }
     },
     onError: (err) => {
       const errorMessage = err instanceof Error ? err.message : '설정 업데이트 실패';
@@ -236,11 +221,11 @@ export const usePollNotifications = (circleId: number) => {
   const notifications = useNotifications();
 
   // 새 투표 생성 알림
-  const notifyPollCreated = useCallback(async (pollTitle: string, pollId: number): Promise<void> => {
-    if (!notifications.settings?.poll_created) return;
+  const notifyPollCreated = useCallback(async (pollTitle: string, pollId: string): Promise<void> => {
+    if (!notifications.settings?.poll_start_notifications) return;
 
     await notifications.scheduleLocalNotification({
-      type: 'poll_created',
+      type: 'poll_start',
       poll_id: pollId,
       circle_id: circleId,
       title: '🗳️ 새로운 투표가 시작되었습니다!',
@@ -254,8 +239,8 @@ export const usePollNotifications = (circleId: number) => {
   }, [notifications, circleId]);
 
   // 투표 결과 알림
-  const notifyPollResults = useCallback(async (pollTitle: string, pollId: number): Promise<void> => {
-    if (!notifications.settings?.poll_results) return;
+  const notifyPollResults = useCallback(async (pollTitle: string, pollId: string): Promise<void> => {
+    if (!notifications.settings?.poll_result_notifications) return;
 
     await notifications.scheduleLocalNotification({
       type: 'poll_result',
@@ -274,12 +259,12 @@ export const usePollNotifications = (circleId: number) => {
   // 투표 마감 임박 알림
   const scheduleDeadlineNotification = useCallback(async (
     pollTitle: string,
-    pollId: number,
+    pollId: string,
     deadlineDate: Date
   ): Promise<string | null> => {
-    if (!notifications.settings?.poll_deadline) return null;
+    if (!notifications.settings?.poll_deadline_notifications) return null;
 
-    return await notifications.schedulePollDeadline(pollId, pollTitle, deadlineDate);
+    return await notifications.schedulePollDeadline(parseInt(pollId), pollTitle, deadlineDate);
   }, [notifications]);
 
   return {

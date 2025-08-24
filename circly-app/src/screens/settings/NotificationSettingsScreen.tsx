@@ -18,27 +18,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useNotifications, NotificationSettings } from '../../hooks/useNotifications';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationSettings } from '../../services/notifications';
 
 export const NotificationSettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const {
     permissionStatus,
-    settings,
+    notificationSettings,
     updateSettings,
     requestPermissions,
     isLoading,
     error,
   } = useNotifications();
   
-  const [localSettings, setLocalSettings] = useState<NotificationSettings>(
-    settings || {
-      poll_created: true,
-      poll_deadline: true,
-      poll_results: true,
-      circle_invites: true,
+  const [localSettings, setLocalSettings] = useState<NotificationSettings | null>(null);
+
+  React.useEffect(() => {
+    if (notificationSettings) {
+      setLocalSettings(notificationSettings);
     }
-  );
+  }, [notificationSettings]);
 
   const handleBack = () => {
     navigation.goBack();
@@ -63,11 +63,13 @@ export const NotificationSettingsScreen: React.FC = () => {
   };
 
   const handleSettingToggle = async (key: keyof NotificationSettings, value: boolean) => {
+    if (!localSettings) return;
+    
     const newSettings = { ...localSettings, [key]: value };
     setLocalSettings(newSettings);
     
     try {
-      await updateSettings(newSettings);
+      await updateSettings({ [key]: value });
     } catch (err) {
       // 실패 시 원래 상태로 되돌림
       setLocalSettings(localSettings);
@@ -169,49 +171,51 @@ export const NotificationSettingsScreen: React.FC = () => {
           <View style={styles.settingsCard}>
             <Text style={styles.sectionTitle}>투표 알림</Text>
             
-            <SettingItem
-              title="새 투표 생성"
-              description="서클에 새로운 투표가 생성되면 알림을 받습니다"
-              value={localSettings.poll_created}
-              onToggle={(value) => handleSettingToggle('poll_created', value)}
-              icon="add-circle"
-              disabled={!permissionGranted}
-            />
+            {localSettings && (
+              <>
+                <SettingItem
+                  title="전체 알림"
+                  description="모든 푸시 알림을 수신합니다"
+                  value={localSettings.all_notifications}
+                  onToggle={(value) => handleSettingToggle('all_notifications', value)}
+                  icon="notifications"
+                  disabled={!permissionGranted}
+                />
 
-            <View style={styles.separator} />
+                <View style={styles.separator} />
 
-            <SettingItem
-              title="투표 마감 알림"
-              description="참여하지 않은 투표가 곧 마감될 때 알림을 받습니다"
-              value={localSettings.poll_deadline}
-              onToggle={(value) => handleSettingToggle('poll_deadline', value)}
-              icon="time"
-              disabled={!permissionGranted}
-            />
+                <SettingItem
+                  title="새 투표 생성"
+                  description="서클에 새로운 투표가 생성되면 알림을 받습니다"
+                  value={localSettings.poll_start_notifications}
+                  onToggle={(value) => handleSettingToggle('poll_start_notifications', value)}
+                  icon="add-circle"
+                  disabled={!permissionGranted || !localSettings.all_notifications}
+                />
 
-            <View style={styles.separator} />
+                <View style={styles.separator} />
 
-            <SettingItem
-              title="투표 결과 발표"
-              description="참여한 투표의 결과가 발표되면 알림을 받습니다"
-              value={localSettings.poll_results}
-              onToggle={(value) => handleSettingToggle('poll_results', value)}
-              icon="bar-chart"
-              disabled={!permissionGranted}
-            />
-          </View>
+                <SettingItem
+                  title="투표 마감 알림"
+                  description="참여하지 않은 투표가 곧 마감될 때 알림을 받습니다"
+                  value={localSettings.poll_deadline_notifications}
+                  onToggle={(value) => handleSettingToggle('poll_deadline_notifications', value)}
+                  icon="time"
+                  disabled={!permissionGranted || !localSettings.all_notifications}
+                />
 
-          <View style={styles.settingsCard}>
-            <Text style={styles.sectionTitle}>서클 알림</Text>
-            
-            <SettingItem
-              title="서클 초대"
-              description="새로운 서클에 초대되면 알림을 받습니다"
-              value={localSettings.circle_invites}
-              onToggle={(value) => handleSettingToggle('circle_invites', value)}
-              icon="people"
-              disabled={!permissionGranted}
-            />
+                <View style={styles.separator} />
+
+                <SettingItem
+                  title="투표 결과 발표"
+                  description="참여한 투표의 결과가 발표되면 알림을 받습니다"
+                  value={localSettings.poll_result_notifications}
+                  onToggle={(value) => handleSettingToggle('poll_result_notifications', value)}
+                  icon="bar-chart"
+                  disabled={!permissionGranted || !localSettings.all_notifications}
+                />
+              </>
+            )}
           </View>
 
           {/* 도움말 */}

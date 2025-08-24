@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthNavigator from './src/navigation/AuthNavigator';
+import { notificationService } from './src/services/notifications';
 
 // React Query 클라이언트 설정
 const queryClient = new QueryClient({
@@ -17,6 +18,20 @@ const queryClient = new QueryClient({
 
 export default function App() {
   console.log('🚀 [App] Component rendering started');
+  
+  useEffect(() => {
+    // 알림 서비스 초기화
+    const initNotifications = async () => {
+      try {
+        await notificationService.initialize();
+        console.log('✅ Notification service initialized');
+      } catch (error) {
+        console.error('❌ Failed to initialize notification service:', error);
+      }
+    };
+
+    initNotifications();
+  }, []);
   
   return (
     <SafeAreaProvider>

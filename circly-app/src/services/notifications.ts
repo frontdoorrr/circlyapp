@@ -20,18 +20,30 @@ Notifications.setNotificationHandler({
 });
 
 export interface NotificationData {
-  type: 'poll_created' | 'poll_deadline' | 'poll_result' | 'circle_invite' | 'vote_reminder';
-  poll_id?: number;
+  type: 'poll_start' | 'poll_deadline' | 'poll_result';
+  poll_id?: string;
   circle_id?: number;
   title: string;
   body: string;
   data?: Record<string, any>;
 }
 
-export interface PushToken {
-  token: string;
-  platform: 'ios' | 'android' | 'web';
-  device_id: string;
+export interface PushTokenCreate {
+  expo_token: string;
+  device_id?: string;
+  platform?: 'ios' | 'android';
+}
+
+export interface NotificationSettings {
+  id: string;
+  all_notifications: boolean;
+  poll_start_notifications: boolean;
+  poll_deadline_notifications: boolean;
+  poll_result_notifications: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  max_daily_notifications: number;
+  updated_at: string;
 }
 
 class NotificationService {
@@ -141,13 +153,13 @@ class NotificationService {
 
     try {
       const deviceId = await this.getDeviceId();
-      const tokenData: PushToken = {
-        token: this.expoPushToken,
+      const tokenData: PushTokenCreate = {
+        expo_token: this.expoPushToken,
         platform: Platform.OS as 'ios' | 'android',
         device_id: deviceId,
       };
 
-      const response = await apiClient.post('/v1/notifications/register-token', tokenData);
+      const response = await apiClient.post('/v1/notifications/push-tokens', tokenData);
       
       if (response.error) {
         throw new Error(response.error);
@@ -340,6 +352,34 @@ class NotificationService {
    */
   getPushToken(): string | null {
     return this.expoPushToken;
+  }
+
+  /**
+   * 알림 설정 조회
+   */
+  async getNotificationSettings(): Promise<NotificationSettings | null> {
+    try {
+      const response = await apiClient.get('/v1/notifications/settings');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get notification settings:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 알림 설정 업데이트
+   */
+  async updateNotificationSettings(
+    settings: Partial<NotificationSettings>
+  ): Promise<NotificationSettings | null> {
+    try {
+      const response = await apiClient.put('/v1/notifications/settings', settings);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update notification settings:', error);
+      return null;
+    }
   }
 
   /**
