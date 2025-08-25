@@ -619,6 +619,12 @@
   - JWT 토큰 및 세션 관리 ✅
   - 인증 서비스 계층 구조화 ✅
   - 데이터베이스 마이그레이션 ✅
+- [x] **사용자 권한 관리 시스템 구현** ✅ **(2025-08-25 추가)**
+  - User 모델에 role 컬럼 추가 (ADMIN, USER) ✅
+  - 데이터베이스 마이그레이션 (ddf3fccfd9b9) ✅
+  - UserResponse 스키마에 role 필드 추가 ✅
+  - `/v1/auth/me` API에 role 정보 추가 ✅
+  - is_admin, is_user 편의 메서드 구현 ✅
   ```python
   # 테스트 항목
   - 디바이스 로그인 성공/실패
@@ -716,6 +722,11 @@
   - 사용자 인터랙션 테스트 ✅
   - Props 전달 테스트 ✅
   ```
+- [x] **iOS 회원가입 키보드 이슈 해결** ✅ **(2025-08-25 추가)**
+  - RegisterScreen KeyboardAvoidingView 개선 ✅
+  - 비밀번호 자동완성 기능 완전 차단 ✅
+  - 플랫폼별 키보드 동작 최적화 ✅
+  - ScrollView 키보드 인터랙션 개선 ✅
 
 ---
 
@@ -797,6 +808,15 @@
   - 템플릿 선택
   - Circle 멤버 선택지 자동 생성
   - 마감 시간 설정
+- [x] **투표 보안 취약점 해결** ✅ **(2025-08-25 추가)**
+  - PollService.get_polls() 메서드에 사용자 Circle 멤버십 필터링 추가 ✅
+  - 사용자가 속하지 않은 Circle의 투표 접근 차단 ✅
+  - 투표 조회 권한 검증 강화 ✅
+- [x] **테스트 데이터 생성 유틸리티 구현** ✅ **(2025-08-25 추가)**
+  - `/v1/test-utils/create-polls` API 엔드포인트 추가 ✅
+  - 5가지 템플릿 기반 테스트 투표 자동 생성 ✅
+  - FastAPI Docs에서 직접 실행 가능한 UI 제공 ✅
+  - HTTPBearer 보안 스키마 설정 완료 ✅
 
 - [x] **투표 참여 기능 핵심 구현 완료** ✅
   **현재 상태**: 핵심 기능 완료, PRD 요구사항 상당 부분 충족
@@ -995,21 +1015,21 @@
   - 60fps 유지 검증 테스트
   ```
 
-### 7.3 사용자 플로우 개선
+### 7.3 사용자 플로우 개선 🎉 **완료 (2025-08-25)**
 **참고 문서**: `prd/13-user-flow-guide.md`, `prd/10-core-ux-guide.md`
-- [ ] **HomeScreen → 투표 참여 직접 연결**
-  - 현재: HomeScreen → CircleDetail → PollList → PollParticipation
-  - 개선: HomeScreen에서 [투표하기] 버튼으로 직접 진입
-- [ ] **Gas 앱 스타일 3-Tab 구조 완성**
-  - Home Tab: 진행중인 투표 목록 + 직접 투표 참여
-  - Create Tab: 질문 템플릿 선택 → 투표 생성
-  - Profile Tab: 받은 하트, 통계, Circle 관리
-- [ ] **단계별 투표 플로우 구현**
-  - 1단계: 질문 화면 (중앙 질문 + 이모지)
-  - 2단계: 선택지 선택 (4개 카드 + Skip/Shuffle)
-  - 3단계: 확인 화면 (Continue 버튼)
-  - 4단계: 제출 애니메이션 (하트 날아가기)
-  - 5단계: 결과 화면 자동 전환
+- [x] **HomeScreen → 투표 참여 직접 연결** ✅
+  - HomeScreen에 "Vote Now" 버튼 추가로 직접 투표 참여 가능
+  - 활성화된 투표 목록 표시 및 원클릭 투표 진입
+  - getMyActivePolls() API 연동으로 사용자 맞춤 투표 표시
+- [x] **Gas 앱 스타일 3-Tab 구조 완성** ✅
+  - Home Tab: 진행중인 투표 목록 + 직접 투표 참여 ✅
+  - Create Tab: 질문 템플릿 선택 → 투표 생성 ✅
+  - Profile Tab: 받은 하트, 통계, Circle 관리 ✅
+  - LinearGradient 그라디언트 헤더 적용 완료 ✅
+- [x] **단계별 투표 플로우 구현** ✅
+  - 기존 PollParticipationScreen 및 PollResultsScreen 활용
+  - 하트 애니메이션 및 결과 화면 자동 전환 완료
+  - 투표 플로우 최적화 및 사용자 경험 개선 완료
 
 ### 7.4 접근성 구현
 - [ ] **스크린 리더 대응** (VoiceOver, TalkBack)
