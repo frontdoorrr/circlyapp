@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../store';
+// import { useAuthStore } from '../../store';
 import { authApi } from '../../services/api';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -143,7 +143,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         Alert.alert(
           '회원가입 성공!',
           '이메일 인증을 위해 메일함을 확인해주세요.',
-          [{ text: '확인', onPress: () => navigation.navigate('EmailLogin') }]
+          [{ text: '확인', onPress: () => navigation.navigate('Login') }]
         );
       }
     } catch (err: any) {
@@ -172,15 +172,18 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+        enabled={true}
       >
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
+          keyboardDismissMode="on-drag"
+          bounces={false}
+          scrollEnabled={true}
         >
         <Animated.View 
           style={[
@@ -240,9 +243,10 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
-            passwordRules=""
+            autoComplete="new-password"
+            textContentType="newPassword"
+            passwordRules="minlength: 8;"
+            importantForAutofill="no"
           />
 
           {passwordStrength && (
@@ -279,9 +283,10 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
-            passwordRules=""
+            autoComplete="new-password"
+            textContentType="newPassword"
+            passwordRules="minlength: 8;"
+            importantForAutofill="no"
           />
 
           {error && (
@@ -299,7 +304,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
           <TouchableOpacity 
             style={styles.loginLink}
-            onPress={() => navigation.navigate('EmailLogin')}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={styles.loginLinkText}>
               이미 계정이 있으신가요? 로그인하기
@@ -327,7 +332,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 40,
-    paddingBottom: 120, // 충분하지만 과하지 않은 공간
+    paddingBottom: Platform.OS === 'ios' ? 200 : 120, // iOS에서 키보드 공간 확보
   },
   header: {
     alignItems: 'center',

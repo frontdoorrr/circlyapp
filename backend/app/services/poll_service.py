@@ -115,7 +115,7 @@ class PollService:
         limit: int = 20,
         offset: int = 0
     ) -> Tuple[List[Poll], int]:
-        """투표 목록 조회"""
+        """투표 목록 조회 - 사용자가 속한 Circle의 투표만 반환"""
         
         query = select(Poll).options(
             selectinload(Poll.options),
@@ -128,6 +128,12 @@ class PollService:
         
         if circle_id:
             conditions.append(Poll.circle_id == circle_id)
+        elif user_id:
+            # circle_id가 없으면 사용자가 속한 모든 Circle의 투표만 조회
+            user_circles_subquery = select(CircleMember.circle_id).where(
+                CircleMember.user_id == user_id
+            )
+            conditions.append(Poll.circle_id.in_(user_circles_subquery))
             
         if status == 'active':
             conditions.append(Poll.deadline > datetime.now(ZoneInfo("UTC")))
