@@ -153,6 +153,7 @@ class ExtendedUserResponse(BaseModel):
     email: Optional[str]
     email_verified: bool
     account_type: str
+    role: str
     is_active: bool
     created_at: datetime
     last_login_at: Optional[datetime]

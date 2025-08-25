@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     display_name: Optional[str]
     profile_emoji: str
     is_active: bool
+    role: str
     created_at: datetime
 
     class Config:

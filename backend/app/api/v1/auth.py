@@ -432,6 +432,7 @@ async def get_current_user_info(
         "email": current_user.email,
         "email_verified": current_user.email_verified or False,
         "account_type": current_user.account_type or "device",
+        "role": current_user.role or "USER",
         "is_active": current_user.is_active,
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
         "last_login_at": current_user.last_login_at.isoformat() if current_user.last_login_at else None,
