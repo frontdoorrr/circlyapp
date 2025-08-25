@@ -1,6 +1,10 @@
 import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { RootStackParamList } from '../types';
+import { tokens } from '../styles/tokens';
 
 // Import navigators and screens
 import TabNavigator from './TabNavigator';
@@ -16,6 +20,35 @@ import { PollResultsScreen } from '../screens/poll/PollResultsScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+// 커스텀 그라데이션 헤더 컴포넌트 (뒤로가기 버튼 포함)
+const GradientStackHeader = ({ 
+  title, 
+  canGoBack, 
+  onGoBack 
+}: { 
+  title: string; 
+  canGoBack?: boolean; 
+  onGoBack?: () => void; 
+}) => {
+  return (
+    <LinearGradient
+      colors={tokens.gradients.primary}
+      style={styles.gradientHeader}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <View style={styles.headerContent}>
+        {canGoBack && (
+          <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>{title}</Text>
+      </View>
+    </LinearGradient>
+  );
+};
+
 export default function AppNavigator() {
   console.log('🏠 [AppNavigator] Component rendering started');
   
@@ -23,13 +56,13 @@ export default function AppNavigator() {
     <Stack.Navigator
       initialRouteName="Main"
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#007AFF',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        header: ({ navigation, route, options }) => (
+          <GradientStackHeader
+            title={options.title || route.name}
+            canGoBack={navigation.canGoBack()}
+            onGoBack={navigation.goBack}
+          />
+        ),
       }}
     >
       <Stack.Screen 
@@ -117,3 +150,27 @@ export default function AppNavigator() {
 
 // Import ProfileScreen (will be imported from Tab as well)
 import ProfileScreen from '../screens/profile/ProfileScreen';
+
+const styles = StyleSheet.create({
+  gradientHeader: {
+    height: Platform.OS === 'ios' ? 100 : 80, // Status bar + header height
+    paddingTop: Platform.OS === 'ios' ? 44 : (StatusBar.currentHeight || 0) + 12,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'flex-end',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginRight: 16,
+    padding: 4,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+});
