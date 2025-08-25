@@ -36,6 +36,7 @@ export interface PollResponse {
   id: string; // UUID
   question_text: string; // 백엔드의 question_text
   circle_id: number;
+  circle_name?: string; // Circle 이름 (선택적)
   creator_id: number;
   template_id?: string;
   deadline: string; // 백엔드의 deadline

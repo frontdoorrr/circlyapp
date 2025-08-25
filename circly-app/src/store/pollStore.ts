@@ -11,6 +11,7 @@ interface PollStore extends PollState {
   // Actions
   createPoll: (pollData: PollCreate) => Promise<PollResponse | null>;
   getCirclePolls: (circleId: number) => Promise<void>;
+  getMyActivePolls: () => Promise<void>;
   getPoll: (pollId: number) => Promise<void>;
   votePoll: (pollId: number, voteData: VoteCreate) => Promise<void>;
   refreshPoll: (pollId: number) => Promise<void>;
@@ -72,6 +73,24 @@ export const usePollStore = create<PollStore>((set, get) => ({
       set({
         loading: false,
         error: error.message || 'Failed to load polls',
+      });
+    }
+  },
+
+  getMyActivePolls: async () => {
+    try {
+      set({ loading: true, error: null });
+      
+      const polls = await pollApi.getMyActivePolls();
+      
+      set({
+        polls,
+        loading: false,
+      });
+    } catch (error: any) {
+      set({
+        loading: false,
+        error: error.message || 'Failed to load active polls',
       });
     }
   },
