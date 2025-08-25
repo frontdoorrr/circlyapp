@@ -10,8 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useCircleStore } from '../../store';
-import { RootStackParamList, CircleResponse } from '../../types';
+import { useCircleStore, usePollStore } from '../../store';
+import { RootStackParamList, CircleResponse, PollResponse } from '../../types';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Button from '../../components/common/Button';
 
@@ -19,14 +19,16 @@ type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { circles, loading, error, getMyCircles } = useCircleStore();
+  const { circles, loading: circlesLoading, error: circlesError, getMyCircles } = useCircleStore();
+  const { polls: activePolls, loading: pollsLoading, error: pollsError, getMyActivePolls } = usePollStore();
 
   useEffect(() => {
-    loadCircles();
+    loadData();
   }, []);
 
-  const loadCircles = () => {
+  const loadData = () => {
     getMyCircles();
+    getMyActivePolls();
   };
 
   const handleCreateCircle = () => {
@@ -39,6 +41,60 @@ export default function HomeScreen() {
 
   const handleCirclePress = (circle: CircleResponse) => {
     navigation.navigate('CircleDetail', { circleId: circle.id });
+  };
+
+  const handleVoteNow = (poll: PollResponse) => {
+    const circle = circles.find(c => c.id === poll.circle_id);
+    const circleName = circle?.name || 'Unknown Circle';
+    
+    navigation.navigate('PollParticipation', { 
+      pollId: poll.id, 
+      circleId: poll.circle_id, 
+      circleName 
+    });
+  };
+
+  const renderActivePollItem = ({ item }: { item: PollResponse }) => {
+    // Find circle name from circles list
+    const circle = circles.find(c => c.id === item.circle_id);
+    const circleName = circle?.name || 'Unknown Circle';
+    
+    return (
+      <View style={styles.pollCard}>
+        <View style={styles.pollHeader}>
+          <View style={styles.pollTitleContainer}>
+            <Text style={styles.pollTitle} numberOfLines={2}>
+              {item.question_text}
+            </Text>
+            <Text style={styles.pollCircle}>in {circleName}</Text>
+          </View>
+          <Button
+            title="Vote Now"
+            onPress={() => handleVoteNow(item)}
+            size="small"
+            style={styles.voteButton}
+          />
+        </View>
+        
+        <View style={styles.pollFooter}>
+          <View style={styles.pollInfo}>
+            <Ionicons name="people" size={16} color="#666" />
+            <Text style={styles.pollInfoText}>
+              {item.total_votes || 0} votes
+            </Text>
+          </View>
+          <View style={styles.pollInfo}>
+            <Ionicons name="time" size={16} color="#666" />
+            <Text style={styles.pollInfoText}>
+              {item.deadline ? 
+                `Ends ${new Date(item.deadline).toLocaleDateString()}` : 
+                'No deadline'
+              }
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   const renderCircleItem = ({ item }: { item: CircleResponse }) => (
@@ -91,10 +147,13 @@ export default function HomeScreen() {
     </View>
   );
 
-  if (loading && circles.length === 0) {
+  const loading = circlesLoading || pollsLoading;
+  const error = circlesError || pollsError;
+
+  if (loading && circles.length === 0 && activePolls.length === 0) {
     return (
       <View style={styles.container}>
-        <LoadingSpinner text="Loading circles..." />
+        <LoadingSpinner text="Loading..." />
       </View>
     );
   }
@@ -122,7 +181,7 @@ export default function HomeScreen() {
           <Text style={styles.errorText}>{error}</Text>
           <Button
             title="Retry"
-            onPress={loadCircles}
+            onPress={loadData}
             size="small"
             variant="outline"
           />
@@ -130,15 +189,49 @@ export default function HomeScreen() {
       )}
 
       <FlatList
-        data={circles}
-        renderItem={renderCircleItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={circles.length === 0 ? styles.emptyContainer : styles.listContainer}
-        ListEmptyComponent={!loading ? renderEmptyState : null}
+        data={[]}
+        renderItem={() => null}
+        keyExtractor={() => 'placeholder'}
+        contentContainerStyle={styles.scrollContainer}
+        ListHeaderComponent={
+          <View>
+            {/* Active Polls Section */}
+            {activePolls.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>🗳️ Active Polls</Text>
+                  <Text style={styles.sectionSubtitle}>Vote now!</Text>
+                </View>
+                {activePolls.map((poll, index) => (
+                  <View key={`poll-${poll.id}`} style={{ marginBottom: index < activePolls.length - 1 ? 12 : 0 }}>
+                    {renderActivePollItem({ item: poll })}
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {/* My Circles Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>👥 My Circles</Text>
+                <Text style={styles.sectionSubtitle}>{circles.length} circle{circles.length !== 1 ? 's' : ''}</Text>
+              </View>
+              {circles.length > 0 ? (
+                circles.map((circle, index) => (
+                  <View key={`circle-${circle.id}`} style={{ marginBottom: index < circles.length - 1 ? 12 : 0 }}>
+                    {renderCircleItem({ item: circle })}
+                  </View>
+                ))
+              ) : (
+                renderEmptyState()
+              )}
+            </View>
+          </View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={loading}
-            onRefresh={loadCircles}
+            onRefresh={loadData}
             tintColor="#007AFF"
           />
         }
@@ -174,6 +267,79 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
     textAlign: 'center',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  pollCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
+  },
+  pollHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  pollTitleContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  pollTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  pollCircle: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  voteButton: {
+    minWidth: 80,
+  },
+  pollFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pollInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pollInfoText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
   },
   listContainer: {
     padding: 16,

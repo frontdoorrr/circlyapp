@@ -25,12 +25,17 @@ async def create_poll(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """새 투표 생성 - 관리자 전용"""
-    # 사용자는 투표 생성 불가
-    raise HTTPException(
-        status_code=403, 
-        detail="투표 생성은 관리자만 가능합니다. 현재 사용자는 투표에 참여만 할 수 있습니다."
-    )
+    """새 투표 생성 - 현재 개발용으로 모든 사용자 허용"""
+    try:
+        service = PollService(db)
+        poll = await service.create_poll(poll_data, current_user.id)
+        return PollResponse.model_validate(poll.to_dict())
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"🚀 [create_poll] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"투표 생성에 실패했습니다: {str(e)}")
 
 @router.get("/", response_model=PollListResponse)
 async def get_polls(

@@ -166,4 +166,26 @@ export const pollApi = {
       throw new Error(response.error);
     }
   },
+
+  /**
+   * Get all active polls for user's circles (for home screen)
+   */
+  async getMyActivePolls(): Promise<PollResponse[]> {
+    const url = `/v1/polls/?status=active`;
+    console.log('🏠 [pollApi.getMyActivePolls] Making request to:', url);
+    
+    const response = await apiClient.get<PollListResponse>(url);
+    console.log('📥 [pollApi.getMyActivePolls] Response:', { 
+      error: response.error, 
+      pollsLength: response.data?.polls?.length,
+      total: response.data?.total 
+    });
+    
+    if (response.error) {
+      console.error('🚨 [pollApi.getMyActivePolls] API Error:', response.error);
+      throw new Error(response.error);
+    }
+    
+    return response.data?.polls || [];
+  },
 };
