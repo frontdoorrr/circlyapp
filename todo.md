@@ -2,6 +2,7 @@
 
 > TDD 기반 백엔드 개발 진행 순서
 > 각 작업 완료 후 테스트 실행 및 `/commit` 커맨드로 커밋
+> 각 작업 완료 후, 작업에 완료 표시 [x]
 
 ---
 
@@ -10,14 +11,14 @@
 > **참고 문서**: `trd/07-development-deployment-setup.md`
 
 ### 1.1 프로젝트 초기화
-- [ ] `backend/` 디렉토리 생성
-- [ ] `uv init` 실행
-- [ ] `pyproject.toml` 작성 (의존성 정의) → `trd/07-development-deployment-setup.md#1.2`
-- [ ] `uv sync` 의존성 설치
-- [ ] `.env.example` 파일 생성 → `trd/07-development-deployment-setup.md#4.1`
-- [ ] `.gitignore` 설정
-- [ ] **테스트**: `uv run python --version` 확인
-- [ ] **커밋**: `chore: initialize backend project with uv`
+- [x] `backend/` 디렉토리 생성
+- [x] `uv init` 실행
+- [x] `pyproject.toml` 작성 (의존성 정의) → `trd/07-development-deployment-setup.md#1.2`
+- [x] `uv sync` 의존성 설치
+- [x] `.env.example` 파일 생성 → `trd/07-development-deployment-setup.md#4.1`
+- [x] `.gitignore` 설정
+- [x] **테스트**: `uv run python --version` 확인
+- [x] **커밋**: `chore: initialize backend project with uv`
 
 ### 1.2 FastAPI 기본 구조 생성
 - [ ] `app/__init__.py` 생성
