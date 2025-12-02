@@ -37,10 +37,10 @@
 - [x] **커밋**: `feat: add core module with database and security utilities`
 
 ### 1.4 Docker 개발 환경
-- [ ] `Dockerfile` 작성 → `trd/07-development-deployment-setup.md#1.5`
-- [ ] `docker-compose.yml` 작성 (PostgreSQL, Redis) → `trd/07-development-deployment-setup.md#1.4`
-- [ ] **테스트**: `docker-compose up -d db redis` 실행 확인
-- [ ] **커밋**: `chore: add Docker development environment`
+- [x] `Dockerfile` 작성 → `trd/07-development-deployment-setup.md#1.5`
+- [x] `docker-compose.yml` 작성 (PostgreSQL, Redis) → `trd/07-development-deployment-setup.md#1.4`
+- [x] **테스트**: `docker-compose up -d db redis` 실행 확인
+- [x] **커밋**: `chore: add Docker development environment`
 
 ---
 
