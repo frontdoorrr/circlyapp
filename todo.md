@@ -56,11 +56,11 @@
 - [x] **커밋**: `test: setup pytest configuration`
 
 ### 2.2 테스트 DB 설정
-- [ ] `tests/conftest.py` - 테스트용 DB fixture
-- [ ] `tests/conftest.py` - 테스트용 FastAPI client fixture
-- [ ] `tests/conftest.py` - 테스트용 async session fixture
-- [ ] **테스트**: `uv run pytest tests/ -v` 빈 테스트 실행
-- [ ] **커밋**: `test: add test database and client fixtures`
+- [x] `tests/conftest.py` - 테스트용 DB fixture
+- [x] `tests/conftest.py` - 테스트용 FastAPI client fixture
+- [x] `tests/conftest.py` - 테스트용 async session fixture
+- [x] **테스트**: `uv run pytest tests/ -v` 빈 테스트 실행
+- [x] **커밋**: `test: add test database and client fixtures`
 
 ---
 
