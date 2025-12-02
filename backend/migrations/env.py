@@ -12,8 +12,7 @@ from app.config import get_settings
 from app.core.database import Base
 
 # Import all models here to ensure they are registered with Base.metadata
-# This will be populated as we create models
-# from app.modules.auth.models import User
+from app.modules.auth.models import User  # noqa: F401
 # from app.modules.circles.models import Circle, CircleMember
 # from app.modules.polls.models import Poll, PollTemplate, Vote, PollResult
 # from app.modules.notifications.models import Notification
