@@ -49,11 +49,11 @@
 > **참고 문서**: `trd/07-development-deployment-setup.md`, `docs/DSL.md#8`
 
 ### 2.1 pytest 기본 설정
-- [ ] `tests/__init__.py` 생성
-- [ ] `tests/conftest.py` - 공통 fixture 설정 → `docs/DSL.md#8`
-- [ ] pytest 설정 (`pyproject.toml`에 추가) → `trd/07-development-deployment-setup.md#1.2`
-- [ ] **테스트**: `uv run pytest --version` 확인
-- [ ] **커밋**: `test: setup pytest configuration`
+- [x] `tests/__init__.py` 생성
+- [x] `tests/conftest.py` - 공통 fixture 설정 → `docs/DSL.md#8`
+- [x] pytest 설정 (`pyproject.toml`에 추가) → `trd/07-development-deployment-setup.md#1.2`
+- [x] **테스트**: `uv run pytest --version` 확인
+- [x] **커밋**: `test: setup pytest configuration`
 
 ### 2.2 테스트 DB 설정
 - [ ] `tests/conftest.py` - 테스트용 DB fixture
