@@ -106,9 +106,12 @@ uv run uvicorn app.main:app --reload
 
 # 테스트 실행
 uv run pytest
+uv run pytest tests/modules/auth/ -v          # 모듈별 테스트
+uv run pytest tests/test_file.py::test_name   # 단일 테스트
 
 # 마이그레이션
 uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "description"
 
 # 린트/포맷
 uv run ruff check .
@@ -119,6 +122,27 @@ uv run mypy .
 ```
 
 **주의**: `python`, `pip` 대신 항상 `uv run` 접두어를 사용하세요.
+
+## Frontend Development
+
+프론트엔드는 Expo (React Native) 기반입니다:
+
+```bash
+# 개발 서버 실행
+npx expo start
+
+# iOS 시뮬레이터
+npx expo start --ios
+
+# Android 에뮬레이터
+npx expo start --android
+
+# 린트
+npm run lint
+
+# 타입 체크
+npm run typecheck
+```
 
 ## Custom Commands
 
