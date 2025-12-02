@@ -29,12 +29,12 @@
 - [x] **커밋**: `feat: create FastAPI application skeleton`
 
 ### 1.3 Core 모듈 구조 생성
-- [ ] `app/core/__init__.py`
-- [ ] `app/core/database.py` - SQLAlchemy async 설정 → `trd/07-development-deployment-setup.md#1.1`
-- [ ] `app/core/security.py` - JWT, 비밀번호 해싱 유틸 → `trd/06-authentication-architecture.md`, `docs/DSL.md#10`
-- [ ] `app/core/exceptions.py` - 커스텀 예외 클래스 → `docs/DSL.md#9`
-- [ ] `app/core/responses.py` - 표준 응답 포맷 → `docs/DSL.md#9`
-- [ ] **커밋**: `feat: add core module with database and security utilities`
+- [x] `app/core/__init__.py`
+- [x] `app/core/database.py` - SQLAlchemy async 설정 → `trd/07-development-deployment-setup.md#1.1`
+- [x] `app/core/security.py` - JWT, 비밀번호 해싱 유틸 → `trd/06-authentication-architecture.md`, `docs/DSL.md#10`
+- [x] `app/core/exceptions.py` - 커스텀 예외 클래스 → `docs/DSL.md#9`
+- [x] `app/core/responses.py` - 표준 응답 포맷 → `docs/DSL.md#9`
+- [x] **커밋**: `feat: add core module with database and security utilities`
 
 ### 1.4 Docker 개발 환경
 - [ ] `Dockerfile` 작성 → `trd/07-development-deployment-setup.md#1.5`
