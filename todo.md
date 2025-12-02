@@ -69,11 +69,11 @@
 > **참고 문서**: `docs/DSL.md#2` (데이터베이스 스키마)
 
 ### 3.1 Alembic 설정
-- [ ] `alembic init migrations` 실행
-- [ ] `alembic.ini` 설정
-- [ ] `migrations/env.py` async 설정
-- [ ] **테스트**: `uv run alembic --help` 확인
-- [ ] **커밋**: `chore: setup Alembic for database migrations`
+- [x] `alembic init migrations` 실행
+- [x] `alembic.ini` 설정
+- [x] `migrations/env.py` async 설정
+- [x] **테스트**: `uv run alembic --help` 확인
+- [x] **커밋**: `chore: setup Alembic for database migrations`
 
 ### 3.2 Enum 타입 정의
 - [ ] `app/core/enums.py` - UserRole enum → `docs/DSL.md#2 (enum 정의)`
