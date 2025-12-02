@@ -85,8 +85,8 @@
 - [x] **커밋**: `feat: define database enum types`
 
 ### 3.3 Base 모델 정의
-- [ ] `app/core/models.py` - Base, TimestampMixin 정의
-- [ ] **커밋**: `feat: add SQLAlchemy base model and mixins`
+- [x] `app/core/models.py` - Base, TimestampMixin 정의
+- [x] **커밋**: `feat: add SQLAlchemy base model and mixins`
 
 ### 3.4 Users 모델
 - [ ] `app/modules/auth/__init__.py`
