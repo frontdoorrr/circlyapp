@@ -21,12 +21,12 @@
 - [x] **커밋**: `chore: initialize backend project with uv`
 
 ### 1.2 FastAPI 기본 구조 생성
-- [ ] `app/__init__.py` 생성
-- [ ] `app/main.py` - FastAPI 앱 팩토리 생성 → `docs/DSL.md#6`
-- [ ] `app/config.py` - Pydantic Settings 설정
-- [ ] `app/deps.py` - 공통 의존성
-- [ ] **테스트**: `uv run uvicorn app.main:app --reload` 서버 실행 확인
-- [ ] **커밋**: `feat: create FastAPI application skeleton`
+- [x] `app/__init__.py` 생성
+- [x] `app/main.py` - FastAPI 앱 팩토리 생성 → `docs/DSL.md#6`
+- [x] `app/config.py` - Pydantic Settings 설정
+- [x] `app/deps.py` - 공통 의존성
+- [x] **테스트**: `uv run uvicorn app.main:app --reload` 서버 실행 확인
+- [x] **커밋**: `feat: create FastAPI application skeleton`
 
 ### 1.3 Core 모듈 구조 생성
 - [ ] `app/core/__init__.py`
