@@ -76,13 +76,13 @@
 - [x] **커밋**: `chore: setup Alembic for database migrations`
 
 ### 3.2 Enum 타입 정의
-- [ ] `app/core/enums.py` - UserRole enum → `docs/DSL.md#2 (enum 정의)`
-- [ ] `app/core/enums.py` - MemberRole enum → `docs/DSL.md#2 (member_role)`
-- [ ] `app/core/enums.py` - PollStatus enum → `docs/DSL.md#2 (poll_status)`
-- [ ] `app/core/enums.py` - TemplateCategory enum → `docs/DSL.md#2 (template_category)`
-- [ ] `app/core/enums.py` - NotificationType enum → `docs/DSL.md#2 (notification_type)`
-- [ ] `app/core/enums.py` - ReportStatus, ReportReason enum → `docs/DSL.md#2 (report_*)`
-- [ ] **커밋**: `feat: define database enum types`
+- [x] `app/core/enums.py` - UserRole enum → `docs/DSL.md#2 (enum 정의)`
+- [x] `app/core/enums.py` - MemberRole enum → `docs/DSL.md#2 (member_role)`
+- [x] `app/core/enums.py` - PollStatus enum → `docs/DSL.md#2 (poll_status)`
+- [x] `app/core/enums.py` - TemplateCategory enum → `docs/DSL.md#2 (template_category)`
+- [x] `app/core/enums.py` - NotificationType enum → `docs/DSL.md#2 (notification_type)`
+- [x] `app/core/enums.py` - ReportStatus, ReportReason enum → `docs/DSL.md#2 (report_*)`
+- [x] **커밋**: `feat: define database enum types`
 
 ### 3.3 Base 모델 정의
 - [ ] `app/core/models.py` - Base, TimestampMixin 정의
