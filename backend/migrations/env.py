@@ -24,7 +24,8 @@ config = context.config
 
 # Get settings and set the database URL
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Escape % for configparser interpolation (% → %%)
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

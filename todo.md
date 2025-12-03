@@ -89,11 +89,11 @@
 - [x] **커밋**: `feat: add SQLAlchemy base model and mixins`
 
 ### 3.4 Users 모델
-- [ ] `app/modules/auth/__init__.py`
-- [ ] `app/modules/auth/models.py` - User 모델 → `docs/DSL.md#2 (users 테이블)`
-- [ ] **마이그레이션**: `uv run alembic revision --autogenerate -m "create users table"`
-- [ ] **테스트**: `uv run alembic upgrade head`
-- [ ] **커밋**: `feat(auth): add User model and migration`
+- [x] `app/modules/auth/__init__.py`
+- [x] `app/modules/auth/models.py` - User 모델 → `docs/DSL.md#2 (users 테이블)`
+- [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create users table"`
+- [x] **테스트**: `uv run alembic upgrade head`
+- [x] **커밋**: `feat(auth): add User model and migration`
 
 ### 3.5 Circles 모델
 - [ ] `app/modules/circles/__init__.py`
