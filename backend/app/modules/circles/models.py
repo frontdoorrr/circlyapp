@@ -94,6 +94,11 @@ class Circle(BaseModel):
         back_populates="circle",
         cascade="all, delete-orphan",
     )
+    polls: Mapped[list["Poll"]] = relationship(  # noqa: F821
+        "Poll",
+        back_populates="circle",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<Circle(id={self.id}, name={self.name}, invite_code={self.invite_code})>"

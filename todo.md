@@ -104,14 +104,14 @@
 - [x] **커밋**: `feat(circles): add Circle and CircleMember models`
 
 ### 3.6 Polls 모델
-- [ ] `app/modules/polls/__init__.py`
-- [ ] `app/modules/polls/models.py` - PollTemplate 모델 → `docs/DSL.md#2 (poll_templates 테이블)`
-- [ ] `app/modules/polls/models.py` - Poll 모델 → `docs/DSL.md#2 (polls 테이블)`
-- [ ] `app/modules/polls/models.py` - Vote 모델 → `docs/DSL.md#2 (votes 테이블)`
-- [ ] `app/modules/polls/models.py` - PollResult 모델 → `docs/DSL.md#2 (poll_results 테이블)`
-- [ ] **마이그레이션**: `uv run alembic revision --autogenerate -m "create polls tables"`
-- [ ] **테스트**: `uv run alembic upgrade head`
-- [ ] **커밋**: `feat(polls): add Poll, PollTemplate, Vote models`
+- [x] `app/modules/polls/__init__.py`
+- [x] `app/modules/polls/models.py` - PollTemplate 모델 → `docs/DSL.md#2 (poll_templates 테이블)`
+- [x] `app/modules/polls/models.py` - Poll 모델 → `docs/DSL.md#2 (polls 테이블)`
+- [x] `app/modules/polls/models.py` - Vote 모델 → `docs/DSL.md#2 (votes 테이블)`
+- [x] `app/modules/polls/models.py` - PollResult 모델 → `docs/DSL.md#2 (poll_results 테이블)`
+- [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create polls tables"`
+- [x] **테스트**: `uv run alembic upgrade head`
+- [x] **커밋**: `feat(polls): add Poll, PollTemplate, Vote models`
 
 ### 3.7 Notifications 모델
 - [ ] `app/modules/notifications/__init__.py`

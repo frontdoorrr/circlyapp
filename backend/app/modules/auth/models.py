@@ -11,6 +11,7 @@ from app.core.models import BaseModel
 
 if TYPE_CHECKING:
     from app.modules.circles.models import Circle, CircleMember
+    from app.modules.polls.models import Poll, PollResult, Vote
 
 
 class User(BaseModel):
@@ -85,8 +86,18 @@ class User(BaseModel):
         "CircleMember",
         back_populates="user",
     )
-    # created_polls: list["Poll"] - defined in polls module
-    # votes_received: list["Vote"] - defined in polls module
+    created_polls: Mapped[list["Poll"]] = relationship(
+        "Poll",
+        back_populates="creator",
+    )
+    votes_received: Mapped[list["Vote"]] = relationship(
+        "Vote",
+        back_populates="voted_for",
+    )
+    poll_results: Mapped[list["PollResult"]] = relationship(
+        "PollResult",
+        back_populates="user",
+    )
     # notifications: list["Notification"] - defined in notifications module
 
     def __repr__(self) -> str:
