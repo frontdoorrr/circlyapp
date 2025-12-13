@@ -134,12 +134,12 @@
 > **참고 문서**: `trd/06-authentication-architecture.md`, `trd/00-interface-specifications.md`, `docs/DSL.md#3.1`, `trd/05-api-specification.md`
 
 ### 4.1 Auth Schemas
-- [ ] `app/modules/auth/schemas.py` - UserCreate schema → `docs/DSL.md#3.1 (UserCreate)`
-- [ ] `app/modules/auth/schemas.py` - UserResponse schema → `docs/DSL.md#3.1 (User)`
-- [ ] `app/modules/auth/schemas.py` - UserUpdate schema → `docs/DSL.md#3.1 (UserUpdate)`
-- [ ] `app/modules/auth/schemas.py` - TokenResponse schema → `docs/DSL.md#3.1 (TokenResponse)`
-- [ ] `app/modules/auth/schemas.py` - LoginRequest schema → `trd/00-interface-specifications.md`
-- [ ] **커밋**: `feat(auth): add Pydantic schemas`
+- [x] `app/modules/auth/schemas.py` - UserCreate schema → `docs/DSL.md#3.1 (UserCreate)`
+- [x] `app/modules/auth/schemas.py` - UserResponse schema → `docs/DSL.md#3.1 (User)`
+- [x] `app/modules/auth/schemas.py` - UserUpdate schema → `docs/DSL.md#3.1 (UserUpdate)`
+- [x] `app/modules/auth/schemas.py` - TokenResponse schema → `docs/DSL.md#3.1 (TokenResponse)`
+- [x] `app/modules/auth/schemas.py` - LoginRequest schema → `trd/00-interface-specifications.md`
+- [x] **커밋**: `feat(auth): add Pydantic schemas`
 
 ### 4.2 Auth Repository (TDD)
 - [ ] `tests/modules/auth/test_repository.py` - create user 테스트 작성
