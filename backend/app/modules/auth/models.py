@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.modules.circles.models import Circle, CircleMember
     from app.modules.notifications.models import Notification
     from app.modules.polls.models import Poll, PollResult, Vote
+    from app.modules.reports.models import Report
 
 
 class User(BaseModel):
@@ -103,6 +104,16 @@ class User(BaseModel):
         "Notification",
         back_populates="user",
         cascade="all, delete-orphan",
+    )
+    reports_submitted: Mapped[list["Report"]] = relationship(
+        "Report",
+        foreign_keys="Report.reporter_id",
+        back_populates="reporter",
+    )
+    reports_reviewed: Mapped[list["Report"]] = relationship(
+        "Report",
+        foreign_keys="Report.reviewed_by",
+        back_populates="reviewer",
     )
 
     def __repr__(self) -> str:

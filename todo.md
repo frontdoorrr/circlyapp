@@ -121,11 +121,11 @@
 - [x] **커밋**: `feat(notifications): add Notification models`
 
 ### 3.8 Reports 모델
-- [ ] `app/modules/reports/__init__.py`
-- [ ] `app/modules/reports/models.py` - Report 모델 → `docs/DSL.md#2 (reports)`
-- [ ] **마이그레이션**: `uv run alembic revision --autogenerate -m "create reports table"`
-- [ ] **테스트**: `uv run alembic upgrade head`
-- [ ] **커밋**: `feat(reports): add Report model`
+- [x] `app/modules/reports/__init__.py`
+- [x] `app/modules/reports/models.py` - Report 모델 → `docs/DSL.md#2 (reports)`
+- [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create reports table"`
+- [x] **테스트**: `uv run alembic upgrade head`
+- [x] **커밋**: `feat(reports): add Report model`
 
 ---
 

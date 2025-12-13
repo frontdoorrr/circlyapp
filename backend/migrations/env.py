@@ -16,7 +16,7 @@ from app.modules.auth.models import User  # noqa: F401
 from app.modules.circles.models import Circle, CircleMember  # noqa: F401
 from app.modules.notifications.models import Notification  # noqa: F401
 from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
-# from app.modules.reports.models import Report
+from app.modules.reports.models import Report  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
