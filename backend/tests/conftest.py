@@ -1,7 +1,6 @@
 """Pytest configuration and fixtures."""
 
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from typing import Any
 
 import pytest
@@ -13,20 +12,19 @@ from app.config import Settings
 from app.core.database import Base
 from app.main import create_app
 
+# Import all models to register them with Base.metadata
+from app.modules.auth.models import User  # noqa: F401
+from app.modules.circles.models import Circle, CircleMember  # noqa: F401
+from app.modules.notifications.models import Notification  # noqa: F401
+from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
+from app.modules.reports.models import Report  # noqa: F401
+
 
 # Test database URL (use a separate test database)
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/circly_test"
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an event loop for the test session."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 def test_settings() -> Settings:
     """Create test settings."""
     return Settings(
@@ -37,7 +35,7 @@ def test_settings() -> Settings:
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def test_engine(test_settings: Settings) -> AsyncGenerator[Any, None]:
     """Create test database engine."""
     engine = create_async_engine(

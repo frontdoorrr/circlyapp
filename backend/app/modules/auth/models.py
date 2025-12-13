@@ -45,10 +45,10 @@ class User(BaseModel):
         String(255),
         nullable=False,
     )
-    username: Mapped[str] = mapped_column(
+    username: Mapped[str | None] = mapped_column(
         String(50),
         unique=True,
-        nullable=False,
+        nullable=True,
         index=True,
     )
     display_name: Mapped[str | None] = mapped_column(
@@ -62,7 +62,7 @@ class User(BaseModel):
         server_default="😊",
     )
     role: Mapped[UserRole] = mapped_column(
-        ENUM(UserRole, name="user_role", create_type=False),
+        ENUM(UserRole, name="user_role", create_type=True),
         nullable=False,
         default=UserRole.USER,
         server_default=UserRole.USER.value,

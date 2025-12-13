@@ -36,7 +36,7 @@ class Report(UUIDMixin, Base):
         index=True,
     )
     target_type: Mapped[ReportTargetType] = mapped_column(
-        ENUM(ReportTargetType, name="report_target_type", create_type=False),
+        ENUM(ReportTargetType, name="report_target_type", create_type=True),
         nullable=False,
     )
     target_id: Mapped[uuid.UUID] = mapped_column(
@@ -45,7 +45,7 @@ class Report(UUIDMixin, Base):
         index=True,
     )
     reason: Mapped[ReportReason] = mapped_column(
-        ENUM(ReportReason, name="report_reason", create_type=False),
+        ENUM(ReportReason, name="report_reason", create_type=True),
         nullable=False,
     )
     description: Mapped[str | None] = mapped_column(
@@ -53,7 +53,7 @@ class Report(UUIDMixin, Base):
         nullable=True,
     )
     status: Mapped[ReportStatus] = mapped_column(
-        ENUM(ReportStatus, name="report_status", create_type=False),
+        ENUM(ReportStatus, name="report_status", create_type=True),
         nullable=False,
         default=ReportStatus.PENDING,
         server_default=ReportStatus.PENDING.value,

@@ -147,7 +147,7 @@ class CircleMember(BaseModel):
         index=True,
     )
     role: Mapped[MemberRole] = mapped_column(
-        ENUM(MemberRole, name="member_role", create_type=False),
+        ENUM(MemberRole, name="member_role", create_type=True),
         nullable=False,
         default=MemberRole.MEMBER,
         server_default=MemberRole.MEMBER.value,

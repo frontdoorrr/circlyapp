@@ -36,7 +36,7 @@ class Notification(UUIDMixin, Base):
         index=True,
     )
     type: Mapped[NotificationType] = mapped_column(
-        ENUM(NotificationType, name="notification_type", create_type=False),
+        ENUM(NotificationType, name="notification_type", create_type=True),
         nullable=False,
     )
     title: Mapped[str] = mapped_column(

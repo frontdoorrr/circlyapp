@@ -38,7 +38,7 @@ class PollTemplate(UUIDMixin, Base):
     __tablename__ = "poll_templates"
 
     category: Mapped[TemplateCategory] = mapped_column(
-        ENUM(TemplateCategory, name="template_category", create_type=False),
+        ENUM(TemplateCategory, name="template_category", create_type=True),
         nullable=False,
     )
     question_text: Mapped[str] = mapped_column(
@@ -118,7 +118,7 @@ class Poll(BaseModel):
         nullable=False,
     )
     status: Mapped[PollStatus] = mapped_column(
-        ENUM(PollStatus, name="poll_status", create_type=False),
+        ENUM(PollStatus, name="poll_status", create_type=True),
         nullable=False,
         default=PollStatus.ACTIVE,
         server_default=PollStatus.ACTIVE.value,
