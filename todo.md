@@ -96,12 +96,12 @@
 - [x] **커밋**: `feat(auth): add User model and migration`
 
 ### 3.5 Circles 모델
-- [ ] `app/modules/circles/__init__.py`
-- [ ] `app/modules/circles/models.py` - Circle 모델 → `docs/DSL.md#2 (circles 테이블)`
-- [ ] `app/modules/circles/models.py` - CircleMember 모델 → `docs/DSL.md#2 (circle_members 테이블)`
-- [ ] **마이그레이션**: `uv run alembic revision --autogenerate -m "create circles tables"`
-- [ ] **테스트**: `uv run alembic upgrade head`
-- [ ] **커밋**: `feat(circles): add Circle and CircleMember models`
+- [x] `app/modules/circles/__init__.py`
+- [x] `app/modules/circles/models.py` - Circle 모델 → `docs/DSL.md#2 (circles 테이블)`
+- [x] `app/modules/circles/models.py` - CircleMember 모델 → `docs/DSL.md#2 (circle_members 테이블)`
+- [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create circles tables"`
+- [x] **테스트**: `uv run alembic upgrade head`
+- [x] **커밋**: `feat(circles): add Circle and CircleMember models`
 
 ### 3.6 Polls 모델
 - [ ] `app/modules/polls/__init__.py`

@@ -1,11 +1,16 @@
 """User model for authentication module."""
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, String, Text
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import UserRole
 from app.core.models import BaseModel
+
+if TYPE_CHECKING:
+    from app.modules.circles.models import Circle, CircleMember
 
 
 class User(BaseModel):
@@ -70,12 +75,19 @@ class User(BaseModel):
         nullable=True,
     )
 
-    # Relationships (defined later to avoid circular imports)
-    # owned_circles: list["Circle"]
-    # memberships: list["CircleMember"]
-    # created_polls: list["Poll"]
-    # votes_received: list["Vote"]
-    # notifications: list["Notification"]
+    # Relationships
+    owned_circles: Mapped[list["Circle"]] = relationship(
+        "Circle",
+        back_populates="owner",
+        foreign_keys="Circle.owner_id",
+    )
+    memberships: Mapped[list["CircleMember"]] = relationship(
+        "CircleMember",
+        back_populates="user",
+    )
+    # created_polls: list["Poll"] - defined in polls module
+    # votes_received: list["Vote"] - defined in polls module
+    # notifications: list["Notification"] - defined in notifications module
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email}, username={self.username})>"
