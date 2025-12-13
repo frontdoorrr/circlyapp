@@ -14,8 +14,8 @@ from app.core.database import Base
 # Import all models here to ensure they are registered with Base.metadata
 from app.modules.auth.models import User  # noqa: F401
 from app.modules.circles.models import Circle, CircleMember  # noqa: F401
+from app.modules.notifications.models import Notification  # noqa: F401
 from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
-# from app.modules.notifications.models import Notification
 # from app.modules.reports.models import Report
 
 # this is the Alembic Config object, which provides

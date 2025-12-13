@@ -114,11 +114,11 @@
 - [x] **커밋**: `feat(polls): add Poll, PollTemplate, Vote models`
 
 ### 3.7 Notifications 모델
-- [ ] `app/modules/notifications/__init__.py`
-- [ ] `app/modules/notifications/models.py` - Notification 모델 → `docs/DSL.md#2 (notifications 테이블)`
-- [ ] **마이그레이션**: `uv run alembic revision --autogenerate -m "create notifications tables"`
-- [ ] **테스트**: `uv run alembic upgrade head`
-- [ ] **커밋**: `feat(notifications): add Notification models`
+- [x] `app/modules/notifications/__init__.py`
+- [x] `app/modules/notifications/models.py` - Notification 모델 → `docs/DSL.md#2 (notifications 테이블)`
+- [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create notifications tables"`
+- [x] **테스트**: `uv run alembic upgrade head`
+- [x] **커밋**: `feat(notifications): add Notification models`
 
 ### 3.8 Reports 모델
 - [ ] `app/modules/reports/__init__.py`

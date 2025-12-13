@@ -11,6 +11,7 @@ from app.core.models import BaseModel
 
 if TYPE_CHECKING:
     from app.modules.circles.models import Circle, CircleMember
+    from app.modules.notifications.models import Notification
     from app.modules.polls.models import Poll, PollResult, Vote
 
 
@@ -98,7 +99,11 @@ class User(BaseModel):
         "PollResult",
         back_populates="user",
     )
-    # notifications: list["Notification"] - defined in notifications module
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email}, username={self.username})>"
