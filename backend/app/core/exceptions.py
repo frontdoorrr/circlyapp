@@ -73,6 +73,10 @@ class AuthenticationError(CirclyError):
         )
 
 
+# Alias for consistency
+UnauthorizedException = AuthenticationError
+
+
 class AuthorizationError(CirclyError):
     """Authorization failed error."""
 
@@ -96,6 +100,22 @@ class ValidationError(CirclyError):
             code="VALIDATION_ERROR",
             message=message,
             status_code=422,
+            details=details,
+        )
+
+
+class BadRequestException(CirclyError):
+    """Bad request error."""
+
+    def __init__(
+        self,
+        message: str = "잘못된 요청입니다",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code="BAD_REQUEST",
+            message=message,
+            status_code=400,
             details=details,
         )
 
