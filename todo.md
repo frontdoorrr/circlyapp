@@ -205,96 +205,96 @@
 > **참고 문서**: `docs/DSL.md#3.2`, `trd/00-interface-specifications.md`, `trd/05-api-specification.md`
 
 ### 5.1 Circle Schemas
-- [ ] `app/modules/circles/schemas.py` - CircleCreate schema → `docs/DSL.md#3.2 (CircleCreate)`
-- [ ] `app/modules/circles/schemas.py` - CircleResponse schema → `docs/DSL.md#3.2 (Circle)`
-- [ ] `app/modules/circles/schemas.py` - CircleUpdate schema → `docs/DSL.md#3.2 (CircleUpdate)`
-- [ ] `app/modules/circles/schemas.py` - CircleDetail schema → `docs/DSL.md#3.2 (CircleDetail)`
-- [ ] `app/modules/circles/schemas.py` - MemberInfo schema → `docs/DSL.md#3.2 (MemberInfo)`
-- [ ] `app/modules/circles/schemas.py` - JoinByCodeRequest schema
-- [ ] **커밋**: `feat(circles): add Pydantic schemas`
+- [x] `app/modules/circles/schemas.py` - CircleCreate schema → `docs/DSL.md#3.2 (CircleCreate)`
+- [x] `app/modules/circles/schemas.py` - CircleResponse schema → `docs/DSL.md#3.2 (Circle)`
+- [x] `app/modules/circles/schemas.py` - CircleUpdate schema → `docs/DSL.md#3.2 (CircleUpdate)`
+- [x] `app/modules/circles/schemas.py` - CircleDetail schema → `docs/DSL.md#3.2 (CircleDetail)`
+- [x] `app/modules/circles/schemas.py` - MemberInfo schema → `docs/DSL.md#3.2 (MemberInfo)`
+- [x] `app/modules/circles/schemas.py` - JoinByCodeRequest schema
+- [x] **커밋**: `feat(circles): add Pydantic schemas`
 
 ### 5.2 Circle Repository (TDD)
-- [ ] `tests/modules/circles/test_repository.py` - create circle 테스트 작성
-- [ ] `app/modules/circles/repository.py` - CircleRepository.create 구현 → `docs/DSL.md#3.2 (CircleRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
+- [x] `tests/modules/circles/test_repository.py` - create circle 테스트 작성
+- [x] `app/modules/circles/repository.py` - CircleRepository.create 구현 → `docs/DSL.md#3.2 (CircleRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
 
-- [ ] `tests/modules/circles/test_repository.py` - find by invite_code 테스트 작성
-- [ ] `app/modules/circles/repository.py` - CircleRepository.find_by_invite_code 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
+- [x] `tests/modules/circles/test_repository.py` - find by invite_code 테스트 작성
+- [x] `app/modules/circles/repository.py` - CircleRepository.find_by_invite_code 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
 
-- [ ] `tests/modules/circles/test_repository.py` - find by user_id 테스트 작성
-- [ ] `app/modules/circles/repository.py` - CircleRepository.find_by_user_id 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
-- [ ] **커밋**: `feat(circles): implement CircleRepository with tests`
+- [x] `tests/modules/circles/test_repository.py` - find by user_id 테스트 작성
+- [x] `app/modules/circles/repository.py` - CircleRepository.find_by_user_id 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
+- [x] **커밋**: `feat(circles): implement CircleRepository with tests`
 
 ### 5.3 Membership Repository (TDD)
-- [ ] `tests/modules/circles/test_membership_repository.py` - create membership 테스트 작성
-- [ ] `app/modules/circles/repository.py` - MembershipRepository.create 구현 → `docs/DSL.md#3.2 (MembershipRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
+- [x] `tests/modules/circles/test_membership_repository.py` - create membership 테스트 작성
+- [x] `app/modules/circles/repository.py` - MembershipRepository.create 구현 → `docs/DSL.md#3.2 (MembershipRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
 
-- [ ] `tests/modules/circles/test_membership_repository.py` - find members 테스트 작성
-- [ ] `app/modules/circles/repository.py` - MembershipRepository.find_by_circle_id 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
+- [x] `tests/modules/circles/test_membership_repository.py` - find members 테스트 작성
+- [x] `app/modules/circles/repository.py` - MembershipRepository.find_by_circle_id 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
 
-- [ ] `tests/modules/circles/test_membership_repository.py` - check membership 테스트 작성
-- [ ] `app/modules/circles/repository.py` - MembershipRepository.exists 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
-- [ ] **커밋**: `feat(circles): implement MembershipRepository with tests`
+- [x] `tests/modules/circles/test_membership_repository.py` - check membership 테스트 작성
+- [x] `app/modules/circles/repository.py` - MembershipRepository.exists 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
+- [x] **커밋**: `feat(circles): implement MembershipRepository with tests`
 
 ### 5.4 Circle Service (TDD)
-- [ ] `tests/modules/circles/test_service.py` - create_circle 테스트 작성
-- [ ] `app/modules/circles/service.py` - CircleService.create_circle 구현 → `docs/DSL.md#3.2 (CircleService)`
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] `tests/modules/circles/test_service.py` - create_circle 테스트 작성
+- [x] `app/modules/circles/service.py` - CircleService.create_circle 구현 → `docs/DSL.md#3.2 (CircleService)`
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
 
-- [ ] `tests/modules/circles/test_service.py` - join_by_code 테스트 작성 → `docs/DSL.md#5 (JoinCircleFlow)`
-- [ ] `app/modules/circles/service.py` - CircleService.join_by_code 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] `tests/modules/circles/test_service.py` - join_by_code 테스트 작성 → `docs/DSL.md#5 (JoinCircleFlow)`
+- [x] `app/modules/circles/service.py` - CircleService.join_by_code 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
 
-- [ ] `tests/modules/circles/test_service.py` - get_user_circles 테스트 작성
-- [ ] `app/modules/circles/service.py` - CircleService.get_user_circles 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] `tests/modules/circles/test_service.py` - get_user_circles 테스트 작성
+- [x] `app/modules/circles/service.py` - CircleService.get_user_circles 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
 
-- [ ] `tests/modules/circles/test_service.py` - get_circle_detail 테스트 작성
-- [ ] `app/modules/circles/service.py` - CircleService.get_circle_detail 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] `tests/modules/circles/test_service.py` - get_circle_detail 테스트 작성
+- [x] `app/modules/circles/service.py` - CircleService.get_circle_detail 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
 
-- [ ] `tests/modules/circles/test_service.py` - leave_circle 테스트 작성
-- [ ] `app/modules/circles/service.py` - CircleService.leave_circle 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] `tests/modules/circles/test_service.py` - leave_circle 테스트 작성
+- [x] `app/modules/circles/service.py` - CircleService.leave_circle 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
 
-- [ ] `tests/modules/circles/test_service.py` - regenerate_invite_code 테스트 작성
-- [ ] `app/modules/circles/service.py` - CircleService.regenerate_invite_code 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
-- [ ] **커밋**: `feat(circles): implement CircleService with tests`
+- [x] `tests/modules/circles/test_service.py` - regenerate_invite_code 테스트 작성
+- [x] `app/modules/circles/service.py` - CircleService.regenerate_invite_code 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+- [x] **커밋**: `feat(circles): implement CircleService with tests`
 
 ### 5.5 Circle Router (TDD)
-- [ ] `tests/modules/circles/test_router.py` - POST /circles 테스트 작성
-- [ ] `app/modules/circles/router.py` - create_circle endpoint 구현 → `docs/DSL.md#3.2 (CircleRouter)`, `trd/05-api-specification.md`
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - POST /circles 테스트 작성
+- [x] `app/modules/circles/router.py` - create_circle endpoint 구현 → `docs/DSL.md#3.2 (CircleRouter)`, `trd/05-api-specification.md`
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `tests/modules/circles/test_router.py` - GET /circles 테스트 작성
-- [ ] `app/modules/circles/router.py` - get_circles endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - GET /circles 테스트 작성
+- [x] `app/modules/circles/router.py` - get_circles endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `tests/modules/circles/test_router.py` - GET /circles/{id} 테스트 작성
-- [ ] `app/modules/circles/router.py` - get_circle endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - GET /circles/{id} 테스트 작성
+- [x] `app/modules/circles/router.py` - get_circle endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `tests/modules/circles/test_router.py` - POST /circles/join/code 테스트 작성
-- [ ] `app/modules/circles/router.py` - join_by_code endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - POST /circles/join/code 테스트 작성
+- [x] `app/modules/circles/router.py` - join_by_code endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `tests/modules/circles/test_router.py` - POST /circles/{id}/leave 테스트 작성
-- [ ] `app/modules/circles/router.py` - leave_circle endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - POST /circles/{id}/leave 테스트 작성
+- [x] `app/modules/circles/router.py` - leave_circle endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `tests/modules/circles/test_router.py` - GET /circles/{id}/members 테스트 작성
-- [ ] `app/modules/circles/router.py` - get_members endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+- [x] `tests/modules/circles/test_router.py` - GET /circles/{id}/members 테스트 작성
+- [x] `app/modules/circles/router.py` - get_members endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
-- [ ] `app/main.py` - circles router 등록
-- [ ] **테스트**: 전체 Circle 모듈 테스트 `uv run pytest tests/modules/circles/ -v`
-- [ ] **커밋**: `feat(circles): implement Circle API endpoints with tests`
+- [x] `app/main.py` - circles router 등록
+- [x] **테스트**: 전체 Circle 모듈 테스트 `uv run pytest tests/modules/circles/ -v`
+- [x] **커밋**: `feat(circles): implement Circle API endpoints with tests`
 
 ---
 
