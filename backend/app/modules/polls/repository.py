@@ -6,8 +6,10 @@ from datetime import datetime, timedelta
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy import func
+
 from app.core.enums import PollStatus, TemplateCategory
-from app.modules.polls.models import Poll, PollTemplate
+from app.modules.polls.models import Poll, PollTemplate, Vote
 
 
 class TemplateRepository:
@@ -195,3 +197,88 @@ class PollRepository:
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+
+class VoteRepository:
+    """Repository for Vote model."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize repository with database session."""
+        self.session = session
+
+    async def create(
+        self, poll_id: uuid.UUID, voter_hash: str, voted_for_id: uuid.UUID
+    ) -> Vote:
+        """Create a new vote.
+
+        Args:
+            poll_id: Poll UUID
+            voter_hash: SHA-256 hash of voter
+            voted_for_id: User UUID being voted for
+
+        Returns:
+            Created Vote instance
+        """
+        vote = Vote(
+            poll_id=poll_id, voter_hash=voter_hash, voted_for_id=voted_for_id
+        )
+        self.session.add(vote)
+        await self.session.commit()
+        await self.session.refresh(vote)
+        return vote
+
+    async def exists_by_voter_hash(
+        self, poll_id: uuid.UUID, voter_hash: str
+    ) -> bool:
+        """Check if vote exists by voter hash.
+
+        Args:
+            poll_id: Poll UUID
+            voter_hash: Voter hash to check
+
+        Returns:
+            True if vote exists, False otherwise
+        """
+        result = await self.session.execute(
+            select(Vote).where(
+                Vote.poll_id == poll_id, Vote.voter_hash == voter_hash
+            )
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def count_by_poll_id(self, poll_id: uuid.UUID) -> int:
+        """Count votes for a poll.
+
+        Args:
+            poll_id: Poll UUID
+
+        Returns:
+            Number of votes
+        """
+        result = await self.session.execute(
+            select(func.count()).select_from(Vote).where(Vote.poll_id == poll_id)
+        )
+        return result.scalar() or 0
+
+    async def get_results_by_poll_id(
+        self, poll_id: uuid.UUID
+    ) -> list[dict[str, int]]:
+        """Get vote results for a poll.
+
+        Args:
+            poll_id: Poll UUID
+
+        Returns:
+            List of vote results with user_id and vote_count
+        """
+        result = await self.session.execute(
+            select(Vote.voted_for_id, func.count(Vote.id).label("vote_count"))
+            .where(Vote.poll_id == poll_id)
+            .group_by(Vote.voted_for_id)
+            .order_by(func.count(Vote.id).desc())
+        )
+
+        return [
+            {"user_id": row.voted_for_id, "vote_count": row.vote_count}
+            for row in result.all()
+        ]
