@@ -3,10 +3,12 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.core.exceptions import CirclyError
 
 
 @asynccontextmanager
@@ -46,6 +48,22 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Exception handlers
+    @app.exception_handler(CirclyError)
+    async def circly_error_handler(request: Request, exc: CirclyError) -> JSONResponse:
+        """Handle CirclyError exceptions and return JSON response."""
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "success": False,
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    **exc.details,
+                },
+            },
+        )
+
     # Health check endpoint
     @app.get("/health", tags=["Health"])
     async def health_check() -> dict[str, str]:
@@ -57,6 +75,11 @@ def create_app() -> FastAPI:
     async def root() -> dict[str, str]:
         """Root endpoint."""
         return {"message": "Welcome to Circly API", "docs": "/docs"}
+
+    # Register routers
+    from app.modules.auth.router import router as auth_router
+
+    app.include_router(auth_router)
 
     return app
 

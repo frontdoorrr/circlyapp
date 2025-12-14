@@ -72,9 +72,32 @@ async def db_session(test_engine: Any) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-def app() -> FastAPI:
-    """Create test FastAPI application."""
-    return create_app()
+def app(test_engine: Any) -> FastAPI:
+    """Create test FastAPI application with dependency overrides."""
+    from app.deps import get_db
+
+    test_app = create_app()
+
+    # Override database dependency to use test database
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        async_session_maker_test = async_sessionmaker(
+            test_engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=False,
+        )
+        async with async_session_maker_test() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+
+    test_app.dependency_overrides[get_db] = override_get_db
+
+    return test_app
 
 
 @pytest.fixture
