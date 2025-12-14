@@ -178,25 +178,25 @@
 - [x] **커밋**: `feat(auth): implement AuthService with tests`
 
 ### 4.4 Auth Router (TDD)
-- [ ] `tests/modules/auth/test_router.py` - POST /register 테스트 작성
-- [ ] `app/modules/auth/router.py` - register endpoint 구현 → `docs/DSL.md#3.1 (AuthRouter)`, `trd/05-api-specification.md`
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+- [x] `tests/modules/auth/test_router.py` - POST /register 테스트 작성
+- [x] `app/modules/auth/router.py` - register endpoint 구현 → `docs/DSL.md#3.1 (AuthRouter)`, `trd/05-api-specification.md`
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
 
-- [ ] `tests/modules/auth/test_router.py` - POST /login 테스트 작성
-- [ ] `app/modules/auth/router.py` - login endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+- [x] `tests/modules/auth/test_router.py` - POST /login 테스트 작성
+- [x] `app/modules/auth/router.py` - login endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
 
-- [ ] `tests/modules/auth/test_router.py` - GET /me 테스트 작성
-- [ ] `app/modules/auth/router.py` - get_me endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+- [x] `tests/modules/auth/test_router.py` - GET /me 테스트 작성
+- [x] `app/modules/auth/router.py` - get_me endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
 
-- [ ] `tests/modules/auth/test_router.py` - PUT /me 테스트 작성
-- [ ] `app/modules/auth/router.py` - update_me endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+- [x] `tests/modules/auth/test_router.py` - PUT /me 테스트 작성
+- [x] `app/modules/auth/router.py` - update_me endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
 
-- [ ] `app/main.py` - auth router 등록
-- [ ] **테스트**: 전체 Auth 모듈 테스트 `uv run pytest tests/modules/auth/ -v`
-- [ ] **커밋**: `feat(auth): implement Auth API endpoints with tests`
+- [x] `app/main.py` - auth router 등록
+- [x] **테스트**: 전체 Auth 모듈 테스트 `uv run pytest tests/modules/auth/ -v`
+- [x] **커밋**: `feat(auth): implement Auth API endpoints with tests`
 
 ---
 
