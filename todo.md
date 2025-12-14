@@ -142,40 +142,40 @@
 - [x] **커밋**: `feat(auth): add Pydantic schemas`
 
 ### 4.2 Auth Repository (TDD)
-- [ ] `tests/modules/auth/test_repository.py` - create user 테스트 작성
-- [ ] `app/modules/auth/repository.py` - UserRepository.create 구현 → `docs/DSL.md#3.1 (UserRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
+- [x] `tests/modules/auth/test_repository.py` - create user 테스트 작성
+- [x] `app/modules/auth/repository.py` - UserRepository.create 구현 → `docs/DSL.md#3.1 (UserRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
-- [ ] `tests/modules/auth/test_repository.py` - find by email 테스트 작성
-- [ ] `app/modules/auth/repository.py` - UserRepository.find_by_email 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
+- [x] `tests/modules/auth/test_repository.py` - find by email 테스트 작성
+- [x] `app/modules/auth/repository.py` - UserRepository.find_by_email 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
-- [ ] `tests/modules/auth/test_repository.py` - find by id 테스트 작성
-- [ ] `app/modules/auth/repository.py` - UserRepository.find_by_id 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
+- [x] `tests/modules/auth/test_repository.py` - find by id 테스트 작성
+- [x] `app/modules/auth/repository.py` - UserRepository.find_by_id 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
-- [ ] `tests/modules/auth/test_repository.py` - update user 테스트 작성
-- [ ] `app/modules/auth/repository.py` - UserRepository.update 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
-- [ ] **커밋**: `feat(auth): implement UserRepository with tests`
+- [x] `tests/modules/auth/test_repository.py` - update user 테스트 작성
+- [x] `app/modules/auth/repository.py` - UserRepository.update 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
+- [x] **커밋**: `feat(auth): implement UserRepository with tests`
 
 ### 4.3 Auth Service (TDD)
-- [ ] `tests/modules/auth/test_service.py` - register 테스트 작성
-- [ ] `app/modules/auth/service.py` - AuthService.register 구현 → `docs/DSL.md#3.1 (AuthService)`
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+- [x] `tests/modules/auth/test_service.py` - register 테스트 작성
+- [x] `app/modules/auth/service.py` - AuthService.register 구현 → `docs/DSL.md#3.1 (AuthService)`
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
 
-- [ ] `tests/modules/auth/test_service.py` - login 테스트 작성
-- [ ] `app/modules/auth/service.py` - AuthService.login 구현 → `trd/06-authentication-architecture.md`
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+- [x] `tests/modules/auth/test_service.py` - login 테스트 작성
+- [x] `app/modules/auth/service.py` - AuthService.login 구현 → `trd/06-authentication-architecture.md`
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
 
-- [ ] `tests/modules/auth/test_service.py` - get_current_user 테스트 작성
-- [ ] `app/modules/auth/service.py` - AuthService.get_current_user 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+- [x] `tests/modules/auth/test_service.py` - get_current_user 테스트 작성
+- [x] `app/modules/auth/service.py` - AuthService.get_current_user 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
 
-- [ ] `tests/modules/auth/test_service.py` - update_profile 테스트 작성
-- [ ] `app/modules/auth/service.py` - AuthService.update_profile 구현
-- [ ] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
-- [ ] **커밋**: `feat(auth): implement AuthService with tests`
+- [x] `tests/modules/auth/test_service.py` - update_profile 테스트 작성
+- [x] `app/modules/auth/service.py` - AuthService.update_profile 구현
+- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+- [x] **커밋**: `feat(auth): implement AuthService with tests`
 
 ### 4.4 Auth Router (TDD)
 - [ ] `tests/modules/auth/test_router.py` - POST /register 테스트 작성
