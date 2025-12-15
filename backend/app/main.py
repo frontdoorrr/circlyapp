@@ -79,9 +79,11 @@ def create_app() -> FastAPI:
     # Register routers
     from app.modules.auth.router import router as auth_router
     from app.modules.circles.router import router as circles_router
+    from app.modules.polls.router import router as polls_router
 
     app.include_router(auth_router)
     app.include_router(circles_router)
+    app.include_router(polls_router)
 
     return app
 
