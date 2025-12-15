@@ -414,55 +414,55 @@
 > **참고 문서**: `docs/DSL.md#3.4`, `trd/05-api-specification.md`
 
 ### 7.1 Notification Schemas
-- [ ] `app/modules/notifications/schemas.py` - NotificationResponse schema → `docs/DSL.md#3.4 (Notification)`
-- [ ] `app/modules/notifications/schemas.py` - NotificationSettingsResponse schema
-- [ ] `app/modules/notifications/schemas.py` - NotificationSettingsUpdate schema
-- [ ] **커밋**: `feat(notifications): add Pydantic schemas`
+- [x] `app/modules/notifications/schemas.py` - NotificationResponse schema → `docs/DSL.md#3.4 (Notification)`
+- [x] `app/modules/notifications/schemas.py` - NotificationSettingsResponse schema
+- [x] `app/modules/notifications/schemas.py` - NotificationSettingsUpdate schema
+- [x] **커밋**: `feat(notifications): add Pydantic schemas`
 
 ### 7.2 Notification Repository (TDD)
-- [ ] `tests/modules/notifications/test_repository.py` - create notification 테스트 작성
-- [ ] `app/modules/notifications/repository.py` - NotificationRepository.create 구현 → `docs/DSL.md#3.4 (NotificationRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
+- [x] `tests/modules/notifications/test_repository.py` - create notification 테스트 작성
+- [x] `app/modules/notifications/repository.py` - NotificationRepository.create 구현 → `docs/DSL.md#3.4 (NotificationRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
 
-- [ ] `tests/modules/notifications/test_repository.py` - find by user_id 테스트 작성
-- [ ] `app/modules/notifications/repository.py` - NotificationRepository.find_by_user_id 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
+- [x] `tests/modules/notifications/test_repository.py` - find by user_id 테스트 작성
+- [x] `app/modules/notifications/repository.py` - NotificationRepository.find_by_user_id 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
 
-- [ ] `tests/modules/notifications/test_repository.py` - mark as read 테스트 작성
-- [ ] `app/modules/notifications/repository.py` - NotificationRepository.mark_as_read 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
-- [ ] **커밋**: `feat(notifications): implement NotificationRepository with tests`
+- [x] `tests/modules/notifications/test_repository.py` - mark as read 테스트 작성
+- [x] `app/modules/notifications/repository.py` - NotificationRepository.mark_as_read 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_repository.py -v`
+- [x] **커밋**: `feat(notifications): implement NotificationRepository with tests`
 
 ### 7.3 Notification Service (TDD)
-- [ ] `tests/modules/notifications/test_service.py` - send_poll_started 테스트 작성
-- [ ] `app/modules/notifications/service.py` - NotificationService.send_poll_started 구현 → `docs/DSL.md#3.4 (NotificationService)`
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
+- [x] `tests/modules/notifications/test_service.py` - send_poll_started 테스트 작성
+- [x] `app/modules/notifications/service.py` - NotificationService.send_poll_started 구현 → `docs/DSL.md#3.4 (NotificationService)`
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
 
-- [ ] `tests/modules/notifications/test_service.py` - send_vote_received 테스트 작성
-- [ ] `app/modules/notifications/service.py` - NotificationService.send_vote_received 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
+- [x] `tests/modules/notifications/test_service.py` - send_vote_received 테스트 작성
+- [x] `app/modules/notifications/service.py` - NotificationService.send_vote_received 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
 
-- [ ] `tests/modules/notifications/test_service.py` - get_notifications 테스트 작성
-- [ ] `app/modules/notifications/service.py` - NotificationService.get_notifications 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
-- [ ] **커밋**: `feat(notifications): implement NotificationService with tests`
+- [x] `tests/modules/notifications/test_service.py` - get_notifications 테스트 작성
+- [x] `app/modules/notifications/service.py` - NotificationService.get_notifications 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
+- [x] **커밋**: `feat(notifications): implement NotificationService with tests`
 
 ### 7.4 Notification Router (TDD)
-- [ ] `tests/modules/notifications/test_router.py` - GET /notifications 테스트 작성
-- [ ] `app/modules/notifications/router.py` - get_notifications endpoint 구현 → `docs/DSL.md#3.4 (NotificationRouter)`, `trd/05-api-specification.md`
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+- [x] `tests/modules/notifications/test_router.py` - GET /notifications 테스트 작성
+- [x] `app/modules/notifications/router.py` - get_notifications endpoint 구현 → `docs/DSL.md#3.4 (NotificationRouter)`, `trd/05-api-specification.md`
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
 
-- [ ] `tests/modules/notifications/test_router.py` - PUT /notifications/{id}/read 테스트 작성
-- [ ] `app/modules/notifications/router.py` - mark_as_read endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+- [x] `tests/modules/notifications/test_router.py` - PUT /notifications/{id}/read 테스트 작성
+- [x] `app/modules/notifications/router.py` - mark_as_read endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
 
-- [ ] `tests/modules/notifications/test_router.py` - GET /notifications/unread-count 테스트 작성
-- [ ] `app/modules/notifications/router.py` - get_unread_count endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+- [x] `tests/modules/notifications/test_router.py` - GET /notifications/unread-count 테스트 작성
+- [x] `app/modules/notifications/router.py` - get_unread_count endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
 
-- [ ] `app/main.py` - notifications router 등록
-- [ ] **테스트**: 전체 Notification 모듈 테스트 `uv run pytest tests/modules/notifications/ -v`
-- [ ] **커밋**: `feat(notifications): implement Notification API endpoints with tests`
+- [x] `app/main.py` - notifications router 등록
+- [x] **테스트**: 전체 Notification 모듈 테스트 `uv run pytest tests/modules/notifications/ -v`
+- [x] **커밋**: `feat(notifications): implement Notification API endpoints with tests`
 
 ---
 
