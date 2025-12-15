@@ -303,109 +303,109 @@
 > **참고 문서**: `docs/DSL.md#3.3`, `trd/00-interface-specifications.md`, `trd/05-api-specification.md`, `docs/DSL.md#10 (투표 익명성)`
 
 ### 6.1 Poll Schemas
-- [ ] `app/modules/polls/schemas.py` - PollTemplateResponse schema → `docs/DSL.md#3.3 (PollTemplate)`
-- [ ] `app/modules/polls/schemas.py` - PollCreate schema → `docs/DSL.md#3.3 (PollCreate)`
-- [ ] `app/modules/polls/schemas.py` - PollResponse schema → `docs/DSL.md#3.3 (Poll)`
-- [ ] `app/modules/polls/schemas.py` - PollDetail schema → `docs/DSL.md#3.3 (PollDetail)`
-- [ ] `app/modules/polls/schemas.py` - VoteRequest schema → `docs/DSL.md#3.3 (VoteCreate)`
-- [ ] `app/modules/polls/schemas.py` - VoteResponse schema → `docs/DSL.md#3.3 (VoteResponse)`
-- [ ] `app/modules/polls/schemas.py` - PollResultItem schema → `docs/DSL.md#3.3 (PollResultItem)`
-- [ ] **커밋**: `feat(polls): add Pydantic schemas`
+- [x] `app/modules/polls/schemas.py` - PollTemplateResponse schema → `docs/DSL.md#3.3 (PollTemplate)`
+- [x] `app/modules/polls/schemas.py` - PollCreate schema → `docs/DSL.md#3.3 (PollCreate)`
+- [x] `app/modules/polls/schemas.py` - PollResponse schema → `docs/DSL.md#3.3 (Poll)`
+- [x] `app/modules/polls/schemas.py` - PollDetail schema → `docs/DSL.md#3.3 (PollDetail)`
+- [x] `app/modules/polls/schemas.py` - VoteRequest schema → `docs/DSL.md#3.3 (VoteCreate)`
+- [x] `app/modules/polls/schemas.py` - VoteResponse schema → `docs/DSL.md#3.3 (VoteResponse)`
+- [x] `app/modules/polls/schemas.py` - PollResultItem schema → `docs/DSL.md#3.3 (PollResultItem)`
+- [x] **커밋**: `feat(polls): add Pydantic schemas`
 
 ### 6.2 Template Repository (TDD)
-- [ ] `tests/modules/polls/test_template_repository.py` - find_all 테스트 작성
-- [ ] `app/modules/polls/repository.py` - TemplateRepository.find_all 구현 → `docs/DSL.md#3.3 (TemplateRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
+- [x] `tests/modules/polls/test_template_repository.py` - find_all 테스트 작성
+- [x] `app/modules/polls/repository.py` - TemplateRepository.find_all 구현 → `docs/DSL.md#3.3 (TemplateRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
 
-- [ ] `tests/modules/polls/test_template_repository.py` - find_by_category 테스트 작성
-- [ ] `app/modules/polls/repository.py` - TemplateRepository.find_by_category 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
-- [ ] **커밋**: `feat(polls): implement TemplateRepository with tests`
+- [x] `tests/modules/polls/test_template_repository.py` - find_by_category 테스트 작성
+- [x] `app/modules/polls/repository.py` - TemplateRepository.find_by_category 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
+- [x] **커밋**: `feat(polls): implement TemplateRepository with tests`
 
 ### 6.3 Poll Repository (TDD)
-- [ ] `tests/modules/polls/test_poll_repository.py` - create poll 테스트 작성
-- [ ] `app/modules/polls/repository.py` - PollRepository.create 구현 → `docs/DSL.md#3.3 (PollRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
+- [x] `tests/modules/polls/test_poll_repository.py` - create poll 테스트 작성
+- [x] `app/modules/polls/repository.py` - PollRepository.create 구현 → `docs/DSL.md#3.3 (PollRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
 
-- [ ] `tests/modules/polls/test_poll_repository.py` - find by circle_id 테스트 작성
-- [ ] `app/modules/polls/repository.py` - PollRepository.find_by_circle_id 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
+- [x] `tests/modules/polls/test_poll_repository.py` - find by circle_id 테스트 작성
+- [x] `app/modules/polls/repository.py` - PollRepository.find_by_circle_id 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
 
-- [ ] `tests/modules/polls/test_poll_repository.py` - update status 테스트 작성
-- [ ] `app/modules/polls/repository.py` - PollRepository.update_status 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
-- [ ] **커밋**: `feat(polls): implement PollRepository with tests`
+- [x] `tests/modules/polls/test_poll_repository.py` - update status 테스트 작성
+- [x] `app/modules/polls/repository.py` - PollRepository.update_status 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
+- [x] **커밋**: `feat(polls): implement PollRepository with tests`
 
 ### 6.4 Vote Repository (TDD)
-- [ ] `tests/modules/polls/test_vote_repository.py` - create vote 테스트 작성
-- [ ] `app/modules/polls/repository.py` - VoteRepository.create 구현 → `docs/DSL.md#3.3 (VoteRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
+- [x] `tests/modules/polls/test_vote_repository.py` - create vote 테스트 작성
+- [x] `app/modules/polls/repository.py` - VoteRepository.create 구현 → `docs/DSL.md#3.3 (VoteRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
 
-- [ ] `tests/modules/polls/test_vote_repository.py` - check duplicate 테스트 작성 → `docs/DSL.md#10 (vote_anonymity)`
-- [ ] `app/modules/polls/repository.py` - VoteRepository.exists_by_voter_hash 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
+- [x] `tests/modules/polls/test_vote_repository.py` - check duplicate 테스트 작성 → `docs/DSL.md#10 (vote_anonymity)`
+- [x] `app/modules/polls/repository.py` - VoteRepository.exists_by_voter_hash 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
 
-- [ ] `tests/modules/polls/test_vote_repository.py` - get results 테스트 작성
-- [ ] `app/modules/polls/repository.py` - VoteRepository.get_results 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
-- [ ] **커밋**: `feat(polls): implement VoteRepository with tests`
+- [x] `tests/modules/polls/test_vote_repository.py` - get results 테스트 작성
+- [x] `app/modules/polls/repository.py` - VoteRepository.get_results 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
+- [x] **커밋**: `feat(polls): implement VoteRepository with tests`
 
 ### 6.5 Poll Service (TDD)
-- [ ] `tests/modules/polls/test_service.py` - get_templates 테스트 작성
-- [ ] `app/modules/polls/service.py` - PollService.get_templates 구현 → `docs/DSL.md#3.3 (PollService)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - get_templates 테스트 작성
+- [x] `app/modules/polls/service.py` - PollService.get_templates 구현 → `docs/DSL.md#3.3 (PollService)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - create_poll 테스트 작성 → `docs/DSL.md#5 (CreatePollFlow)`
-- [ ] `app/modules/polls/service.py` - PollService.create_poll 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - create_poll 테스트 작성 → `docs/DSL.md#5 (CreatePollFlow)`
+- [x] `app/modules/polls/service.py` - PollService.create_poll 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - vote (익명 해시 포함) 테스트 작성 → `docs/DSL.md#5 (VoteFlow)`, `docs/DSL.md#10`
-- [ ] `app/modules/polls/service.py` - PollService.vote 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - vote (익명 해시 포함) 테스트 작성 → `docs/DSL.md#5 (VoteFlow)`, `docs/DSL.md#10`
+- [x] `app/modules/polls/service.py` - PollService.vote 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - 중복 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 중복 투표 확인)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - 중복 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 중복 투표 확인)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - 자기 자신 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 자기 자신 투표 방지)`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - 자기 자신 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 자기 자신 투표 방지)`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - get_results 테스트 작성
-- [ ] `app/modules/polls/service.py` - PollService.get_results 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] `tests/modules/polls/test_service.py` - get_results 테스트 작성
+- [x] `app/modules/polls/service.py` - PollService.get_results 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
 
-- [ ] `tests/modules/polls/test_service.py` - close_poll 테스트 작성 → `docs/DSL.md#5 (PollEndFlow)`
-- [ ] `app/modules/polls/service.py` - PollService.close_poll 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
-- [ ] **커밋**: `feat(polls): implement PollService with tests`
+- [x] `tests/modules/polls/test_service.py` - close_poll 테스트 작성 → `docs/DSL.md#5 (PollEndFlow)`
+- [x] `app/modules/polls/service.py` - PollService.close_poll 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+- [x] **커밋**: `feat(polls): implement PollService with tests`
 
 ### 6.6 Poll Router (TDD)
-- [ ] `tests/modules/polls/test_router.py` - GET /polls/templates 테스트 작성
-- [ ] `app/modules/polls/router.py` - get_templates endpoint 구현 → `docs/DSL.md#3.3 (PollRouter)`, `trd/05-api-specification.md`
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - GET /polls/templates 테스트 작성
+- [x] `app/modules/polls/router.py` - get_templates endpoint 구현 → `docs/DSL.md#3.3 (PollRouter)`, `trd/05-api-specification.md`
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `tests/modules/polls/test_router.py` - POST /circles/{id}/polls 테스트 작성
-- [ ] `app/modules/polls/router.py` - create_poll endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - POST /circles/{id}/polls 테스트 작성
+- [x] `app/modules/polls/router.py` - create_poll endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `tests/modules/polls/test_router.py` - GET /circles/{id}/polls 테스트 작성
-- [ ] `app/modules/polls/router.py` - get_circle_polls endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - GET /circles/{id}/polls 테스트 작성
+- [x] `app/modules/polls/router.py` - get_circle_polls endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `tests/modules/polls/test_router.py` - GET /polls/{id} 테스트 작성
-- [ ] `app/modules/polls/router.py` - get_poll endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - GET /polls/{id} 테스트 작성
+- [x] `app/modules/polls/router.py` - get_poll endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `tests/modules/polls/test_router.py` - POST /polls/{id}/vote 테스트 작성
-- [ ] `app/modules/polls/router.py` - vote endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - POST /polls/{id}/vote 테스트 작성
+- [x] `app/modules/polls/router.py` - vote endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `tests/modules/polls/test_router.py` - GET /polls/{id}/results 테스트 작성
-- [ ] `app/modules/polls/router.py` - get_results endpoint 구현
-- [ ] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+- [x] `tests/modules/polls/test_router.py` - GET /polls/{id}/results 테스트 작성
+- [x] `app/modules/polls/router.py` - get_results endpoint 구현
+- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
 
-- [ ] `app/main.py` - polls router 등록
-- [ ] **테스트**: 전체 Poll 모듈 테스트 `uv run pytest tests/modules/polls/ -v`
-- [ ] **커밋**: `feat(polls): implement Poll API endpoints with tests`
+- [x] `app/main.py` - polls router 등록
+- [x] **테스트**: 전체 Poll 모듈 테스트 `uv run pytest tests/modules/polls/ -v`
+- [x] **커밋**: `feat(polls): implement Poll API endpoints with tests`
 
 ---
 
