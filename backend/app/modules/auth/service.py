@@ -6,7 +6,13 @@ from app.core.exceptions import BadRequestException, UnauthorizedException
 from app.core.security import create_access_token, hash_password, verify_password, verify_token
 from app.modules.auth.models import User
 from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import AuthResponse, LoginRequest, UserCreate, UserResponse, UserUpdate
+from app.modules.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 
 
 class AuthService:
@@ -116,7 +122,7 @@ class AuthService:
         try:
             user_id = uuid.UUID(user_id_str)
         except ValueError:
-            raise UnauthorizedException("Invalid token")
+            raise UnauthorizedException("Invalid token") from None
 
         # Find user by id
         user = await self.repository.find_by_id(user_id)

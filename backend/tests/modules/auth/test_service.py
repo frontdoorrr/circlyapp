@@ -64,9 +64,7 @@ class TestAuthServiceRegister:
         assert "already registered" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_register_without_optional_fields(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_register_without_optional_fields(self, db_session: AsyncSession) -> None:
         """Test registration without optional fields."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
@@ -205,9 +203,7 @@ class TestAuthServiceGetCurrentUser:
         assert user.username == "tokenuser"
 
     @pytest.mark.asyncio
-    async def test_get_current_user_invalid_token(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_get_current_user_invalid_token(self, db_session: AsyncSession) -> None:
         """Test getting current user with invalid token."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
@@ -218,9 +214,7 @@ class TestAuthServiceGetCurrentUser:
         assert "invalid token" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_get_current_user_expired_token(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_get_current_user_expired_token(self, db_session: AsyncSession) -> None:
         """Test getting current user with expired token."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
@@ -244,9 +238,7 @@ class TestAuthServiceGetCurrentUser:
         assert "invalid token" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_get_current_user_deleted_user(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_get_current_user_deleted_user(self, db_session: AsyncSession) -> None:
         """Test getting current user when user is deleted from database."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
@@ -321,9 +313,7 @@ class TestAuthServiceUpdateProfile:
         assert updated_user.display_name == "Only Display Changed"
 
     @pytest.mark.asyncio
-    async def test_update_profile_nonexistent_user(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_update_profile_nonexistent_user(self, db_session: AsyncSession) -> None:
         """Test updating profile of non-existent user."""
         repo = UserRepository(db_session)
         service = AuthService(repo)

@@ -10,7 +10,6 @@ from app.modules.circles.schemas import (
     CircleCreate,
     CircleDetail,
     CircleResponse,
-    CircleUpdate,
     JoinByCodeRequest,
     MemberInfo,
     RegenerateInviteCodeResponse,

@@ -32,9 +32,7 @@ class NotificationService:
         Returns:
             List of NotificationResponse
         """
-        notifications = await self.notification_repo.find_by_user_id(
-            user_id, limit, offset
-        )
+        notifications = await self.notification_repo.find_by_user_id(user_id, limit, offset)
         return [NotificationResponse.model_validate(n) for n in notifications]
 
     async def get_unread_count(self, user_id: uuid.UUID) -> int:
@@ -48,9 +46,7 @@ class NotificationService:
         """
         return await self.notification_repo.count_unread(user_id)
 
-    async def mark_as_read(
-        self, notification_id: uuid.UUID, user_id: uuid.UUID
-    ) -> None:
+    async def mark_as_read(self, notification_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """Mark a notification as read.
 
         Args:
@@ -68,9 +64,7 @@ class NotificationService:
         """
         await self.notification_repo.mark_all_as_read(user_id)
 
-    async def send_poll_started(
-        self, poll: Poll, circle_member_ids: list[uuid.UUID]
-    ) -> None:
+    async def send_poll_started(self, poll: Poll, circle_member_ids: list[uuid.UUID]) -> None:
         """Send poll started notifications to circle members.
 
         Args:
@@ -120,9 +114,7 @@ class NotificationService:
 
         await self.notification_repo.create(notification)
 
-    async def send_poll_ended(
-        self, poll: Poll, circle_member_ids: list[uuid.UUID]
-    ) -> None:
+    async def send_poll_ended(self, poll: Poll, circle_member_ids: list[uuid.UUID]) -> None:
         """Send poll ended notifications to circle members.
 
         Args:
@@ -148,9 +140,7 @@ class NotificationService:
 
         await self.notification_repo.create_bulk(notifications)
 
-    async def send_poll_reminder(
-        self, poll: Poll, non_voter_ids: list[uuid.UUID]
-    ) -> None:
+    async def send_poll_reminder(self, poll: Poll, non_voter_ids: list[uuid.UUID]) -> None:
         """Send poll reminder notifications to non-voters.
 
         Args:

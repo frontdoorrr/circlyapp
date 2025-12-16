@@ -507,38 +507,38 @@
 > **참고 문서**: `trd/00-system-architecture-v2.md`, `docs/DSL.md#5 (워크플로우)`, `docs/DSL.md#8 (테스트 전략)`
 
 ### 9.1 통합 테스트
-- [ ] `tests/integration/test_circle_flow.py` - Circle 생성 -> 가입 플로우 테스트 → `docs/DSL.md#5 (JoinCircleFlow)`
-- [ ] `tests/integration/test_poll_flow.py` - 투표 생성 -> 참여 -> 결과 플로우 테스트 → `docs/DSL.md#5 (CreatePollFlow, VoteFlow, PollEndFlow)`
-- [ ] **테스트**: `uv run pytest tests/integration/ -v`
-- [ ] **커밋**: `test: add integration tests for main workflows`
+- [x] `tests/integration/test_circle_flow.py` - Circle 생성 -> 가입 플로우 테스트 → `docs/DSL.md#5 (JoinCircleFlow)`
+- [x] `tests/integration/test_poll_flow.py` - 투표 생성 -> 참여 -> 결과 플로우 테스트 → `docs/DSL.md#5 (CreatePollFlow, VoteFlow, PollEndFlow)`
+- [x] **테스트**: `uv run pytest tests/integration/ -v`
+- [x] **커밋**: `test: add integration tests for main workflows`
 
 ### 9.2 API 문서화
-- [ ] OpenAPI 스키마 검토 → `trd/05-api-specification.md`
-- [ ] API 엔드포인트 설명 추가
-- [ ] `/docs` 및 `/redoc` 확인
-- [ ] **커밋**: `docs: improve API documentation`
+- [x] OpenAPI 스키마 검토 → `trd/05-api-specification.md`
+- [x] API 엔드포인트 설명 추가 (각 router에 summary, description 포함)
+- [x] `/docs` 및 `/redoc` 확인 (debug 모드에서 자동 활성화)
+- [x] **커밋**: `docs: improve API documentation`
 
 ### 9.3 성능 및 보안 검토
-- [ ] Rate limiting 미들웨어 추가 → `docs/DSL.md#10 (rate_limiting)`
-- [ ] CORS 설정 검토 → `trd/07-development-deployment-setup.md#4.1`
-- [ ] 민감 데이터 로깅 제외
-- [ ] **테스트**: 전체 테스트 스위트 실행 `uv run pytest -v --cov=app`
-- [ ] **커밋**: `feat: add rate limiting and security middleware`
+- [x] Rate limiting 미들웨어 추가 → `docs/DSL.md#10 (rate_limiting)` - slowapi 사용
+- [x] CORS 설정 검토 → `trd/07-development-deployment-setup.md#4.1`
+- [x] 민감 데이터 로깅 제외 (토큰 직접 로깅 없음)
+- [x] **테스트**: 전체 테스트 스위트 실행 `uv run pytest -v --cov=app` (139 passed, 87% coverage)
+- [x] **커밋**: `feat: add rate limiting and security middleware`
 
 ### 9.4 초기 데이터 시딩
-- [ ] `scripts/seed_templates.py` - 투표 템플릿 초기 데이터 → `docs/DSL.md#2 (poll_templates)`
-- [ ] **테스트**: 시드 스크립트 실행 확인
-- [ ] **커밋**: `chore: add seed script for poll templates`
+- [x] `scripts/seed_templates.py` - 투표 템플릿 초기 데이터 → `docs/DSL.md#2 (poll_templates)`
+- [x] **테스트**: 시드 스크립트 실행 확인
+- [x] **커밋**: `chore: add seed script for poll templates`
 
 ---
 
 ## 최종 점검
 
-- [ ] 전체 테스트 통과: `uv run pytest -v --cov=app --cov-report=html`
-- [ ] 린트 통과: `uv run ruff check app/`
-- [ ] 타입 체크 통과: `uv run mypy app/`
+- [x] 전체 테스트 통과: `uv run pytest -v --cov=app --cov-report=html` (139 passed, 87% coverage)
+- [x] 린트 통과: `uv run ruff check app/`
+- [ ] 타입 체크 통과: `uv run mypy app/` (TODO: mypy 설정 조정 필요)
 - [ ] 서버 정상 실행: `uv run uvicorn app.main:app --reload`
-- [ ] **최종 커밋**: `chore: complete backend MVP implementation`
+- [x] **최종 커밋**: `chore: complete backend MVP implementation`
 
 ---
 

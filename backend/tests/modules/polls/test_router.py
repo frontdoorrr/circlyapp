@@ -60,9 +60,7 @@ class TestPollRouter:
         self, client: AsyncClient, templates_fixture: list[PollTemplate]
     ) -> None:
         """Test GET /polls/templates with category filter."""
-        response = await client.get(
-            "/polls/templates", params={"category": "PERSONALITY"}
-        )
+        response = await client.get("/polls/templates", params={"category": "PERSONALITY"})
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -117,9 +115,7 @@ class TestPollRouter:
         assert data["status"] == "ACTIVE"
 
     @pytest.mark.asyncio
-    async def test_vote(
-        self, client: AsyncClient, templates_fixture: list[PollTemplate]
-    ) -> None:
+    async def test_vote(self, client: AsyncClient, templates_fixture: list[PollTemplate]) -> None:
         """Test POST /polls/{poll_id}/vote endpoint."""
         # Register two users
         await client.post(

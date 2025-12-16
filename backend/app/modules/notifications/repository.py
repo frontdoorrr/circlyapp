@@ -37,9 +37,7 @@ class NotificationRepository:
         await self.session.refresh(notification)
         return notification
 
-    async def create_bulk(
-        self, notifications_data: list[NotificationCreate]
-    ) -> int:
+    async def create_bulk(self, notifications_data: list[NotificationCreate]) -> int:
         """Create multiple notifications in bulk.
 
         Args:
@@ -120,9 +118,7 @@ class NotificationRepository:
             notification_id: Notification UUID
         """
         await self.session.execute(
-            update(Notification)
-            .where(Notification.id == notification_id)
-            .values(is_read=True)
+            update(Notification).where(Notification.id == notification_id).values(is_read=True)
         )
         await self.session.commit()
 

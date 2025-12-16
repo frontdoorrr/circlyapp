@@ -4,7 +4,13 @@ from fastapi import APIRouter, status
 
 from app.deps import CurrentUserDep, DBSessionDep
 from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import AuthResponse, LoginRequest, UserCreate, UserResponse, UserUpdate
+from app.modules.auth.schemas import (
+    AuthResponse,
+    LoginRequest,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 from app.modules.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

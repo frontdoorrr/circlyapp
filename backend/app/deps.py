@@ -1,6 +1,7 @@
 """Common dependencies for FastAPI endpoints."""
 
-from typing import Annotated, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,7 @@ from app.modules.auth.service import AuthService
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncGenerator[AsyncSession]:
     """Get database session dependency."""
     async with async_session_maker() as session:
         try:

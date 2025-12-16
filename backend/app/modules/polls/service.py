@@ -7,7 +7,6 @@ from decimal import Decimal
 from app.core.enums import PollStatus, TemplateCategory
 from app.core.exceptions import (
     BadRequestException,
-    CircleNotFoundError,
     PollNotFoundError,
 )
 from app.core.security import generate_voter_hash

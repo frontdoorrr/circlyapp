@@ -2,6 +2,7 @@
 
 import uuid
 
+from app.core.enums import MemberRole
 from app.core.exceptions import (
     AlreadyMemberError,
     BadRequestException,
@@ -10,17 +11,14 @@ from app.core.exceptions import (
     InvalidInviteCodeError,
 )
 from app.core.security import generate_invite_code
-from app.modules.circles.models import Circle
 from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.circles.schemas import (
     CircleCreate,
     CircleDetail,
     CircleResponse,
-    CircleUpdate,
     MemberInfo,
     RegenerateInviteCodeResponse,
 )
-from app.core.enums import MemberRole
 
 
 class CircleService:

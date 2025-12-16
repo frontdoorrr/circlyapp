@@ -15,9 +15,7 @@ class TestNotificationRouter:
     """Tests for Notification API endpoints."""
 
     @pytest.mark.asyncio
-    async def test_get_notifications(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
+    async def test_get_notifications(self, client: AsyncClient, db_session: AsyncSession) -> None:
         """Test GET /notifications endpoint."""
         # Register and login
         await client.post(
@@ -128,9 +126,7 @@ class TestNotificationRouter:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
-    async def test_get_unread_count(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
+    async def test_get_unread_count(self, client: AsyncClient, db_session: AsyncSession) -> None:
         """Test GET /notifications/unread-count endpoint."""
         # Register and login
         await client.post(
@@ -190,9 +186,7 @@ class TestNotificationRouter:
         assert data["count"] == 2
 
     @pytest.mark.asyncio
-    async def test_mark_as_read(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
+    async def test_mark_as_read(self, client: AsyncClient, db_session: AsyncSession) -> None:
         """Test PUT /notifications/{id}/read endpoint."""
         # Register and login
         await client.post(
@@ -243,9 +237,7 @@ class TestNotificationRouter:
         assert notification.is_read is True
 
     @pytest.mark.asyncio
-    async def test_mark_all_as_read(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
+    async def test_mark_all_as_read(self, client: AsyncClient, db_session: AsyncSession) -> None:
         """Test PUT /notifications/read-all endpoint."""
         # Register and login
         await client.post(

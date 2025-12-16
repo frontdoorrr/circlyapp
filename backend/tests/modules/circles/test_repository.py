@@ -56,7 +56,9 @@ class TestCircleRepository:
     async def test_find_by_user_id(self, db_session: AsyncSession) -> None:
         """Test finding circles by user ID."""
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(UserCreate(email="member@example.com", password="password123"))
+        user = await user_repo.create(
+            UserCreate(email="member@example.com", password="password123")
+        )
 
         circle_repo = CircleRepository(db_session)
         membership_repo = MembershipRepository(db_session)
@@ -81,7 +83,9 @@ class TestMembershipRepository:
     async def test_create_membership(self, db_session: AsyncSession) -> None:
         """Test membership creation."""
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(UserCreate(email="newmember@example.com", password="password123"))
+        user = await user_repo.create(
+            UserCreate(email="newmember@example.com", password="password123")
+        )
 
         circle_repo = CircleRepository(db_session)
         circle_data = CircleCreate(name="Circle")
@@ -99,7 +103,9 @@ class TestMembershipRepository:
     async def test_membership_exists(self, db_session: AsyncSession) -> None:
         """Test checking if membership exists."""
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(UserCreate(email="checker@example.com", password="password123"))
+        user = await user_repo.create(
+            UserCreate(email="checker@example.com", password="password123")
+        )
 
         circle_repo = CircleRepository(db_session)
         circle = await circle_repo.create(

@@ -3,10 +3,8 @@
 import uuid
 from datetime import datetime, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlalchemy import func
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.polls.models import Poll, PollTemplate, Vote
@@ -19,9 +17,7 @@ class TemplateRepository:
         """Initialize repository with database session."""
         self.session = session
 
-    async def find_all(
-        self, category: TemplateCategory | None = None
-    ) -> list[PollTemplate]:
+    async def find_all(self, category: TemplateCategory | None = None) -> list[PollTemplate]:
         """Find all active templates, optionally filtered by category.
 
         Args:
@@ -160,9 +156,7 @@ class PollRepository:
             poll_id: Poll UUID
             status: New status
         """
-        await self.session.execute(
-            update(Poll).where(Poll.id == poll_id).values(status=status)
-        )
+        await self.session.execute(update(Poll).where(Poll.id == poll_id).values(status=status))
         await self.session.commit()
 
     async def increment_vote_count(self, poll_id: uuid.UUID) -> None:
@@ -172,9 +166,7 @@ class PollRepository:
             poll_id: Poll UUID
         """
         await self.session.execute(
-            update(Poll)
-            .where(Poll.id == poll_id)
-            .values(vote_count=Poll.vote_count + 1)
+            update(Poll).where(Poll.id == poll_id).values(vote_count=Poll.vote_count + 1)
         )
         await self.session.commit()
 
@@ -206,9 +198,7 @@ class VoteRepository:
         """Initialize repository with database session."""
         self.session = session
 
-    async def create(
-        self, poll_id: uuid.UUID, voter_hash: str, voted_for_id: uuid.UUID
-    ) -> Vote:
+    async def create(self, poll_id: uuid.UUID, voter_hash: str, voted_for_id: uuid.UUID) -> Vote:
         """Create a new vote.
 
         Args:
@@ -219,17 +209,13 @@ class VoteRepository:
         Returns:
             Created Vote instance
         """
-        vote = Vote(
-            poll_id=poll_id, voter_hash=voter_hash, voted_for_id=voted_for_id
-        )
+        vote = Vote(poll_id=poll_id, voter_hash=voter_hash, voted_for_id=voted_for_id)
         self.session.add(vote)
         await self.session.commit()
         await self.session.refresh(vote)
         return vote
 
-    async def exists_by_voter_hash(
-        self, poll_id: uuid.UUID, voter_hash: str
-    ) -> bool:
+    async def exists_by_voter_hash(self, poll_id: uuid.UUID, voter_hash: str) -> bool:
         """Check if vote exists by voter hash.
 
         Args:
@@ -240,9 +226,7 @@ class VoteRepository:
             True if vote exists, False otherwise
         """
         result = await self.session.execute(
-            select(Vote).where(
-                Vote.poll_id == poll_id, Vote.voter_hash == voter_hash
-            )
+            select(Vote).where(Vote.poll_id == poll_id, Vote.voter_hash == voter_hash)
         )
         return result.scalar_one_or_none() is not None
 
@@ -260,9 +244,7 @@ class VoteRepository:
         )
         return result.scalar() or 0
 
-    async def get_results_by_poll_id(
-        self, poll_id: uuid.UUID
-    ) -> list[dict[str, int]]:
+    async def get_results_by_poll_id(self, poll_id: uuid.UUID) -> list[dict[str, int]]:
         """Get vote results for a poll.
 
         Args:
@@ -278,7 +260,4 @@ class VoteRepository:
             .order_by(func.count(Vote.id).desc())
         )
 
-        return [
-            {"user_id": row.voted_for_id, "vote_count": row.vote_count}
-            for row in result.all()
-        ]
+        return [{"user_id": row.voted_for_id, "vote_count": row.vote_count} for row in result.all()]

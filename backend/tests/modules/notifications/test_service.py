@@ -29,9 +29,7 @@ class TestNotificationService:
         """Test getting user notifications."""
         # Setup: Create user and notifications
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create notifications
         notification1 = Notification(
@@ -66,9 +64,7 @@ class TestNotificationService:
         """Test getting notifications with pagination."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create 5 notifications
         for i in range(5):
@@ -96,9 +92,7 @@ class TestNotificationService:
         """Test getting unread notification count."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create unread and read notifications
         unread1 = Notification(
@@ -139,9 +133,7 @@ class TestNotificationService:
         """Test marking notification as read."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         notification = Notification(
             user_id=user.id,
@@ -169,9 +161,7 @@ class TestNotificationService:
         """Test marking all notifications as read."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create unread notifications
         for i in range(3):

@@ -21,9 +21,7 @@ class TestNotificationRepository:
         """Test notification creation."""
         # Setup: Create user
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create notification
         repo = NotificationRepository(db_session)
@@ -49,9 +47,7 @@ class TestNotificationRepository:
         """Test finding notifications by user ID."""
         # Setup: Create user
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create multiple notifications for user
         notification1 = Notification(
@@ -90,9 +86,7 @@ class TestNotificationRepository:
         """Test finding notifications with limit."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create 5 notifications
         for i in range(5):
@@ -117,9 +111,7 @@ class TestNotificationRepository:
         """Test finding notifications with offset."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create 5 notifications
         for i in range(5):
@@ -144,9 +136,7 @@ class TestNotificationRepository:
         """Test finding unread notifications."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create read and unread notifications
         unread_notification = Notification(
@@ -179,9 +169,7 @@ class TestNotificationRepository:
         """Test marking notification as read."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         notification = Notification(
             user_id=user.id,
@@ -206,9 +194,7 @@ class TestNotificationRepository:
         """Test marking all notifications as read for a user."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create multiple unread notifications
         for i in range(3):
@@ -235,9 +221,7 @@ class TestNotificationRepository:
         """Test counting unread notifications."""
         # Setup
         user_repo = UserRepository(db_session)
-        user = await user_repo.create(
-            UserCreate(email="user@example.com", password="password123")
-        )
+        user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         # Create 2 unread and 1 read notification
         for i in range(2):

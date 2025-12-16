@@ -30,6 +30,8 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "orjson>=3.10.0",
     "email-validator>=2.3.0",
+    # Rate Limiting
+    "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]
@@ -70,7 +72,13 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM", "ASYNC"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long
+    "N805",   # First argument of method should be 'self' (SQLAlchemy declared_attr uses cls)
+    "N818",   # Exception name should end with 'Error' (we use Exception suffix for HTTP errors)
+    "B008",   # Do not perform function call in argument defaults (FastAPI Depends pattern)
+    "UP046",  # Generic class uses Generic subclass (Pydantic compatibility)
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

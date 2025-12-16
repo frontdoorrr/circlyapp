@@ -117,9 +117,7 @@ class CircleMember(BaseModel):
     """
 
     __tablename__ = "circle_members"
-    __table_args__ = (
-        UniqueConstraint("circle_id", "user_id", name="uq_circle_member"),
-    )
+    __table_args__ = (UniqueConstraint("circle_id", "user_id", name="uq_circle_member"),)
 
     # Override created_at/updated_at - we only need joined_at
     created_at: Mapped[datetime] = mapped_column(
@@ -173,4 +171,6 @@ class CircleMember(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<CircleMember(circle_id={self.circle_id}, user_id={self.user_id}, role={self.role})>"
+        return (
+            f"<CircleMember(circle_id={self.circle_id}, user_id={self.user_id}, role={self.role})>"
+        )

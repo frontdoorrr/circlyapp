@@ -174,9 +174,7 @@ class Vote(UUIDMixin, Base):
     """
 
     __tablename__ = "votes"
-    __table_args__ = (
-        UniqueConstraint("poll_id", "voter_hash", name="uq_poll_voter"),
-    )
+    __table_args__ = (UniqueConstraint("poll_id", "voter_hash", name="uq_poll_voter"),)
 
     poll_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -227,9 +225,7 @@ class PollResult(UUIDMixin, Base):
     """
 
     __tablename__ = "poll_results"
-    __table_args__ = (
-        UniqueConstraint("poll_id", "user_id", name="uq_poll_result"),
-    )
+    __table_args__ = (UniqueConstraint("poll_id", "user_id", name="uq_poll_result"),)
 
     poll_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

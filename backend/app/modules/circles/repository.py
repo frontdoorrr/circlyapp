@@ -18,7 +18,9 @@ class CircleRepository:
         """Initialize repository with database session."""
         self.session = session
 
-    async def create(self, circle_data: CircleCreate, owner_id: uuid.UUID, invite_code: str) -> Circle:
+    async def create(
+        self, circle_data: CircleCreate, owner_id: uuid.UUID, invite_code: str
+    ) -> Circle:
         """Create a new circle.
 
         Args:
@@ -251,7 +253,9 @@ class MembershipRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def find_membership(self, circle_id: uuid.UUID, user_id: uuid.UUID) -> CircleMember | None:
+    async def find_membership(
+        self, circle_id: uuid.UUID, user_id: uuid.UUID
+    ) -> CircleMember | None:
         """Find a specific membership.
 
         Args:

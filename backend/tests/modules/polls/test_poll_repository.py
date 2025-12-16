@@ -68,7 +68,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         # Create poll directly
         poll = Poll(
@@ -106,7 +108,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         # Create multiple polls
         poll1 = Poll(
@@ -140,7 +144,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         # Create polls with different statuses
         poll1 = Poll(
@@ -175,7 +181,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         # Create polls
         poll1 = Poll(
@@ -210,7 +218,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         poll = Poll(
             circle_id=circle.id,
@@ -238,7 +248,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         poll = Poll(
             circle_id=circle.id,
@@ -267,7 +279,9 @@ class TestPollRepository:
         user = await user_repo.create(UserCreate(email="user@example.com", password="password123"))
 
         circle_repo = CircleRepository(db_session)
-        circle = await circle_repo.create(CircleCreate(name="Circle"), user.id, generate_invite_code())
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), user.id, generate_invite_code()
+        )
 
         now = datetime.now()
         # Poll ending in 5 minutes

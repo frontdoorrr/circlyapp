@@ -32,9 +32,7 @@ class TestUserRepositoryCreate:
         assert user.is_active is True
 
     @pytest.mark.asyncio
-    async def test_create_user_without_optional_fields(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_create_user_without_optional_fields(self, db_session: AsyncSession) -> None:
         """Test user creation without optional fields."""
         repo = UserRepository(db_session)
         user_data = UserCreate(
