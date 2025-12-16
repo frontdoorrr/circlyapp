@@ -471,34 +471,34 @@
 > **참고 문서**: `docs/DSL.md#3.5`, `trd/05-api-specification.md`
 
 ### 8.1 Report Schemas
-- [ ] `app/modules/reports/schemas.py` - ReportCreate schema → `docs/DSL.md#3.5 (ReportCreate)`
-- [ ] `app/modules/reports/schemas.py` - ReportResponse schema → `docs/DSL.md#3.5 (Report)`
-- [ ] **커밋**: `feat(reports): add Pydantic schemas`
+- [x] `app/modules/reports/schemas.py` - ReportCreate schema → `docs/DSL.md#3.5 (ReportCreate)`
+- [x] `app/modules/reports/schemas.py` - ReportResponse schema → `docs/DSL.md#3.5 (Report)`
+- [x] **커밋**: `feat(reports): add Pydantic schemas`
 
 ### 8.2 Report Repository (TDD)
-- [ ] `tests/modules/reports/test_repository.py` - create report 테스트 작성
-- [ ] `app/modules/reports/repository.py` - ReportRepository.create 구현 → `docs/DSL.md#3.5 (ReportRepository)`
-- [ ] **테스트**: `uv run pytest tests/modules/reports/test_repository.py -v`
+- [x] `tests/modules/reports/test_repository.py` - create report 테스트 작성
+- [x] `app/modules/reports/repository.py` - ReportRepository.create 구현 → `docs/DSL.md#3.5 (ReportRepository)`
+- [x] **테스트**: `uv run pytest tests/modules/reports/test_repository.py -v`
 
-- [ ] `tests/modules/reports/test_repository.py` - find by status 테스트 작성
-- [ ] `app/modules/reports/repository.py` - ReportRepository.find_by_status 구현
-- [ ] **테스트**: `uv run pytest tests/modules/reports/test_repository.py -v`
-- [ ] **커밋**: `feat(reports): implement ReportRepository with tests`
+- [x] `tests/modules/reports/test_repository.py` - find by status 테스트 작성
+- [x] `app/modules/reports/repository.py` - ReportRepository.find_by_status 구현
+- [x] **테스트**: `uv run pytest tests/modules/reports/test_repository.py -v`
+- [x] **커밋**: `feat(reports): implement ReportRepository with tests`
 
 ### 8.3 Report Service (TDD)
-- [ ] `tests/modules/reports/test_service.py` - create_report 테스트 작성
-- [ ] `app/modules/reports/service.py` - ReportService.create_report 구현 → `docs/DSL.md#3.5 (ReportService)`
-- [ ] **테스트**: `uv run pytest tests/modules/reports/test_service.py -v`
-- [ ] **커밋**: `feat(reports): implement ReportService with tests`
+- [x] `tests/modules/reports/test_service.py` - create_report 테스트 작성
+- [x] `app/modules/reports/service.py` - ReportService.create_report 구현 → `docs/DSL.md#3.5 (ReportService)`
+- [x] **테스트**: `uv run pytest tests/modules/reports/test_service.py -v`
+- [x] **커밋**: `feat(reports): implement ReportService with tests`
 
 ### 8.4 Report Router (TDD)
-- [ ] `tests/modules/reports/test_router.py` - POST /reports 테스트 작성
-- [ ] `app/modules/reports/router.py` - create_report endpoint 구현 → `docs/DSL.md#3.5 (ReportRouter)`, `trd/05-api-specification.md`
-- [ ] **테스트**: `uv run pytest tests/modules/reports/test_router.py -v`
+- [x] `tests/modules/reports/test_router.py` - POST /reports 테스트 작성
+- [x] `app/modules/reports/router.py` - create_report endpoint 구현 → `docs/DSL.md#3.5 (ReportRouter)`, `trd/05-api-specification.md`
+- [x] **테스트**: `uv run pytest tests/modules/reports/test_router.py -v`
 
-- [ ] `app/main.py` - reports router 등록
-- [ ] **테스트**: 전체 Report 모듈 테스트 `uv run pytest tests/modules/reports/ -v`
-- [ ] **커밋**: `feat(reports): implement Report API endpoints with tests`
+- [x] `app/main.py` - reports router 등록
+- [x] **테스트**: 전체 Report 모듈 테스트 `uv run pytest tests/modules/reports/ -v`
+- [x] **커밋**: `feat(reports): implement Report API endpoints with tests`
 
 ---
 

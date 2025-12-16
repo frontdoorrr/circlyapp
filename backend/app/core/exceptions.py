@@ -110,12 +110,30 @@ class BadRequestException(CirclyError):
     def __init__(
         self,
         message: str = "잘못된 요청입니다",
+        code: str = "BAD_REQUEST",
         details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(
-            code="BAD_REQUEST",
+            code=code,
             message=message,
             status_code=400,
+            details=details,
+        )
+
+
+class NotFoundException(CirclyError):
+    """Resource not found error."""
+
+    def __init__(
+        self,
+        message: str = "리소스를 찾을 수 없습니다",
+        code: str = "NOT_FOUND",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code=code,
+            message=message,
+            status_code=404,
             details=details,
         )
 
