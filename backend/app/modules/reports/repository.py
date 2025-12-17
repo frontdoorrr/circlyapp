@@ -136,7 +136,8 @@ class ReportRepository:
             )
         )
         await self.session.commit()
-        return result.rowcount > 0
+        rowcount = getattr(result, "rowcount", 0) or 0
+        return rowcount > 0
 
     async def count_by_target(
         self,

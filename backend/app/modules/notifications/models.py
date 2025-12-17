@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, UUID
@@ -10,6 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import NotificationType
 from app.core.models import Base, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
 
 
 class Notification(UUIDMixin, Base):

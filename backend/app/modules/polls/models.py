@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -20,6 +21,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.core.models import Base, BaseModel, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
+    from app.modules.circles.models import Circle
 
 
 class PollTemplate(UUIDMixin, Base):

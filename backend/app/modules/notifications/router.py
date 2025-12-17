@@ -1,6 +1,7 @@
 """API routes for notifications."""
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Query, status
 
@@ -60,7 +61,7 @@ async def mark_as_read(
     notification_id: uuid.UUID,
     current_user: CurrentUserDep,
     db: DBSessionDep,
-) -> dict:
+) -> dict[str, Any]:
     """Mark a notification as read."""
     notification_repo = NotificationRepository(db)
     service = NotificationService(notification_repo)
@@ -78,7 +79,7 @@ async def mark_as_read(
 async def mark_all_as_read(
     current_user: CurrentUserDep,
     db: DBSessionDep,
-) -> dict:
+) -> dict[str, Any]:
     """Mark all notifications as read for the current user."""
     notification_repo = NotificationRepository(db)
     service = NotificationService(notification_repo)

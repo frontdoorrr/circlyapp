@@ -536,8 +536,8 @@
 
 - [x] 전체 테스트 통과: `uv run pytest -v --cov=app --cov-report=html` (139 passed, 87% coverage)
 - [x] 린트 통과: `uv run ruff check app/`
-- [ ] 타입 체크 통과: `uv run mypy app/` (TODO: mypy 설정 조정 필요)
-- [ ] 서버 정상 실행: `uv run uvicorn app.main:app --reload`
+- [x] 타입 체크 통과: `uv run mypy app/` (43 source files checked)
+- [x] 서버 정상 실행: `uv run uvicorn app.main:app --reload`
 - [x] **최종 커밋**: `chore: complete backend MVP implementation`
 
 ---

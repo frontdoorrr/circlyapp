@@ -2,12 +2,20 @@
 
 import uuid
 from datetime import datetime, timedelta
+from typing import TypedDict
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.polls.models import Poll, PollTemplate, Vote
+
+
+class VoteResultDict(TypedDict):
+    """Type for vote result dictionary."""
+
+    user_id: uuid.UUID
+    vote_count: int
 
 
 class TemplateRepository:
@@ -244,7 +252,7 @@ class VoteRepository:
         )
         return result.scalar() or 0
 
-    async def get_results_by_poll_id(self, poll_id: uuid.UUID) -> list[dict[str, int]]:
+    async def get_results_by_poll_id(self, poll_id: uuid.UUID) -> list[VoteResultDict]:
         """Get vote results for a poll.
 
         Args:

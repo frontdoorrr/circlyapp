@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -18,6 +19,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import MemberRole
 from app.core.models import BaseModel
+
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
+    from app.modules.polls.models import Poll
 
 
 class Circle(BaseModel):

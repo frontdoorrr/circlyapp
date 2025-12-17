@@ -2,16 +2,23 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import cast
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request as StarletteRequest
 
 from app.config import get_settings
 from app.core.exceptions import CirclyError
 from app.core.rate_limit import limiter
+
+
+def _custom_rate_limit_handler(request: StarletteRequest, exc: Exception) -> Response:
+    """Custom rate limit handler that matches Starlette's expected signature."""
+    return _rate_limit_exceeded_handler(request, cast(RateLimitExceeded, exc))
 
 
 @asynccontextmanager
@@ -44,7 +51,7 @@ def create_app() -> FastAPI:
 
     # Rate limiting
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _custom_rate_limit_handler)
 
     # CORS middleware
     app.add_middleware(
