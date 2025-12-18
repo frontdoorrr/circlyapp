@@ -532,9 +532,111 @@
 
 ---
 
+## Phase 10: 코드 품질 개선 및 보안 강화
+
+> **참고**: 코드 분석을 통해 도출된 개선사항 (MVP 이후 안정화 단계)
+
+### 10.1 보안 강화 (CRITICAL/HIGH)
+
+#### 10.1.1 Secret Key 설정 개선(나중에 진행)
+- [ ] `app/config.py` - `secret_key` 기본값 제거, 필수 설정으로 변경
+- [ ] 환경변수 미설정 시 애플리케이션 시작 실패하도록 검증 추가
+- [ ] `.env.example`에 `secrets.token_urlsafe(32)` 생성 가이드 추가
+- [ ] **커밋**: `fix(security): require secret key configuration`
+
+#### 10.1.2 Notification 권한 체크 추가 ✅
+- [x] `app/modules/notifications/service.py` - `mark_as_read()` 소유권 검증 추가
+- [x] `app/modules/notifications/repository.py` - `find_by_id()` 메서드 추가
+- [x] `tests/modules/notifications/test_router.py` - 권한 체크 테스트 추가
+- [x] **커밋**: `fix(notifications): add authorization check for notification updates`
+
+#### 10.1.3 JWT 토큰 만료 시간 조정(나중에 진행)
+- [ ] `app/config.py` - `jwt_access_token_expire_minutes` 120분(2시간)으로 변경
+- [ ] Refresh Token 스키마 및 엔드포인트 설계 (선택적)
+- [ ] **커밋**: `fix(auth): reduce JWT token expiration to 2 hours`
+
+#### 10.1.4 Username 입력 검증 강화(나중에 진행)
+- [ ] `app/modules/auth/schemas.py` - `username` 필드에 `pattern=r"^[a-zA-Z0-9_-]+$"` 추가
+- [ ] **커밋**: `fix(auth): add username pattern validation`
+
+### 10.2 아키텍처 개선 (HIGH)
+
+#### 10.2.1 트랜잭션 관리 일관성 ✅
+- [x] Repository 파일들에서 `commit()` 호출 제거, `flush()`만 사용
+  - [x] `app/modules/polls/repository.py`
+  - [x] `app/modules/notifications/repository.py`
+  - [x] `app/modules/reports/repository.py`
+- [x] Session manager에서 트랜잭션 경계 관리하도록 통일
+
+#### 10.2.2 Dependency Injection 개선 ✅
+- [x] `app/deps.py` - Service DI 함수 추가 (`get_poll_service`, `get_circle_service` 등)
+- [x] Router에서 직접 Repository/Service 생성 코드 제거
+- [x] `Annotated[Service, Depends(get_service)]` 패턴 적용
+  - [x] `app/modules/polls/router.py`
+  - [x] `app/modules/circles/router.py`
+  - [x] `app/modules/notifications/router.py`
+  - [x] `app/modules/reports/router.py`
+
+#### 10.2.3 N+1 쿼리 해결 ✅
+- [x] `app/modules/circles/repository.py` - `find_with_members()`에 User eager loading 이미 적용됨
+- [x] `selectinload(CircleMember.user)` 이미 사용 중
+
+#### 10.2.4 중복 코드 제거 ✅
+- [x] `app/deps.py` - 중복된 `get_db()` 함수 제거
+- [x] `app/core/database.py`의 `get_db()` 사용하도록 통일
+
+### 10.3 코드 품질 개선 (MEDIUM)
+
+#### 10.3.1 에러 핸들링 개선 ✅
+- [x] `app/main.py` - `RequestValidationError` 핸들러 추가
+- [x] 표준 API 응답 포맷으로 Pydantic 에러 반환
+
+#### 10.3.2 로깅 시스템 도입 ✅
+- [x] `app/main.py` - `print()` 문을 `logging` 모듈로 교체
+- [x] 로깅 설정 추가 (`app/main.py`에서 basicConfig 설정)
+
+#### 10.3.3 비즈니스 에러 타입 세분화(나중에 진행)
+- [ ] `app/core/exceptions.py` - 구체적인 에러 클래스 추가
+  - [ ] `PollEndedError`
+  - [ ] `SelfVoteError`
+  - [ ] `CircleFullError`
+  - [ ] `AlreadyMemberError`
+- [ ] 서비스 레이어에서 `BadRequestException` 대신 구체적 에러 사용
+- [ ] **커밋**: `refactor: add specific business exception types`
+
+#### 10.3.4 Rate Limit 해싱 개선(나중에 진행)
+- [ ] `app/core/rate_limit.py` - `hash()` 대신 `hashlib.sha256()` 사용
+- [ ] **커밋**: `fix(security): use SHA-256 for rate limit token hashing`
+
+### 10.4 성능 최적화 (MEDIUM)
+
+#### 10.4.1 DB 커넥션 풀 설정(나중에 진행)
+- [ ] `app/core/database.py` - `pool_size` 환경변수로 설정 가능하게 변경
+- [ ] `app/config.py` - `db_pool_size`, `db_max_overflow` 설정 추가
+- [ ] 기본값 `pool_size=20`, `max_overflow=30`으로 조정
+- [ ] **커밋**: `perf: make database pool size configurable`
+
+#### 10.4.2 템플릿 캐싱 (선택적)(나중에 진행)
+- [ ] Redis 캐싱 레이어 설계
+- [ ] `PollService.get_templates()` 결과 캐싱 (TTL 10분)
+- [ ] **커밋**: `perf: add Redis caching for poll templates`
+
+
+### 10.6 설정 및 배포 준비 (LOW)
+
+#### 10.6.1 CORS 설정 개선 ✅
+- [x] `app/config.py` - `field_validator`로 CORS origins 검증 추가
+- [x] 개발 환경만 localhost 허용하도록 조건부 설정
+
+#### 10.6.2 상수 추출 ✅
+- [x] `app/core/constants.py` 생성
+- [x] 매직 넘버 상수화 (초대코드 길이, 신고 임계값, 투표 기간 등)
+
+---
+
 ## 최종 점검
 
-- [x] 전체 테스트 통과: `uv run pytest -v --cov=app --cov-report=html` (139 passed, 87% coverage)
+- [x] 전체 테스트 통과: `uv run pytest -v --cov=app --cov-report=html` (140 passed, 87% coverage)
 - [x] 린트 통과: `uv run ruff check app/`
 - [x] 타입 체크 통과: `uv run mypy app/` (43 source files checked)
 - [x] 서버 정상 실행: `uv run uvicorn app.main:app --reload`

@@ -3,6 +3,7 @@
 import uuid
 
 from app.core.enums import NotificationType
+from app.core.exceptions import AuthorizationError, NotFoundException
 from app.modules.circles.models import Circle
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import NotificationCreate, NotificationResponse
@@ -52,8 +53,18 @@ class NotificationService:
         Args:
             notification_id: Notification UUID
             user_id: User UUID (for authorization)
+
+        Raises:
+            NotFoundException: If notification not found
+            AuthorizationError: If notification doesn't belong to user
         """
-        # Note: In production, should verify notification belongs to user
+        notification = await self.notification_repo.find_by_id(notification_id)
+        if notification is None:
+            raise NotFoundException(message="알림을 찾을 수 없습니다", code="NOTIFICATION_NOT_FOUND")
+
+        if notification.user_id != user_id:
+            raise AuthorizationError(message="해당 알림에 대한 접근 권한이 없습니다")
+
         await self.notification_repo.mark_as_read(notification_id)
 
     async def mark_all_as_read(self, user_id: uuid.UUID) -> None:

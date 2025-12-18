@@ -69,7 +69,7 @@ class TemplateRepository:
             .where(PollTemplate.id == template_id)
             .values(usage_count=PollTemplate.usage_count + 1)
         )
-        await self.session.commit()
+        await self.session.flush()
 
 
 class PollRepository:
@@ -108,7 +108,7 @@ class PollRepository:
             ends_at=ends_at,
         )
         self.session.add(poll)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(poll)
         return poll
 
@@ -165,7 +165,7 @@ class PollRepository:
             status: New status
         """
         await self.session.execute(update(Poll).where(Poll.id == poll_id).values(status=status))
-        await self.session.commit()
+        await self.session.flush()
 
     async def increment_vote_count(self, poll_id: uuid.UUID) -> None:
         """Increment poll vote count.
@@ -176,7 +176,7 @@ class PollRepository:
         await self.session.execute(
             update(Poll).where(Poll.id == poll_id).values(vote_count=Poll.vote_count + 1)
         )
-        await self.session.commit()
+        await self.session.flush()
 
     async def find_ending_soon(self, minutes: int) -> list[Poll]:
         """Find active polls ending within specified minutes.
@@ -219,7 +219,7 @@ class VoteRepository:
         """
         vote = Vote(poll_id=poll_id, voter_hash=voter_hash, voted_for_id=voted_for_id)
         self.session.add(vote)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(vote)
         return vote
 

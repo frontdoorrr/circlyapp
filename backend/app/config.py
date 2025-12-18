@@ -3,6 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +24,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/circly"
+    db_pool_size: int = 20
+    db_max_overflow: int = 30
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
@@ -31,8 +34,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 10080  # 7 days
 
-    # CORS
-    cors_origins: list[str] = ["http://localhost:19006", "exp://localhost:19000"]
+    # CORS - empty list means it must be configured in production
+    cors_origins: list[str] = []
 
     # Rate Limiting
     rate_limit_per_minute: int = 100
@@ -46,6 +49,17 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.app_env == "production"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def set_default_cors_origins(cls, v: list[str] | str | None) -> list[str]:
+        """Set default CORS origins for development if not provided."""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        if not v:
+            # Default origins for development only
+            return ["http://localhost:19006", "exp://localhost:19000"]
+        return v
 
 
 @lru_cache

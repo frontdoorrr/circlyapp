@@ -41,7 +41,7 @@ class ReportRepository:
             status=ReportStatus.PENDING,
         )
         self.session.add(report)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(report)
         return report
 
@@ -135,7 +135,7 @@ class ReportRepository:
                 reviewed_at=datetime.now(UTC),
             )
         )
-        await self.session.commit()
+        await self.session.flush()
         rowcount = getattr(result, "rowcount", 0) or 0
         return rowcount > 0
 

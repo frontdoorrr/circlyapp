@@ -1,32 +1,27 @@
 """Common dependencies for FastAPI endpoints."""
 
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
-from app.core.database import async_session_maker
+from app.core.database import get_db
 from app.core.exceptions import UnauthorizedException
 from app.modules.auth.models import User
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.service import AuthService
+from app.modules.circles.repository import CircleRepository, MembershipRepository
+from app.modules.circles.service import CircleService
+from app.modules.notifications.repository import NotificationRepository
+from app.modules.notifications.service import NotificationService
+from app.modules.polls.repository import PollRepository, TemplateRepository, VoteRepository
+from app.modules.polls.service import PollService
+from app.modules.reports.repository import ReportRepository
+from app.modules.reports.service import ReportService
 
 # Settings dependency
 SettingsDep = Annotated[Settings, Depends(get_settings)]
-
-
-async def get_db() -> AsyncGenerator[AsyncSession]:
-    """Get database session dependency."""
-    async with async_session_maker() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-
 
 # Database session dependency type
 DBSessionDep = Annotated[AsyncSession, Depends(get_db)]
@@ -64,3 +59,42 @@ async def get_current_user(
 
 # Current user dependency type
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+# Service factory functions
+def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
+    """Get AuthService dependency."""
+    return AuthService(UserRepository(db))
+
+
+def get_circle_service(db: AsyncSession = Depends(get_db)) -> CircleService:
+    """Get CircleService dependency."""
+    return CircleService(CircleRepository(db), MembershipRepository(db))
+
+
+def get_poll_service(db: AsyncSession = Depends(get_db)) -> PollService:
+    """Get PollService dependency."""
+    return PollService(
+        TemplateRepository(db),
+        PollRepository(db),
+        VoteRepository(db),
+        MembershipRepository(db),
+    )
+
+
+def get_notification_service(db: AsyncSession = Depends(get_db)) -> NotificationService:
+    """Get NotificationService dependency."""
+    return NotificationService(NotificationRepository(db))
+
+
+def get_report_service(db: AsyncSession = Depends(get_db)) -> ReportService:
+    """Get ReportService dependency."""
+    return ReportService(ReportRepository(db))
+
+
+# Service dependency types
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+CircleServiceDep = Annotated[CircleService, Depends(get_circle_service)]
+PollServiceDep = Annotated[PollService, Depends(get_poll_service)]
+NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]
+ReportServiceDep = Annotated[ReportService, Depends(get_report_service)]

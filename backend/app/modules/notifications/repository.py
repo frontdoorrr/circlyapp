@@ -33,7 +33,7 @@ class NotificationRepository:
             data=notification_data.data,
         )
         self.session.add(notification)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(notification)
         return notification
 
@@ -57,8 +57,22 @@ class NotificationRepository:
             for n in notifications_data
         ]
         self.session.add_all(notifications)
-        await self.session.commit()
+        await self.session.flush()
         return len(notifications)
+
+    async def find_by_id(self, notification_id: uuid.UUID) -> Notification | None:
+        """Find a notification by ID.
+
+        Args:
+            notification_id: Notification UUID
+
+        Returns:
+            Notification if found, None otherwise
+        """
+        result = await self.session.execute(
+            select(Notification).where(Notification.id == notification_id)
+        )
+        return result.scalar_one_or_none()
 
     async def find_by_user_id(
         self,
@@ -120,7 +134,7 @@ class NotificationRepository:
         await self.session.execute(
             update(Notification).where(Notification.id == notification_id).values(is_read=True)
         )
-        await self.session.commit()
+        await self.session.flush()
 
     async def mark_all_as_read(self, user_id: uuid.UUID) -> None:
         """Mark all notifications as read for a user.
@@ -136,7 +150,7 @@ class NotificationRepository:
             )
             .values(is_read=True)
         )
-        await self.session.commit()
+        await self.session.flush()
 
     async def count_unread(self, user_id: uuid.UUID) -> int:
         """Count unread notifications for a user.

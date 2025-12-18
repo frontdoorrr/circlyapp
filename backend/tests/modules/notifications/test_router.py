@@ -322,5 +322,68 @@ class TestNotificationRouter:
             headers={"Authorization": f"Bearer {token}"},
         )
 
-        # Should succeed (idempotent operation)
-        assert response.status_code == status.HTTP_200_OK
+        # Should return 404 for non-existent notification
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"]["code"] == "NOTIFICATION_NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_mark_as_read_unauthorized(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Test marking another user's notification as read."""
+        # Register user 1
+        await client.post(
+            "/auth/register",
+            json={
+                "email": "user1@example.com",
+                "password": "password123",
+                "username": "user1",
+            },
+        )
+
+        # Register and login user 2
+        await client.post(
+            "/auth/register",
+            json={
+                "email": "user2@example.com",
+                "password": "password123",
+                "username": "user2",
+            },
+        )
+        login_response = await client.post(
+            "/auth/login",
+            json={
+                "email": "user2@example.com",
+                "password": "password123",
+            },
+        )
+        token = login_response.json()["access_token"]
+
+        # Get user1 from DB and create notification for them
+        user_repo = UserRepository(db_session)
+        user1 = await user_repo.find_by_email("user1@example.com")
+
+        notification = Notification(
+            user_id=user1.id,
+            type=NotificationType.POLL_STARTED,
+            title="User1 Notification",
+            body="Body",
+            is_read=False,
+        )
+        db_session.add(notification)
+        await db_session.commit()
+        await db_session.refresh(notification)
+
+        # User2 tries to mark user1's notification as read
+        response = await client.put(
+            f"/notifications/{notification.id}/read",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        # Should return 403 Forbidden
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"]["code"] == "FORBIDDEN"

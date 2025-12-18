@@ -2,10 +2,8 @@
 
 from fastapi import APIRouter, status
 
-from app.deps import CurrentUserDep, DBSessionDep
-from app.modules.reports.repository import ReportRepository
+from app.deps import CurrentUserDep, ReportServiceDep
 from app.modules.reports.schemas import ReportCreate, ReportResponse
-from app.modules.reports.service import ReportService
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -19,7 +17,7 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 async def create_report(
     report_data: ReportCreate,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: ReportServiceDep,
 ) -> ReportResponse:
     """Create a new report for inappropriate content or behavior.
 
@@ -34,9 +32,6 @@ async def create_report(
     - HARASSMENT: Bullying or harassing behavior
     - OTHER: Other issues not covered above
     """
-    report_repo = ReportRepository(db)
-    service = ReportService(report_repo)
-
     return await service.create_report(
         reporter_id=current_user.id,
         data=report_data,

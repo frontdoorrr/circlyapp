@@ -1,10 +1,12 @@
 """FastAPI application factory and configuration."""
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import cast
+from typing import Any, cast
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from slowapi import _rate_limit_exceeded_handler
@@ -15,6 +17,13 @@ from app.config import get_settings
 from app.core.exceptions import CirclyError
 from app.core.rate_limit import limiter
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 def _custom_rate_limit_handler(request: StarletteRequest, exc: Exception) -> Response:
     """Custom rate limit handler that matches Starlette's expected signature."""
@@ -24,16 +33,12 @@ def _custom_rate_limit_handler(request: StarletteRequest, exc: Exception) -> Res
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan handler for startup and shutdown events."""
-    # Startup
     settings = get_settings()
-    if settings.debug:
-        print(f"Starting {settings.app_name} in {settings.app_env} mode...")
+    logger.info(f"Starting {settings.app_name} in {settings.app_env} mode...")
 
     yield
 
-    # Shutdown
-    if settings.debug:
-        print("Shutting down...")
+    logger.info("Shutting down...")
 
 
 def create_app() -> FastAPI:
@@ -74,6 +79,31 @@ def create_app() -> FastAPI:
                     "code": exc.code,
                     "message": exc.message,
                     **exc.details,
+                },
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        """Handle Pydantic validation errors with consistent API response format."""
+        errors: list[dict[str, Any]] = []
+        for error in exc.errors():
+            errors.append({
+                "field": ".".join(str(loc) for loc in error["loc"]),
+                "message": error["msg"],
+                "type": error["type"],
+            })
+
+        return JSONResponse(
+            status_code=422,
+            content={
+                "success": False,
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "입력값 검증에 실패했습니다",
+                    "details": errors,
                 },
             },
         )

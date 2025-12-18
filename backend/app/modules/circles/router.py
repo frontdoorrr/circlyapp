@@ -4,8 +4,7 @@ import uuid
 
 from fastapi import APIRouter, status
 
-from app.deps import CurrentUserDep, DBSessionDep
-from app.modules.circles.repository import CircleRepository, MembershipRepository
+from app.deps import CircleServiceDep, CurrentUserDep
 from app.modules.circles.schemas import (
     CircleCreate,
     CircleDetail,
@@ -14,7 +13,6 @@ from app.modules.circles.schemas import (
     MemberInfo,
     RegenerateInviteCodeResponse,
 )
-from app.modules.circles.service import CircleService
 
 router = APIRouter(prefix="/circles", tags=["Circles"])
 
@@ -28,16 +26,12 @@ router = APIRouter(prefix="/circles", tags=["Circles"])
 async def create_circle(
     circle_data: CircleCreate,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> CircleResponse:
     """Create a new circle.
 
     The current user will be set as the owner and first member.
     """
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     return await service.create_circle(circle_data, current_user.id)
 
 
@@ -48,13 +42,9 @@ async def create_circle(
 )
 async def get_circles(
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> list[CircleResponse]:
     """Get all circles the current user is a member of."""
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     return await service.get_user_circles(current_user.id)
 
 
@@ -66,13 +56,9 @@ async def get_circles(
 async def get_circle(
     circle_id: uuid.UUID,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> CircleDetail:
     """Get detailed circle information including members."""
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     return await service.get_circle_detail(circle_id, current_user.id)
 
 
@@ -84,13 +70,9 @@ async def get_circle(
 async def join_by_code(
     join_data: JoinByCodeRequest,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> CircleResponse:
     """Join a circle using invite code."""
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     return await service.join_by_code(
         join_data.invite_code,
         current_user.id,
@@ -106,16 +88,12 @@ async def join_by_code(
 async def leave_circle(
     circle_id: uuid.UUID,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> None:
     """Leave a circle.
 
     Circle owners cannot leave their circles.
     """
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     await service.leave_circle(circle_id, current_user.id)
 
 
@@ -127,17 +105,12 @@ async def leave_circle(
 async def get_members(
     circle_id: uuid.UUID,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> list[MemberInfo]:
     """Get list of circle members.
 
     Returns member information including user details.
     """
-    # Reuse get_circle_detail to check membership and get members
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     circle_detail = await service.get_circle_detail(circle_id, current_user.id)
     return circle_detail.members
 
@@ -150,14 +123,10 @@ async def get_members(
 async def regenerate_invite_code(
     circle_id: uuid.UUID,
     current_user: CurrentUserDep,
-    db: DBSessionDep,
+    service: CircleServiceDep,
 ) -> RegenerateInviteCodeResponse:
     """Regenerate circle's invite code.
 
     Only the circle owner can regenerate the code.
     """
-    circle_repo = CircleRepository(db)
-    membership_repo = MembershipRepository(db)
-    service = CircleService(circle_repo, membership_repo)
-
     return await service.regenerate_invite_code(circle_id, current_user.id)
