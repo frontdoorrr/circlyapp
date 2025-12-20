@@ -179,150 +179,42 @@ const WaitingScreen = {
 
 ## 🎨 인터랙션 및 애니메이션
 
-### 1. 마이크로 인터랙션
+> **📌 Single Source of Truth**: 상세 애니메이션 정의 및 CSS 코드는 [`03-animations.md`](./03-animations.md)를 참조하세요.
 
-#### 터치 피드백
-```css
-.vote-option {
-  transition: all 0.2s ease;
-  transform: scale(1);
-}
+### 핵심 애니메이션 원칙 (UX 관점)
 
-.vote-option:active {
-  transform: scale(0.98);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
+**1. 마이크로 인터랙션**
+- **터치 피드백**: 0.2s 내 즉각적 반응
+- **선택 상태**: scale(1.02)로 선택됨 강조
+- **로딩 상태**: shimmer 효과로 대기 상태 표현
 
-.vote-option.selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  transform: scale(1.02);
-}
-```
+**2. 화면 전환**
+- **슬라이드 전환**: spring 효과로 자연스러운 이동
+- **페이드 스케일**: 모달/오버레이 등장 시 사용
 
-#### 로딩 상태
-```css
-.loading-shimmer {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-```
-
-### 2. 화면 전환 애니메이션
-
-#### 페이지 전환
-```javascript
-const pageTransitions = {
-  slideIn: {
-    initial: { x: '100%', opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: '-100%', opacity: 0 },
-    transition: { type: 'spring', stiffness: 100, damping: 20 }
-  },
-  fadeScale: {
-    initial: { scale: 0.9, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 1.1, opacity: 0 },
-    transition: { duration: 0.3 }
-  }
-};
-```
-
-### 3. 결과 표시 애니메이션
-
-#### 실시간 그래프 업데이트
-```css
-.result-bar {
-  height: 40px;
-  background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%);
-  border-radius: 20px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.result-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
-  );
-  animation: shine 2s infinite;
-}
-
-@keyframes shine {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-```
+**3. 결과 표시**
+- **막대 그래프**: 1s cubic-bezier로 부드러운 증가
+- **실시간 업데이트**: shine 효과로 새로운 투표 강조
 
 ## 🎭 감정적 디자인 요소
 
 ### 1. 색상 시스템
 
-#### Gas 앱 영감을 받은 컬러 팔레트
-```css
-:root {
-  /* Primary Gradients */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  
-  /* Emotion Colors */
-  --heart-pink: #ff6b9d;
-  --joy-orange: #ffa726;
-  --calm-blue: #42a5f5;
-  --nature-green: #66bb6a;
-  
-  /* Interaction States */
-  --hover-glow: rgba(102, 126, 234, 0.3);
-  --active-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-```
+> **📌 Single Source of Truth**: 상세 디자인 토큰은 [`02-ui-design-system.md`](./02-ui-design-system.md)를 참조하세요.
+
+**핵심 감정 컬러 (UX 관점)**:
+- **Primary Gradient**: 신뢰와 친근함을 전달 (`--gradient-primary`)
+- **Heart Pink**: 칭찬과 따뜻함을 표현 (`--heart-pink: #ff6b9d`)
+- **Joy Orange**: 기쁨과 활력을 표현 (`--joy-orange: #ffa726`)
 
 ### 2. 타이포그래피
 
-#### 감정 전달을 위한 폰트 시스템
-```css
-.text-celebration {
-  font-family: 'Pretendard Variable', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  text-align: center;
-  line-height: 1.2;
-}
+> **📌 Single Source of Truth**: 폰트 스케일 및 CSS 정의는 [`02-ui-design-system.md`](./02-ui-design-system.md)를 참조하세요.
 
-.text-warm {
-  font-family: 'Pretendard Variable', sans-serif;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #666;
-  line-height: 1.6;
-  letter-spacing: -0.01em;
-}
-```
+**UX 관점의 타이포 원칙**:
+- **축하 메시지**: 그라디언트 텍스트로 특별함 표현
+- **일반 텍스트**: 부드럽고 읽기 쉬운 스타일
+- **한국어 최적화**: Pretendard Variable 사용
 
 ### 3. 이모지 및 아이콘 사용
 
@@ -354,56 +246,23 @@ const emotionIcons = {
 
 ## 📊 사용자 플로우 최적화
 
-### 1. 핵심 플로우 단순화
+> **📌 Single Source of Truth**: 상세 화면별 플로우 및 버튼 액션은 [`04-user-flow.md`](./04-user-flow.md)를 참조하세요.
 
-#### 투표 참여 플로우 (3단계)
-```
-Step 1: 질문 확인 (2초)
-↓
-Step 2: 선택지 터치 (1초)
-↓  
-Step 3: 결과 확인 (3초)
+### 핵심 플로우 원칙 (UX 관점)
 
-총 소요 시간: 6초 이내
-```
+**1. 투표 참여**: 3단계, 6초 이내 완료
+- 질문 확인 → 선택지 터치 → 결과 확인
 
-#### 투표 생성 플로우 (5단계)
-```
-Step 1: 템플릿 선택 (5초)
-↓
-Step 2: 마감시간 설정 (3초)
-↓
-Step 3: 미리보기 확인 (2초)
-↓
-Step 4: 게시 확인 (1초)
-↓
-Step 5: 공유 링크 생성 (2초)
+**2. 투표 생성**: 5단계, 13초 이내 완료
+- 템플릿 선택 → 마감시간 설정 → 미리보기 → 게시 → 공유
 
-총 소요 시간: 13초 이내
-```
+### 에러 상태 (UX 메시지)
 
-### 2. 에러 상태 및 예외 처리
-
-#### 네트워크 에러 처리
-```javascript
-const errorStates = {
-  networkError: {
-    message: "잠시 인터넷이 불안정해요",
-    action: "다시 시도하기",
-    illustration: "🌐"
-  },
-  votingClosed: {
-    message: "이 투표는 마감되었어요",
-    action: "다른 투표 보기",
-    illustration: "⏰"
-  },
-  alreadyVoted: {
-    message: "이미 투표했어요!",
-    action: "결과 확인하기",
-    illustration: "✅"
-  }
-};
-```
+| 상태 | 메시지 | 액션 |
+|------|--------|------|
+| 네트워크 오류 | "잠시 인터넷이 불안정해요" | 다시 시도하기 |
+| 투표 마감 | "이 투표는 마감되었어요" | 다른 투표 보기 |
+| 중복 투표 | "이미 투표했어요!" | 결과 확인하기 |
 
 ## 🚀 성능 및 최적화
 

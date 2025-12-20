@@ -3,6 +3,85 @@
 ## 개요
 Gas 앱의 매끄럽고 즐거운 인터랙션을 벤치마킹하여 Circly만의 독특하고 감성적인 애니메이션 시스템을 구축하는 가이드입니다.
 
+---
+
+## 🎯 Motion Design Tokens
+
+> **이 섹션이 애니메이션 관련 토큰의 Single Source of Truth입니다.**
+
+### Duration (지속시간)
+
+```css
+:root {
+  --duration-instant: 0ms;      /* 즉시 */
+  --duration-fastest: 50ms;     /* 즉각 피드백 */
+  --duration-faster: 100ms;     /* 빠른 피드백 */
+  --duration-fast: 150ms;       /* 마이크로 인터랙션 */
+  --duration-normal: 200ms;     /* 표준 전환 */
+  --duration-slow: 300ms;       /* 화면 전환 */
+  --duration-slower: 400ms;     /* 복잡한 애니메이션 */
+  --duration-slowest: 500ms;    /* 모달 전환 */
+  --duration-gentle: 800ms;     /* 결과 그래프 */
+  --duration-relaxed: 1000ms;   /* 축하 애니메이션 */
+}
+```
+
+| Token | Duration | 용도 |
+|-------|----------|------|
+| `instant` | 0ms | 즉시 |
+| `fastest` | 50ms | 즉각 피드백 (터치 하이라이트) |
+| `faster` | 100ms | 빠른 피드백 (버튼 press) |
+| `fast` | 150ms | 마이크로 인터랙션 |
+| `normal` | 200ms | **표준 전환** |
+| `slow` | 300ms | 화면 전환 |
+| `slower` | 400ms | 복잡한 애니메이션 |
+| `slowest` | 500ms | 모달 전환 |
+| `gentle` | 800ms | 결과 그래프 애니메이션 |
+| `relaxed` | 1000ms | 축하 애니메이션 |
+
+### Easing Curves
+
+```css
+:root {
+  /* 기본 이징 */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 특수 이징 (Gas 앱 스타일) */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-back-out: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --ease-spring: cubic-bezier(0.37, 0, 0.63, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+```
+
+| Token | Cubic Bezier | 용도 |
+|-------|--------------|------|
+| `linear` | 0, 0, 1, 1 | 진행바, 로딩 |
+| `ease-in` | 0.4, 0, 1, 1 | 나가는 요소 |
+| `ease-out` | 0, 0, 0.2, 1 | 들어오는 요소 |
+| `ease-in-out` | 0.4, 0, 0.2, 1 | **기본 전환** |
+| `bounce` | 0.34, 1.56, 0.64, 1 | 선택 완료, 축하 |
+| `back-out` | 0.34, 1.3, 0.64, 1 | 버튼 등장 |
+| `spring` | 0.37, 0, 0.63, 1 | 카드 전환 |
+| `smooth` | 0.25, 0.1, 0.25, 1 | 부드러운 스크롤 |
+
+### Spring Configuration (React Native Reanimated)
+
+```typescript
+// 스프링 프리셋
+const springPresets = {
+  stiff: { damping: 15, stiffness: 200 },    // 빠르고 단단한 반응
+  bouncy: { damping: 12, stiffness: 180 },   // 바운스 효과
+  gentle: { damping: 20, stiffness: 100 },   // 부드러운 전환
+  wobbly: { damping: 10, stiffness: 150 },   // 흔들리는 효과
+};
+```
+
+---
+
 ## 🎭 핵심 애니메이션 철학
 
 ### 1. 감정적 연결 (Emotional Connection)

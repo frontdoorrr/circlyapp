@@ -60,6 +60,7 @@ database Schema {
         name: VARCHAR(100) NOT NULL
         description: TEXT
         invite_code: VARCHAR(6) UNIQUE NOT NULL
+        invite_code_expires_at: TIMESTAMPTZ NOT NULL  // 초대 코드 만료 시간 (생성 후 24시간)
         invite_link_id: UUID UNIQUE
         owner_id: UUID FOREIGN KEY -> users(id)
         max_members: INTEGER DEFAULT 50
@@ -142,6 +143,48 @@ database Schema {
         created_at: TIMESTAMPTZ DEFAULT NOW()
     }
 
+    // 푸시 토큰 테이블
+    table push_tokens {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        user_id: UUID FOREIGN KEY -> users(id)
+        expo_token: VARCHAR(255) UNIQUE NOT NULL
+        device_id: VARCHAR(255)
+        platform: VARCHAR(10)  // ios, android
+        is_active: BOOLEAN DEFAULT TRUE
+        created_at: TIMESTAMPTZ DEFAULT NOW()
+        updated_at: TIMESTAMPTZ DEFAULT NOW()
+    }
+
+    // 알림 설정 테이블
+    table notification_settings {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        user_id: UUID FOREIGN KEY -> users(id) UNIQUE
+        all_notifications: BOOLEAN DEFAULT TRUE
+        poll_start_notifications: BOOLEAN DEFAULT TRUE
+        poll_deadline_notifications: BOOLEAN DEFAULT TRUE
+        poll_result_notifications: BOOLEAN DEFAULT TRUE
+        quiet_hours_start: TIME DEFAULT '22:00'
+        quiet_hours_end: TIME DEFAULT '08:00'
+        max_daily_notifications: INTEGER DEFAULT 10
+        created_at: TIMESTAMPTZ DEFAULT NOW()
+        updated_at: TIMESTAMPTZ DEFAULT NOW()
+    }
+
+    // 알림 발송 로그 테이블
+    table notification_logs {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        user_id: UUID FOREIGN KEY -> users(id)
+        poll_id: UUID FOREIGN KEY -> polls(id)
+        notification_type: notification_type NOT NULL
+        title: VARCHAR(255)
+        body: TEXT
+        sent_at: TIMESTAMPTZ
+        status: notification_log_status DEFAULT 'PENDING'  // PENDING, SENT, FAILED, CLICKED
+        expo_receipt_id: VARCHAR(255)
+        error_message: TEXT
+        created_at: TIMESTAMPTZ DEFAULT NOW()
+    }
+
     // 신고 테이블
     table reports {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
@@ -165,6 +208,7 @@ database Schema {
     enum report_target_type = 'USER' | 'CIRCLE' | 'POLL'
     enum report_reason = 'INAPPROPRIATE' | 'SPAM' | 'HARASSMENT' | 'OTHER'
     enum report_status = 'PENDING' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED'
+    enum notification_log_status = 'PENDING' | 'SENT' | 'FAILED' | 'CLICKED'
 }
 ```
 
@@ -339,6 +383,7 @@ module Circle {
         name: String
         description: String?
         inviteCode: String
+        inviteCodeExpiresAt: DateTime  // 초대 코드 만료 시간
         inviteLinkId: UUID
         ownerId: UUID
         maxMembers: Integer
