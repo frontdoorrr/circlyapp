@@ -716,16 +716,22 @@
 - [x] **커밋**: `feat(frontend): setup Expo Router file structure and layouts`
 
 ### 11.4 Animation Hooks (P1)
-- [ ] `frontend/src/hooks/` 디렉토리 생성
-- [ ] `useAnimation.ts` - 공통 애니메이션 훅
-  - [ ] `useFadeIn()` - Fade in 애니메이션
-  - [ ] `useSlideIn()` - Slide in 애니메이션
-  - [ ] `useScale()` - Scale 애니메이션
-  - [ ] `useButtonPress()` - 버튼 press 애니메이션
-- [ ] `useHaptics.ts` - Haptic feedback 훅
-  - [ ] Expo Haptics 통합
-  - [ ] Action-to-haptic 매핑
-- [ ] **커밋**: `feat(frontend): add animation hooks`
+- [x] `frontend/src/hooks/` 디렉토리 생성
+- [x] `useAnimation.ts` - 공통 애니메이션 훅
+  - [x] `useFadeIn()` - Fade in 애니메이션
+  - [x] `useFadeOut()` - Fade out 애니메이션
+  - [x] `useSlideIn()` - Slide in 애니메이션
+  - [x] `useScaleIn()` - Scale in 애니메이션
+  - [x] `usePulse()` - Pulse 애니메이션
+  - [x] `useButtonPress()` - 버튼 press 애니메이션
+  - [x] `useStaggeredFadeIn()` - 스태거 애니메이션
+  - [x] `useShake()` - Shake 애니메이션 (에러 표시)
+- [x] `useHaptics.ts` - Haptic feedback 훅
+  - [x] Expo Haptics 통합
+  - [x] Action-to-haptic 매핑
+  - [x] Context-specific hooks (Vote, Circle, Navigation, Form)
+- [x] `index.ts` - Barrel export
+- [x] **커밋**: `feat(frontend): add animation hooks`
 
 ### 11.5 Pattern Components (P1)
 - [ ] `frontend/src/components/patterns/` 디렉토리 생성
