@@ -138,6 +138,13 @@ import {
   fontWeights,
   lineHeights,
   letterSpacing,
+  spacing,
+  borderRadius,
+  shadows,
+  zIndex,
+  iconSizes,
+  touchTargets,
+  accessibility,
 } from './tokens';
 
 export const typography = {
@@ -167,9 +174,18 @@ import {
 } from './animations';
 
 export const animations = {
-  durations,
+  duration: {
+    instant: durations.instant,
+    fast: durations.fast,
+    normal: durations.normal,
+    slow: durations.slow,
+  },
   easing: easingCurves,
-  spring: springConfigs,
+  spring: {
+    responsive: springConfigs.gentle,
+    bouncy: springConfigs.bouncy,
+    stiff: springConfigs.stiff,
+  },
   patterns: {
     fade: fadeAnimations,
     slide: slideAnimations,
@@ -214,6 +230,83 @@ export const theme = {
  * 타입 안전성을 위한 전체 테마 타입
  */
 export type Theme = typeof theme;
+
+// ============================================================================
+// Consolidated Tokens Object (for component usage)
+// ============================================================================
+
+/**
+ * Tokens Object
+ * 컴포넌트에서 사용하기 편한 통합 토큰 객체
+ *
+ * @example
+ * import { tokens } from '@/theme';
+ *
+ * const styles = StyleSheet.create({
+ *   button: {
+ *     backgroundColor: tokens.colors.primary[500],
+ *     padding: tokens.spacing.md,
+ *     borderRadius: tokens.borderRadius.lg,
+ *   },
+ * });
+ */
+export const tokens = {
+  colors: {
+    primary: primaryColors,
+    secondary: secondaryColors,
+    semantic: semanticColors,
+    neutral: neutralColors,
+    white: '#ffffff',
+    black: '#000000',
+    error: semanticColors.error,
+    success: semanticColors.success,
+    warning: semanticColors.warning,
+    gradients,
+    dark: darkTheme,
+  },
+  typography: {
+    fontFamily: {
+      sans: fontFamilies.primary,
+      mono: fontFamilies.mono,
+    },
+    fontSize: fontSizes,
+    fontWeight: {
+      normal: '400' as const,
+      medium: '500' as const,
+      semibold: '600' as const,
+      bold: '700' as const,
+    },
+    lineHeight: {
+      xs: fontSizes.xs * 1.5,
+      sm: fontSizes.sm * 1.5,
+      base: fontSizes.base * 1.5,
+      lg: fontSizes.lg * 1.5,
+      xl: fontSizes.xl * 1.5,
+      '2xl': fontSizes['2xl'] * 1.5,
+      '3xl': fontSizes['3xl'] * 1.5,
+      '4xl': fontSizes['4xl'] * 1.5,
+    },
+    letterSpacing,
+  },
+  spacing: {
+    xs: spacing[1],
+    sm: spacing[2],
+    md: spacing[4],
+    lg: spacing[6],
+    xl: spacing[8],
+    '2xl': spacing[12],
+  },
+  borderRadius,
+  shadows,
+  zIndex,
+  iconSizes,
+  touchTarget: {
+    sm: touchTargets.min,
+    md: touchTargets.comfortable,
+    lg: touchTargets.spacious,
+  },
+  accessibility,
+} as const;
 
 // ============================================================================
 // Default Export

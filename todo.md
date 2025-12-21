@@ -671,30 +671,30 @@
 - [x] **커밋**: `feat(frontend): add design tokens and animation system`
 
 ### 11.2 Basic Primitives Components (P0)
-- [ ] `frontend/src/components/primitives/` 디렉토리 생성
-- [ ] `Button.tsx` - 기본 버튼 컴포넌트
-  - [ ] Primary, Secondary, Ghost variants
-  - [ ] Size variants (sm, md, lg)
-  - [ ] Loading state
-  - [ ] Disabled state
-  - [ ] Press animation (React Native Reanimated)
-  - [ ] Haptic feedback
+- [x] `frontend/src/components/primitives/` 디렉토리 생성
+- [x] `Button.tsx` - 기본 버튼 컴포넌트
+  - [x] Primary, Secondary, Ghost variants
+  - [x] Size variants (sm, md, lg)
+  - [x] Loading state
+  - [x] Disabled state
+  - [x] Press animation (React Native Reanimated)
+  - [x] Haptic feedback
   - [ ] **테스트**: Storybook 또는 수동 테스트
-- [ ] `Card.tsx` - 카드 컴포넌트
-  - [ ] 기본 카드 레이아웃
-  - [ ] Shadow elevation variants
-  - [ ] Border radius variants
-  - [ ] Press animation (선택적)
-- [ ] `Input.tsx` - 입력 필드 컴포넌트
-  - [ ] Text input
-  - [ ] Focus/Error states
-  - [ ] Label, placeholder, helper text
-  - [ ] Validation feedback
-- [ ] `Text.tsx` - 타이포그래피 컴포넌트
-  - [ ] Typography variants (xs, sm, base, lg, xl, 2xl, 3xl, 4xl)
-  - [ ] Weight variants (normal, medium, semibold, bold)
-  - [ ] Color variants
-- [ ] **커밋**: `feat(frontend): add primitive components`
+- [x] `Card.tsx` - 카드 컴포넌트
+  - [x] 기본 카드 레이아웃
+  - [x] Shadow elevation variants
+  - [x] Border radius variants
+  - [x] Press animation (선택적)
+- [x] `Input.tsx` - 입력 필드 컴포넌트
+  - [x] Text input
+  - [x] Focus/Error states
+  - [x] Label, placeholder, helper text
+  - [x] Validation feedback
+- [x] `Text.tsx` - 타이포그래피 컴포넌트
+  - [x] Typography variants (xs, sm, base, lg, xl, 2xl, 3xl, 4xl)
+  - [x] Weight variants (normal, medium, semibold, bold)
+  - [x] Color variants
+- [x] **커밋**: `feat(frontend): add primitive components`
 
 ### 11.3 Expo Router Setup (P0)
 - [ ] Expo 프로젝트 초기화
