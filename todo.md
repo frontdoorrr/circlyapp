@@ -734,20 +734,26 @@
 - [x] **커밋**: `feat(frontend): add animation hooks`
 
 ### 11.5 Pattern Components (P1)
-- [ ] `frontend/src/components/patterns/` 디렉토리 생성
-- [ ] `VoteCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.3`
-  - [ ] 4명 선택지 레이아웃
-  - [ ] 선택 애니메이션
-  - [ ] Selected state
-  - [ ] Haptic feedback
-- [ ] `ResultBar.tsx` - 결과 바 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.4`
-  - [ ] 진행바 애니메이션
-  - [ ] 퍼센티지 표시
-  - [ ] 그라디언트 배경
-- [ ] `ProgressBar.tsx` - 질문 진행 표시 → `prd/design/02-ui-design-system.md#Progress Indicator`
-  - [ ] 현재/전체 표시
-  - [ ] 진행바 애니메이션
-- [ ] **커밋**: `feat(frontend): add pattern components`
+- [x] `frontend/src/components/patterns/` 디렉토리 생성
+- [x] `VoteCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.3`
+  - [x] 4명 선택지 레이아웃 (2x2 그리드)
+  - [x] 선택 애니메이션 (scale, border, opacity)
+  - [x] Selected state (체크마크 배지)
+  - [x] Haptic feedback (selection)
+  - [x] 스태거 애니메이션 (순차 등장)
+- [x] `ResultBar.tsx` - 결과 바 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.4`
+  - [x] 진행바 애니메이션 (spring physics)
+  - [x] 퍼센티지 표시
+  - [x] 그라디언트 배경 (LinearGradient)
+  - [x] 순위 배지
+  - [x] 1위 강조 스타일
+- [x] `ProgressBar.tsx` - 질문 진행 표시 → `prd/design/02-ui-design-system.md#Progress Indicator`
+  - [x] 현재/전체 표시
+  - [x] 진행바 애니메이션
+  - [x] CompactProgressBar variant (간결한 버전)
+  - [x] DotProgress variant (점 표시)
+- [x] `index.ts` - Barrel export
+- [x] **커밋**: `feat(frontend): add pattern components`
 
 ### 11.6 Empty/Loading States (P1)
 - [ ] `frontend/src/components/states/` 디렉토리 생성
