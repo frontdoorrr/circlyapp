@@ -644,6 +644,143 @@
 
 ---
 
+## Phase 11: Frontend Development
+
+> **참고 문서**: `prd/design/02-ui-design-system.md`, `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md`
+
+### 11.1 Design Tokens Setup (P0)
+- [x] `frontend/src/theme/` 디렉토리 생성
+- [x] `frontend/src/theme/tokens.ts` - 디자인 토큰 정의 → `prd/design/02-ui-design-system.md`
+  - [x] Colors (Primary, Secondary, Semantic, Neutral, Gradients)
+  - [x] Typography (Font families, sizes, weights, line heights)
+  - [x] Spacing (8pt grid)
+  - [x] Border Radius
+  - [x] Shadows (Elevation)
+  - [x] Z-Index Scale
+  - [x] Icon Sizes
+  - [x] Touch Targets
+  - [x] Dark Theme Support
+- [x] `frontend/src/theme/animations.ts` - 애니메이션 토큰 → `prd/design/03-animations.md`
+  - [x] Duration Tokens
+  - [x] Easing Curves (React Native Reanimated)
+  - [x] Spring Configurations
+  - [x] Animation Helpers (animateValue, animateSpring)
+  - [x] Animation Patterns (fade, slide, scale, modal, toast)
+  - [x] Haptic Feedback Patterns
+- [x] `frontend/src/theme/index.ts` - 통합 export
+- [x] **커밋**: `feat(frontend): add design tokens and animation system`
+
+### 11.2 Basic Primitives Components (P0)
+- [ ] `frontend/src/components/primitives/` 디렉토리 생성
+- [ ] `Button.tsx` - 기본 버튼 컴포넌트
+  - [ ] Primary, Secondary, Ghost variants
+  - [ ] Size variants (sm, md, lg)
+  - [ ] Loading state
+  - [ ] Disabled state
+  - [ ] Press animation (React Native Reanimated)
+  - [ ] Haptic feedback
+  - [ ] **테스트**: Storybook 또는 수동 테스트
+- [ ] `Card.tsx` - 카드 컴포넌트
+  - [ ] 기본 카드 레이아웃
+  - [ ] Shadow elevation variants
+  - [ ] Border radius variants
+  - [ ] Press animation (선택적)
+- [ ] `Input.tsx` - 입력 필드 컴포넌트
+  - [ ] Text input
+  - [ ] Focus/Error states
+  - [ ] Label, placeholder, helper text
+  - [ ] Validation feedback
+- [ ] `Text.tsx` - 타이포그래피 컴포넌트
+  - [ ] Typography variants (xs, sm, base, lg, xl, 2xl, 3xl, 4xl)
+  - [ ] Weight variants (normal, medium, semibold, bold)
+  - [ ] Color variants
+- [ ] **커밋**: `feat(frontend): add primitive components`
+
+### 11.3 Expo Router Setup (P0)
+- [ ] Expo 프로젝트 초기화
+  - [ ] `npx create-expo-app frontend --template blank-typescript`
+  - [ ] `npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar`
+  - [ ] `npx expo install react-native-reanimated react-native-gesture-handler`
+- [ ] `frontend/app/` 디렉토리 구조 생성 → `CLAUDE.md#Architecture`
+  - [ ] `app/(auth)/` - 비인증 화면 (로그인, 가입)
+  - [ ] `app/(main)/(home)/` - 홈 탭 (진행 중 투표)
+  - [ ] `app/(main)/(create)/` - 투표 생성 탭
+  - [ ] `app/(main)/(profile)/` - 프로필 탭
+- [ ] `app/_layout.tsx` - Root layout with theme provider
+- [ ] `app/(auth)/_layout.tsx` - Auth layout
+- [ ] `app/(main)/_layout.tsx` - Main layout with tabs
+- [ ] **테스트**: `npx expo start` 실행 확인
+- [ ] **커밋**: `feat(frontend): setup Expo Router file structure`
+
+### 11.4 Animation Hooks (P1)
+- [ ] `frontend/src/hooks/` 디렉토리 생성
+- [ ] `useAnimation.ts` - 공통 애니메이션 훅
+  - [ ] `useFadeIn()` - Fade in 애니메이션
+  - [ ] `useSlideIn()` - Slide in 애니메이션
+  - [ ] `useScale()` - Scale 애니메이션
+  - [ ] `useButtonPress()` - 버튼 press 애니메이션
+- [ ] `useHaptics.ts` - Haptic feedback 훅
+  - [ ] Expo Haptics 통합
+  - [ ] Action-to-haptic 매핑
+- [ ] **커밋**: `feat(frontend): add animation hooks`
+
+### 11.5 Pattern Components (P1)
+- [ ] `frontend/src/components/patterns/` 디렉토리 생성
+- [ ] `VoteCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.3`
+  - [ ] 4명 선택지 레이아웃
+  - [ ] 선택 애니메이션
+  - [ ] Selected state
+  - [ ] Haptic feedback
+- [ ] `ResultBar.tsx` - 결과 바 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.4`
+  - [ ] 진행바 애니메이션
+  - [ ] 퍼센티지 표시
+  - [ ] 그라디언트 배경
+- [ ] `ProgressBar.tsx` - 질문 진행 표시 → `prd/design/02-ui-design-system.md#Progress Indicator`
+  - [ ] 현재/전체 표시
+  - [ ] 진행바 애니메이션
+- [ ] **커밋**: `feat(frontend): add pattern components`
+
+### 11.6 Empty/Loading States (P1)
+- [ ] `frontend/src/components/states/` 디렉토리 생성
+- [ ] `EmptyState.tsx` - 빈 상태 컴포넌트
+  - [ ] 아이콘 + 메시지 레이아웃
+  - [ ] 다양한 빈 상태 variants
+- [ ] `LoadingSpinner.tsx` - 로딩 스피너
+  - [ ] Animated spinner
+  - [ ] Size variants
+- [ ] `Skeleton.tsx` - Skeleton 로딩
+  - [ ] 다양한 skeleton shapes
+  - [ ] Pulse animation
+- [ ] **커밋**: `feat(frontend): add empty and loading states`
+
+### 11.7 UI Documentation (P2)
+- [ ] Storybook 설정 (선택적)
+  - [ ] `@storybook/react-native` 설치
+  - [ ] 컴포넌트별 stories 작성
+- [ ] 컴포넌트 사용 가이드 작성
+  - [ ] `frontend/src/components/README.md`
+- [ ] **커밋**: `docs(frontend): add component documentation`
+
+### 11.8 Responsive Testing (P2)
+- [ ] 다양한 화면 크기 테스트
+  - [ ] iPhone SE (작은 화면)
+  - [ ] iPhone 14 Pro (표준)
+  - [ ] iPhone 14 Pro Max (큰 화면)
+  - [ ] iPad (태블릿)
+- [ ] Safe Area 처리 확인
+- [ ] 가로 모드 지원 (선택적)
+- [ ] **커밋**: `test(frontend): verify responsive design`
+
+### 11.9 Dark Mode Implementation (P2)
+- [ ] Dark theme tokens 적용
+- [ ] Theme provider 구현
+- [ ] Theme toggle 컴포넌트
+- [ ] 컴포넌트별 dark mode 스타일 추가
+- [ ] **테스트**: 라이트/다크 모드 전환 확인
+- [ ] **커밋**: `feat(frontend): implement dark mode support`
+
+---
+
 ## 참고 문서 목록
 
 > **Single Source of Truth**: `docs/DSL.md`가 스키마, 타입, API 정의의 기준 문서입니다.
