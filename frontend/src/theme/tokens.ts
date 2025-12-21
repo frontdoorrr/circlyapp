@@ -391,29 +391,107 @@ export const accessibility = {
 // ============================================================================
 
 /**
+ * Light Theme Colors (Default)
+ */
+export const lightTheme = {
+  background: '#ffffff',
+  backgroundSecondary: '#fafafa',
+  backgroundTertiary: '#f5f5f5',
+
+  text: '#171717',
+  textSecondary: '#525252',
+  textTertiary: '#a3a3a3',
+  textInverse: '#ffffff',
+
+  border: '#e5e5e5',
+  borderSecondary: '#d4d4d4',
+
+  card: '#ffffff',
+  cardElevated: '#ffffff',
+
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  scrim: 'rgba(0, 0, 0, 0.3)',
+} as const;
+
+/**
  * Dark Theme Colors
  * 다크 모드 전용 컬러 시스템
  */
 export const darkTheme = {
-  background: {
-    primary: '#1a1a1a',
-    secondary: '#2d2d2d',
-    tertiary: '#404040',
-  },
-  text: {
-    primary: '#ffffff',
-    secondary: '#e5e5e5',
-    tertiary: '#a3a3a3',
-  },
-  border: {
-    primary: '#404040',
-    secondary: '#525252',
-  },
+  background: '#0a0a0a',
+  backgroundSecondary: '#1a1a1a',
+  backgroundTertiary: '#2d2d2d',
+
+  text: '#ffffff',
+  textSecondary: '#e5e5e5',
+  textTertiary: '#a3a3a3',
+  textInverse: '#171717',
+
+  border: '#404040',
+  borderSecondary: '#525252',
+
+  card: '#1a1a1a',
+  cardElevated: '#2d2d2d',
+
+  overlay: 'rgba(0, 0, 0, 0.7)',
+  scrim: 'rgba(0, 0, 0, 0.5)',
+} as const;
+
+/**
+ * Theme-agnostic Semantic Colors
+ * 라이트/다크 모드에서 동일하게 사용되는 색상
+ */
+export const themeAgnosticColors = {
+  primary: primaryColors,
+  secondary: secondaryColors,
+  semantic: semanticColors,
+  neutral: neutralColors,
+} as const;
+
+// ============================================================================
+// 10. Unified Colors Export (Theme-aware)
+// ============================================================================
+
+/**
+ * Unified Colors
+ * useTheme()으로 접근하여 현재 테마에 맞는 색상 사용
+ */
+export const colors = {
+  // Brand colors (theme-agnostic)
+  primary: primaryColors,
+  secondary: secondaryColors,
+  semantic: semanticColors,
+  neutral: neutralColors,
+
+  // Light theme (default)
+  white: '#ffffff',
+  black: '#000000',
+  background: lightTheme.background,
+  backgroundSecondary: lightTheme.backgroundSecondary,
+  backgroundTertiary: lightTheme.backgroundTertiary,
+
+  text: lightTheme.text,
+  textSecondary: lightTheme.textSecondary,
+  textTertiary: lightTheme.textTertiary,
+  textInverse: lightTheme.textInverse,
+
+  border: lightTheme.border,
+  borderSecondary: lightTheme.borderSecondary,
+
+  card: lightTheme.card,
+  cardElevated: lightTheme.cardElevated,
+
+  overlay: lightTheme.overlay,
+  scrim: lightTheme.scrim,
 } as const;
 
 // ============================================================================
 // Type Exports
 // ============================================================================
+
+export type ThemeMode = 'light' | 'dark';
+export type Theme = typeof lightTheme;
+export type Colors = typeof colors;
 
 export type PrimaryColor = keyof typeof primaryColors;
 export type SecondaryColor = keyof typeof secondaryColors;
