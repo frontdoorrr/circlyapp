@@ -697,20 +697,23 @@
 - [x] **커밋**: `feat(frontend): add primitive components`
 
 ### 11.3 Expo Router Setup (P0)
-- [ ] Expo 프로젝트 초기화
-  - [ ] `npx create-expo-app frontend --template blank-typescript`
-  - [ ] `npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar`
-  - [ ] `npx expo install react-native-reanimated react-native-gesture-handler`
-- [ ] `frontend/app/` 디렉토리 구조 생성 → `CLAUDE.md#Architecture`
-  - [ ] `app/(auth)/` - 비인증 화면 (로그인, 가입)
-  - [ ] `app/(main)/(home)/` - 홈 탭 (진행 중 투표)
-  - [ ] `app/(main)/(create)/` - 투표 생성 탭
-  - [ ] `app/(main)/(profile)/` - 프로필 탭
-- [ ] `app/_layout.tsx` - Root layout with theme provider
-- [ ] `app/(auth)/_layout.tsx` - Auth layout
-- [ ] `app/(main)/_layout.tsx` - Main layout with tabs
+- [x] Expo 프로젝트 초기화
+  - [x] `npx create-expo-app frontend --template blank-typescript`
+  - [x] `npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar`
+  - [x] `npx expo install react-native-reanimated react-native-gesture-handler`
+- [x] `frontend/app/` 디렉토리 구조 생성 → `CLAUDE.md#Architecture`
+  - [x] `app/(auth)/` - 비인증 화면 (로그인, 가입)
+  - [x] `app/(main)/(home)/` - 홈 탭 (진행 중 투표)
+  - [x] `app/(main)/(create)/` - 투표 생성 탭
+  - [x] `app/(main)/(profile)/` - 프로필 탭
+- [x] `app/_layout.tsx` - Root layout with theme provider
+- [x] `app/(auth)/_layout.tsx` - Auth layout
+- [x] `app/(main)/_layout.tsx` - Main layout with tabs
+- [x] `app/(main)/(home)/_layout.tsx` - Home tab layout
+- [x] `app/(main)/(create)/_layout.tsx` - Create poll tab layout
+- [x] `app/(main)/(profile)/_layout.tsx` - Profile tab layout
 - [ ] **테스트**: `npx expo start` 실행 확인
-- [ ] **커밋**: `feat(frontend): setup Expo Router file structure`
+- [x] **커밋**: `feat(frontend): setup Expo Router file structure and layouts`
 
 ### 11.4 Animation Hooks (P1)
 - [ ] `frontend/src/hooks/` 디렉토리 생성
