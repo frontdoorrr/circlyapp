@@ -4,7 +4,7 @@ import {
   TextStyle,
   StyleSheet,
 } from 'react-native';
-import { tokens } from '../../theme';
+import { tokens, useThemedStyles } from '../../theme';
 
 type TextVariant = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
@@ -31,11 +31,13 @@ export function Text({
   numberOfLines,
   ellipsizeMode,
 }: TextProps) {
+  const styles = useThemedStyles(createStyles);
+
   const textStyles: (TextStyle | undefined | false)[] = [
     styles.base,
-    styles[`variant_${variant}`],
-    styles[`weight_${weight}`],
-    styles[`align_${align}`],
+    styles[`variant_${variant}` as keyof ReturnType<typeof createStyles>],
+    styles[`weight_${weight}` as keyof ReturnType<typeof createStyles>],
+    styles[`align_${align}` as keyof ReturnType<typeof createStyles>],
     color && { color },
     style,
   ].filter((s): s is TextStyle => !!s);
@@ -51,11 +53,12 @@ export function Text({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    fontFamily: tokens.typography.fontFamily.sans,
-    color: tokens.colors.neutral[900],
-  },
+const createStyles = (theme: any) =>
+  StyleSheet.create({
+    base: {
+      fontFamily: tokens.typography.fontFamily.sans,
+      color: theme.text,
+    },
   // Variant styles
   variant_xs: {
     fontSize: tokens.typography.fontSize.xs,

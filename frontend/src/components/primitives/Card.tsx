@@ -11,7 +11,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { tokens, animations } from '../../theme';
+import { tokens, animations, useThemedStyles } from '../../theme';
 
 type CardElevation = 'none' | 'sm' | 'md' | 'lg';
 type CardRadius = 'sm' | 'md' | 'lg' | 'xl';
@@ -37,6 +37,7 @@ export function Card({
   pressable = false,
 }: CardProps) {
   const scale = useSharedValue(1);
+  const styles = useThemedStyles(createStyles);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -63,8 +64,8 @@ export function Card({
 
   const cardStyles = [
     styles.base,
-    styles[`elevation_${elevation}`],
-    styles[`radius_${radius}`],
+    styles[`elevation_${elevation}` as keyof ReturnType<typeof createStyles>],
+    styles[`radius_${radius}` as keyof ReturnType<typeof createStyles>],
     style,
   ];
 
@@ -84,48 +85,54 @@ export function Card({
   return <View style={cardStyles}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  base: {
-    backgroundColor: tokens.colors.white,
-    padding: tokens.spacing.lg,
-  },
-  // Elevation styles
-  elevation_none: {
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  elevation_sm: {
-    shadowColor: tokens.shadows.sm.shadowColor,
-    shadowOffset: tokens.shadows.sm.shadowOffset,
-    shadowOpacity: tokens.shadows.sm.shadowOpacity,
-    shadowRadius: tokens.shadows.sm.shadowRadius,
-    elevation: tokens.shadows.sm.elevation,
-  },
-  elevation_md: {
-    shadowColor: tokens.shadows.md.shadowColor,
-    shadowOffset: tokens.shadows.md.shadowOffset,
-    shadowOpacity: tokens.shadows.md.shadowOpacity,
-    shadowRadius: tokens.shadows.md.shadowRadius,
-    elevation: tokens.shadows.md.elevation,
-  },
-  elevation_lg: {
-    shadowColor: tokens.shadows.lg.shadowColor,
-    shadowOffset: tokens.shadows.lg.shadowOffset,
-    shadowOpacity: tokens.shadows.lg.shadowOpacity,
-    shadowRadius: tokens.shadows.lg.shadowRadius,
-    elevation: tokens.shadows.lg.elevation,
-  },
-  // Radius styles
-  radius_sm: {
-    borderRadius: tokens.borderRadius.sm,
-  },
-  radius_md: {
-    borderRadius: tokens.borderRadius.md,
-  },
-  radius_lg: {
-    borderRadius: tokens.borderRadius.lg,
-  },
-  radius_xl: {
-    borderRadius: tokens.borderRadius.xl,
-  },
-});
+const createStyles = (theme: any, isDark: boolean) =>
+  StyleSheet.create({
+    base: {
+      backgroundColor: theme.card,
+      padding: tokens.spacing.lg,
+      // Dark mode에서 border 추가로 구분감 강화
+      ...(isDark && {
+        borderWidth: 1,
+        borderColor: theme.border,
+      }),
+    },
+    // Elevation styles
+    elevation_none: {
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    elevation_sm: {
+      shadowColor: isDark ? '#ffffff' : tokens.shadows.sm.shadowColor,
+      shadowOffset: tokens.shadows.sm.shadowOffset,
+      shadowOpacity: isDark ? 0.05 : tokens.shadows.sm.shadowOpacity,
+      shadowRadius: tokens.shadows.sm.shadowRadius,
+      elevation: tokens.shadows.sm.elevation,
+    },
+    elevation_md: {
+      shadowColor: isDark ? '#ffffff' : tokens.shadows.md.shadowColor,
+      shadowOffset: tokens.shadows.md.shadowOffset,
+      shadowOpacity: isDark ? 0.08 : tokens.shadows.md.shadowOpacity,
+      shadowRadius: tokens.shadows.md.shadowRadius,
+      elevation: tokens.shadows.md.elevation,
+    },
+    elevation_lg: {
+      shadowColor: isDark ? '#ffffff' : tokens.shadows.lg.shadowColor,
+      shadowOffset: tokens.shadows.lg.shadowOffset,
+      shadowOpacity: isDark ? 0.1 : tokens.shadows.lg.shadowOpacity,
+      shadowRadius: tokens.shadows.lg.shadowRadius,
+      elevation: tokens.shadows.lg.elevation,
+    },
+    // Radius styles
+    radius_sm: {
+      borderRadius: tokens.borderRadius.sm,
+    },
+    radius_md: {
+      borderRadius: tokens.borderRadius.md,
+    },
+    radius_lg: {
+      borderRadius: tokens.borderRadius.lg,
+    },
+    radius_xl: {
+      borderRadius: tokens.borderRadius.xl,
+    },
+  });
