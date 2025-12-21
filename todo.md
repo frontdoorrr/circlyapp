@@ -756,17 +756,25 @@
 - [x] **커밋**: `feat(frontend): add pattern components`
 
 ### 11.6 Empty/Loading States (P1)
-- [ ] `frontend/src/components/states/` 디렉토리 생성
-- [ ] `EmptyState.tsx` - 빈 상태 컴포넌트
-  - [ ] 아이콘 + 메시지 레이아웃
-  - [ ] 다양한 빈 상태 variants
-- [ ] `LoadingSpinner.tsx` - 로딩 스피너
-  - [ ] Animated spinner
-  - [ ] Size variants
-- [ ] `Skeleton.tsx` - Skeleton 로딩
-  - [ ] 다양한 skeleton shapes
-  - [ ] Pulse animation
-- [ ] **커밋**: `feat(frontend): add empty and loading states`
+- [x] `frontend/src/components/states/` 디렉토리 생성
+- [x] `EmptyState.tsx` - 빈 상태 컴포넌트
+  - [x] 아이콘 + 메시지 레이아웃
+  - [x] 다양한 빈 상태 variants (8가지)
+  - [x] CompactEmptyState variant (간결한 버전)
+  - [x] 액션 버튼 옵션
+- [x] `LoadingSpinner.tsx` - 로딩 스피너
+  - [x] Animated spinner (ActivityIndicator)
+  - [x] Size variants (sm, md, lg, xl)
+  - [x] DotsLoading variant (점 3개)
+  - [x] PulseLoading variant (펄스 애니메이션)
+  - [x] 전체 화면 오버레이 옵션
+- [x] `Skeleton.tsx` - Skeleton 로딩
+  - [x] 다양한 skeleton shapes (rect, circle, rounded)
+  - [x] Pulse animation
+  - [x] SkeletonText, SkeletonAvatar, SkeletonCard variants
+  - [x] SkeletonList, SkeletonVoteCard, SkeletonResultBar variants
+- [x] `index.ts` - Barrel export
+- [x] **커밋**: `feat(frontend): add empty and loading states`
 
 ### 11.7 UI Documentation (P2)
 - [ ] Storybook 설정 (선택적)
