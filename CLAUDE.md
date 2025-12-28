@@ -82,6 +82,7 @@ trd/                    # 기술 문서 (DSL.md 기반)
 
 | 구현 대상 | 참고 문서 |
 |----------|----------|
+| **프론트엔드 구현** | `trd/08-frontend-implementation-spec.md` ⭐ |
 | 투표 기능 | `docs/DSL.md` (Poll 모듈), `prd/features/01-voting-spec.md` |
 | Circle 초대 | `docs/DSL.md` (Circle 모듈), `prd/features/02-circle-invite.md` |
 | 푸시 알림 | `docs/DSL.md` (Notification 모듈), `prd/features/03-push-notification.md` |
@@ -127,6 +128,8 @@ uv run mypy .
 
 프론트엔드는 Expo (React Native) 기반입니다:
 
+### 기본 명령어
+
 ```bash
 # 개발 서버 실행
 npx expo start
@@ -142,6 +145,134 @@ npm run lint
 
 # 타입 체크
 npm run typecheck
+```
+
+### 환경 변수 설정
+
+`.env` 파일에 백엔드 API URL 설정 필요:
+
+```bash
+# .env (로컬 개발)
+EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
+
+# .env.production (프로덕션)
+EXPO_PUBLIC_API_URL=https://api.circly.app/api/v1
+```
+
+### 코드 구조
+
+```
+frontend/src/
+├── api/           # API 클라이언트 (Axios 기반)
+│   ├── client.ts  # 기본 설정, 인터셉터
+│   ├── auth.ts    # Auth API 함수
+│   ├── circle.ts  # Circle API 함수
+│   └── poll.ts    # Poll API 함수
+├── types/         # TypeScript 타입 정의
+│   ├── auth.ts    # docs/DSL.md Auth 모듈 기반
+│   ├── circle.ts  # docs/DSL.md Circle 모듈 기반
+│   └── poll.ts    # docs/DSL.md Poll 모듈 기반
+├── hooks/         # React Query 훅
+│   ├── useAuth.ts
+│   ├── useCircles.ts
+│   └── usePolls.ts
+├── stores/        # Zustand 전역 상태
+│   └── auth.ts    # 인증 상태 (토큰, 사용자)
+└── theme/         # 디자인 시스템 ✅ 구현 완료
+    ├── tokens.ts  # prd/design/02-ui-design-system.md 기반
+    └── animations.ts
+```
+
+### 상태 관리 전략
+
+- **서버 상태**: React Query (`@tanstack/react-query`)
+  - API 데이터 캐싱, 자동 재시도, 백그라운드 업데이트
+- **클라이언트 상태**: Zustand (`zustand`)
+  - 인증 토큰, 사용자 정보, UI 상태
+
+### API 타입 정의 규칙
+
+**중요**: 모든 타입은 `docs/DSL.md`의 각 모듈 정의를 기준으로 합니다.
+
+```typescript
+// src/types/auth.ts 예시
+// ✅ docs/DSL.md → Auth 모듈 → type User 참조
+export interface UserResponse {
+  id: string;        // UUID
+  email: string;
+  username: string | null;
+  // ... (DSL.md와 정확히 일치)
+}
+```
+
+### 디자인 시스템 사용법
+
+```typescript
+import { tokens } from '../theme';
+
+// ✅ 올바른 사용
+const styles = StyleSheet.create({
+  button: {
+    backgroundColor: tokens.colors.primary[500],
+    borderRadius: tokens.borderRadius.lg,
+    padding: tokens.spacing[4],
+  },
+});
+
+// ❌ 하드코딩 금지
+const styles = StyleSheet.create({
+  button: {
+    backgroundColor: '#667eea',  // ❌
+    borderRadius: 16,            // ❌
+  },
+});
+```
+
+### 프론트엔드 구현 가이드
+
+| 구현 대상 | 참고 문서 |
+|----------|----------|
+| **전체 구현 가이드** | `trd/08-frontend-implementation-spec.md` ⭐ |
+| API 연동 | `trd/08-frontend-implementation-spec.md` (섹션: API 연동 가이드) |
+| 타입 정의 | `docs/DSL.md` (각 모듈 types), `trd/08-frontend-implementation-spec.md` |
+| 상태 관리 | `trd/08-frontend-implementation-spec.md` (섹션: 상태 관리) |
+| 에러 처리 | `trd/08-frontend-implementation-spec.md` (섹션: 에러 처리 전략) |
+| 디자인 토큰 | `frontend/src/theme/tokens.ts` (구현 완료) |
+| 화면별 구현 | `prd/design/05-complete-ui-specification.md` |
+
+### 개발 워크플로우
+
+1. **기능 구현 전 체크리스트**:
+   ```bash
+   ✅ docs/DSL.md에서 해당 모듈 API 확인
+   ✅ src/types/에 TypeScript 타입 정의
+   ✅ src/api/에 API 함수 작성
+   ✅ src/hooks/에 React Query 훅 작성
+   ✅ 화면 컴포넌트 구현 (prd/design/ 참조)
+   ```
+
+2. **타입 안전성 검증**:
+   ```bash
+   npm run typecheck  # TypeScript 에러 확인
+   ```
+
+3. **API 응답 검증**:
+   - Backend 서버 실행: `cd backend && uv run uvicorn app.main:app --reload`
+   - API 문서: http://localhost:8000/docs
+
+### 주요 라이브러리
+
+```json
+{
+  "dependencies": {
+    "expo-router": "^3.x",           // 파일 기반 라우팅
+    "react-native-reanimated": "^3.x", // 애니메이션
+    "@tanstack/react-query": "^5.x", // 서버 상태 관리
+    "zustand": "^4.x",               // 클라이언트 상태 관리
+    "axios": "^1.x",                 // HTTP 클라이언트
+    "expo-haptics": "^13.x"          // 햅틱 피드백
+  }
+}
 ```
 
 ## Custom Commands
