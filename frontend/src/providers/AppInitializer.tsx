@@ -3,6 +3,7 @@
  *
  * 앱 시작 시 필요한 초기화 작업 수행
  * - 저장된 인증 정보 로드
+ * - 인증 상태에 따른 자동 리다이렉트
  * - 온보딩 완료 여부 확인
  * - 푸시 알림 초기화
  * - 스플래시 화면 표시
@@ -10,6 +11,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../stores/auth';
 import { registerForPushNotificationsAsync } from '../services/notification/pushNotification';
 import * as notificationApi from '../api/notification';
@@ -26,7 +28,10 @@ export function AppInitializer({ children }: AppInitializerProps) {
   const { loadAuthFromStorage, isLoading, token } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const router = useRouter();
+  const segments = useSegments();
 
+  // 1. 앱 초기화
   useEffect(() => {
     async function initialize() {
       try {
@@ -48,6 +53,22 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
     initialize();
   }, [loadAuthFromStorage]);
+
+  // 2. 인증 상태에 따른 자동 리다이렉트
+  useEffect(() => {
+    if (!isReady || isLoading || showOnboarding) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    // 로그인되지 않았는데 메인 화면에 있으면 → 로그인 화면으로
+    if (!token && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    }
+    // 로그인되었는데 로그인 화면에 있으면 → 홈 화면으로
+    else if (token && inAuthGroup) {
+      router.replace('/(main)/(home)');
+    }
+  }, [token, segments, isReady, isLoading, showOnboarding]);
 
   // 2. 로그인 후 푸시 알림 토큰 등록
   useEffect(() => {
