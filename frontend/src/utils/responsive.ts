@@ -16,10 +16,10 @@ const BASE_HEIGHT = 852;
  * Device size categories
  */
 export const DeviceSize = {
-  SMALL: 'small', // iPhone SE, iPhone 8
-  MEDIUM: 'medium', // iPhone 14 Pro
-  LARGE: 'large', // iPhone 14 Pro Max, Plus models
-  TABLET: 'tablet', // iPad
+  SMALL: 'SMALL', // iPhone SE, iPhone 8
+  MEDIUM: 'MEDIUM', // iPhone 14 Pro
+  LARGE: 'LARGE', // iPhone 14 Pro Max, Plus models
+  TABLET: 'TABLET', // iPad
 } as const;
 
 /**
@@ -186,23 +186,23 @@ export const TestDevices = {
  * Example: getResponsiveValue({ small: 12, medium: 14, large: 16, tablet: 18 })
  */
 export const getResponsiveValue = <T>(values: {
-  small?: T;
-  medium?: T;
-  large?: T;
-  tablet?: T;
+  SMALL?: T;
+  MEDIUM?: T;
+  LARGE?: T;
+  TABLET?: T;
   default: T;
 }): T => {
   const deviceSize = getDeviceSize();
 
   switch (deviceSize) {
     case DeviceSize.SMALL:
-      return values.small ?? values.default;
+      return values.SMALL ?? values.default;
     case DeviceSize.MEDIUM:
-      return values.medium ?? values.default;
+      return values.MEDIUM ?? values.default;
     case DeviceSize.LARGE:
-      return values.large ?? values.default;
+      return values.LARGE ?? values.default;
     case DeviceSize.TABLET:
-      return values.tablet ?? values.default;
+      return values.TABLET ?? values.default;
     default:
       return values.default;
   }

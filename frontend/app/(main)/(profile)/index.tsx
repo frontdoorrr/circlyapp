@@ -1,20 +1,175 @@
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCurrentUser, useUpdateProfile, useLogout } from '../../../src/hooks/useAuth';
+import { useMyCircles } from '../../../src/hooks/useCircles';
+import { useTheme } from '../../../src/theme/ThemeContext';
+import { ProfileInfo } from '../../../src/components/profile/ProfileInfo';
+import { ProfileEditModal } from '../../../src/components/profile/ProfileEditModal';
+import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
+import { Text } from '../../../src/components/primitives/Text';
+import { Button } from '../../../src/components/primitives/Button';
+import { tokens } from '../../../src/theme';
+import { ApiError } from '../../../src/types/api';
+import { UserUpdate } from '../../../src/types/auth';
 
 /**
  * Profile Screen
  *
- * 사용자 프로필 화면
- *
- * TODO: Implement profile UI
- * - User info
- * - Circles list
- * - Settings
+ * 사용자 프로필 및 설정 화면
  */
 export default function ProfileScreen() {
+  const router = useRouter();
+  const { isDark, toggleTheme } = useTheme();
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+
+  // 사용자 정보 조회
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: circles } = useMyCircles();
+
+  // 프로필 수정
+  const updateProfileMutation = useUpdateProfile();
+
+  // 로그아웃
+  const logoutMutation = useLogout();
+
+  const handleUpdateProfile = async (data: UserUpdate) => {
+    try {
+      await updateProfileMutation.mutateAsync(data);
+      Alert.alert('성공', '프로필이 업데이트되었습니다');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        Alert.alert('오류', error.message);
+      } else {
+        Alert.alert('오류', '프로필 업데이트 중 문제가 발생했습니다');
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            await logoutMutation.mutateAsync();
+            router.replace('/(auth)/login');
+          }
+        }
+      ]
+    );
+  };
+
+  if (userLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <LoadingSpinner />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>사용자 정보를 불러올 수 없습니다</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>👤 프로필</Text>
-      <Text style={styles.subtitle}>내 정보</Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 사용자 정보 */}
+        <ProfileInfo
+          user={user}
+          onEdit={() => setEditModalOpen(true)}
+        />
+
+        {/* Circle 섹션 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>내 Circle</Text>
+          <View style={styles.card}>
+            {circles && circles.length > 0 ? (
+              <>
+                {circles.map((circle) => (
+                  <TouchableOpacity
+                    key={circle.id}
+                    style={styles.circleItem}
+                    onPress={() => router.push(`/circle/${circle.id}` as any)}
+                  >
+                    <Text style={styles.circleItemText}>
+                      {circle.name}
+                    </Text>
+                    <Text style={styles.circleItemMeta}>
+                      {circle.member_count}명
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <Text style={styles.circleCount}>
+                  총 {circles.length}개 Circle 참여 중
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.emptyText}>참여한 Circle이 없습니다</Text>
+            )}
+          </View>
+        </View>
+
+        {/* 설정 섹션 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>설정</Text>
+          <View style={styles.card}>
+            {/* 다크 모드 토글 */}
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={toggleTheme}
+            >
+              <Text style={styles.settingItemText}>
+                🌙 다크 모드
+              </Text>
+              <Text style={styles.settingItemValue}>
+                {isDark ? 'ON' : 'OFF'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 앱 정보 */}
+            <TouchableOpacity style={styles.settingItem}>
+              <Text style={styles.settingItemText}>ℹ️ 앱 정보</Text>
+              <Text style={styles.settingItemArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 로그아웃 버튼 */}
+        <View style={styles.logoutSection}>
+          <Button
+            variant="ghost"
+            onPress={handleLogout}
+            fullWidth
+          >
+            로그아웃
+          </Button>
+        </View>
+      </ScrollView>
+
+      {/* 프로필 수정 모달 */}
+      <ProfileEditModal
+        isOpen={isEditModalOpen}
+        initialData={{
+          username: user.username,
+          display_name: user.display_name,
+          profile_emoji: user.profile_emoji,
+        }}
+        onSubmit={handleUpdateProfile}
+        onClose={() => setEditModalOpen(false)}
+      />
     </View>
   );
 }
@@ -22,19 +177,93 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: tokens.colors.neutral[50],
+  },
+  centerContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    padding: 16,
+    backgroundColor: tokens.colors.neutral[50],
+    padding: tokens.spacing.lg,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: '#171717',
-    marginBottom: 8,
+  scrollView: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#737373',
+  scrollContent: {
+    padding: tokens.spacing.lg,
+  },
+  section: {
+    marginBottom: tokens.spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: tokens.typography.fontSize.lg,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.neutral[900],
+    marginBottom: tokens.spacing.md,
+  },
+  card: {
+    backgroundColor: tokens.colors.white,
+    borderRadius: tokens.borderRadius.lg,
+    padding: tokens.spacing.md,
+    ...tokens.shadows.sm,
+  },
+  circleItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: tokens.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.neutral[100],
+  },
+  circleItemText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[900],
+  },
+  circleItemMeta: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.neutral[600],
+  },
+  circleCount: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.neutral[600],
+    textAlign: 'center',
+    marginTop: tokens.spacing.sm,
+  },
+  emptyText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[500],
+    textAlign: 'center',
+    paddingVertical: tokens.spacing.lg,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: tokens.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.neutral[100],
+  },
+  settingItemText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[900],
+  },
+  settingItemValue: {
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.primary[600],
+  },
+  settingItemArrow: {
+    fontSize: 24,
+    color: tokens.colors.neutral[400],
+  },
+  logoutSection: {
+    marginTop: tokens.spacing.md,
+    marginBottom: tokens.spacing.xl,
+  },
+  errorText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[600],
+    textAlign: 'center',
   },
 });
+
