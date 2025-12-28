@@ -463,6 +463,14 @@ export const colors = {
   semantic: semanticColors,
   neutral: neutralColors,
 
+  // Semantic color aliases (편의성)
+  error: semanticColors.error,
+  success: semanticColors.success,
+  warning: semanticColors.warning,
+  red: semanticColors.error,
+  green: semanticColors.success,
+  yellow: semanticColors.warning,
+
   // Light theme (default)
   white: '#ffffff',
   black: '#000000',
@@ -490,7 +498,21 @@ export const colors = {
 // ============================================================================
 
 export type ThemeMode = 'light' | 'dark';
-export type Theme = typeof lightTheme;
+export interface Theme {
+  background: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  text: string;
+  textSecondary: string;
+  textTertiary: string;
+  textInverse: string;
+  border: string;
+  borderSecondary: string;
+  card: string;
+  cardElevated: string;
+  overlay: string;
+  scrim: string;
+}
 export type Colors = typeof colors;
 
 export type PrimaryColor = keyof typeof primaryColors;

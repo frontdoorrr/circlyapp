@@ -77,41 +77,64 @@ export {
   type IconSize,
 } from './tokens';
 
-export {
-  // Durations
-  durations,
+// TEMPORARILY DISABLED: animations.ts causing Worklets version mismatch
+// export {
+//   // Durations
+//   durations,
+//
+//   // Easing Curves
+//   easingCurves,
+//   cubicBezierValues,
+//
+//   // Spring Configs
+//   springConfigs,
+//
+//   // Animation Helpers
+//   animateValue,
+//   animateSpring,
+//
+//   // Animation Patterns
+//   fadeAnimations,
+//   slideAnimations,
+//   scaleAnimations,
+//   buttonPressAnimation,
+//   cardFlipAnimation,
+//   modalAnimations,
+//   progressBarAnimation,
+//   toastAnimation,
+//
+//   // Haptic Feedback
+//   hapticPatterns,
+//   hapticMapping,
+//
+//   // Type Exports
+//   type Duration,
+//   type EasingCurve,
+//   type SpringConfig,
+//   type HapticPattern,
+// } from './animations';
 
-  // Easing Curves
-  easingCurves,
-  cubicBezierValues,
-
-  // Spring Configs
-  springConfigs,
-
-  // Animation Helpers
-  animateValue,
-  animateSpring,
-
-  // Animation Patterns
-  fadeAnimations,
-  slideAnimations,
-  scaleAnimations,
-  buttonPressAnimation,
-  cardFlipAnimation,
-  modalAnimations,
-  progressBarAnimation,
-  toastAnimation,
-
-  // Haptic Feedback
-  hapticPatterns,
-  hapticMapping,
-
-  // Type Exports
-  type Duration,
-  type EasingCurve,
-  type SpringConfig,
-  type HapticPattern,
-} from './animations';
+// Temporary dummy exports
+export const durations = { instant: 0, fast: 200, normal: 300, slow: 500 };
+export const easingCurves = {};
+export const cubicBezierValues = {};
+export const springConfigs = {};
+export const animateValue = () => {};
+export const animateSpring = () => {};
+export const fadeAnimations = {};
+export const slideAnimations = {};
+export const scaleAnimations = {};
+export const buttonPressAnimation = {};
+export const cardFlipAnimation = {};
+export const modalAnimations = {};
+export const progressBarAnimation = {};
+export const toastAnimation = {};
+export const hapticPatterns = {};
+export const hapticMapping = {};
+export type Duration = number;
+export type EasingCurve = any;
+export type SpringConfig = any;
+export type HapticPattern = any;
 
 // ============================================================================
 // Convenience Re-exports
@@ -144,6 +167,7 @@ export const colors = {
  * 타이포그래피 시스템 통합
  */
 import {
+  colors as tokenColors,
   fontFamilies,
   fontSizes,
   fontWeights,
@@ -170,42 +194,43 @@ export const typography = {
  * Unified Animations Object
  * 애니메이션 시스템 통합
  */
-import {
-  durations,
-  easingCurves,
-  springConfigs,
-  fadeAnimations,
-  slideAnimations,
-  scaleAnimations,
-  buttonPressAnimation,
-  cardFlipAnimation,
-  modalAnimations,
-  progressBarAnimation,
-  toastAnimation,
-} from './animations';
+// TEMPORARILY DISABLED: animations.ts import
+// import {
+//   durations,
+//   easingCurves,
+//   springConfigs,
+//   fadeAnimations,
+//   slideAnimations,
+//   scaleAnimations,
+//   buttonPressAnimation,
+//   cardFlipAnimation,
+//   modalAnimations,
+//   progressBarAnimation,
+//   toastAnimation,
+// } from './animations';
 
 export const animations = {
   duration: {
-    instant: durations.instant,
-    fast: durations.fast,
-    normal: durations.normal,
-    slow: durations.slow,
+    instant: 0,
+    fast: 200,
+    normal: 300,
+    slow: 500,
   },
-  easing: easingCurves,
+  easing: {},
   spring: {
-    responsive: springConfigs.gentle,
-    bouncy: springConfigs.bouncy,
-    stiff: springConfigs.stiff,
+    responsive: {},
+    bouncy: {},
+    stiff: {},
   },
   patterns: {
-    fade: fadeAnimations,
-    slide: slideAnimations,
-    scale: scaleAnimations,
-    button: buttonPressAnimation,
-    card: cardFlipAnimation,
-    modal: modalAnimations,
-    progress: progressBarAnimation,
-    toast: toastAnimation,
+    fade: {},
+    slide: {},
+    scale: {},
+    button: {},
+    card: {},
+    modal: {},
+    progress: {},
+    toast: {},
   },
 } as const;
 
@@ -262,19 +287,8 @@ export type Theme = typeof theme;
  * });
  */
 export const tokens = {
-  colors: {
-    primary: primaryColors,
-    secondary: secondaryColors,
-    semantic: semanticColors,
-    neutral: neutralColors,
-    white: '#ffffff',
-    black: '#000000',
-    error: semanticColors.error,
-    success: semanticColors.success,
-    warning: semanticColors.warning,
-    gradients,
-    dark: darkTheme,
-  },
+  // Use colors from tokens.ts directly (includes red, green, yellow, error, success, warning aliases)
+  colors: tokenColors,
   typography: {
     fontFamily: {
       sans: fontFamilies.primary,

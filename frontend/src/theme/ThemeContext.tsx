@@ -160,7 +160,7 @@ export function ThemeProvider({
     }
   };
 
-  const theme = mode === 'dark' ? darkTheme : lightTheme;
+  const theme: Theme = mode === 'dark' ? darkTheme : lightTheme;
   const isDark = mode === 'dark';
 
   const value: ThemeContextType = {
