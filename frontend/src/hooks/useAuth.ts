@@ -13,10 +13,24 @@ export function useRegister() {
   const { setAuth } = useAuthStore();
 
   return useMutation({
-    mutationFn: (data: UserCreate) => authApi.register(data),
+    mutationFn: async (data: UserCreate) => {
+      console.log('[useRegister] 회원가입 API 호출:', { email: data.email, username: data.username });
+      try {
+        const response = await authApi.register(data);
+        console.log('[useRegister] API 응답 성공:', { user: response.user.email });
+        return response;
+      } catch (error) {
+        console.error('[useRegister] API 호출 실패:', error);
+        throw error;
+      }
+    },
     onSuccess: (response) => {
+      console.log('[useRegister] onSuccess - 자동 로그인 처리');
       // 자동 로그인
       setAuth(response.user, response.access_token);
+    },
+    onError: (error) => {
+      console.error('[useRegister] onError:', error);
     },
   });
 }
@@ -28,9 +42,23 @@ export function useLogin() {
   const { setAuth } = useAuthStore();
 
   return useMutation({
-    mutationFn: (data: LoginRequest) => authApi.login(data),
+    mutationFn: async (data: LoginRequest) => {
+      console.log('[useLogin] 로그인 API 호출:', { email: data.email });
+      try {
+        const response = await authApi.login(data);
+        console.log('[useLogin] API 응답 성공:', { user: response.user.email });
+        return response;
+      } catch (error) {
+        console.error('[useLogin] API 호출 실패:', error);
+        throw error;
+      }
+    },
     onSuccess: (response) => {
+      console.log('[useLogin] onSuccess - 로그인 처리');
       setAuth(response.user, response.access_token);
+    },
+    onError: (error) => {
+      console.error('[useLogin] onError:', error);
     },
   });
 }

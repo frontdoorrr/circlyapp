@@ -16,15 +16,30 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // 중복 제출 방지
 
   const loginMutation = useLogin();
 
   const handleLogin = async () => {
+    console.log('[Login] handleLogin 호출됨', {
+      isSubmitting,
+      isPending: loginMutation.isPending,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 중복 제출 방지
+    if (isSubmitting || loginMutation.isPending) {
+      console.log('[Login] 🚫 이미 제출 중입니다. 중복 요청 무시.');
+      return;
+    }
+
     // 입력 검증
     if (!email.trim() || !password.trim()) {
       Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요');
       return;
     }
+
+    setIsSubmitting(true); // 제출 시작
 
     try {
       await loginMutation.mutateAsync({ email, password });
@@ -36,6 +51,8 @@ export default function LoginScreen() {
       } else {
         Alert.alert('오류', '로그인 중 문제가 발생했습니다');
       }
+    } finally {
+      setIsSubmitting(false); // 제출 완료
     }
   };
 
@@ -60,7 +77,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
-            editable={!loginMutation.isPending}
+            editable={!isSubmitting && !loginMutation.isPending}
           />
 
           <Input
@@ -69,15 +86,15 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="off"
-            textContentType="none"
-            editable={!loginMutation.isPending}
+            textContentType="oneTimeCode"
+            editable={!isSubmitting && !loginMutation.isPending}
             onSubmitEditing={handleLogin}
           />
 
           <Button
             onPress={handleLogin}
-            loading={loginMutation.isPending}
-            disabled={!email.trim() || !password.trim()}
+            loading={isSubmitting || loginMutation.isPending}
+            disabled={isSubmitting || !email.trim() || !password.trim()}
             fullWidth
           >
             로그인
@@ -90,7 +107,7 @@ export default function LoginScreen() {
           <Button
             variant="ghost"
             onPress={() => router.push('/(auth)/register')}
-            disabled={loginMutation.isPending}
+            disabled={isSubmitting || loginMutation.isPending}
           >
             회원가입
           </Button>

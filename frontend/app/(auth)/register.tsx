@@ -27,10 +27,23 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // 중복 제출 방지
 
   const registerMutation = useRegister();
 
   const handleRegister = async () => {
+    console.log('[Register] handleRegister 호출됨', {
+      isSubmitting,
+      isPending: registerMutation.isPending,
+      timestamp: new Date().toISOString(),
+    });
+
+    // 중복 제출 방지
+    if (isSubmitting || registerMutation.isPending) {
+      console.log('[Register] 🚫 이미 제출 중입니다. 중복 요청 무시.');
+      return;
+    }
+
     // 입력 검증
     if (!email.trim() || !password.trim()) {
       Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요');
@@ -47,21 +60,37 @@ export default function RegisterScreen() {
       return;
     }
 
+    setIsSubmitting(true); // 제출 시작
+
     try {
+      console.log('[Register] 회원가입 시도:', { email, username, display_name: displayName });
+
       await registerMutation.mutateAsync({
         email,
         password,
         username: username.trim() || undefined,
         display_name: displayName.trim() || undefined,
       });
+
+      console.log('[Register] 회원가입 성공');
       // 성공 시 자동으로 메인 화면으로 리다이렉트
       router.replace('/(main)/(home)');
     } catch (error) {
+      console.error('[Register] 회원가입 실패:', error);
+
       if (error instanceof ApiError) {
+        console.error('[Register] API 에러:', {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+        });
         Alert.alert('회원가입 실패', error.message);
       } else {
+        console.error('[Register] 알 수 없는 에러:', error);
         Alert.alert('오류', '회원가입 중 문제가 발생했습니다');
       }
+    } finally {
+      setIsSubmitting(false); // 제출 완료
     }
   };
 
@@ -89,7 +118,7 @@ export default function RegisterScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
-            editable={!registerMutation.isPending}
+            editable={!isSubmitting && !registerMutation.isPending}
           />
 
           <Input
@@ -98,7 +127,7 @@ export default function RegisterScreen() {
             onChangeText={setUsername}
             autoCapitalize="none"
             autoComplete="username"
-            editable={!registerMutation.isPending}
+            editable={!isSubmitting && !registerMutation.isPending}
           />
 
           <Input
@@ -106,7 +135,7 @@ export default function RegisterScreen() {
             value={displayName}
             onChangeText={setDisplayName}
             autoComplete="name"
-            editable={!registerMutation.isPending}
+            editable={!isSubmitting && !registerMutation.isPending}
           />
 
           <Input
@@ -115,8 +144,8 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="off"
-            textContentType="none"
-            editable={!registerMutation.isPending}
+            textContentType="oneTimeCode"
+            editable={!isSubmitting && !registerMutation.isPending}
           />
 
           <Input
@@ -125,15 +154,15 @@ export default function RegisterScreen() {
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoComplete="off"
-            textContentType="none"
-            editable={!registerMutation.isPending}
+            textContentType="oneTimeCode"
+            editable={!isSubmitting && !registerMutation.isPending}
             onSubmitEditing={handleRegister}
           />
 
           <Button
             onPress={handleRegister}
-            loading={registerMutation.isPending}
-            disabled={!email.trim() || !password.trim() || !confirmPassword.trim()}
+            loading={isSubmitting || registerMutation.isPending}
+            disabled={isSubmitting || !email.trim() || !password.trim() || !confirmPassword.trim()}
             fullWidth
           >
             회원가입
@@ -146,7 +175,7 @@ export default function RegisterScreen() {
           <Button
             variant="ghost"
             onPress={() => router.back()}
-            disabled={registerMutation.isPending}
+            disabled={isSubmitting || registerMutation.isPending}
           >
             로그인
           </Button>

@@ -127,11 +127,11 @@ def create_app() -> FastAPI:
     from app.modules.polls.router import router as polls_router
     from app.modules.reports.router import router as reports_router
 
-    app.include_router(auth_router)
-    app.include_router(circles_router)
-    app.include_router(notifications_router)
-    app.include_router(polls_router)
-    app.include_router(reports_router)
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(circles_router, prefix="/api/v1")
+    app.include_router(notifications_router, prefix="/api/v1")
+    app.include_router(polls_router, prefix="/api/v1")
+    app.include_router(reports_router, prefix="/api/v1")
 
     return app
 
