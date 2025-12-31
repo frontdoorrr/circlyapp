@@ -1,62 +1,113 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
+import { PollDuration } from '../../../src/types/poll';
+import { usePollTemplates } from '../../../src/hooks/usePolls';
+import { useMyCircles } from '../../../src/hooks/useCircles';
 
 /**
- * 투표 옵션 설정 화면
+ * Poll Settings Screen (투표 설정 화면)
  *
- * 투표 마감 시간과 기타 옵션을 설정합니다.
- * - 마감 시간 선택 (1H, 3H, 6H, 24H)
- * - 익명 투표 여부
- * - 투표 생성 완료 시 success 화면으로 이동
+ * 투표 기간, 참여 대상, 알림 설정을 구성합니다.
+ *
+ * 참고: prd/design/05-complete-ui-specification.md#2.6.3
  */
+
+// 투표 기간 옵션
+const DURATION_OPTIONS: { value: PollDuration; label: string }[] = [
+  { value: '1H', label: '1시간' },
+  { value: '3H', label: '3시간' },
+  { value: '6H', label: '6시간' },
+  { value: '24H', label: '24시간' },
+];
+
+// 참여 대상 타입
+type ParticipationTarget = 'all' | 'select';
+
+// 알림 설정 타입
+type NotificationSetting = 'immediate' | 'scheduled';
+
 export default function ConfigureScreen() {
-  const { circleId, templateId } = useLocalSearchParams<{
-    circleId: string;
-    templateId: string;
-  }>();
+  const params = useLocalSearchParams<{ templateId: string; circleId?: string }>();
+  const templateId = params.templateId;
+  const circleIdParam = params.circleId;
 
-  const [duration, setDuration] = useState<'1H' | '3H' | '6H' | '24H'>('24H');
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  // 데이터 조회
+  const { data: templates } = usePollTemplates();
+  const { data: circles } = useMyCircles();
 
-  const durations = [
-    { value: '1H' as const, label: '1시간', emoji: '⚡' },
-    { value: '3H' as const, label: '3시간', emoji: '🔥' },
-    { value: '6H' as const, label: '6시간', emoji: '⏰' },
-    { value: '24H' as const, label: '24시간', emoji: '📅' },
-  ];
+  // 선택된 템플릿 찾기
+  const selectedTemplate = templates?.find((t) => t.id === templateId);
 
-  const handleCreate = async () => {
-    setIsCreating(true);
+  // 첫 번째 circle을 기본값으로 (실제로는 이전 화면에서 선택되어야 함)
+  const selectedCircle = circleIdParam
+    ? circles?.find((c) => c.id === circleIdParam)
+    : circles?.[0];
 
-    try {
-      // TODO: API 호출하여 투표 생성
-      // const response = await createPoll({
-      //   circleId,
-      //   templateId,
-      //   duration,
-      //   isAnonymous,
-      // });
+  // 상태
+  const [duration, setDuration] = useState<PollDuration>('6H');
+  const [target, setTarget] = useState<ParticipationTarget>('all');
+  const [notification, setNotification] = useState<NotificationSetting>('immediate');
 
-      // 임시로 딜레이
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // 생성 완료 화면으로 이동
-      router.push({
-        pathname: '/(main)/(create)/success',
-        params: {
-          pollId: 'temp-poll-id', // TODO: 실제 생성된 poll ID
-        },
-      });
-    } catch (error) {
-      console.error('Failed to create poll:', error);
-      // TODO: 에러 처리
-    } finally {
-      setIsCreating(false);
+  // 기간 선택 핸들러
+  const handleDurationSelect = (value: PollDuration) => {
+    setDuration(value);
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
     }
   };
+
+  // 참여 대상 선택 핸들러
+  const handleTargetSelect = (value: ParticipationTarget) => {
+    setTarget(value);
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+  };
+
+  // 알림 설정 선택 핸들러
+  const handleNotificationSelect = (value: NotificationSetting) => {
+    setNotification(value);
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
+    }
+  };
+
+  // 미리보기 버튼 핸들러
+  const handlePreview = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    router.push({
+      pathname: '/(main)/(create)/preview',
+      params: {
+        templateId,
+        circleId: selectedCircle?.id || '',
+        duration,
+        target,
+        notification,
+      },
+    });
+  };
+
+  if (!selectedTemplate || !selectedCircle) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>데이터를 불러오는 중...</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -72,115 +123,140 @@ export default function ConfigureScreen() {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>투표 옵션을 설정해주세요</Text>
-          <Text style={styles.description}>
-            투표가 언제까지 진행될지 선택해주세요
-          </Text>
-
-          {/* 마감 시간 선택 */}
+          {/* 선택한 질문 섹션 */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⏰ 마감 시간</Text>
-            <View style={styles.durationGrid}>
-              {durations.map((item) => (
-                <Pressable
-                  key={item.value}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionIcon}>📝</Text>
+              <Text style={styles.sectionTitle}>선택한 질문</Text>
+            </View>
+            <View style={styles.selectedQuestion}>
+              <Text style={styles.selectedQuestionText}>
+                {selectedTemplate.emoji} {selectedTemplate.question_text}
+              </Text>
+            </View>
+          </View>
+
+          {/* 투표 기간 섹션 */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionIcon}>⏰</Text>
+              <Text style={styles.sectionTitle}>투표 기간</Text>
+            </View>
+            <View style={styles.durationChips}>
+              {DURATION_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
                   style={[
-                    styles.durationCard,
-                    duration === item.value && styles.durationCardSelected,
+                    styles.chip,
+                    duration === option.value && styles.chipSelected,
                   ]}
-                  onPress={() => setDuration(item.value)}
+                  onPress={() => handleDurationSelect(option.value)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.durationEmoji}>{item.emoji}</Text>
                   <Text
                     style={[
-                      styles.durationLabel,
-                      duration === item.value && styles.durationLabelSelected,
+                      styles.chipText,
+                      duration === option.value && styles.chipTextSelected,
                     ]}
                   >
-                    {item.label}
+                    {option.label}
                   </Text>
-                </Pressable>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
 
-          {/* 익명 투표 설정 */}
+          {/* 참여 대상 섹션 */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎭 투표 방식</Text>
-            <View style={styles.optionList}>
-              <Pressable
-                style={[
-                  styles.optionCard,
-                  isAnonymous && styles.optionCardSelected,
-                ]}
-                onPress={() => setIsAnonymous(true)}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionIcon}>🎯</Text>
+              <Text style={styles.sectionTitle}>참여 대상</Text>
+            </View>
+            <View style={styles.radioGroup}>
+              {/* Circle 전체 */}
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => handleTargetSelect('all')}
+                activeOpacity={0.7}
               >
-                <View style={styles.optionInfo}>
-                  <Text style={styles.optionTitle}>익명 투표</Text>
-                  <Text style={styles.optionDescription}>
-                    누가 투표했는지 알 수 없어요 (권장)
-                  </Text>
+                <View style={styles.radioButton}>
+                  {target === 'all' && <View style={styles.radioButtonInner} />}
                 </View>
-                {isAnonymous && <Text style={styles.checkmark}>✓</Text>}
-              </Pressable>
+                <Text style={styles.radioLabel}>
+                  Circle 전체 ({selectedCircle.member_count || 0}명)
+                </Text>
+              </TouchableOpacity>
 
-              <Pressable
-                style={[
-                  styles.optionCard,
-                  !isAnonymous && styles.optionCardSelected,
-                ]}
-                onPress={() => setIsAnonymous(false)}
+              {/* 일부만 선택 */}
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => handleTargetSelect('select')}
+                activeOpacity={0.7}
               >
-                <View style={styles.optionInfo}>
-                  <Text style={styles.optionTitle}>공개 투표</Text>
-                  <Text style={styles.optionDescription}>
-                    누가 투표했는지 모두에게 공개돼요
-                  </Text>
+                <View style={styles.radioButton}>
+                  {target === 'select' && <View style={styles.radioButtonInner} />}
                 </View>
-                {!isAnonymous && <Text style={styles.checkmark}>✓</Text>}
-              </Pressable>
+                <Text style={styles.radioLabel}>일부만 선택하기</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* 투표 요약 */}
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>📋 투표 요약</Text>
-            <View style={styles.summaryList}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>Circle</Text>
-                <Text style={styles.summaryValue}>로딩중...</Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>질문</Text>
-                <Text style={styles.summaryValue}>로딩중...</Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>마감 시간</Text>
-                <Text style={styles.summaryValue}>
-                  {durations.find((d) => d.value === duration)?.label}
-                </Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>투표 방식</Text>
-                <Text style={styles.summaryValue}>
-                  {isAnonymous ? '익명' : '공개'}
-                </Text>
-              </View>
+          {/* 알림 설정 섹션 */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionIcon}>📢</Text>
+              <Text style={styles.sectionTitle}>알림 설정</Text>
+            </View>
+            <View style={styles.radioGroup}>
+              {/* 즉시 알림 */}
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => handleNotificationSelect('immediate')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.radioButton}>
+                  {notification === 'immediate' && (
+                    <View style={styles.radioButtonInner} />
+                  )}
+                </View>
+                <Text style={styles.radioLabel}>즉시 알림 보내기</Text>
+              </TouchableOpacity>
+
+              {/* 예약 발송 */}
+              <TouchableOpacity
+                style={styles.radioOption}
+                onPress={() => handleNotificationSelect('scheduled')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.radioButton}>
+                  {notification === 'scheduled' && (
+                    <View style={styles.radioButtonInner} />
+                  )}
+                </View>
+                <Text style={styles.radioLabel}>예약 발송</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
 
+        {/* 미리보기 버튼 (하단 고정) */}
         <View style={styles.footer}>
-          <Pressable
-            style={[styles.createButton, isCreating && styles.createButtonDisabled]}
-            onPress={handleCreate}
-            disabled={isCreating}
+          <TouchableOpacity
+            style={styles.previewButton}
+            onPress={handlePreview}
+            activeOpacity={0.8}
           >
-            <Text style={styles.createButtonText}>
-              {isCreating ? '투표 만드는 중...' : '투표 만들기'}
-            </Text>
-          </Pressable>
+            <LinearGradient
+              colors={[tokens.colors.primary[500], tokens.colors.secondary[500]]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.previewButtonGradient}
+            >
+              <Text style={styles.previewButtonText}>미리보기</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </>
@@ -192,148 +268,157 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: tokens.colors.neutral[50],
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.neutral[50],
+  },
+  emptyText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[500],
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: tokens.spacing.lg,
-    paddingBottom: 100,
+    paddingBottom: 100, // Footer 공간 확보
   },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  description: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-    marginBottom: tokens.spacing.xl,
-  },
+
+  // 섹션
   section: {
-    marginBottom: tokens.spacing.xl,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.neutral[100],
+    backgroundColor: tokens.colors.neutral[50],
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionIcon: {
+    fontSize: 20,
   },
   sectionTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
+    fontSize: tokens.typography.fontSize.base, // 16px
+    fontWeight: tokens.typography.fontWeight.semibold, // 600
+    color: tokens.colors.neutral[700],
+    marginLeft: 8,
   },
-  durationGrid: {
+
+  // 선택한 질문
+  selectedQuestion: {
+    backgroundColor: tokens.colors.white,
+    padding: 16,
+    borderRadius: 12,
+  },
+  selectedQuestionText: {
+    fontSize: tokens.typography.fontSize.lg, // 18px
+    fontWeight: tokens.typography.fontWeight.medium, // 500
+    color: tokens.colors.neutral[900],
+  },
+
+  // 투표 기간 칩
+  durationChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: tokens.spacing.md,
+    gap: 8,
   },
-  durationCard: {
-    flex: 1,
-    minWidth: '45%',
+  chip: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
     backgroundColor: tokens.colors.white,
-    padding: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: tokens.colors.neutral[200],
-    alignItems: 'center',
-    gap: tokens.spacing.xs,
   },
-  durationCardSelected: {
-    borderColor: tokens.colors.primary[500],
+  chipSelected: {
     backgroundColor: tokens.colors.primary[50],
+    borderWidth: 2,
+    borderColor: tokens.colors.primary[500],
   },
-  durationEmoji: {
-    fontSize: 32,
+  chipText: {
+    fontSize: tokens.typography.fontSize.sm, // 14px
+    fontWeight: tokens.typography.fontWeight.medium, // 500
+    color: tokens.colors.neutral[600],
   },
-  durationLabel: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.neutral[700],
-  },
-  durationLabelSelected: {
+  chipTextSelected: {
     color: tokens.colors.primary[700],
   },
-  optionList: {
-    gap: tokens.spacing.md,
+
+  // 라디오 그룹
+  radioGroup: {
+    gap: 12,
   },
-  optionCard: {
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     backgroundColor: tokens.colors.white,
-    padding: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
+    borderRadius: 12,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    flexDirection: 'row',
+    borderColor: tokens.colors.neutral[300],
+    backgroundColor: tokens.colors.white,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginRight: 12,
   },
-  optionCardSelected: {
-    borderColor: tokens.colors.primary[500],
-    backgroundColor: tokens.colors.primary[50],
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: tokens.colors.primary[500],
   },
-  optionInfo: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: 4,
-  },
-  optionDescription: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-  },
-  checkmark: {
-    fontSize: 20,
-    color: tokens.colors.primary[500],
-  },
-  summaryCard: {
-    backgroundColor: tokens.colors.neutral[100],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  summaryTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  summaryList: {
-    gap: tokens.spacing.sm,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-  },
-  summaryValue: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.medium,
+  radioLabel: {
+    fontSize: tokens.typography.fontSize.base, // 16px
+    fontWeight: tokens.typography.fontWeight.normal, // 400
     color: tokens.colors.neutral[900],
   },
+
+  // 하단 버튼
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: tokens.spacing.lg,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Safe Area Bottom
     backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
   },
-  createButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
+  previewButton: {
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+    // Shadow (shadow-primary)
+    ...Platform.select({
+      ios: {
+        shadowColor: tokens.colors.primary[500],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  previewButtonGradient: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  createButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[300],
-  },
-  createButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
+  previewButtonText: {
+    fontSize: tokens.typography.fontSize.lg, // 18px
+    fontWeight: tokens.typography.fontWeight.semibold, // 600
     color: tokens.colors.white,
   },
 });
