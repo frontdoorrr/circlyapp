@@ -943,7 +943,138 @@
   - [x] 모든 버튼에 accessibilityLabel, accessibilityRole, accessibilityHint 추가
   - [x] 스와이프 대신 버튼으로도 조작 가능 (5개 액션 버튼)
   - [x] 힌트 텍스트 접근성 개선
-- [ ] **커밋**: `perf(frontend): optimize Create Tab animations and UX`
+- [x] **커밋**: `perf(frontend): optimize Create Tab animations and UX`
+
+### 11.11 Home Tab - 투표 피드 (P0)
+
+> **참고 문서**: `prd/design/05-complete-ui-specification.md`, `prd/design/04-user-flow.md`, `docs/DSL.md#3.3 (Poll 모듈)`
+
+#### 11.11.1 화면 레이아웃 및 탭 구조 (P0)
+- [ ] `app/(main)/(home)/index.tsx` - Home Tab 메인 화면 → `prd/design/05-complete-ui-specification.md#2.1`
+  - [ ] 헤더: "홈" + 알림 아이콘 (우측 상단)
+  - [ ] 탭 컨트롤: [진행 중] [완료됨] (2개 탭) → `prd/design/02-ui-design-system.md#Tabs`
+  - [ ] Pull-to-Refresh 구현 (RefreshControl)
+- [ ] **테스트**: 탭 전환 및 레이아웃 확인
+- [ ] **커밋**: `feat(frontend): implement Home Tab layout and tabs`
+
+#### 11.11.2 투표 카드 컴포넌트 (P0)
+- [ ] `src/components/patterns/PollCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.1.2`
+  - [ ] Variant 타입: 'active' | 'completed'
+  - [ ] Active 카드 레이아웃:
+    - [ ] 이모지 + 질문 텍스트 (text-xl, bold)
+    - [ ] Circle 이름 (text-sm, neutral-500)
+    - [ ] 남은 시간 표시 (⏰ 3H 남음)
+    - [ ] 참여 현황 (👥 5/15명 참여)
+    - [ ] 투표 상태 배지 (투표 완료 ✅ / 투표하기 →)
+  - [ ] Completed 카드 레이아웃:
+    - [ ] 이모지 + 질문 텍스트
+    - [ ] Circle 이름
+    - [ ] "투표 종료" 배지 (gray)
+    - [ ] 1위 결과 미리보기 (🏆 이름 + N표)
+  - [ ] Press 애니메이션 (scale 0.98) → `prd/design/03-animations.md`
+  - [ ] Haptic feedback (selection)
+  - [ ] Shadow (shadow-md) → `prd/design/02-ui-design-system.md#Shadows`
+- [ ] **테스트**: 카드 variants 렌더링 확인
+- [ ] **커밋**: `feat(frontend): add PollCard component with active/completed variants`
+
+#### 11.11.3 Empty State 컴포넌트 (P1)
+- [ ] 진행 중 탭 Empty State → `src/components/states/EmptyState.tsx` 재사용
+  - [ ] 이모지: 🎯
+  - [ ] 메시지: "진행 중인 투표가 없어요"
+  - [ ] 서브텍스트: "친구들이 투표를 시작하면 여기에 표시됩니다"
+- [ ] 완료됨 탭 Empty State
+  - [ ] 이모지: 📊
+  - [ ] 메시지: "아직 완료된 투표가 없어요"
+  - [ ] 서브텍스트: "투표가 끝나면 결과를 확인할 수 있습니다"
+- [ ] **커밋**: `feat(frontend): add Home Tab empty states`
+
+#### 11.11.4 남은 시간 계산 유틸리티 (P0)
+- [ ] `src/utils/timeUtils.ts` - 시간 계산 함수
+  - [ ] `formatTimeRemaining(endDate: string)` - "3H 남음", "30분 남음", "5분 남음"
+    - [ ] 1시간 이상: "XH 남음"
+    - [ ] 1시간 미만: "X분 남음"
+    - [ ] 마감: "마감됨"
+  - [ ] `getTimeRemainingColor(endDate: string)` - 긴급도에 따른 색상
+    - [ ] <30분: red-500 (긴급)
+    - [ ] <1H: orange-500 (주의)
+    - [ ] >1H: neutral-500 (보통)
+  - [ ] `isUrgent(endDate: string)` - 1시간 이내 여부 (boolean)
+- [ ] **테스트**: 다양한 시간 케이스 단위 테스트
+- [ ] **커밋**: `feat(frontend): add time formatting utilities`
+
+#### 11.11.5 투표 목록 API 연동 (P0)
+- [ ] `src/hooks/usePolls.ts` 확장 - 투표 목록 React Query hooks → `trd/08-frontend-implementation-spec.md#API 연동`
+  - [ ] `useActivePolls()` - 진행 중인 투표 목록 조회
+    - [ ] Query: GET /circles/me/polls?status=active → `docs/DSL.md#3.3 (PollRouter)`
+    - [ ] staleTime: 1분 (자동 리페치)
+    - [ ] 응답 타입: `PollResponse[]` → `docs/DSL.md#3.3 (Poll type)`
+  - [ ] `useCompletedPolls()` - 완료된 투표 목록 조회
+    - [ ] Query: GET /circles/me/polls?status=completed
+    - [ ] staleTime: 5분
+  - [ ] 에러 처리 및 로딩 상태 관리
+  - [ ] Query key 관리: `['polls', 'active']`, `['polls', 'completed']`
+- [ ] **테스트**: API 응답 확인 및 React Query 캐싱 동작 테스트
+- [ ] **커밋**: `feat(frontend): add poll list API integration`
+
+#### 11.11.6 리스트 렌더링 및 최적화 (P1)
+- [ ] FlatList 사용 (React Native 기본) → `trd/08-frontend-implementation-spec.md#성능 최적화`
+  - [ ] keyExtractor: poll.id
+  - [ ] renderItem: PollCard 컴포넌트
+  - [ ] ItemSeparatorComponent: 12px 간격
+- [ ] React.memo로 PollCard 최적화 (불필요한 리렌더링 방지)
+- [ ] Pull-to-Refresh 구현
+  - [ ] RefreshControl 컴포넌트
+  - [ ] onRefresh: queryClient.invalidateQueries(['polls'])
+  - [ ] Haptic feedback (impact-light)
+- [ ] 정렬 로직: 마감 임박 순 (ends_at ASC)
+- [ ] **테스트**: 대량 데이터 렌더링 성능 테스트
+- [ ] **커밋**: `perf(frontend): optimize Home Tab list rendering`
+
+#### 11.11.7 투표 상세 화면 네비게이션 (P0)
+- [ ] 진행 중 투표 카드 탭 → 투표 화면 이동
+  - [ ] `router.push('/poll/[id]/vote')` → `prd/design/04-user-flow.md#투표 참여 플로우`
+  - [ ] Poll ID 전달
+- [ ] 완료된 투표 카드 탭 → 결과 화면 이동
+  - [ ] `router.push('/poll/[id]/result')`
+- [ ] 네비게이션 Haptic feedback (impact-medium)
+- [ ] **테스트**: 카드 탭 동작 및 화면 전환 확인
+- [ ] **커밋**: `feat(frontend): add poll card navigation`
+
+#### 11.11.8 실시간 카운트다운 (P1)
+- [ ] 남은 시간 실시간 업데이트 구현
+  - [ ] useInterval 훅 또는 setInterval 사용
+  - [ ] 1분마다 자동 업데이트
+  - [ ] 긴급 상태 (<1H) 시 색상 변경 (red-500)
+- [ ] 마감된 투표 자동 처리
+  - [ ] 마감 시간 도달 시 queryClient.invalidateQueries(['polls'])
+  - [ ] "완료됨" 탭으로 자동 이동 (선택적)
+- [ ] **테스트**: 카운트다운 동작 및 색상 변경 확인
+- [ ] **커밋**: `feat(frontend): add real-time countdown for polls`
+
+#### 11.11.9 접근성 개선 (P2)
+- [ ] PollCard에 accessibilityLabel 추가
+  - [ ] Active: "투표: [질문], [남은 시간], [참여 현황], [내 상태]"
+  - [ ] Completed: "완료된 투표: [질문], 1위: [이름]"
+- [ ] 탭에 accessibilityRole="tab" 추가
+- [ ] Empty State 스크린 리더 지원
+  - [ ] accessibilityLabel, accessibilityRole="text"
+- [ ] Pull-to-Refresh 접근성 힌트
+- [ ] **테스트**: VoiceOver (iOS) / TalkBack (Android) 테스트
+- [ ] **커밋**: `a11y(frontend): improve Home Tab accessibility`
+
+#### 11.11.10 애니메이션 및 피드백 (P2)
+- [ ] 탭 전환 애니메이션 (Slide) → `prd/design/03-animations.md`
+  - [ ] useAnimatedStyle + translateX
+  - [ ] Duration: 300ms, Easing: easeInOut
+- [ ] 카드 등장 애니메이션 (Staggered Fade-in)
+  - [ ] useStaggeredFadeIn 훅 사용
+  - [ ] Delay: 50ms per item
+- [ ] Pull-to-Refresh 커스텀 애니메이션 (선택적)
+  - [ ] Loading spinner + bounce
+- [ ] 투표 완료 시 축하 애니메이션 (선택적)
+  - [ ] Confetti 효과 (투표 완료 후)
+- [ ] **테스트**: 애니메이션 부드러움 및 성능 확인
+- [ ] **커밋**: `feat(frontend): add Home Tab animations`
 
 ---
 
