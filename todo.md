@@ -1092,3 +1092,9 @@
 | API 명세 | `trd/05-api-specification.md` | REST API 엔드포인트 정의 (DSL.md 기반) |
 | 인증 아키텍처 | `trd/06-authentication-architecture.md` | JWT, 세션 관리 |
 | 개발환경 셋업 | `trd/07-development-deployment-setup.md` | uv, Docker, CI/CD |
+
+---
+
+## 고도화 작업 (TODO)
+
+- [ ] **Supabase Auth**: anon key → Publishable key로 변경 (보안 강화)

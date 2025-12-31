@@ -30,9 +30,14 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # JWT
+    # JWT (Legacy - kept for backward compatibility)
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 10080  # 7 days
+
+    # Supabase Auth
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+    supabase_service_role_key: str = ""
 
     # CORS - empty list means it must be configured in production
     cors_origins: list[str] = []

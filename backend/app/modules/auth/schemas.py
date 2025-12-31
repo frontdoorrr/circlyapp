@@ -30,6 +30,7 @@ class UserResponse(BaseModel):
 
     id: uuid.UUID
     email: str
+    supabase_user_id: str | None
     username: str | None
     display_name: str | None
     profile_emoji: str

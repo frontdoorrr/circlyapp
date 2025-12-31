@@ -48,14 +48,15 @@ class CircleService:
             CircleResponse with created circle data
         """
         # Generate unique invite code
+        print("1111", "generate_invite_code")
         invite_code = generate_invite_code()
-
+        print("2222", "invite_code", invite_code)
         # Create circle
         circle = await self.circle_repo.create(circle_data, owner_id, invite_code)
-
+        print("3333", "circle", circle)
         # Add owner as first member with OWNER role
         await self.membership_repo.create(circle.id, owner_id, MemberRole.OWNER)
-
+        print("4444", "membership")
         return CircleResponse.model_validate(circle)
 
     async def join_by_code(
@@ -94,7 +95,9 @@ class CircleService:
             raise CircleFullError(circle.max_members)
 
         # Add member
-        await self.membership_repo.create(circle.id, user_id, MemberRole.MEMBER, nickname)
+        await self.membership_repo.create(
+            circle.id, user_id, MemberRole.MEMBER, nickname
+        )
 
         # Increment member count
         await self.circle_repo.increment_member_count(circle.id)
@@ -220,7 +223,9 @@ class CircleService:
 
         # Check if user is owner
         if circle.owner_id != user_id:
-            raise BadRequestException("Only the circle owner can regenerate invite code")
+            raise BadRequestException(
+                "Only the circle owner can regenerate invite code"
+            )
 
         # Generate new invite code
         new_code = generate_invite_code()

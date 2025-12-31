@@ -1,89 +1,74 @@
 /**
  * Authentication Store (Zustand)
  *
- * 전역 인증 상태 관리
+ * 전역 인증 상태 관리 - Supabase Auth 연동
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
+import { supabase } from '../lib/supabase';
 import { UserResponse } from '../types/auth';
 
 interface AuthState {
   // State
   user: UserResponse | null;
-  token: string | null;
+  session: Session | null;
   isLoading: boolean;
 
   // Actions
-  setAuth: (user: UserResponse, token: string) => Promise<void>;
+  setSession: (session: Session | null) => void;
+  setUser: (user: UserResponse | null) => void;
   logout: () => Promise<void>;
-  loadAuthFromStorage: () => Promise<void>;
-  updateUser: (user: UserResponse) => Promise<void>;
+  initialize: () => Promise<void>;
 }
-
-const TOKEN_KEY = '@circly:token';
-const USER_KEY = '@circly:user';
 
 export const useAuthStore = create<AuthState>((set) => ({
   // Initial state
   user: null,
-  token: null,
+  session: null,
   isLoading: true,
 
-  // 로그인 성공 시 호출
-  setAuth: async (user, token) => {
-    try {
-      // AsyncStorage에 저장
-      await AsyncStorage.setItem(TOKEN_KEY, token);
-      await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+  // Set Supabase session
+  setSession: (session) => {
+    set({ session });
+  },
 
-      // 상태 업데이트
-      set({ user, token, isLoading: false });
-    } catch (error) {
-      console.error('Failed to save auth:', error);
-    }
+  // Set user profile
+  setUser: (user) => {
+    set({ user });
   },
 
   // 로그아웃
   logout: async () => {
     try {
-      // AsyncStorage에서 제거
-      await AsyncStorage.removeItem(TOKEN_KEY);
-      await AsyncStorage.removeItem(USER_KEY);
-
-      // 상태 초기화
-      set({ user: null, token: null, isLoading: false });
+      await supabase.auth.signOut();
+      set({ user: null, session: null, isLoading: false });
     } catch (error) {
       console.error('Failed to logout:', error);
+      // Force clear state even on error
+      set({ user: null, session: null, isLoading: false });
     }
   },
 
-  // 앱 시작 시 저장된 인증 정보 로드
-  loadAuthFromStorage: async () => {
+  // 앱 시작 시 Supabase 세션 로드
+  initialize: async () => {
     try {
-      const [token, userJson] = await Promise.all([
-        AsyncStorage.getItem(TOKEN_KEY),
-        AsyncStorage.getItem(USER_KEY),
-      ]);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (token && userJson) {
-        const user = JSON.parse(userJson) as UserResponse;
-        set({ user, token, isLoading: false });
-      } else {
-        set({ isLoading: false });
-      }
+      set({
+        session,
+        isLoading: false,
+      });
     } catch (error) {
-      console.error('Failed to load auth:', error);
+      console.error('Failed to initialize auth:', error);
       set({ isLoading: false });
     }
   },
-
-  // 사용자 정보 업데이트 (프로필 수정 후)
-  updateUser: async (user) => {
-    try {
-      await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
-      set({ user });
-    } catch (error) {
-      console.error('Failed to update user:', error);
-    }
-  },
 }));
+
+// Legacy compatibility: token getter for API client
+export const getAccessToken = (): string | null => {
+  const session = useAuthStore.getState().session;
+  return session?.access_token ?? null;
+};

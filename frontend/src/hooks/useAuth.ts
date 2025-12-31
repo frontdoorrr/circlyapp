@@ -1,5 +1,7 @@
 /**
  * Authentication Hooks (React Query)
+ *
+ * Backend API를 통한 Supabase Auth 연동
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as authApi from '../api/auth';
@@ -8,9 +10,10 @@ import { useAuthStore } from '../stores/auth';
 
 /**
  * 회원가입 훅
+ * Backend가 Supabase Auth signup을 프록시로 처리
  */
 export function useRegister() {
-  const { setAuth } = useAuthStore();
+  const { setUser, setSession } = useAuthStore();
 
   return useMutation({
     mutationFn: async (data: UserCreate) => {
@@ -24,10 +27,18 @@ export function useRegister() {
         throw error;
       }
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log('[useRegister] onSuccess - 자동 로그인 처리');
-      // 자동 로그인
-      setAuth(response.user, response.access_token);
+      // Backend 응답으로 Supabase 세션 설정
+      // Note: Backend가 Supabase 토큰을 반환하므로, 이를 세션으로 사용
+      setUser(response.user);
+
+      // Supabase 세션 동기화를 위해 getSession 호출
+      const { supabase } = await import('../lib/supabase');
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setSession(data.session);
+      }
     },
     onError: (error) => {
       console.error('[useRegister] onError:', error);
@@ -37,9 +48,10 @@ export function useRegister() {
 
 /**
  * 로그인 훅
+ * Backend가 Supabase Auth signin을 프록시로 처리
  */
 export function useLogin() {
-  const { setAuth } = useAuthStore();
+  const { setUser, setSession } = useAuthStore();
 
   return useMutation({
     mutationFn: async (data: LoginRequest) => {
@@ -53,9 +65,16 @@ export function useLogin() {
         throw error;
       }
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log('[useLogin] onSuccess - 로그인 처리');
-      setAuth(response.user, response.access_token);
+      setUser(response.user);
+
+      // Supabase 세션 동기화
+      const { supabase } = await import('../lib/supabase');
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setSession(data.session);
+      }
     },
     onError: (error) => {
       console.error('[useLogin] onError:', error);
@@ -85,12 +104,12 @@ export function useLogout() {
  * 현재 사용자 조회 훅
  */
 export function useCurrentUser() {
-  const { token } = useAuthStore();
+  const { session } = useAuthStore();
 
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: authApi.getCurrentUser,
-    enabled: !!token, // 토큰이 있을 때만 실행
+    enabled: !!session, // 세션이 있을 때만 실행
     staleTime: 5 * 60 * 1000, // 5분
   });
 }
@@ -100,13 +119,13 @@ export function useCurrentUser() {
  */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  const { updateUser } = useAuthStore();
+  const { setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: (data: UserUpdate) => authApi.updateProfile(data),
     onSuccess: (updatedUser) => {
       // Zustand store 업데이트
-      updateUser(updatedUser);
+      setUser(updatedUser);
 
       // React Query 캐시 업데이트
       queryClient.setQueryData(['auth', 'me'], updatedUser);

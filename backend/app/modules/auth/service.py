@@ -1,10 +1,11 @@
-"""Business logic for authentication."""
+"""Business logic for authentication via Supabase."""
 
 import uuid
 
+from supabase_auth.errors import AuthApiError
+
 from app.core.exceptions import BadRequestException, UnauthorizedException
-from app.core.security import create_access_token, hash_password, verify_password, verify_token
-from app.modules.auth.models import User
+from app.core.supabase import get_supabase_client
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
     AuthResponse,
@@ -16,14 +17,14 @@ from app.modules.auth.schemas import (
 
 
 class AuthService:
-    """Service for authentication operations."""
+    """Service for authentication operations via Supabase."""
 
     def __init__(self, repository: UserRepository) -> None:
         """Initialize service with repository."""
         self.repository = repository
 
     async def register(self, user_data: UserCreate) -> AuthResponse:
-        """Register a new user.
+        """Register a new user via Supabase.
 
         Args:
             user_data: User registration data.
@@ -34,28 +35,45 @@ class AuthService:
         Raises:
             BadRequestException: If email is already registered.
         """
-        # Check if user already exists
-        existing_user = await self.repository.find_by_email(user_data.email)
+        supabase = get_supabase_client()
+
+        try:
+            # Create user in Supabase Auth
+            auth_response = supabase.auth.sign_up(
+                {
+                    "email": user_data.email,
+                    "password": user_data.password,
+                }
+            )
+        except Exception as e:
+            raise BadRequestException(str(e)) from e
+
+        if auth_response.user is None:
+            raise BadRequestException("Registration failed")
+
+        # Check if local user already exists (handles duplicate requests)
+        existing_user = await self.repository.find_by_supabase_id(
+            auth_response.user.id
+        )
         if existing_user is not None:
-            raise BadRequestException("Email is already registered")
+            raise BadRequestException("User already registered")
 
-        # Hash the password before creating user
-        hashed_password = hash_password(user_data.password)
+        # Also check by email for race condition
+        existing_by_email = await self.repository.find_by_email(user_data.email)
+        if existing_by_email is not None:
+            raise BadRequestException("Email already registered")
 
-        # Create user with hashed password
-        # Repository expects password field to contain the hashed password
-        user_create_data = UserCreate(
+        # Create local user profile with all provided data
+        user = await self.repository.create_from_supabase(
+            supabase_user_id=auth_response.user.id,
             email=user_data.email,
-            password=hashed_password,
             username=user_data.username,
             display_name=user_data.display_name,
         )
-        user = await self.repository.create(user_create_data)
 
-        # Create access token
-        access_token = create_access_token(subject=user.id)
+        # Return auth response with Supabase token
+        access_token = auth_response.session.access_token if auth_response.session else ""
 
-        # Return auth response
         return AuthResponse(
             user=UserResponse.model_validate(user),
             access_token=access_token,
@@ -63,7 +81,7 @@ class AuthService:
         )
 
     async def login(self, login_data: LoginRequest) -> AuthResponse:
-        """Login a user.
+        """Login a user via Supabase.
 
         Args:
             login_data: Login credentials (email and password).
@@ -72,66 +90,46 @@ class AuthService:
             AuthResponse with user data and access token.
 
         Raises:
-            UnauthorizedException: If credentials are invalid or user is inactive.
+            UnauthorizedException: If credentials are invalid.
         """
-        # Find user by email
-        user = await self.repository.find_by_email(login_data.email)
+        supabase = get_supabase_client()
+
+        try:
+            # Authenticate with Supabase
+            auth_response = supabase.auth.sign_in_with_password(
+                {
+                    "email": login_data.email,
+                    "password": login_data.password,
+                }
+            )
+        except AuthApiError as e:
+            raise UnauthorizedException("Invalid credentials") from e
+
+        if auth_response.user is None or auth_response.session is None:
+            raise UnauthorizedException("Invalid credentials")
+
+        # Find or create local user profile
+        user = await self.repository.find_by_supabase_id(auth_response.user.id)
+
         if user is None:
-            raise UnauthorizedException("Invalid credentials")
+            # Auto-create local profile
+            user = await self.repository.create_from_supabase(
+                supabase_user_id=auth_response.user.id,
+                email=login_data.email,
+            )
 
-        # Verify password
-        if not verify_password(login_data.password, user.hashed_password):
-            raise UnauthorizedException("Invalid credentials")
-
-        # Check if user is active
         if not user.is_active:
             raise UnauthorizedException("User account is inactive")
 
-        # Create access token
-        access_token = create_access_token(subject=user.id)
-
-        # Return auth response
         return AuthResponse(
             user=UserResponse.model_validate(user),
-            access_token=access_token,
+            access_token=auth_response.session.access_token,
             token_type="bearer",
         )
 
-    async def get_current_user(self, token: str) -> User:
-        """Get current user from access token.
-
-        Args:
-            token: JWT access token.
-
-        Returns:
-            Current user.
-
-        Raises:
-            UnauthorizedException: If token is invalid or user not found.
-        """
-        # Verify and decode token
-        payload = verify_token(token)
-        if payload is None:
-            raise UnauthorizedException("Invalid token")
-
-        # Extract user_id from token
-        user_id_str = payload.get("sub")
-        if user_id_str is None:
-            raise UnauthorizedException("Invalid token")
-
-        try:
-            user_id = uuid.UUID(user_id_str)
-        except ValueError:
-            raise UnauthorizedException("Invalid token") from None
-
-        # Find user by id
-        user = await self.repository.find_by_id(user_id)
-        if user is None or not user.is_active:
-            raise UnauthorizedException("User not found or inactive")
-
-        return user
-
-    async def update_profile(self, user_id: uuid.UUID, update_data: UserUpdate) -> UserResponse:
+    async def update_profile(
+        self, user_id: uuid.UUID, update_data: UserUpdate
+    ) -> UserResponse:
         """Update user profile.
 
         Args:

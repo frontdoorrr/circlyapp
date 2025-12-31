@@ -18,20 +18,22 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request 인터셉터: 토큰 자동 추가
+// Request 인터셉터: Supabase 세션에서 토큰 자동 추가
 apiClient.interceptors.request.use(
   async (config) => {
     console.log(`[API Client] ${config.method?.toUpperCase()} ${config.url}`);
 
-    // Zustand store에서 토큰 가져오기 (동적 import로 순환 참조 방지)
-    const { useAuthStore } = await import('../stores/auth');
-    const token = useAuthStore.getState().token;
+    // Supabase 세션에서 토큰 가져오기
+    const { supabase } = await import('../lib/supabase');
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('[API Client] 인증 토큰 추가됨');
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+      console.log('[API Client] Supabase 토큰 추가됨');
     } else {
-      console.log('[API Client] 인증 토큰 없음');
+      console.log('[API Client] Supabase 세션 없음');
     }
 
     return config;
@@ -64,11 +66,17 @@ apiClient.interceptors.response.use(
 
       console.error('[API Client] 에러 응답 데이터:', JSON.stringify(data, null, 2));
 
-      // 401 Unauthorized: 토큰 만료 → 자동 로그아웃
+      // 401 Unauthorized: 토큰 만료 → Supabase 세션 갱신 시도
       if (status === 401) {
-        console.warn('[API Client] 401 Unauthorized - 자동 로그아웃 처리');
-        const { useAuthStore } = await import('../stores/auth');
-        useAuthStore.getState().logout();
+        console.warn('[API Client] 401 Unauthorized - 세션 갱신 시도');
+        const { supabase } = await import('../lib/supabase');
+        const { error: refreshError } = await supabase.auth.refreshSession();
+
+        if (refreshError) {
+          // 갱신 실패 → 로그아웃
+          console.warn('[API Client] 세션 갱신 실패 - 로그아웃 처리');
+          await supabase.auth.signOut();
+        }
       }
 
       // API 에러 객체 생성

@@ -20,16 +20,57 @@ class UserRepository:
         """Create a new user.
 
         Args:
-            user_data: User creation data including email, password, etc.
+            user_data: User creation data including email, etc.
 
         Returns:
             The created user instance.
         """
         user = User(
             email=user_data.email,
-            hashed_password=user_data.password,  # Note: should be pre-hashed by service
             username=user_data.username,
             display_name=user_data.display_name,
+        )
+        self.session.add(user)
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def find_by_supabase_id(self, supabase_user_id: str) -> User | None:
+        """Find a user by Supabase user ID.
+
+        Args:
+            supabase_user_id: Supabase Auth user ID.
+
+        Returns:
+            User if found, None otherwise.
+        """
+        stmt = select(User).where(User.supabase_user_id == supabase_user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def create_from_supabase(
+        self,
+        supabase_user_id: str,
+        email: str,
+        username: str | None = None,
+        display_name: str | None = None,
+    ) -> User:
+        """Create a local user profile from Supabase auth user.
+
+        Args:
+            supabase_user_id: Supabase Auth user ID.
+            email: User's email address.
+            username: Optional username.
+            display_name: Optional display name.
+
+        Returns:
+            The created user instance.
+        """
+        user = User(
+            supabase_user_id=supabase_user_id,
+            email=email,
+            username=username,
+            display_name=display_name,
         )
         self.session.add(user)
         await self.session.flush()

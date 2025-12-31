@@ -22,7 +22,7 @@ class User(BaseModel):
     Attributes:
         id: UUID primary key (from BaseModel)
         email: Unique email address
-        hashed_password: Bcrypt hashed password
+        supabase_user_id: Supabase Auth user ID (links to Supabase auth.users)
         username: Unique username (max 50 chars)
         display_name: Display name (max 100 chars)
         profile_emoji: Profile emoji (default: smile)
@@ -41,9 +41,11 @@ class User(BaseModel):
         nullable=False,
         index=True,
     )
-    hashed_password: Mapped[str] = mapped_column(
+    supabase_user_id: Mapped[str | None] = mapped_column(
         String(255),
-        nullable=False,
+        unique=True,
+        nullable=True,
+        index=True,
     )
     username: Mapped[str | None] = mapped_column(
         String(50),

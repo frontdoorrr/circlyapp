@@ -2,7 +2,7 @@
  * App Initializer
  *
  * 앱 시작 시 필요한 초기화 작업 수행
- * - 저장된 인증 정보 로드
+ * - Supabase 세션 로드 및 상태 리스너
  * - 인증 상태에 따른 자동 리다이렉트
  * - 온보딩 완료 여부 확인
  * - 푸시 알림 초기화
@@ -12,6 +12,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useSegments } from 'expo-router';
+import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/auth';
 import { registerForPushNotificationsAsync } from '../services/notification/pushNotification';
 import * as notificationApi from '../api/notification';
@@ -25,18 +26,18 @@ interface AppInitializerProps {
 const ONBOARDING_KEY = '@circly:onboarding_completed';
 
 export function AppInitializer({ children }: AppInitializerProps) {
-  const { loadAuthFromStorage, isLoading, token } = useAuthStore();
+  const { initialize, isLoading, session, setSession } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
-  // 1. 앱 초기화
+  // 1. 앱 초기화 및 Supabase 세션 리스너 설정
   useEffect(() => {
-    async function initialize() {
+    async function initializeApp() {
       try {
-        // 1. 저장된 인증 정보 로드
-        await loadAuthFromStorage();
+        // 1. Supabase 세션 로드
+        await initialize();
 
         // 2. 온보딩 완료 여부 확인
         const onboardingCompleted = await AsyncStorage.getItem(ONBOARDING_KEY);
@@ -51,8 +52,32 @@ export function AppInitializer({ children }: AppInitializerProps) {
       }
     }
 
-    initialize();
-  }, [loadAuthFromStorage]);
+    initializeApp();
+
+    // Supabase 인증 상태 변경 리스너
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('[Auth] State changed:', event);
+      setSession(newSession);
+
+      // 세션 갱신 시 푸시 토큰 재등록
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        try {
+          const pushToken = await registerForPushNotificationsAsync();
+          if (pushToken) {
+            await notificationApi.registerPushToken(pushToken);
+          }
+        } catch (error) {
+          console.error('Failed to register push token:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [initialize, setSession]);
 
   // 2. 인증 상태에 따른 자동 리다이렉트
   useEffect(() => {
@@ -61,37 +86,14 @@ export function AppInitializer({ children }: AppInitializerProps) {
     const inAuthGroup = segments[0] === '(auth)';
 
     // 로그인되지 않았는데 메인 화면에 있으면 → 로그인 화면으로
-    if (!token && !inAuthGroup) {
+    if (!session && !inAuthGroup) {
       router.replace('/(auth)/login');
     }
     // 로그인되었는데 로그인 화면에 있으면 → 홈 화면으로
-    else if (token && inAuthGroup) {
+    else if (session && inAuthGroup) {
       router.replace('/(main)/(home)');
     }
-  }, [token, segments, isReady, isLoading, showOnboarding]);
-
-  // 2. 로그인 후 푸시 알림 토큰 등록
-  useEffect(() => {
-    async function registerPushNotification() {
-      if (!token) return; // 로그인하지 않았으면 스킵
-
-      try {
-        // 푸시 알림 권한 요청 및 토큰 획득
-        const pushToken = await registerForPushNotificationsAsync();
-
-        if (pushToken) {
-          // 백엔드에 토큰 등록
-          await notificationApi.registerPushToken(pushToken);
-          console.log('Push notification registered successfully');
-        }
-      } catch (error) {
-        console.error('Failed to register push notification:', error);
-        // 푸시 알림 실패해도 앱은 정상 작동
-      }
-    }
-
-    registerPushNotification();
-  }, [token]);
+  }, [session, segments, isReady, isLoading, showOnboarding, router]);
 
   // 초기화 중이면 로딩 화면 표시
   if (!isReady || isLoading) {

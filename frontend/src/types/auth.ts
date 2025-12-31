@@ -21,6 +21,7 @@ export interface LoginRequest {
 export interface UserResponse {
   id: string; // UUID
   email: string;
+  supabase_user_id: string | null; // Supabase Auth user ID
   username: string | null;
   display_name: string | null;
   profile_emoji: string;

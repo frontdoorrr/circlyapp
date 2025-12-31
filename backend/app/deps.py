@@ -31,7 +31,7 @@ async def get_current_user(
     authorization: str = Header(..., description="Bearer token"),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Get current authenticated user from JWT token.
+    """Get current authenticated user from Supabase JWT token.
 
     Args:
         authorization: Authorization header with Bearer token
@@ -43,16 +43,39 @@ async def get_current_user(
     Raises:
         UnauthorizedException: If token is invalid or user not found
     """
+    from app.core.supabase import verify_supabase_token
+
     # Extract token from "Bearer <token>" format
     if not authorization.startswith("Bearer "):
         raise UnauthorizedException("Invalid authorization header format")
 
     token = authorization.replace("Bearer ", "")
 
-    # Get user from token
+    # Verify Supabase token
+    payload = verify_supabase_token(token)
+    if payload is None:
+        raise UnauthorizedException("Invalid token")
+
+    # Extract Supabase user ID
+    supabase_user_id = payload.get("sub")
+    if not supabase_user_id:
+        raise UnauthorizedException("Invalid token: missing user ID")
+
+    # Find user by Supabase ID
     repo = UserRepository(db)
-    service = AuthService(repo)
-    user = await service.get_current_user(token)
+    user = await repo.find_by_supabase_id(supabase_user_id)
+
+    # Auto-create local profile if not exists
+    if user is None:
+        email = payload.get("email", "")
+        user = await repo.create_from_supabase(
+            supabase_user_id=supabase_user_id,
+            email=email,
+        )
+        await db.commit()
+
+    if not user.is_active:
+        raise UnauthorizedException("User account is inactive")
 
     return user
 
