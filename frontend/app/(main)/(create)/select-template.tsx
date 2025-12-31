@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius['3xl'], // 24px
+    borderRadius: 24, // 24px (3xl)
     paddingHorizontal: 32,
     paddingVertical: 32,
     alignItems: 'center',
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   },
   actionButtonRed: {
     backgroundColor: tokens.colors.red[50],
-    borderColor: tokens.colors.red[200],
+    borderColor: '#fecaca', // red-200
   },
   actionButtonPrimary: {
     backgroundColor: tokens.colors.primary[500],
