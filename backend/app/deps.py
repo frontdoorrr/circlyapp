@@ -84,7 +84,7 @@ def get_poll_service(db: AsyncSession = Depends(get_db)) -> PollService:
 
 def get_notification_service(db: AsyncSession = Depends(get_db)) -> NotificationService:
     """Get NotificationService dependency."""
-    return NotificationService(NotificationRepository(db))
+    return NotificationService(NotificationRepository(db), UserRepository(db))
 
 
 def get_report_service(db: AsyncSession = Depends(get_db)) -> ReportService:

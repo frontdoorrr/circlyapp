@@ -78,3 +78,9 @@ class NotificationSettingsUpdate(BaseModel):
     poll_ended: bool | None = None
     vote_received: bool | None = None
     circle_invite: bool | None = None
+
+
+class PushTokenRequest(BaseModel):
+    """Schema for push token registration/update request."""
+
+    expo_push_token: str = Field(..., min_length=1, max_length=500)

@@ -4,6 +4,7 @@ import uuid
 
 from app.core.enums import NotificationType
 from app.core.exceptions import AuthorizationError, NotFoundException
+from app.modules.auth.repository import UserRepository
 from app.modules.circles.models import Circle
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import NotificationCreate, NotificationResponse
@@ -13,9 +14,14 @@ from app.modules.polls.models import Poll
 class NotificationService:
     """Service for notification operations."""
 
-    def __init__(self, notification_repo: NotificationRepository) -> None:
-        """Initialize service with repository."""
+    def __init__(
+        self,
+        notification_repo: NotificationRepository,
+        user_repo: UserRepository,
+    ) -> None:
+        """Initialize service with repositories."""
         self.notification_repo = notification_repo
+        self.user_repo = user_repo
 
     async def get_notifications(
         self,
@@ -196,3 +202,30 @@ class NotificationService:
         )
 
         await self.notification_repo.create(notification)
+
+    async def register_push_token(self, user_id: uuid.UUID, token: str) -> None:
+        """Register or update user's push notification token.
+
+        Args:
+            user_id: User UUID
+            token: Expo push notification token
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        success = await self.user_repo.update_push_token(user_id, token)
+        if not success:
+            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+
+    async def unregister_push_token(self, user_id: uuid.UUID) -> None:
+        """Unregister user's push notification token (set to empty string).
+
+        Args:
+            user_id: User UUID
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        success = await self.user_repo.update_push_token(user_id, "")
+        if not success:
+            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")

@@ -9,6 +9,7 @@ from app.core.responses import success_response
 from app.deps import CurrentUserDep, NotificationServiceDep
 from app.modules.notifications.schemas import (
     NotificationResponse,
+    PushTokenRequest,
     UnreadCountResponse,
 )
 
@@ -71,3 +72,49 @@ async def mark_all_as_read(
     """Mark all notifications as read for the current user."""
     await service.mark_all_as_read(current_user.id)
     return success_response(data={}, message="All notifications marked as read")
+
+
+@router.post(
+    "/register-token",
+    status_code=status.HTTP_200_OK,
+    summary="Register push notification token",
+)
+async def register_push_token(
+    token_data: PushTokenRequest,
+    current_user: CurrentUserDep,
+    service: NotificationServiceDep,
+) -> dict[str, Any]:
+    """Register or update user's Expo push notification token.
+
+    Args:
+        token_data: Push token request containing expo_push_token
+        current_user: Currently authenticated user
+        service: Notification service instance
+
+    Returns:
+        Success response
+    """
+    await service.register_push_token(current_user.id, token_data.expo_push_token)
+    return success_response(data={}, message="Push token registered successfully")
+
+
+@router.delete(
+    "/unregister-token",
+    status_code=status.HTTP_200_OK,
+    summary="Unregister push notification token",
+)
+async def unregister_push_token(
+    current_user: CurrentUserDep,
+    service: NotificationServiceDep,
+) -> dict[str, Any]:
+    """Unregister user's push notification token (logout).
+
+    Args:
+        current_user: Currently authenticated user
+        service: Notification service instance
+
+    Returns:
+        Success response
+    """
+    await service.unregister_push_token(current_user.id)
+    return success_response(data={}, message="Push token unregistered successfully")
