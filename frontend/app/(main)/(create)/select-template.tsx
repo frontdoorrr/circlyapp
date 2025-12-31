@@ -1,141 +1,337 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
+import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
+import { usePollTemplates } from '../../../src/hooks/usePolls';
+import { TemplateCategory } from '../../../src/types/poll';
+import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 
 /**
- * 질문 템플릿 선택 화면
+ * Select Template Screen - Swipe Card Interface
  *
- * 투표 질문 템플릿을 선택합니다.
- * - 카테고리별 템플릿 목록 표시
- * - 템플릿 선택 시 다음 단계로 진행
+ * Gas 앱 스타일의 스와이프 카드로 투표 질문 선택
+ *
+ * 참고: prd/design/05-complete-ui-specification.md#2.6.2
  */
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = 343;
+const CARD_HEIGHT = 480;
+const SWIPE_THRESHOLD = 100;
+const SWIPE_UP_THRESHOLD = 80;
+
+// 카테고리명 매핑
+const CATEGORY_NAMES: Record<TemplateCategory, string> = {
+  PERSONALITY: '성격 관련',
+  APPEARANCE: '외모 관련',
+  SPECIAL: '특별한 날',
+  TALENT: '능력 관련',
+};
+
+// 카드 컴포넌트
+interface CardProps {
+  question: string;
+  emoji: string | null;
+  index: number; // 0 = 현재, 1 = 뒷카드1, 2 = 뒷카드2
+  onSelect: () => void;
+}
+
+function QuestionCard({ question, emoji, index, onSelect }: CardProps) {
+  // 카드 스택 스타일 (뒷카드는 작고 아래에 배치)
+  const offset = index * 8; // 8px씩 아래로
+  const scale = 1 - index * 0.04; // 4%씩 작게
+  const opacity = index === 0 ? 1 : index === 1 ? 0.7 : 0.4;
+
+  return (
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          transform: [{ translateY: offset }, { scale }],
+          opacity,
+          zIndex: 10 - index,
+        },
+      ]}
+    >
+      {/* 이모지 */}
+      <Text style={styles.cardEmoji}>{emoji || '❓'}</Text>
+
+      {/* 질문 텍스트 */}
+      <Text style={styles.cardQuestion}>{question}</Text>
+
+      {/* 선택 버튼 (현재 카드에만 표시) */}
+      {index === 0 && (
+        <TouchableOpacity style={styles.selectButton} onPress={onSelect}>
+          <Text style={styles.selectButtonText}>선택하기</Text>
+        </TouchableOpacity>
+      )}
+    </Animated.View>
+  );
+}
+
+// 메인 화면
 export default function SelectTemplateScreen() {
-  const { circleId } = useLocalSearchParams<{ circleId: string }>();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const params = useLocalSearchParams<{ category: TemplateCategory }>();
+  const category = params.category || 'PERSONALITY';
 
-  // TODO: 실제 템플릿 목록 가져오기
-  const templates = [
-    {
-      id: '1',
-      category: '성격 관련',
-      emoji: '😊',
-      questions: [
-        { id: 't1', text: '가장 친절한 친구는?' },
-        { id: 't2', text: '가장 유머러스한 친구는?' },
-        { id: 't3', text: '가장 책임감 있는 친구는?' },
-      ],
-    },
-    {
-      id: '2',
-      category: '외모 관련',
-      emoji: '✨',
-      questions: [
-        { id: 't4', text: '가장 웃음이 예쁜 친구는?' },
-        { id: 't5', text: '가장 패션센스 좋은 친구는?' },
-        { id: 't6', text: '가장 귀여운 친구는?' },
-      ],
-    },
-    {
-      id: '3',
-      category: '특별한 날',
-      emoji: '🎉',
-      questions: [
-        { id: 't7', text: '생일파티 주인공 같은 친구는?' },
-        { id: 't8', text: '반장 하면 어울릴 것 같은 친구는?' },
-      ],
-    },
-  ];
+  // 템플릿 데이터 가져오기
+  const { data: allTemplates, isLoading } = usePollTemplates();
 
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplateId(templateId);
+  // 카테고리별 필터링
+  const templates = allTemplates?.filter((t) => t.category === category) || [];
+
+  // 현재 카드 인덱스
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // 힌트 텍스트 표시 여부 (3초 후 자동 숨김)
+  const [showHint, setShowHint] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHint(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 스와이프 애니메이션 값
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  // 다음 카드로 이동
+  const goToNext = () => {
+    if (currentIndex < templates.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
   };
 
-  const handleNext = () => {
-    if (!selectedTemplateId) return;
+  // 이전 카드로 이동
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
+  };
 
-    // TODO: 선택된 템플릿 ID를 다음 화면으로 전달
+  // 질문 선택 및 다음 단계로
+  const handleSelectQuestion = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    const selectedTemplate = templates[currentIndex];
     router.push({
       pathname: '/(main)/(create)/configure',
       params: {
-        circleId,
-        templateId: selectedTemplateId,
+        templateId: selectedTemplate.id,
       },
     });
   };
+
+  // 스와이프 제스처
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
+    })
+    .onEnd((event) => {
+      const velocityX = event.velocityX;
+      const velocityY = event.velocityY;
+
+      // 좌측 스와이프: 다음 카드
+      if (translateX.value < -SWIPE_THRESHOLD || velocityX < -500) {
+        translateX.value = withSpring(-SCREEN_WIDTH, { stiffness: 300, damping: 30 }, () => {
+          runOnJS(goToNext)();
+          translateX.value = 0;
+        });
+      }
+      // 우측 스와이프: 이전 카드
+      else if (translateX.value > SWIPE_THRESHOLD || velocityX > 500) {
+        translateX.value = withSpring(SCREEN_WIDTH, { stiffness: 300, damping: 30 }, () => {
+          runOnJS(goToPrevious)();
+          translateX.value = 0;
+        });
+      }
+      // 위로 스와이프: 질문 선택
+      else if (translateY.value < -SWIPE_UP_THRESHOLD || velocityY < -500) {
+        translateY.value = withTiming(-SCREEN_WIDTH, { duration: 300 }, () => {
+          runOnJS(handleSelectQuestion)();
+        });
+      }
+      // 원위치
+      else {
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 500 : 1 },
+    ],
+    opacity: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 300 : 1,
+  }));
+
+  if (isLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <LoadingSpinner />
+      </View>
+    );
+  }
+
+  if (templates.length === 0) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>해당 카테고리에 질문이 없습니다</Text>
+      </View>
+    );
+  }
+
+  const currentTemplate = templates[currentIndex];
+  const nextTemplate1 = templates[currentIndex + 1];
+  const nextTemplate2 = templates[currentIndex + 2];
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: '질문 선택',
+          title: '',
           headerShown: true,
-          headerBackTitle: '뒤로',
+          headerBackTitle: '닫기',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+              <Text style={styles.headerBackText}>← 닫기</Text>
+            </TouchableOpacity>
+          ),
+          headerTitle: () => (
+            <Text style={styles.headerTitle}>{CATEGORY_NAMES[category]}</Text>
+          ),
+          headerRight: () => (
+            <Text style={styles.headerProgress}>
+              {currentIndex + 1}/{templates.length}
+            </Text>
+          ),
         }}
       />
 
       <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <Text style={styles.title}>어떤 질문으로 투표할까요?</Text>
-          <Text style={styles.description}>
-            친구들에게 묻고 싶은 질문을 선택해주세요
-          </Text>
+        {/* 카드 스택 */}
+        <View style={styles.cardStack}>
+          {/* 뒷카드 2 */}
+          {nextTemplate2 && (
+            <QuestionCard
+              question={nextTemplate2.question_text}
+              emoji={nextTemplate2.emoji}
+              index={2}
+              onSelect={() => {}}
+            />
+          )}
 
-          <View style={styles.templateList}>
-            {templates.map((category) => (
-              <View key={category.id} style={styles.categorySection}>
-                <View style={styles.categoryHeader}>
-                  <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-                  <Text style={styles.categoryName}>{category.category}</Text>
-                  <Text style={styles.categoryCount}>
-                    {category.questions.length}개
-                  </Text>
-                </View>
+          {/* 뒷카드 1 */}
+          {nextTemplate1 && (
+            <QuestionCard
+              question={nextTemplate1.question_text}
+              emoji={nextTemplate1.emoji}
+              index={1}
+              onSelect={() => {}}
+            />
+          )}
 
-                <View style={styles.questionList}>
-                  {category.questions.map((question) => (
-                    <Pressable
-                      key={question.id}
-                      style={[
-                        styles.questionCard,
-                        selectedTemplateId === question.id && styles.questionCardSelected,
-                      ]}
-                      onPress={() => handleTemplateSelect(question.id)}
-                    >
-                      <Text style={styles.questionText}>{question.text}</Text>
-                      {selectedTemplateId === question.id && (
-                        <Text style={styles.checkmark}>✓</Text>
-                      )}
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Pressable
-            style={[
-              styles.nextButton,
-              !selectedTemplateId && styles.nextButtonDisabled,
-            ]}
-            onPress={handleNext}
-            disabled={!selectedTemplateId}
-          >
-            <Text
-              style={[
-                styles.nextButtonText,
-                !selectedTemplateId && styles.nextButtonTextDisabled,
-              ]}
-            >
-              다음
-            </Text>
-          </Pressable>
+          {/* 현재 카드 (제스처 가능) */}
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={animatedStyle}>
+              <QuestionCard
+                question={currentTemplate.question_text}
+                emoji={currentTemplate.emoji}
+                index={0}
+                onSelect={handleSelectQuestion}
+              />
+            </Animated.View>
+          </GestureDetector>
         </View>
+
+        {/* 액션 버튼 */}
+        <View style={styles.actionButtons}>
+          {/* 이전 버튼 */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionButtonGray, styles.actionButtonSmall]}
+            onPress={goToPrevious}
+            disabled={currentIndex === 0}
+          >
+            <Text style={styles.actionButtonIcon}>←</Text>
+          </TouchableOpacity>
+
+          {/* 건너뛰기 버튼 */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionButtonRed, styles.actionButtonMedium]}
+            onPress={goToNext}
+            disabled={currentIndex === templates.length - 1}
+          >
+            <Text style={styles.actionButtonIcon}>✕</Text>
+          </TouchableOpacity>
+
+          {/* 관심 표시 버튼 (메인) */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionButtonPrimary, styles.actionButtonLarge]}
+            onPress={handleSelectQuestion}
+          >
+            <Text style={styles.actionButtonIcon}>💖</Text>
+          </TouchableOpacity>
+
+          {/* 선택 버튼 */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionButtonBlue, styles.actionButtonMedium]}
+            onPress={handleSelectQuestion}
+          >
+            <Text style={styles.actionButtonIcon}>✓</Text>
+          </TouchableOpacity>
+
+          {/* 다음 버튼 */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionButtonGray, styles.actionButtonSmall]}
+            onPress={goToNext}
+            disabled={currentIndex === templates.length - 1}
+          >
+            <Text style={styles.actionButtonIcon}>→</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 힌트 텍스트 */}
+        {showHint && (
+          <Animated.View
+            style={[
+              styles.hintContainer,
+              {
+                opacity: withTiming(showHint ? 1 : 0, { duration: 300 }),
+              },
+            ]}
+          >
+            <Text style={styles.hintText}>← 스와이프하여 넘기기</Text>
+          </Animated.View>
+        )}
       </View>
     </>
   );
@@ -145,100 +341,177 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: tokens.colors.neutral[50],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scrollView: {
+  centerContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: tokens.colors.neutral[50],
   },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-    paddingBottom: 100,
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  description: {
+  emptyText: {
     fontSize: tokens.typography.fontSize.base,
     color: tokens.colors.neutral[500],
-    marginBottom: tokens.spacing.xl,
   },
-  templateList: {
-    gap: tokens.spacing.xl,
+
+  // 헤더
+  headerButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  categorySection: {
-    gap: tokens.spacing.md,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
-  },
-  categoryEmoji: {
-    fontSize: 24,
-  },
-  categoryName: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    flex: 1,
-  },
-  categoryCount: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-  },
-  questionList: {
-    gap: tokens.spacing.sm,
-  },
-  questionCard: {
-    backgroundColor: tokens.colors.white,
-    padding: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  questionCardSelected: {
-    borderColor: tokens.colors.primary[500],
-    backgroundColor: tokens.colors.primary[50],
-  },
-  questionText: {
+  headerBackText: {
     fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-    flex: 1,
-  },
-  checkmark: {
-    fontSize: 20,
     color: tokens.colors.primary[500],
   },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: tokens.spacing.lg,
-    backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
+  headerTitle: {
+    fontSize: tokens.typography.fontSize.lg, // 18px
+    fontWeight: tokens.typography.fontWeight.semibold, // 600
+    color: tokens.colors.neutral[900],
   },
-  nextButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
+  headerProgress: {
+    fontSize: tokens.typography.fontSize.sm, // 14px
+    fontWeight: tokens.typography.fontWeight.medium, // 500
+    color: tokens.colors.neutral[500],
+    paddingHorizontal: 16,
+  },
+
+  // 카드 스택
+  cardStack: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
     alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  nextButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[200],
+
+  // 카드
+  card: {
+    position: 'absolute',
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    backgroundColor: tokens.colors.white,
+    borderRadius: tokens.borderRadius['3xl'], // 24px
+    paddingHorizontal: 32,
+    paddingVertical: 32,
+    alignItems: 'center',
+    // Shadow (shadow-2xl)
+    ...Platform.select({
+      ios: {
+        shadowColor: tokens.colors.neutral[900],
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
-  nextButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
+  cardEmoji: {
+    fontSize: 80,
+    marginTop: 40,
+    marginBottom: 24,
+  },
+  cardQuestion: {
+    fontSize: tokens.typography.fontSize['2xl'], // 24px
+    fontWeight: tokens.typography.fontWeight.bold, // 700
+    color: tokens.colors.neutral[900],
+    textAlign: 'center',
+    lineHeight: 32,
+  },
+  selectButton: {
+    position: 'absolute',
+    bottom: 32,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    backgroundColor: tokens.colors.primary[500],
+    borderRadius: 12,
+    // Shadow (shadow-primary)
+    ...Platform.select({
+      ios: {
+        shadowColor: tokens.colors.primary[500],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  selectButtonText: {
+    fontSize: tokens.typography.fontSize.base, // 16px
+    fontWeight: tokens.typography.fontWeight.semibold, // 600
     color: tokens.colors.white,
   },
-  nextButtonTextDisabled: {
+
+  // 액션 버튼
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 60,
+  },
+  actionButton: {
+    borderRadius: 9999, // full
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  actionButtonSmall: {
+    width: 48,
+    height: 48,
+  },
+  actionButtonMedium: {
+    width: 56,
+    height: 56,
+  },
+  actionButtonLarge: {
+    width: 64,
+    height: 64,
+    // Shadow (shadow-lg)
+    ...Platform.select({
+      ios: {
+        shadowColor: tokens.colors.neutral[900],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  actionButtonGray: {
+    backgroundColor: tokens.colors.neutral[100],
+    borderColor: tokens.colors.neutral[200],
+  },
+  actionButtonRed: {
+    backgroundColor: tokens.colors.red[50],
+    borderColor: tokens.colors.red[200],
+  },
+  actionButtonPrimary: {
+    backgroundColor: tokens.colors.primary[500],
+    borderColor: tokens.colors.primary[500],
+  },
+  actionButtonBlue: {
+    backgroundColor: tokens.colors.primary[50],
+    borderColor: tokens.colors.primary[200],
+  },
+  actionButtonIcon: {
+    fontSize: 24,
+  },
+
+  // 힌트 텍스트
+  hintContainer: {
+    position: 'absolute',
+    bottom: 60,
+  },
+  hintText: {
+    fontSize: tokens.typography.fontSize.xs, // 12px
+    fontWeight: tokens.typography.fontWeight.normal, // 400
     color: tokens.colors.neutral[400],
+    textAlign: 'center',
   },
 });
