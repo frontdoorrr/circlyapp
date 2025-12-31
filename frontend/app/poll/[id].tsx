@@ -279,7 +279,7 @@ export default function PollDetailScreen() {
 
                 <View style={styles.resultInfo}>
                   <Text style={styles.resultName}>
-                    {result.display_name || result.username || '익명'}
+                    {result.nickname || '익명'}
                   </Text>
 
                   {/* 득표율 바 (애니메이션) */}

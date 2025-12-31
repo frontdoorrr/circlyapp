@@ -48,7 +48,8 @@ export type ErrorCode = AuthErrorCode | CircleErrorCode | PollErrorCode;
 export class ApiError extends Error {
   constructor(
     public code: ErrorCode,
-    message: string
+    message: string,
+    public status?: number // HTTP 상태 코드 (선택)
   ) {
     super(message);
     this.name = 'ApiError';

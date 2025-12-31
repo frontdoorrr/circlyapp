@@ -41,19 +41,17 @@ export interface VoteRequest {
 
 export interface VoteResponse {
   success: boolean;
-  poll_id: string;
-  voted_at: string;
+  results: PollResultItem[]; // 투표 후 실시간 결과
   message: string;
 }
 
 export interface PollResultItem {
   user_id: string;
-  username: string | null;
-  display_name: string | null;
+  nickname: string | null; // Circle 내 닉네임
   profile_emoji: string;
   vote_count: number;
   vote_percentage: number;
-  rank: number;
+  rank: number | null; // 순위 (동률 시 null 가능)
 }
 
 export interface PollDetailResponse extends PollResponse {

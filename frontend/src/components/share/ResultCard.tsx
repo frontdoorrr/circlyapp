@@ -50,7 +50,7 @@ export function ResultCard({ poll, cardRef }: ResultCardProps) {
               <View style={styles.resultContent}>
                 <View style={styles.resultHeader}>
                   <Text style={styles.resultName}>
-                    {result.profile_emoji} {result.display_name || result.username || '익명'}
+                    {result.profile_emoji} {result.nickname || '익명'}
                   </Text>
                   <Text style={styles.resultVotes}>{result.vote_count}표</Text>
                 </View>
