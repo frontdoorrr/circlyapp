@@ -7,15 +7,15 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
-import { PollDuration } from '../../../src/types/poll';
 import { usePollTemplates } from '../../../src/hooks/usePolls';
 import { useMyCircles } from '../../../src/hooks/useCircles';
-import { useCreatePoll } from '../../../src/hooks/usePolls';
+import { useCreatePoll } from '../../../src/hooks/useCreatePoll';
+import { usePollCreateStore, PollDuration } from '../../../src/stores/pollCreate';
 
 /**
  * Poll Preview Screen (투표 미리보기 화면)
@@ -42,23 +42,20 @@ const DURATION_LABELS: Record<PollDuration, string> = {
 };
 
 export default function PreviewScreen() {
-  const params = useLocalSearchParams<{
-    templateId: string;
-    circleId: string;
-    duration: PollDuration;
-    target: 'all' | 'select';
-    notification: 'immediate' | 'scheduled';
-  }>();
-
-  const { templateId, circleId, duration, target, notification } = params;
+  // Zustand store에서 상태 가져오기
+  const {
+    selectedTemplate,
+    settings,
+    circleId,
+    isComplete,
+  } = usePollCreateStore();
 
   // 데이터 조회
   const { data: templates } = usePollTemplates();
   const { data: circles } = useMyCircles();
   const createPollMutation = useCreatePoll();
 
-  // 선택된 템플릿과 Circle 찾기
-  const selectedTemplate = templates?.find((t) => t.id === templateId);
+  // Circle 정보 찾기
   const selectedCircle = circles?.find((c) => c.id === circleId);
 
   // 수정하기 버튼 핸들러
@@ -72,27 +69,23 @@ export default function PreviewScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    if (!selectedCircle || !selectedTemplate) {
+    if (!isComplete()) {
+      Alert.alert('오류', '필요한 정보를 모두 입력해주세요');
+      return;
+    }
+
+    if (!selectedCircle || !selectedTemplate || !circleId) {
       Alert.alert('오류', '필요한 정보를 불러올 수 없습니다');
       return;
     }
 
     try {
       await createPollMutation.mutateAsync({
-        circleId: selectedCircle.id,
-        data: {
-          template_id: selectedTemplate.id,
-          duration,
-        },
+        templateId: selectedTemplate.id,
+        duration: settings.duration,
+        circleId,
       });
-
-      // 성공 화면으로 이동
-      router.push({
-        pathname: '/(main)/(create)/success',
-        params: {
-          pollId: 'created', // 실제로는 생성된 poll ID
-        },
-      });
+      // Note: useCreatePoll hook will handle navigation to success screen
     } catch (error) {
       Alert.alert('오류', '투표 생성에 실패했습니다');
       console.error('Poll creation error:', error);
@@ -134,7 +127,7 @@ export default function PreviewScreen() {
 
               {/* 질문 텍스트 */}
               <Text style={styles.previewQuestion}>
-                {selectedTemplate.question_text}
+                {selectedTemplate.text}
               </Text>
 
               {/* 선택지 카드들 (더미 데이터) */}
@@ -153,13 +146,13 @@ export default function PreviewScreen() {
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>⏰</Text>
               <Text style={styles.metaText}>
-                {DURATION_LABELS[duration]} 후 마감
+                {DURATION_LABELS[settings.duration]} 후 마감
               </Text>
             </View>
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>👥</Text>
               <Text style={styles.metaText}>
-                {target === 'all'
+                {settings.target === 'all'
                   ? `Circle 전체 (${selectedCircle.member_count || 0}명)`
                   : '선택된 멤버'}
               </Text>
@@ -167,7 +160,7 @@ export default function PreviewScreen() {
             <View style={styles.metaItem}>
               <Text style={styles.metaIcon}>📢</Text>
               <Text style={styles.metaText}>
-                {notification === 'immediate' ? '즉시 알림 발송' : '예약 발송'}
+                {settings.notificationTiming === 'immediate' ? '즉시 알림 발송' : '예약 발송'}
               </Text>
             </View>
           </View>

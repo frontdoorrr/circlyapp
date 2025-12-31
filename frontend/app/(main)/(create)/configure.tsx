@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,9 +11,9 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
-import { PollDuration } from '../../../src/types/poll';
 import { usePollTemplates } from '../../../src/hooks/usePolls';
 import { useMyCircles } from '../../../src/hooks/useCircles';
+import { usePollCreateStore, PollDuration } from '../../../src/stores/pollCreate';
 
 /**
  * Poll Settings Screen (투표 설정 화면)
@@ -46,6 +46,16 @@ export default function ConfigureScreen() {
   const { data: templates } = usePollTemplates();
   const { data: circles } = useMyCircles();
 
+  // Zustand store
+  const {
+    settings,
+    selectedTemplate: storedTemplate,
+    circleId: storedCircleId,
+    setSettings,
+    setTemplate,
+    setCircleId,
+  } = usePollCreateStore();
+
   // 선택된 템플릿 찾기
   const selectedTemplate = templates?.find((t) => t.id === templateId);
 
@@ -54,30 +64,42 @@ export default function ConfigureScreen() {
     ? circles?.find((c) => c.id === circleIdParam)
     : circles?.[0];
 
-  // 상태
-  const [duration, setDuration] = useState<PollDuration>('6H');
-  const [target, setTarget] = useState<ParticipationTarget>('all');
-  const [notification, setNotification] = useState<NotificationSetting>('immediate');
+  // 초기화: 템플릿과 Circle 정보를 store에 저장
+  useEffect(() => {
+    if (selectedTemplate && !storedTemplate) {
+      setTemplate({
+        id: selectedTemplate.id,
+        emoji: selectedTemplate.emoji || '❓',
+        text: selectedTemplate.question_text,
+      });
+    }
+  }, [selectedTemplate, storedTemplate, setTemplate]);
+
+  useEffect(() => {
+    if (selectedCircle && !storedCircleId) {
+      setCircleId(selectedCircle.id);
+    }
+  }, [selectedCircle, storedCircleId, setCircleId]);
 
   // 기간 선택 핸들러
   const handleDurationSelect = (value: PollDuration) => {
-    setDuration(value);
+    setSettings({ duration: value });
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
   };
 
   // 참여 대상 선택 핸들러
-  const handleTargetSelect = (value: ParticipationTarget) => {
-    setTarget(value);
+  const handleTargetSelect = (value: 'all' | 'selected') => {
+    setSettings({ target: value });
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
   };
 
   // 알림 설정 선택 핸들러
-  const handleNotificationSelect = (value: NotificationSetting) => {
-    setNotification(value);
+  const handleNotificationSelect = (value: 'immediate' | 'scheduled') => {
+    setSettings({ notificationTiming: value });
     if (Platform.OS === 'ios') {
       Haptics.selectionAsync();
     }
@@ -89,16 +111,7 @@ export default function ConfigureScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    router.push({
-      pathname: '/(main)/(create)/preview',
-      params: {
-        templateId,
-        circleId: selectedCircle?.id || '',
-        duration,
-        target,
-        notification,
-      },
-    });
+    router.push('/(main)/(create)/preview');
   };
 
   if (!selectedTemplate || !selectedCircle) {
@@ -150,14 +163,14 @@ export default function ConfigureScreen() {
                   key={option.value}
                   style={[
                     styles.chip,
-                    duration === option.value && styles.chipSelected,
+                    settings.duration === option.value && styles.chipSelected,
                   ]}
                   onPress={() => handleDurationSelect(option.value)}
                   activeOpacity={0.7}
                 >
                   <Text
                     style={
-                      duration === option.value
+                      settings.duration === option.value
                         ? [styles.chipText, styles.chipTextSelected]
                         : styles.chipText
                     }
@@ -183,7 +196,7 @@ export default function ConfigureScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.radioButton}>
-                  {target === 'all' && <View style={styles.radioButtonInner} />}
+                  {settings.target === 'all' && <View style={styles.radioButtonInner} />}
                 </View>
                 <Text style={styles.radioLabel}>
                   Circle 전체 ({selectedCircle.member_count || 0}명)
@@ -193,11 +206,11 @@ export default function ConfigureScreen() {
               {/* 일부만 선택 */}
               <TouchableOpacity
                 style={styles.radioOption}
-                onPress={() => handleTargetSelect('select')}
+                onPress={() => handleTargetSelect('selected')}
                 activeOpacity={0.7}
               >
                 <View style={styles.radioButton}>
-                  {target === 'select' && <View style={styles.radioButtonInner} />}
+                  {settings.target === 'selected' && <View style={styles.radioButtonInner} />}
                 </View>
                 <Text style={styles.radioLabel}>일부만 선택하기</Text>
               </TouchableOpacity>
@@ -218,7 +231,7 @@ export default function ConfigureScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.radioButton}>
-                  {notification === 'immediate' && (
+                  {settings.notificationTiming === 'immediate' && (
                     <View style={styles.radioButtonInner} />
                   )}
                 </View>
@@ -232,7 +245,7 @@ export default function ConfigureScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.radioButton}>
-                  {notification === 'scheduled' && (
+                  {settings.notificationTiming === 'scheduled' && (
                     <View style={styles.radioButtonInner} />
                   )}
                 </View>

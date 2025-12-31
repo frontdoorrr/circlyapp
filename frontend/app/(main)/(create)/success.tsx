@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
+import { usePollCreateStore } from '../../../src/stores/pollCreate';
 
 /**
  * Poll Success Screen (투표 발행 완료 화면)
@@ -23,6 +24,9 @@ import { tokens } from '../../../src/theme';
  */
 
 export default function SuccessScreen() {
+  // Zustand store - reset after success
+  const { reset } = usePollCreateStore();
+
   // 애니메이션 값
   const scale = useSharedValue(0.5);
   const rotate = useSharedValue(-15);
@@ -55,13 +59,15 @@ export default function SuccessScreen() {
     // 3초 후 홈으로 자동 전환
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 500 }, () => {
+        // Store 초기화
+        reset();
         // 페이드 아웃 완료 후 홈으로 이동
         router.replace('/(main)/(home)');
       });
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [reset]);
 
   // 이모지 애니메이션 스타일
   const emojiAnimatedStyle = useAnimatedStyle(() => ({

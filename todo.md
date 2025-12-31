@@ -914,15 +914,16 @@
 - [x] **커밋**: `feat(frontend): implement poll creation success screen`
 
 #### 11.10.6 통합 및 상태 관리 (P1)
-- [ ] `frontend/src/stores/pollCreate.ts` - 투표 생성 상태 관리 (Zustand)
-  - [ ] 선택된 카테고리
-  - [ ] 선택된 질문 (template_id, emoji, text)
-  - [ ] 투표 설정 (duration, target, notification)
-  - [ ] Actions: setCategory, setQuestion, setSettings, reset
-- [ ] `frontend/src/hooks/useCreatePoll.ts` - 투표 생성 React Query hook
-  - [ ] Mutation: POST /circles/{id}/polls
-  - [ ] Error handling
-  - [ ] Success callback → Success 화면으로 이동
+- [x] `frontend/src/stores/pollCreate.ts` - 투표 생성 상태 관리 (Zustand)
+  - [x] 선택된 카테고리
+  - [x] 선택된 질문 (template_id, emoji, text)
+  - [x] 투표 설정 (duration, target, notification)
+  - [x] Actions: setCategory, setQuestion, setSettings, reset
+- [x] `frontend/src/hooks/useCreatePoll.ts` - 투표 생성 React Query hook
+  - [x] Mutation: POST /circles/{id}/polls
+  - [x] Error handling
+  - [x] Success callback → Success 화면으로 이동
+- [x] Configure, Preview, Success 화면에 state management 통합
 - [ ] **테스트**: 전체 투표 생성 플로우 테스트
 - [ ] **커밋**: `feat(frontend): add Create Tab state management and API integration`
 
