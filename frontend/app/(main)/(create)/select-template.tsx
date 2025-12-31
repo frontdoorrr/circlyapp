@@ -44,7 +44,7 @@ const CATEGORY_NAMES: Record<TemplateCategory, string> = {
   TALENT: '능력 관련',
 };
 
-// 카드 컴포넌트
+// 카드 컴포넌트 (React.memo로 최적화)
 interface CardProps {
   question: string;
   emoji: string | null;
@@ -52,7 +52,7 @@ interface CardProps {
   onSelect: () => void;
 }
 
-function QuestionCard({ question, emoji, index, onSelect }: CardProps) {
+const QuestionCard = React.memo(({ question, emoji, index, onSelect }: CardProps) => {
   // 카드 스택 스타일 (뒷카드는 작고 아래에 배치)
   const offset = index * 8; // 8px씩 아래로
   const scale = 1 - index * 0.04; // 4%씩 작게
@@ -77,13 +77,19 @@ function QuestionCard({ question, emoji, index, onSelect }: CardProps) {
 
       {/* 선택 버튼 (현재 카드에만 표시) */}
       {index === 0 && (
-        <TouchableOpacity style={styles.selectButton} onPress={onSelect}>
+        <TouchableOpacity
+          style={styles.selectButton}
+          onPress={onSelect}
+          accessibilityLabel={`질문 선택: ${question}`}
+          accessibilityRole="button"
+          accessibilityHint="이 질문을 선택하고 투표 설정으로 이동합니다"
+        >
           <Text style={styles.selectButtonText}>선택하기</Text>
         </TouchableOpacity>
       )}
     </Animated.View>
   );
-}
+});
 
 // 메인 화면
 export default function SelectTemplateScreen() {
@@ -112,6 +118,7 @@ export default function SelectTemplateScreen() {
   // 스와이프 애니메이션 값
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  const rotate = useSharedValue(0);
 
   // 다음 카드로 이동
   const goToNext = () => {
@@ -148,13 +155,18 @@ export default function SelectTemplateScreen() {
     });
   };
 
-  // 스와이프 제스처
+  // 스와이프 제스처 (강화된 피드백)
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
+      'worklet';
       translateX.value = event.translationX;
       translateY.value = event.translationY;
+
+      // 카드 회전 효과 (좌우 스와이프 시)
+      rotate.value = (event.translationX / SCREEN_WIDTH) * 20; // 최대 ±20도 회전
     })
     .onEnd((event) => {
+      'worklet';
       const velocityX = event.velocityX;
       const velocityY = event.velocityY;
 
@@ -163,6 +175,7 @@ export default function SelectTemplateScreen() {
         translateX.value = withSpring(-SCREEN_WIDTH, { stiffness: 300, damping: 30 }, () => {
           runOnJS(goToNext)();
           translateX.value = 0;
+          rotate.value = 0;
         });
       }
       // 우측 스와이프: 이전 카드
@@ -170,6 +183,7 @@ export default function SelectTemplateScreen() {
         translateX.value = withSpring(SCREEN_WIDTH, { stiffness: 300, damping: 30 }, () => {
           runOnJS(goToPrevious)();
           translateX.value = 0;
+          rotate.value = 0;
         });
       }
       // 위로 스와이프: 질문 선택
@@ -182,17 +196,51 @@ export default function SelectTemplateScreen() {
       else {
         translateX.value = withSpring(0);
         translateY.value = withSpring(0);
+        rotate.value = withSpring(0);
       }
     });
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 500 : 1 },
-    ],
-    opacity: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 300 : 1,
-  }));
+  // 강화된 애니메이션 스타일 (회전 + 스케일)
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { rotate: `${rotate.value}deg` },
+        { scale: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 500 : 1 },
+      ],
+      opacity: translateY.value < 0 ? 1 - Math.abs(translateY.value) / 300 : 1,
+    };
+  });
+
+  // 스와이프 방향 힌트 오버레이 스타일
+  const overlayStyle = useAnimatedStyle(() => {
+    'worklet';
+    let backgroundColor = 'transparent';
+    let opacity = 0;
+
+    // 좌측 스와이프: 빨간색 (다음)
+    if (translateX.value < -30) {
+      backgroundColor = 'rgba(239, 68, 68, 0.1)'; // red-500 with 10% opacity
+      opacity = Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 0.3);
+    }
+    // 우측 스와이프: 파란색 (이전)
+    else if (translateX.value > 30) {
+      backgroundColor = 'rgba(99, 102, 241, 0.1)'; // primary-500 with 10% opacity
+      opacity = Math.min(Math.abs(translateX.value) / SWIPE_THRESHOLD, 0.3);
+    }
+    // 위로 스와이프: 초록색 (선택)
+    else if (translateY.value < -30) {
+      backgroundColor = 'rgba(34, 197, 94, 0.1)'; // green-500 with 10% opacity
+      opacity = Math.min(Math.abs(translateY.value) / SWIPE_UP_THRESHOLD, 0.3);
+    }
+
+    return {
+      backgroundColor,
+      opacity,
+    };
+  });
 
   if (isLoading) {
     return (
@@ -263,6 +311,9 @@ export default function SelectTemplateScreen() {
           {/* 현재 카드 (제스처 가능) */}
           <GestureDetector gesture={panGesture}>
             <Animated.View style={animatedStyle}>
+              {/* 스와이프 방향 힌트 오버레이 */}
+              <Animated.View style={[styles.swipeOverlay, overlayStyle]} />
+
               <QuestionCard
                 question={currentTemplate.question_text}
                 emoji={currentTemplate.emoji}
@@ -273,13 +324,21 @@ export default function SelectTemplateScreen() {
           </GestureDetector>
         </View>
 
-        {/* 액션 버튼 */}
-        <View style={styles.actionButtons}>
+        {/* 액션 버튼 (접근성 개선) */}
+        <View
+          style={styles.actionButtons}
+          accessible={true}
+          accessibilityLabel="투표 질문 탐색 버튼"
+        >
           {/* 이전 버튼 */}
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonGray, styles.actionButtonSmall]}
             onPress={goToPrevious}
             disabled={currentIndex === 0}
+            accessibilityLabel="이전 질문"
+            accessibilityRole="button"
+            accessibilityHint="이전 투표 질문으로 이동합니다"
+            accessibilityState={{ disabled: currentIndex === 0 }}
           >
             <Text style={styles.actionButtonIcon}>←</Text>
           </TouchableOpacity>
@@ -289,6 +348,10 @@ export default function SelectTemplateScreen() {
             style={[styles.actionButton, styles.actionButtonRed, styles.actionButtonMedium]}
             onPress={goToNext}
             disabled={currentIndex === templates.length - 1}
+            accessibilityLabel="건너뛰기"
+            accessibilityRole="button"
+            accessibilityHint="이 질문을 건너뛰고 다음 질문으로 이동합니다"
+            accessibilityState={{ disabled: currentIndex === templates.length - 1 }}
           >
             <Text style={styles.actionButtonIcon}>✕</Text>
           </TouchableOpacity>
@@ -297,6 +360,9 @@ export default function SelectTemplateScreen() {
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonPrimary, styles.actionButtonLarge]}
             onPress={handleSelectQuestion}
+            accessibilityLabel="이 질문으로 투표 만들기"
+            accessibilityRole="button"
+            accessibilityHint="현재 질문을 선택하고 투표 설정으로 이동합니다"
           >
             <Text style={styles.actionButtonIcon}>💖</Text>
           </TouchableOpacity>
@@ -305,6 +371,9 @@ export default function SelectTemplateScreen() {
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonBlue, styles.actionButtonMedium]}
             onPress={handleSelectQuestion}
+            accessibilityLabel="질문 선택"
+            accessibilityRole="button"
+            accessibilityHint="현재 질문을 선택하고 투표 설정으로 이동합니다"
           >
             <Text style={styles.actionButtonIcon}>✓</Text>
           </TouchableOpacity>
@@ -314,6 +383,10 @@ export default function SelectTemplateScreen() {
             style={[styles.actionButton, styles.actionButtonGray, styles.actionButtonSmall]}
             onPress={goToNext}
             disabled={currentIndex === templates.length - 1}
+            accessibilityLabel="다음 질문"
+            accessibilityRole="button"
+            accessibilityHint="다음 투표 질문으로 이동합니다"
+            accessibilityState={{ disabled: currentIndex === templates.length - 1 }}
           >
             <Text style={styles.actionButtonIcon}>→</Text>
           </TouchableOpacity>
@@ -328,8 +401,11 @@ export default function SelectTemplateScreen() {
                 opacity: withTiming(showHint ? 1 : 0, { duration: 300 }),
               },
             ]}
+            accessible={true}
+            accessibilityLabel="카드를 좌우로 스와이프하면 다른 질문을 볼 수 있습니다"
+            accessibilityRole="text"
           >
-            <Text style={styles.hintText}>← 스와이프하여 넘기기</Text>
+            <Text style={styles.hintText}>← 스와이프하여 넘기기 →</Text>
           </Animated.View>
         )}
       </View>
@@ -501,6 +577,18 @@ const styles = StyleSheet.create({
   },
   actionButtonIcon: {
     fontSize: 24,
+  },
+
+  // 스와이프 오버레이
+  swipeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 24,
+    pointerEvents: 'none',
+    zIndex: 1,
   },
 
   // 힌트 텍스트

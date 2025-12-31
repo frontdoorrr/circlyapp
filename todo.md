@@ -928,16 +928,21 @@
 - [ ] **커밋**: `feat(frontend): add Create Tab state management and API integration`
 
 #### 11.10.7 최적화 및 UX 개선 (P2)
-- [ ] 카드 프리로딩 (다음 2장 미리 렌더링)
-- [ ] 스와이프 제스처 피드백 강화
-  - [ ] 스와이프 중 카드 회전 효과
-  - [ ] 스와이프 방향 힌트 (좌/우 색상 overlay)
-- [ ] 애니메이션 성능 최적화
-  - [ ] useNativeDriver 사용
-  - [ ] 불필요한 리렌더링 방지 (React.memo)
-- [ ] 접근성 개선
-  - [ ] 스크린 리더 지원
-  - [ ] 스와이프 대신 버튼으로도 조작 가능
+- [x] 카드 프리로딩 (다음 2장 미리 렌더링)
+  - [x] 현재 카드 + 뒷카드 2장 동시 렌더링
+- [x] 스와이프 제스처 피드백 강화
+  - [x] 스와이프 중 카드 회전 효과 (최대 ±20도)
+  - [x] 스와이프 방향 힌트 (좌/우/위 색상 overlay)
+    - [x] 좌측 스와이프: 빨간색 (다음)
+    - [x] 우측 스와이프: 파란색 (이전)
+    - [x] 위로 스와이프: 초록색 (선택)
+- [x] 애니메이션 성능 최적화
+  - [x] 'worklet' 지시어로 useNativeDriver 자동 활성화
+  - [x] 불필요한 리렌더링 방지 (React.memo on QuestionCard)
+- [x] 접근성 개선
+  - [x] 모든 버튼에 accessibilityLabel, accessibilityRole, accessibilityHint 추가
+  - [x] 스와이프 대신 버튼으로도 조작 가능 (5개 액션 버튼)
+  - [x] 힌트 텍스트 접근성 개선
 - [ ] **커밋**: `perf(frontend): optimize Create Tab animations and UX`
 
 ---
