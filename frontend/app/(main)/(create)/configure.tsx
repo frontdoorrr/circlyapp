@@ -156,10 +156,11 @@ export default function ConfigureScreen() {
                   activeOpacity={0.7}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      duration === option.value && styles.chipTextSelected,
-                    ]}
+                    style={
+                      duration === option.value
+                        ? [styles.chipText, styles.chipTextSelected]
+                        : styles.chipText
+                    }
                   >
                     {option.label}
                   </Text>
