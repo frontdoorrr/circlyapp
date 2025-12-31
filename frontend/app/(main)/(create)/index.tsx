@@ -1,203 +1,158 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMyCircles } from '../../../src/hooks/useCircles';
-import { usePollTemplates, useCreatePoll } from '../../../src/hooks/usePolls';
-import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
-import { Button } from '../../../src/components/primitives/Button';
-import { Input } from '../../../src/components/primitives/Input';
 import { tokens } from '../../../src/theme';
-import { PollDuration, TemplateCategory } from '../../../src/types/poll';
-import { ApiError } from '../../../src/types/api';
+import { TemplateCategory } from '../../../src/types/poll';
 
 /**
- * Create Poll Screen
+ * Create Tab - Main Screen (Category Exploration)
  *
- * 투표 생성 화면
+ * 카테고리별로 투표 템플릿을 탐색하는 메인 화면
+ *
+ * 참고: prd/design/05-complete-ui-specification.md#2.6.1
  */
-export default function CreateScreen() {
-  const router = useRouter();
 
-  // Circle 및 템플릿 조회
-  const { data: circles, isLoading: circlesLoading } = useMyCircles();
-  const { data: templates, isLoading: templatesLoading } = usePollTemplates();
+// 카테고리 정보 타입
+interface CategoryInfo {
+  category: TemplateCategory;
+  emoji: string;
+  title: string;
+  questionCount: number;
+}
 
-  // 선택 상태
-  const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<PollDuration>('24H');
-  const [customQuestion, setCustomQuestion] = useState('');
+// 카테고리 목록 (백엔드 API에서 가져올 수도 있지만, 현재는 하드코딩)
+const CATEGORIES: CategoryInfo[] = [
+  {
+    category: 'PERSONALITY',
+    emoji: '😊',
+    title: '성격 관련',
+    questionCount: 8,
+  },
+  {
+    category: 'APPEARANCE',
+    emoji: '✨',
+    title: '외모 관련',
+    questionCount: 6,
+  },
+  {
+    category: 'SPECIAL',
+    emoji: '🎉',
+    title: '특별한 날',
+    questionCount: 4,
+  },
+  {
+    category: 'TALENT',
+    emoji: '🏆',
+    title: '능력 관련',
+    questionCount: 5,
+  },
+];
 
-  // 투표 생성
-  const createPollMutation = useCreatePoll();
+// 카테고리 카드 컴포넌트
+interface CategoryCardProps {
+  category: CategoryInfo;
+  onPress: () => void;
+}
 
-  const handleCreatePoll = async () => {
-    // 유효성 검증
-    if (!selectedCircleId) {
-      Alert.alert('입력 오류', 'Circle을 선택해주세요');
-      return;
-    }
+function CategoryCard({ category, onPress }: CategoryCardProps) {
+  const scale = useSharedValue(1);
+  const shadowOpacity = useSharedValue(0.05);
 
-    if (!selectedTemplateId && !customQuestion.trim()) {
-      Alert.alert('입력 오류', '질문을 선택하거나 직접 입력해주세요');
-      return;
-    }
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
-    try {
-      await createPollMutation.mutateAsync({
-        circleId: selectedCircleId,
-        data: {
-          template_id: selectedTemplateId || (templates?.[0]?.id ?? ''),
-          question_text: customQuestion.trim() || undefined,
-          duration: selectedDuration,
-        }
-      });
+  const shadowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: shadowOpacity.value,
+  }));
 
-      Alert.alert('성공', '투표가 시작되었습니다!');
-      router.replace('/(main)/(home)');
-    } catch (error) {
-      if (error instanceof ApiError) {
-        Alert.alert('생성 실패', error.message);
-      } else {
-        Alert.alert('오류', '투표 생성 중 문제가 발생했습니다');
-      }
+  const handlePressIn = () => {
+    // Press animation: scale 0.98 + shadow-lg
+    scale.value = withSpring(0.98, {
+      stiffness: 300,
+      damping: 30,
+    });
+    shadowOpacity.value = withTiming(0.15, { duration: 150 });
+
+    // Haptic feedback
+    if (Platform.OS === 'ios') {
+      Haptics.selectionAsync();
     }
   };
 
-  if (circlesLoading || templatesLoading) {
-    return (
-      <View style={styles.centerContainer}>
-        <LoadingSpinner />
-      </View>
-    );
-  }
+  const handlePressOut = () => {
+    // Restore original state
+    scale.value = withSpring(1, {
+      stiffness: 300,
+      damping: 30,
+    });
+    shadowOpacity.value = withTiming(0.05, { duration: 150 });
+  };
 
-  // Circle이 없을 때
-  if (!circles || circles.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.emptyTitle}>Circle이 없습니다</Text>
-        <Text style={styles.emptyText}>
-          먼저 Circle에 참여해주세요
-        </Text>
-        <Button onPress={() => router.push('/(main)/(home)')}>
-          홈으로 가기
-        </Button>
-      </View>
-    );
-  }
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+    >
+      <Animated.View style={[styles.categoryCard, shadowStyle, animatedStyle]}>
+        <View style={styles.cardContent}>
+          {/* 이모지 */}
+          <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+
+          {/* 텍스트 정보 */}
+          <View style={styles.categoryInfo}>
+            <Text style={styles.categoryTitle}>{category.title}</Text>
+            <Text style={styles.categoryCount}>{category.questionCount}개의 질문</Text>
+          </View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+export default function CreateScreen() {
+  const router = useRouter();
+
+  const handleCategoryPress = (category: TemplateCategory) => {
+    // 질문 선택 화면으로 이동 (slide-right transition)
+    router.push({
+      pathname: '/(main)/(create)/select-template',
+      params: { category },
+    });
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text style={styles.title}>투표 만들기</Text>
-
-        {/* 1. Circle 선택 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1️⃣ Circle 선택</Text>
-          <View style={styles.optionsGrid}>
-            {circles.map((circle) => (
-              <TouchableOpacity
-                key={circle.id}
-                style={[
-                  styles.option,
-                  selectedCircleId === circle.id && styles.optionSelected
-                ]}
-                onPress={() => setSelectedCircleId(circle.id)}
-              >
-                <Text style={styles.optionText}>{circle.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>새 투표 만들기</Text>
+          <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
         </View>
 
-        {/* 2. 질문 선택 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2️⃣ 투표 질문</Text>
-
-          {/* 템플릿 목록 */}
-          {templates && templates.length > 0 && (
-            <View style={styles.templateList}>
-              {templates.slice(0, 5).map((template) => (
-                <TouchableOpacity
-                  key={template.id}
-                  style={[
-                    styles.templateCard,
-                    selectedTemplateId === template.id && styles.templateCardSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedTemplateId(template.id);
-                    setCustomQuestion('');
-                  }}
-                >
-                  <Text style={styles.templateEmoji}>{template.emoji}</Text>
-                  <Text style={styles.templateText}>{template.question_text}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* 커스텀 질문 입력 */}
-          <Text style={styles.orText}>또는</Text>
-          <Input
-            placeholder="직접 질문 작성하기"
-            value={customQuestion}
-            onChangeText={(text) => {
-              setCustomQuestion(text);
-              setSelectedTemplateId(null);
-            }}
-            maxLength={50}
-            multiline
-          />
-        </View>
-
-        {/* 3. 마감 시간 선택 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3️⃣ 마감 시간</Text>
-          <View style={styles.durationGrid}>
-            {[
-              { value: '1H', label: '1시간' },
-              { value: '3H', label: '3시간' },
-              { value: '6H', label: '6시간' },
-              { value: '24H', label: '24시간' },
-            ].map((duration) => (
-              <TouchableOpacity
-                key={duration.value}
-                style={[
-                  styles.durationOption,
-                  selectedDuration === duration.value && styles.durationOptionSelected
-                ]}
-                onPress={() => setSelectedDuration(duration.value as PollDuration)}
-              >
-                <Text
-                  style={
-                    selectedDuration === duration.value
-                      ? styles.durationTextSelected
-                      : styles.durationText
-                  }
-                >
-                  {duration.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 생성 버튼 */}
-        <View style={styles.createButtonContainer}>
-          <Button
-            onPress={handleCreatePoll}
-            loading={createPollMutation.isPending}
-            disabled={!selectedCircleId || (!selectedTemplateId && !customQuestion.trim())}
-            fullWidth
-          >
-            투표 시작하기
-          </Button>
+        {/* 카테고리 카드 리스트 */}
+        <View style={styles.categoryList}>
+          {CATEGORIES.map((category) => (
+            <CategoryCard
+              key={category.category}
+              category={category}
+              onPress={() => handleCategoryPress(category.category)}
+            />
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -209,128 +164,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: tokens.colors.neutral[50],
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: tokens.spacing.lg,
+    paddingBottom: tokens.spacing.xl * 2,
+  },
+
+  // 헤더
+  header: {
+    paddingTop: tokens.spacing.xl,
+    paddingHorizontal: tokens.spacing.lg,
+    alignItems: 'center',
+    marginBottom: tokens.spacing.xl,
   },
   title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
+    fontSize: tokens.typography.fontSize['2xl'], // 24px
+    fontWeight: tokens.typography.fontWeight.bold, // 700
     color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.xl,
+    textAlign: 'center',
   },
-  section: {
-    marginBottom: tokens.spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: tokens.spacing.sm,
-  },
-  option: {
-    paddingHorizontal: tokens.spacing.md,
-    paddingVertical: tokens.spacing.sm,
-    borderRadius: tokens.borderRadius.md,
-    backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-  },
-  optionSelected: {
-    backgroundColor: tokens.colors.primary[50],
-    borderColor: tokens.colors.primary[500],
-  },
-  optionText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  templateList: {
-    gap: tokens.spacing.sm,
-    marginBottom: tokens.spacing.md,
-  },
-  templateCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: tokens.spacing.md,
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-  },
-  templateCardSelected: {
-    backgroundColor: tokens.colors.primary[50],
-    borderColor: tokens.colors.primary[500],
-  },
-  templateEmoji: {
-    fontSize: 24,
-    marginRight: tokens.spacing.sm,
-  },
-  templateText: {
-    flex: 1,
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  orText: {
-    fontSize: tokens.typography.fontSize.sm,
+  subtitle: {
+    fontSize: tokens.typography.fontSize.sm, // 14px
+    fontWeight: tokens.typography.fontWeight.normal, // 400
     color: tokens.colors.neutral[500],
     textAlign: 'center',
-    marginVertical: tokens.spacing.md,
+    marginTop: tokens.spacing.xs, // 8px
   },
-  durationGrid: {
-    flexDirection: 'row',
-    gap: tokens.spacing.sm,
+
+  // 카테고리 리스트
+  categoryList: {
+    paddingHorizontal: tokens.spacing.md, // 16px
+    gap: tokens.spacing.sm * 1.5, // 12px
   },
-  durationOption: {
-    flex: 1,
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.md,
+
+  // 카테고리 카드
+  categoryCard: {
+    paddingHorizontal: tokens.spacing.xl, // 24px
+    paddingVertical: tokens.spacing.xl, // 24px
     backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
+    borderRadius: tokens.borderRadius['2xl'], // 20px
+    // Shadow (shadow-sm)
+    ...Platform.select({
+      ios: {
+        shadowColor: tokens.colors.neutral[900],
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  cardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  durationOptionSelected: {
-    backgroundColor: tokens.colors.primary[50],
-    borderColor: tokens.colors.primary[500],
+
+  // 이모지
+  categoryEmoji: {
+    fontSize: 32, // 32px
   },
-  durationText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[700],
-    fontWeight: tokens.typography.fontWeight.normal,
+
+  // 텍스트 정보
+  categoryInfo: {
+    marginLeft: tokens.spacing.sm * 1.5, // 12px
+    flex: 1,
   },
-  durationTextSelected: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.primary[700],
-    fontWeight: tokens.typography.fontWeight.semibold,
-  },
-  createButtonContainer: {
-    marginTop: tokens.spacing.lg,
-    marginBottom: tokens.spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: tokens.typography.fontSize.xl,
-    fontWeight: tokens.typography.fontWeight.bold,
+  categoryTitle: {
+    fontSize: tokens.typography.fontSize.lg, // 18px
+    fontWeight: tokens.typography.fontWeight.semibold, // 600
     color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
   },
-  emptyText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
+  categoryCount: {
+    fontSize: tokens.typography.fontSize.sm, // 14px
+    fontWeight: tokens.typography.fontWeight.normal, // 400
+    color: tokens.colors.neutral[400],
+    marginTop: 4, // 4px
   },
 });

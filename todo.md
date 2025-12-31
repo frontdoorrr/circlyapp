@@ -807,7 +807,7 @@
 > **참고 문서**: `prd/design/05-complete-ui-specification.md#2.6`, `prd/design/04-user-flow.md`
 
 #### 11.10.1 메인 화면 - 카테고리 탐색 (P0)
-- [ ] `app/(main)/(create)/index.tsx` - Create Tab 메인 화면
+- [x] `app/(main)/(create)/index.tsx` - Create Tab 메인 화면
   - [ ] 헤더: "새 투표 만들기" + 부제
   - [ ] 카테고리 카드 리스트 (세로 스크롤)
     - [ ] 😊 성격 관련 (8개의 질문)
@@ -815,9 +815,12 @@
     - [ ] 🎉 특별한 날 (4개의 질문)
     - [ ] 🏆 능력 관련 (5개의 질문)
   - [ ] 카드 터치 애니메이션 (scale 0.98, shadow-lg)
-  - [ ] Haptic: selection
-  - [ ] 카드 탭 → 질문 선택 화면으로 슬라이드 전환
-- [ ] **테스트**: 카테고리 선택 동작 확인
+  - [x] Haptic: selection
+  - [x] 카드 탭 → 질문 선택 화면으로 슬라이드 전환
+- [ ] **개선 필요**: 하드코딩된 카테고리 목록을 백엔드 API에서 동적으로 가져오도록 수정
+  - [ ] GET /polls/templates/categories 엔드포인트 생성 (백엔드)
+  - [ ] API 연동 및 React Query hook 작성 (프론트엔드)
+- [x] **테스트**: 카테고리 선택 동작 확인
 - [ ] **커밋**: `feat(frontend): implement Create Tab main screen`
 
 #### 11.10.2 질문 선택 화면 - 스와이프 카드 (P0)
