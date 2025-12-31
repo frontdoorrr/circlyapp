@@ -1,36 +1,86 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Platform } from 'react-native';
+import { Stack, router } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
 
 /**
- * 투표 생성 완료 화면
+ * Poll Success Screen (투표 발행 완료 화면)
  *
- * 투표 생성 성공을 축하하고 다음 액션을 안내합니다.
- * - 축하 애니메이션/메시지
- * - 투표 보기 버튼
- * - 홈으로 돌아가기 버튼
+ * 투표 생성 성공을 축하하고 3초 후 자동으로 홈으로 전환합니다.
+ *
+ * 참고: prd/design/05-complete-ui-specification.md#2.6.5
  */
-export default function SuccessScreen() {
-  const { pollId } = useLocalSearchParams<{ pollId: string }>();
 
-  // TODO: 햅틱 피드백 추가
+export default function SuccessScreen() {
+  // 애니메이션 값
+  const scale = useSharedValue(0.5);
+  const rotate = useSharedValue(-15);
+  const opacity = useSharedValue(0);
+  const progressWidth = useSharedValue(0);
+
+  // Success 햅틱 피드백
   useEffect(() => {
-    // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    // 이모지 애니메이션 시작
+    scale.value = withSequence(
+      withSpring(1.2, { stiffness: 200, damping: 15 }),
+      withSpring(1.0, { stiffness: 200, damping: 15 })
+    );
+    rotate.value = withSequence(
+      withSpring(15, { stiffness: 200, damping: 15 }),
+      withSpring(0, { stiffness: 200, damping: 15 })
+    );
+    opacity.value = withTiming(1, { duration: 300 });
+
+    // 로딩 바 애니메이션 (0 → 100% in 3초)
+    progressWidth.value = withTiming(1, {
+      duration: 3000,
+      easing: Easing.linear,
+    });
+
+    // 3초 후 홈으로 자동 전환
+    const timer = setTimeout(() => {
+      opacity.value = withTiming(0, { duration: 500 }, () => {
+        // 페이드 아웃 완료 후 홈으로 이동
+        router.replace('/(main)/(home)');
+      });
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleViewPoll = () => {
-    // 생성된 투표로 이동
-    router.replace({
-      pathname: '/poll/[id]',
-      params: { id: pollId },
-    });
-  };
+  // 이모지 애니메이션 스타일
+  const emojiAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
 
-  const handleGoHome = () => {
-    // 홈으로 돌아가기
-    router.replace('/(main)/(home)');
-  };
+  // 전체 화면 페이드 스타일
+  const containerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  // 로딩 바 애니메이션 스타일
+  const progressAnimatedStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value * 100}%`,
+  }));
 
   return (
     <>
@@ -38,61 +88,116 @@ export default function SuccessScreen() {
         options={{
           title: '',
           headerShown: false,
-          presentation: 'modal',
+          presentation: 'card',
+          gestureEnabled: false,
         }}
       />
 
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, containerAnimatedStyle]}>
         <View style={styles.content}>
-          {/* 축하 이모지 */}
-          <View style={styles.emojiContainer}>
-            <Text style={styles.emoji}>🎉</Text>
-          </View>
+          {/* Success 애니메이션 이모지 */}
+          <Animated.Text style={[styles.emoji, emojiAnimatedStyle]}>
+            🎉
+          </Animated.Text>
 
-          {/* 축하 메시지 */}
-          <Text style={styles.title}>투표가 생성되었어요!</Text>
-          <Text style={styles.description}>
-            친구들이 투표에 참여할 수 있도록{'\n'}알림이 전송되었어요
+          {/* Success 메시지 */}
+          <Text style={styles.successMessage}>투표가 시작되었어요!</Text>
+
+          {/* 상세 정보 */}
+          <Text style={styles.detailInfo}>
+            15명의 친구에게{'\n'}알림을 보냈어요
           </Text>
 
-          {/* 투표 정보 카드 */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>생성된 투표</Text>
-              <Text style={styles.infoValue}>로딩 중...</Text>
+          {/* 로딩 바 (자동 전환 표시) */}
+          <View style={styles.loadingBarContainer}>
+            <View style={styles.loadingBarBackground}>
+              <Animated.View style={progressAnimatedStyle}>
+                <LinearGradient
+                  colors={[tokens.colors.primary[500], tokens.colors.secondary[500]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.loadingBarFill}
+                />
+              </Animated.View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Circle</Text>
-              <Text style={styles.infoValue}>로딩 중...</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>마감까지</Text>
-              <Text style={styles.infoValue}>로딩 중...</Text>
-            </View>
-          </View>
-
-          {/* 안내 메시지 */}
-          <View style={styles.tipCard}>
-            <Text style={styles.tipText}>
-              💡 투표는 홈 화면에서 확인할 수 있어요
-            </Text>
           </View>
         </View>
 
-        {/* 액션 버튼 */}
-        <View style={styles.footer}>
-          <Pressable style={styles.viewButton} onPress={handleViewPoll}>
-            <Text style={styles.viewButtonText}>투표 보러가기</Text>
-          </Pressable>
-
-          <Pressable style={styles.homeButton} onPress={handleGoHome}>
-            <Text style={styles.homeButtonText}>홈으로 돌아가기</Text>
-          </Pressable>
+        {/* Confetti 파티클 효과 (간단한 구현) */}
+        <View style={styles.confettiContainer} pointerEvents="none">
+          {Array.from({ length: 20 }).map((_, index) => (
+            <ConfettiParticle key={index} index={index} />
+          ))}
         </View>
-      </View>
+      </Animated.View>
     </>
+  );
+}
+
+// Confetti 파티클 컴포넌트
+interface ConfettiParticleProps {
+  index: number;
+}
+
+function ConfettiParticle({ index }: ConfettiParticleProps) {
+  const translateY = useSharedValue(-100);
+  const translateX = useSharedValue(0);
+  const rotate = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    // 랜덤 시작 위치와 각도
+    const randomX = (Math.random() - 0.5) * 300;
+    const randomRotate = Math.random() * 360;
+    const randomDelay = Math.random() * 500;
+
+    setTimeout(() => {
+      translateY.value = withTiming(800, {
+        duration: 2000 + Math.random() * 1000,
+        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+      });
+      translateX.value = withTiming(randomX, {
+        duration: 2000 + Math.random() * 1000,
+      });
+      rotate.value = withTiming(randomRotate + 360, {
+        duration: 2000 + Math.random() * 1000,
+      });
+      opacity.value = withTiming(0, {
+        duration: 2000,
+      });
+    }, randomDelay);
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { translateX: translateX.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
+
+  // 랜덤 색상
+  const colors = [
+    tokens.colors.primary[500],
+    tokens.colors.secondary[500],
+    tokens.colors.red[500],
+    '#FFD700', // Gold
+    '#FF69B4', // Hot pink
+  ];
+  const randomColor = colors[index % colors.length];
+
+  return (
+    <Animated.View
+      style={[
+        styles.confettiParticle,
+        {
+          backgroundColor: randomColor,
+          left: `${50 + (Math.random() - 0.5) * 20}%`,
+        },
+        animatedStyle,
+      ]}
+    />
   );
 }
 
@@ -103,100 +208,63 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: tokens.spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
-  emojiContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: tokens.colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: tokens.spacing.xl,
-  },
+
+  // 이모지 (120px)
   emoji: {
-    fontSize: 64,
+    fontSize: 120,
   },
-  title: {
-    fontSize: tokens.typography.fontSize['3xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
+
+  // Success 메시지
+  successMessage: {
+    fontSize: tokens.typography.fontSize['2xl'], // 24px
+    fontWeight: tokens.typography.fontWeight.bold, // 700
     color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
     textAlign: 'center',
+    marginTop: 32,
   },
-  description: {
-    fontSize: tokens.typography.fontSize.base,
+
+  // 상세 정보
+  detailInfo: {
+    fontSize: tokens.typography.fontSize.base, // 16px
+    fontWeight: tokens.typography.fontWeight.normal, // 400
     color: tokens.colors.neutral[500],
     textAlign: 'center',
+    marginTop: 12,
     lineHeight: 24,
-    marginBottom: tokens.spacing.xl,
   },
-  infoCard: {
-    width: '100%',
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-    marginBottom: tokens.spacing.lg,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+
+  // 로딩 바
+  loadingBarContainer: {
+    marginTop: 40,
     alignItems: 'center',
   },
-  infoLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
+  loadingBarBackground: {
+    width: 80,
+    height: 4,
+    backgroundColor: tokens.colors.neutral[100],
+    borderRadius: 9999, // full
+    overflow: 'hidden',
   },
-  infoValue: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
+  loadingBarFill: {
+    height: '100%',
+    borderRadius: 9999,
   },
-  divider: {
-    height: 1,
-    backgroundColor: tokens.colors.neutral[200],
-    marginVertical: tokens.spacing.md,
-  },
-  tipCard: {
-    width: '100%',
-    backgroundColor: tokens.colors.primary[50],
-    padding: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  tipText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[700],
-    textAlign: 'center',
-  },
-  footer: {
-    padding: tokens.spacing.lg,
-    paddingBottom: tokens.spacing.xl,
-    gap: tokens.spacing.sm,
-  },
-  viewButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
+
+  // Confetti 파티클
+  confettiContainer: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
-  viewButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.white,
-  },
-  homeButton: {
-    backgroundColor: tokens.colors.white,
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-  },
-  homeButtonText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[700],
+  confettiParticle: {
+    position: 'absolute',
+    top: 100,
+    width: 8,
+    height: 8,
+    borderRadius: 2,
   },
 });
