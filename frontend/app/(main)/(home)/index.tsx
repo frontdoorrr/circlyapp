@@ -1,43 +1,93 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMyCircles } from '../../../src/hooks/useCircles';
-import { CircleCard } from '../../../src/components/home/CircleCard';
-import { JoinCircleModal } from '../../../src/components/home/JoinCircleModal';
-import { HomeEmptyState } from '../../../src/components/home/HomeEmptyState';
+import { HomeHeader } from '../../../src/components/home/HomeHeader';
+import { SectionHeader } from '../../../src/components/home/SectionHeader';
+import { PollCard, PollCardData } from '../../../src/components/patterns/PollCard';
+import { PollEmptyState } from '../../../src/components/home/PollEmptyState';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
-import { tokens } from '../../../src/theme';
+import { tokens, spacing, fontSizes } from '../../../src/theme';
 
 /**
- * Home Screen
+ * Home Screen - 진행 중인 투표 화면
  *
- * Circle 목록 및 진행 중인 투표 화면
+ * Spec: prd/design/05-complete-ui-specification.md - 섹션 2.2
+ *
+ * Layout:
+ * - Header: Circle 이름, 알림, 프로필
+ * - Section: 진행 중인 투표 목록
+ * - Empty State: 투표가 없을 때
  */
 export default function HomeScreen() {
   const router = useRouter();
-  const [isJoinModalOpen, setJoinModalOpen] = useState(false);
 
-  // Circle 목록 조회
-  const { data: circles, isLoading, isError, refetch } = useMyCircles();
+  // TODO: API 연동 - useActivePolls() 훅으로 대체
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Mock data - API 연동 후 제거
+  const mockPolls: PollCardData[] = [
+    {
+      id: '1',
+      question: '가장 친절한 사람은?',
+      emoji: '😊',
+      timeRemaining: '2시간 23분 남음',
+      participantCount: 12,
+      totalMembers: 16,
+      participationRate: 75,
+    },
+    {
+      id: '2',
+      question: '가장 잘생긴/예쁜 사람은?',
+      emoji: '✨',
+      timeRemaining: '5시간 10분 남음',
+      participantCount: 8,
+      totalMembers: 16,
+      participationRate: 50,
+    },
+    {
+      id: '3',
+      question: '가장 창의적인 사람은?',
+      emoji: '🎨',
+      timeRemaining: '1시간 45분 남음',
+      participantCount: 14,
+      totalMembers: 16,
+      participationRate: 88,
+    },
+  ];
+
+  const activePolls = mockPolls; // TODO: API data로 대체
+  const circleName = 'OO고 2학년 1반'; // TODO: 현재 선택된 Circle 이름
 
   // Pull to Refresh
-  const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    // TODO: API refetch
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setRefreshing(false);
   };
 
-  // Circle 카드 클릭 → 상세 화면
-  const handleCirclePress = (circleId: string) => {
-    router.push(`/circle/${circleId}` as any);
+  // 투표 카드 클릭
+  const handlePollPress = (pollId: string) => {
+    router.push(`/poll/${pollId}` as any);
   };
 
-  // Circle 참여 성공 후
-  const handleJoinSuccess = () => {
-    refetch();
+  // 알림 클릭
+  const handleNotificationPress = () => {
+    router.push('/notifications' as any);
+  };
+
+  // 프로필 클릭
+  const handleProfilePress = () => {
+    router.push('/(main)/(profile)' as any);
+  };
+
+  // 투표 만들기
+  const handleCreatePoll = () => {
+    router.push('/(main)/(create)' as any);
   };
 
   // 로딩 중
@@ -53,31 +103,28 @@ export default function HomeScreen() {
   if (isError) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Circle 목록을 불러올 수 없습니다</Text>
-        <Button onPress={() => refetch()}>다시 시도</Button>
+        <Text style={styles.errorText}>투표 목록을 불러올 수 없습니다</Text>
+        <Button onPress={onRefresh}>다시 시도</Button>
       </View>
-    );
-  }
-
-  // Circle이 없을 때
-  if (!circles || circles.length === 0) {
-    return (
-      <>
-        <HomeEmptyState onJoinCircle={() => setJoinModalOpen(true)} />
-        <JoinCircleModal
-          isOpen={isJoinModalOpen}
-          onClose={() => setJoinModalOpen(false)}
-          onSuccess={handleJoinSuccess}
-        />
-      </>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
+      <HomeHeader
+        circleName={circleName}
+        notificationCount={0} // TODO: API에서 가져오기
+        onNotificationPress={handleNotificationPress}
+        onProfilePress={handleProfilePress}
+      />
+
+      {/* Content */}
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          activePolls.length === 0 ? styles.scrollContentCenter : styles.scrollContent
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -86,44 +133,25 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.title}>내 Circle</Text>
-          <TouchableOpacity onPress={() => setJoinModalOpen(true)}>
-            <Text style={styles.headerButton}>➕ 참여</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Circle 목록 */}
-        <View style={styles.circleList}>
-          {circles.map((circle, index) => (
-            <CircleCard
-              key={circle.id}
-              circle={circle}
-              onPress={() => handleCirclePress(circle.id)}
-              index={index}
-            />
-          ))}
-        </View>
-
-        {/* Circle 참여 버튼 */}
-        <View style={styles.joinButtonContainer}>
-          <Button
-            variant="secondary"
-            onPress={() => setJoinModalOpen(true)}
-            fullWidth
-          >
-            ➕ 다른 Circle 참여하기
-          </Button>
-        </View>
+        {activePolls.length === 0 ? (
+          // Empty State
+          <PollEmptyState onCreatePoll={handleCreatePoll} />
+        ) : (
+          // Poll List
+          <>
+            <SectionHeader title="진행 중인 투표" count={activePolls.length} />
+            <View style={styles.pollList}>
+              {activePolls.map((poll) => (
+                <PollCard
+                  key={poll.id}
+                  poll={poll}
+                  onPress={() => handlePollPress(poll.id)}
+                />
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
-
-      {/* Circle 참여 모달 */}
-      <JoinCircleModal
-        isOpen={isJoinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-        onSuccess={handleJoinSuccess}
-      />
     </View>
   );
 }
@@ -138,41 +166,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
+    padding: spacing[6], // 24px
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: tokens.spacing.lg,
+    paddingBottom: spacing[6], // 24px
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: tokens.spacing.lg,
+  scrollContentCenter: {
+    flexGrow: 1,
   },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-  },
-  headerButton: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[600],
-  },
-  circleList: {
-    marginBottom: tokens.spacing.lg,
-  },
-  joinButtonContainer: {
-    marginTop: tokens.spacing.md,
-    marginBottom: tokens.spacing.xl,
+  pollList: {
+    paddingHorizontal: spacing[4], // 16px
   },
   errorText: {
-    fontSize: tokens.typography.fontSize.base,
+    fontSize: fontSizes.base,
     color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.lg,
+    marginBottom: spacing[6],
     textAlign: 'center',
   },
 });

@@ -950,12 +950,14 @@
 > **참고 문서**: `prd/design/05-complete-ui-specification.md`, `prd/design/04-user-flow.md`, `docs/DSL.md#3.3 (Poll 모듈)`
 
 #### 11.11.1 화면 레이아웃 및 탭 구조 (P0)
-- [ ] `app/(main)/(home)/index.tsx` - Home Tab 메인 화면 → `prd/design/05-complete-ui-specification.md#2.1`
-  - [ ] 헤더: "홈" + 알림 아이콘 (우측 상단)
-  - [ ] 탭 컨트롤: [진행 중] [완료됨] (2개 탭) → `prd/design/02-ui-design-system.md#Tabs`
-  - [ ] Pull-to-Refresh 구현 (RefreshControl)
-- [ ] **테스트**: 탭 전환 및 레이아웃 확인
-- [ ] **커밋**: `feat(frontend): implement Home Tab layout and tabs`
+- [x] `app/(main)/(home)/index.tsx` - Home Tab 메인 화면 → `prd/design/05-complete-ui-specification.md#2.2`
+  - [x] 헤더: HomeHeader 컴포넌트 (Circle 이름, 알림, 프로필)
+  - [x] SectionHeader: "진행 중인 투표 (N)" 섹션 제목
+  - [x] PollCard: 투표 카드 컴포넌트 (이모지, 질문, 시간, 참여율)
+  - [x] PollEmptyState: 빈 상태 화면
+  - [x] Pull-to-Refresh 구현 (RefreshControl)
+- [x] **테스트**: Mock 데이터로 레이아웃 확인 완료
+- [x] **커밋**: `feat(frontend): implement Home Tab layout with poll cards`
 
 #### 11.11.2 투표 카드 컴포넌트 (P0)
 - [ ] `src/components/patterns/PollCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.1.2`
