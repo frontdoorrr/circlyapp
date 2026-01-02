@@ -4,7 +4,6 @@ from functools import lru_cache
 from typing import Any
 
 import jwt
-from jwt import PyJWKClient
 from supabase import Client, create_client
 
 from app.config import get_settings
@@ -30,16 +29,10 @@ def get_supabase_admin_client() -> Client:
     return create_client(settings.supabase_url, settings.supabase_service_role_key)
 
 
-@lru_cache
-def get_jwks_client() -> PyJWKClient:
-    """Get cached JWKS client for Supabase JWT verification."""
-    settings = get_settings()
-    jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
-    return PyJWKClient(jwks_url)
-
-
 def verify_supabase_token(token: str) -> dict[str, Any] | None:
     """Verify Supabase JWT token and return payload.
+
+    Uses HS256 algorithm with Supabase JWT secret.
 
     Args:
         token: JWT access token from Supabase
@@ -49,19 +42,30 @@ def verify_supabase_token(token: str) -> dict[str, Any] | None:
     """
     settings = get_settings()
 
-    try:
-        jwks_client = get_jwks_client()
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
+    if not settings.supabase_jwt_secret:
+        print("[JWT] Warning: supabase_jwt_secret not configured")
+        return None
 
+    try:
         payload = jwt.decode(
             token,
-            signing_key.key,
-            algorithms=["RS256"],
+            settings.supabase_jwt_secret,
+            algorithms=["HS256"],
             audience="authenticated",
             issuer=f"{settings.supabase_url}/auth/v1",
         )
         return payload
-    except jwt.exceptions.PyJWTError:
+    except jwt.exceptions.ExpiredSignatureError:
+        print("[JWT] Token expired")
+        return None
+    except jwt.exceptions.InvalidAudienceError:
+        print("[JWT] Invalid audience")
+        return None
+    except jwt.exceptions.InvalidIssuerError:
+        print("[JWT] Invalid issuer")
+        return None
+    except jwt.exceptions.PyJWTError as e:
+        print(f"[JWT] Verification failed: {e}")
         return None
 
 

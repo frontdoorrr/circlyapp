@@ -10,7 +10,7 @@ import {
   UserResponse,
   UserUpdate,
 } from '../types/auth';
-import { ApiResponse } from '../types/api';
+import { ApiSuccessResponse } from '../types/api';
 import { apiClient } from './client';
 
 /**
@@ -18,14 +18,9 @@ import { apiClient } from './client';
  */
 export async function register(data: UserCreate): Promise<AuthResponse> {
   console.log('[API] POST /auth/register 요청:', { email: data.email, username: data.username });
-  try {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
-    console.log('[API] POST /auth/register 응답:', { status: response.status });
-    return response.data;
-  } catch (error) {
-    console.error('[API] POST /auth/register 에러:', error);
-    throw error;
-  }
+  const response = await apiClient.post<ApiSuccessResponse<AuthResponse>>('/auth/register', data);
+  console.log('[API] POST /auth/register 응답:', { status: response.status });
+  return response.data.data;
 }
 
 /**
@@ -33,28 +28,34 @@ export async function register(data: UserCreate): Promise<AuthResponse> {
  */
 export async function login(data: LoginRequest): Promise<AuthResponse> {
   console.log('[API] POST /auth/login 요청:', { email: data.email });
-  try {
-    const response = await apiClient.post<AuthResponse>('/auth/login', data);
-    console.log('[API] POST /auth/login 응답:', { status: response.status });
-    return response.data;
-  } catch (error) {
-    console.error('[API] POST /auth/login 에러:', error);
-    throw error;
+  const response = await apiClient.post<ApiSuccessResponse<AuthResponse>>('/auth/login', data);
+  console.log('[API] POST /auth/login 응답:', { status: response.status, data: JSON.stringify(response.data) });
+
+  // 백엔드 응답 형식에 따라 처리
+  const responseData = response.data as any;
+  if (responseData.success && responseData.data) {
+    // { success: true, data: AuthResponse } 형식
+    return responseData.data;
+  } else if (responseData.user && responseData.access_token) {
+    // AuthResponse 직접 반환 형식
+    return responseData;
   }
+
+  throw new Error('Unexpected response format');
 }
 
 /**
  * 현재 사용자 정보 조회
  */
 export async function getCurrentUser(): Promise<UserResponse> {
-  const response = await apiClient.get<UserResponse>('/auth/me');
-  return response.data;
+  const response = await apiClient.get<ApiSuccessResponse<UserResponse>>('/auth/me');
+  return response.data.data;
 }
 
 /**
  * 프로필 수정
  */
 export async function updateProfile(data: UserUpdate): Promise<UserResponse> {
-  const response = await apiClient.put<UserResponse>('/auth/me', data);
-  return response.data;
+  const response = await apiClient.put<ApiSuccessResponse<UserResponse>>('/auth/me', data);
+  return response.data.data;
 }

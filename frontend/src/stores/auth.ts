@@ -1,35 +1,40 @@
 /**
  * Authentication Store (Zustand)
  *
- * 전역 인증 상태 관리 - Supabase Auth 연동
+ * 전역 인증 상태 관리 - Backend Proxy 방식
+ * 백엔드에서 발급받은 Supabase JWT 토큰을 저장/관리
  */
-import { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
 import { UserResponse } from '../types/auth';
+
+const ACCESS_TOKEN_KEY = '@circly:access_token';
 
 interface AuthState {
   // State
   user: UserResponse | null;
-  session: Session | null;
+  accessToken: string | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
 
   // Actions
-  setSession: (session: Session | null) => void;
+  setAuth: (user: UserResponse, accessToken: string) => Promise<void>;
   setUser: (user: UserResponse | null) => void;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   // Initial state
   user: null,
-  session: null,
+  accessToken: null,
   isLoading: true,
+  isAuthenticated: false,
 
-  // Set Supabase session
-  setSession: (session) => {
-    set({ session });
+  // 로그인 성공 시 호출
+  setAuth: async (user, accessToken) => {
+    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    set({ user, accessToken, isAuthenticated: true });
   },
 
   // Set user profile
@@ -40,26 +45,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   // 로그아웃
   logout: async () => {
     try {
-      await supabase.auth.signOut();
-      set({ user: null, session: null, isLoading: false });
+      await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+      set({ user: null, accessToken: null, isLoading: false, isAuthenticated: false });
     } catch (error) {
       console.error('Failed to logout:', error);
       // Force clear state even on error
-      set({ user: null, session: null, isLoading: false });
+      set({ user: null, accessToken: null, isLoading: false, isAuthenticated: false });
     }
   },
 
-  // 앱 시작 시 Supabase 세션 로드
+  // 앱 시작 시 저장된 토큰 로드
   initialize: async () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const storedToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
 
-      set({
-        session,
-        isLoading: false,
-      });
+      if (storedToken) {
+        set({
+          accessToken: storedToken,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else {
+        set({ isLoading: false });
+      }
     } catch (error) {
       console.error('Failed to initialize auth:', error);
       set({ isLoading: false });
@@ -67,8 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
-// Legacy compatibility: token getter for API client
+// API Client에서 사용할 토큰 getter
 export const getAccessToken = (): string | null => {
-  const session = useAuthStore.getState().session;
-  return session?.access_token ?? null;
+  return useAuthStore.getState().accessToken;
 };
