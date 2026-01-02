@@ -12,6 +12,8 @@ import Animated from 'react-native-reanimated';
 
 export type EmptyStateVariant =
   | 'no-polls'
+  | 'no-active-polls'
+  | 'no-completed-polls'
   | 'no-circles'
   | 'no-results'
   | 'no-notifications'
@@ -147,6 +149,17 @@ function getEmptyStateConfig(variant: EmptyStateVariant): EmptyStateConfig {
       title: '진행 중인 투표가 없어요',
       description: '친구들과 함께 재미있는 투표를 만들어보세요!',
       actionLabel: '투표 만들기',
+    },
+    'no-active-polls': {
+      icon: '🎯',
+      title: '진행 중인 투표가 없어요',
+      description: '친구들이 투표를 시작하면 여기에 표시됩니다',
+      actionLabel: '투표 만들기',
+    },
+    'no-completed-polls': {
+      icon: '📊',
+      title: '아직 완료된 투표가 없어요',
+      description: '투표가 끝나면 결과를 확인할 수 있습니다',
     },
     'no-circles': {
       icon: '👥',

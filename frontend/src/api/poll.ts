@@ -4,6 +4,7 @@
  * Endpoint: /api/v1/polls
  */
 import {
+  CategoryInfo,
   PollCreate,
   PollDetailResponse,
   PollResponse,
@@ -43,6 +44,18 @@ export async function getPollTemplates(
   );
   console.log('[API] GET /polls/templates 응답:', { status: response.status });
   return extractData<PollTemplateResponse[]>(response.data, (d) => Array.isArray(d));
+}
+
+/**
+ * 템플릿 카테고리 목록 조회
+ */
+export async function getCategories(): Promise<CategoryInfo[]> {
+  console.log('[API] GET /polls/templates/categories 요청');
+  const response = await apiClient.get<ApiResponse<CategoryInfo[]>>(
+    '/polls/templates/categories'
+  );
+  console.log('[API] GET /polls/templates/categories 응답:', { status: response.status });
+  return extractData<CategoryInfo[]>(response.data, (d) => Array.isArray(d));
 }
 
 /**

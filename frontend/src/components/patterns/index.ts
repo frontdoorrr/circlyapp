@@ -7,6 +7,17 @@
 // Vote Card
 export { VoteCard, type VoteOption } from './VoteCard';
 
+// Poll Card
+export {
+  PollCard,
+  type PollCardVariant,
+  type VoteStatus,
+  type WinnerInfo,
+  type ActivePollData,
+  type CompletedPollData,
+  type PollCardData,
+} from './PollCard';
+
 // Result Bar
 export { ResultBar, type ResultBarProps } from './ResultBar';
 

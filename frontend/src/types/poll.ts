@@ -28,11 +28,20 @@ export interface PollResponse {
   template_id: string;
   creator_id: string;
   question_text: string;
+  question: string; // Alias for question_text
   status: PollStatus;
   ends_at: string; // ISO 8601
   vote_count: number;
   created_at: string;
   updated_at: string;
+  // Extended fields for Home Tab
+  emoji?: string;
+  circle_name?: string;
+  total_members?: number;
+  has_voted?: boolean;
+  // Winner info for completed polls
+  winner_name?: string;
+  winner_vote_count?: number;
 }
 
 export interface VoteRequest {
@@ -40,9 +49,11 @@ export interface VoteRequest {
 }
 
 export interface VoteResponse {
+  poll_id: string;
+  voted_user_id: string;
   success: boolean;
-  results: PollResultItem[]; // 투표 후 실시간 결과
-  message: string;
+  results?: PollResultItem[]; // 투표 후 실시간 결과
+  message?: string;
 }
 
 export interface PollResultItem {
@@ -57,4 +68,11 @@ export interface PollResultItem {
 export interface PollDetailResponse extends PollResponse {
   results: PollResultItem[];
   has_voted: boolean;
+}
+
+export interface CategoryInfo {
+  category: TemplateCategory;
+  emoji: string;
+  title: string;
+  question_count: number;
 }

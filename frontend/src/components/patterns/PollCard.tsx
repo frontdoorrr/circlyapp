@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, AccessibilityRole } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -14,20 +14,95 @@ import { Text } from '../primitives/Text';
 // Types
 // ============================================================================
 
-export interface PollCardData {
+/**
+ * Poll Card Variant
+ * - active: 진행 중인 투표
+ * - completed: 완료된 투표
+ */
+export type PollCardVariant = 'active' | 'completed';
+
+/**
+ * Vote Status for Active Polls
+ */
+export type VoteStatus = 'voted' | 'not_voted';
+
+/**
+ * Winner Info for Completed Polls
+ */
+export interface WinnerInfo {
+  name: string;
+  voteCount: number;
+}
+
+/**
+ * Poll Card Data - Active Variant
+ */
+export interface ActivePollData {
   id: string;
   question: string;
   emoji: string;
+  circleName: string;
   timeRemaining: string; // e.g., "2시간 23분 남음"
   participantCount: number;
   totalMembers: number;
   participationRate: number; // 0-100
+  voteStatus: VoteStatus;
 }
 
-interface PollCardProps {
+/**
+ * Poll Card Data - Completed Variant
+ */
+export interface CompletedPollData {
+  id: string;
+  question: string;
+  emoji: string;
+  circleName: string;
+  winner: WinnerInfo;
+}
+
+/**
+ * Legacy Poll Card Data (backward compatibility)
+ */
+export interface PollCardData {
+  id: string;
+  question: string;
+  emoji: string;
+  circleName?: string;
+  timeRemaining: string;
+  participantCount: number;
+  totalMembers: number;
+  participationRate: number;
+  voteStatus?: VoteStatus;
+}
+
+/**
+ * Active Poll Card Props
+ */
+interface ActivePollCardProps {
+  variant: 'active';
+  poll: ActivePollData;
+  onPress: () => void;
+}
+
+/**
+ * Completed Poll Card Props
+ */
+interface CompletedPollCardProps {
+  variant: 'completed';
+  poll: CompletedPollData;
+  onPress: () => void;
+}
+
+/**
+ * Legacy Poll Card Props (backward compatibility)
+ */
+interface LegacyPollCardProps {
+  variant?: undefined;
   poll: PollCardData;
   onPress: () => void;
 }
+
+type PollCardProps = ActivePollCardProps | CompletedPollCardProps | LegacyPollCardProps;
 
 // ============================================================================
 // PollCard Component
@@ -38,27 +113,47 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /**
  * PollCard Component
  *
- * 홈 화면에 표시되는 진행 중인 투표 카드
+ * 홈 화면에 표시되는 투표 카드
  * Spec: prd/design/05-complete-ui-specification.md - 섹션 2.2
  *
- * @param poll - 투표 데이터
- * @param onPress - 카드 클릭 핸들러
- *
- * @example
+ * @example Active variant
+ * ```tsx
  * <PollCard
+ *   variant="active"
  *   poll={{
  *     id: '1',
  *     question: '가장 친절한 사람은?',
  *     emoji: '😊',
+ *     circleName: 'OO고 2학년 1반',
  *     timeRemaining: '2시간 23분 남음',
  *     participantCount: 12,
  *     totalMembers: 16,
  *     participationRate: 75,
+ *     voteStatus: 'not_voted',
  *   }}
- *   onPress={() => router.push(`/poll/${poll.id}`)}
+ *   onPress={() => router.push(`/poll/${poll.id}/vote`)}
  * />
+ * ```
+ *
+ * @example Completed variant
+ * ```tsx
+ * <PollCard
+ *   variant="completed"
+ *   poll={{
+ *     id: '1',
+ *     question: '가장 친절한 사람은?',
+ *     emoji: '😊',
+ *     circleName: 'OO고 2학년 1반',
+ *     winner: { name: '김민수', voteCount: 8 },
+ *   }}
+ *   onPress={() => router.push(`/poll/${poll.id}/result`)}
+ * />
+ * ```
  */
-export function PollCard({ poll, onPress }: PollCardProps) {
+export function PollCard(props: PollCardProps) {
+  const { poll, onPress } = props;
+  const variant = props.variant ?? 'active';
+
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -79,27 +174,77 @@ export function PollCard({ poll, onPress }: PollCardProps) {
     onPress();
   };
 
+  // Generate accessibility label based on variant
+  const getAccessibilityLabel = (): string => {
+    if (variant === 'completed') {
+      const completedPoll = poll as CompletedPollData;
+      return `완료된 투표: ${poll.question}, 1위: ${completedPoll.winner.name} ${completedPoll.winner.voteCount}표`;
+    } else {
+      const activePoll = poll as ActivePollData | PollCardData;
+      const status = 'voteStatus' in activePoll && activePoll.voteStatus === 'voted'
+        ? '투표 완료'
+        : '투표하기';
+      return `투표: ${poll.question}, ${activePoll.timeRemaining}, ${activePoll.participantCount}/${activePoll.totalMembers}명 참여, ${status}`;
+    }
+  };
+
   return (
     <AnimatedPressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[styles.card, animatedStyle]}
+      accessibilityRole="button" as AccessibilityRole
+      accessibilityLabel={getAccessibilityLabel()}
+      accessibilityHint={variant === 'completed' ? '결과를 확인하려면 두 번 탭하세요' : '투표에 참여하려면 두 번 탭하세요'}
     >
+      {variant === 'completed' ? (
+        <CompletedCardContent poll={poll as CompletedPollData} />
+      ) : (
+        <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} />
+      )}
+    </AnimatedPressable>
+  );
+}
+
+// ============================================================================
+// Active Card Content
+// ============================================================================
+
+interface ActiveCardContentProps {
+  poll: ActivePollData | PollCardData;
+}
+
+function ActiveCardContent({ poll }: ActiveCardContentProps) {
+  const voteStatus = 'voteStatus' in poll ? poll.voteStatus : 'not_voted';
+  const circleName = poll.circleName;
+
+  return (
+    <>
       {/* Question Header */}
       <View style={styles.questionHeader}>
         <Text variant="2xl" style={styles.emoji}>
           {poll.emoji}
         </Text>
-        <Text
-          variant="lg"
-          weight="semibold"
-          color={tokens.colors.neutral[900]}
-          style={styles.question}
-          numberOfLines={2}
-        >
-          {poll.question}
-        </Text>
+        <View style={styles.questionContent}>
+          <Text
+            variant="lg"
+            weight="semibold"
+            color={tokens.colors.neutral[900]}
+            numberOfLines={2}
+          >
+            {poll.question}
+          </Text>
+          {circleName && (
+            <Text
+              variant="sm"
+              color={tokens.colors.neutral[500]}
+              style={styles.circleName}
+            >
+              {circleName}
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Meta Information */}
@@ -111,26 +256,128 @@ export function PollCard({ poll, onPress }: PollCardProps) {
         </View>
         <View style={styles.metaItem}>
           <Text variant="sm" color={tokens.colors.neutral[500]}>
-            👥 {poll.participantCount}명 참여
+            👥 {poll.participantCount}/{poll.totalMembers}명 참여
           </Text>
         </View>
       </View>
 
-      {/* Participation Progress Bar */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBarBackground}>
-          <ProgressBarFill percentage={poll.participationRate} />
+      {/* Vote Status Badge */}
+      <View style={styles.statusContainer}>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBarBackground}>
+            <ProgressBarFill percentage={poll.participationRate} />
+          </View>
+          <Text
+            variant="sm"
+            weight="medium"
+            color={tokens.colors.primary[600]}
+            style={styles.progressText}
+          >
+            {poll.participationRate}%
+          </Text>
         </View>
-        <Text
-          variant="sm"
-          weight="medium"
-          color={tokens.colors.primary[600]}
-          style={styles.progressText}
-        >
-          {poll.participationRate}%
-        </Text>
+
+        {/* Vote Status Badge */}
+        <VoteStatusBadge status={voteStatus} />
       </View>
-    </AnimatedPressable>
+    </>
+  );
+}
+
+// ============================================================================
+// Completed Card Content
+// ============================================================================
+
+interface CompletedCardContentProps {
+  poll: CompletedPollData;
+}
+
+function CompletedCardContent({ poll }: CompletedCardContentProps) {
+  return (
+    <>
+      {/* Question Header */}
+      <View style={styles.questionHeader}>
+        <Text variant="2xl" style={styles.emoji}>
+          {poll.emoji}
+        </Text>
+        <View style={styles.questionContent}>
+          <Text
+            variant="lg"
+            weight="semibold"
+            color={tokens.colors.neutral[900]}
+            numberOfLines={2}
+          >
+            {poll.question}
+          </Text>
+          {poll.circleName && (
+            <Text
+              variant="sm"
+              color={tokens.colors.neutral[500]}
+              style={styles.circleName}
+            >
+              {poll.circleName}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      {/* Completed Status + Winner */}
+      <View style={styles.completedFooter}>
+        {/* Completed Badge */}
+        <View style={styles.completedBadge}>
+          <Text variant="sm" weight="medium" color={tokens.colors.neutral[500]}>
+            투표 종료
+          </Text>
+        </View>
+
+        {/* Winner Preview */}
+        <View style={styles.winnerPreview}>
+          <Text variant="sm" color={tokens.colors.neutral[600]}>
+            🏆
+          </Text>
+          <Text
+            variant="sm"
+            weight="semibold"
+            color={tokens.colors.neutral[800]}
+            style={styles.winnerName}
+          >
+            {poll.winner.name}
+          </Text>
+          <Text variant="sm" color={tokens.colors.neutral[500]}>
+            {poll.winner.voteCount}표
+          </Text>
+        </View>
+      </View>
+    </>
+  );
+}
+
+// ============================================================================
+// Vote Status Badge Component
+// ============================================================================
+
+interface VoteStatusBadgeProps {
+  status: VoteStatus;
+}
+
+function VoteStatusBadge({ status }: VoteStatusBadgeProps) {
+  const isVoted = status === 'voted';
+
+  return (
+    <View
+      style={[
+        styles.voteBadge,
+        isVoted ? styles.voteBadgeVoted : styles.voteBadgeNotVoted,
+      ]}
+    >
+      <Text
+        variant="sm"
+        weight="medium"
+        color={isVoted ? tokens.colors.success[600] : tokens.colors.primary[600]}
+      >
+        {isVoted ? '투표 완료 ✅' : '투표하기 →'}
+      </Text>
+    </View>
   );
 }
 
@@ -174,11 +421,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing[3], // 12px
   },
   emoji: {
-    marginRight: spacing[1], // 4px
+    marginRight: spacing[2], // 8px
     lineHeight: 28, // Align with text
   },
-  question: {
+  questionContent: {
     flex: 1,
+  },
+  circleName: {
+    marginTop: spacing[1], // 4px
   },
   metaContainer: {
     flexDirection: 'row',
@@ -188,9 +438,16 @@ const styles = StyleSheet.create({
   metaItem: {
     marginRight: spacing[4], // 16px
   },
-  progressContainer: {
+  statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  progressContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: spacing[3], // 12px
   },
   progressBarBackground: {
     flex: 1,
@@ -208,5 +465,36 @@ const styles = StyleSheet.create({
   progressText: {
     minWidth: 36,
     textAlign: 'right',
+  },
+  // Vote Status Badge
+  voteBadge: {
+    paddingHorizontal: spacing[3], // 12px
+    paddingVertical: spacing[1], // 4px
+    borderRadius: borderRadius.full,
+  },
+  voteBadgeVoted: {
+    backgroundColor: tokens.colors.success[50],
+  },
+  voteBadgeNotVoted: {
+    backgroundColor: tokens.colors.primary[50],
+  },
+  // Completed Card
+  completedFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  completedBadge: {
+    backgroundColor: tokens.colors.neutral[100],
+    paddingHorizontal: spacing[3], // 12px
+    paddingVertical: spacing[1], // 4px
+    borderRadius: borderRadius.full,
+  },
+  winnerPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  winnerName: {
+    marginHorizontal: spacing[1], // 4px
   },
 });
