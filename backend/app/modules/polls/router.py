@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query, status
 from app.core.enums import TemplateCategory
 from app.deps import CurrentUserDep, PollServiceDep
 from app.modules.polls.schemas import (
+    CategoryInfo,
     PollCreate,
     PollResponse,
     PollTemplateResponse,
@@ -28,6 +29,18 @@ async def get_templates(
 ) -> list[PollTemplateResponse]:
     """Get all active poll templates, optionally filtered by category."""
     return await service.get_templates(category)
+
+
+@router.get(
+    "/templates/categories",
+    response_model=list[CategoryInfo],
+    summary="Get template categories",
+)
+async def get_categories(
+    service: PollServiceDep,
+) -> list[CategoryInfo]:
+    """Get all template categories with question counts."""
+    return await service.get_categories()
 
 
 @router.post(

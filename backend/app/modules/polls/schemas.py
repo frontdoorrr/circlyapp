@@ -109,3 +109,33 @@ class VoteResponse(BaseModel):
     success: bool
     results: list[PollResultItem]
     message: str
+
+
+class CategoryInfo(BaseModel):
+    """Schema for template category information."""
+
+    category: TemplateCategory
+    emoji: str
+    title: str
+    question_count: int
+
+
+# Category metadata mapping
+CATEGORY_METADATA: dict[TemplateCategory, dict[str, str]] = {
+    TemplateCategory.PERSONALITY: {
+        "emoji": "😊",
+        "title": "성격 관련",
+    },
+    TemplateCategory.APPEARANCE: {
+        "emoji": "✨",
+        "title": "외모 관련",
+    },
+    TemplateCategory.SPECIAL: {
+        "emoji": "🎉",
+        "title": "특별한 날",
+    },
+    TemplateCategory.TALENT: {
+        "emoji": "🏆",
+        "title": "능력 관련",
+    },
+}

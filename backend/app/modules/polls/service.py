@@ -13,6 +13,8 @@ from app.core.security import generate_voter_hash
 from app.modules.circles.repository import MembershipRepository
 from app.modules.polls.repository import PollRepository, TemplateRepository, VoteRepository
 from app.modules.polls.schemas import (
+    CATEGORY_METADATA,
+    CategoryInfo,
     PollCreate,
     PollDuration,
     PollResponse,
@@ -235,3 +237,29 @@ class PollService:
 
         # Update poll status to COMPLETED
         await self.poll_repo.update_status(poll_id, PollStatus.COMPLETED)
+
+    async def get_categories(self) -> list[CategoryInfo]:
+        """Get all template categories with question counts.
+
+        Returns:
+            List of CategoryInfo with category metadata and question counts
+        """
+        # Get template counts by category
+        category_counts = await self.template_repo.count_by_category()
+
+        # Build category info list
+        categories = []
+        for category in TemplateCategory:
+            metadata = CATEGORY_METADATA.get(category, {"emoji": "📝", "title": str(category.value)})
+            count = category_counts.get(category, 0)
+
+            categories.append(
+                CategoryInfo(
+                    category=category,
+                    emoji=metadata["emoji"],
+                    title=metadata["title"],
+                    question_count=count,
+                )
+            )
+
+        return categories

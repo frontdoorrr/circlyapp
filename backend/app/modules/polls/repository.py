@@ -71,6 +71,20 @@ class TemplateRepository:
         )
         await self.session.flush()
 
+    async def count_by_category(self) -> dict[TemplateCategory, int]:
+        """Count active templates by category.
+
+        Returns:
+            Dictionary mapping category to template count
+        """
+        query = (
+            select(PollTemplate.category, func.count(PollTemplate.id))
+            .where(PollTemplate.is_active == True)  # noqa: E712
+            .group_by(PollTemplate.category)
+        )
+        result = await self.session.execute(query)
+        return {row[0]: row[1] for row in result.all()}
+
 
 class PollRepository:
     """Repository for Poll model."""
