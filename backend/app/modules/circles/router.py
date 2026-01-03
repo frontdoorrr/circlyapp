@@ -2,16 +2,18 @@
 
 import uuid
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 
-from app.deps import CircleServiceDep, CurrentUserDep
+from app.deps import AdminUserDep, CircleServiceDep, CurrentUserDep
 from app.modules.circles.schemas import (
     CircleCreate,
     CircleDetail,
+    CircleListResponse,
     CircleResponse,
     JoinByCodeRequest,
     MemberInfo,
     RegenerateInviteCodeResponse,
+    UpdateCircleStatusRequest,
     ValidateInviteCodeResponse,
 )
 
@@ -148,3 +150,72 @@ async def regenerate_invite_code(
     Only the circle owner can regenerate the code.
     """
     return await service.regenerate_invite_code(circle_id, current_user.id)
+
+
+# ==================== Admin Endpoints ====================
+
+
+@router.get(
+    "/admin/all",
+    response_model=CircleListResponse,
+    summary="[Admin] Get all circles",
+    tags=["Admin - Circles"],
+)
+async def get_all_circles(
+    admin_user: AdminUserDep,
+    service: CircleServiceDep,
+    search: str | None = Query(None, description="Search in name/description"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> CircleListResponse:
+    """Get all circles with optional filters (Admin only)."""
+    circles, total = await service.get_all_circles(search, is_active, limit, offset)
+    return CircleListResponse(items=circles, total=total, limit=limit, offset=offset)
+
+
+@router.get(
+    "/admin/{circle_id}",
+    response_model=CircleDetail,
+    summary="[Admin] Get circle details",
+    tags=["Admin - Circles"],
+)
+async def get_circle_admin(
+    circle_id: uuid.UUID,
+    admin_user: AdminUserDep,
+    service: CircleServiceDep,
+) -> CircleDetail:
+    """Get detailed circle information including members (Admin only)."""
+    return await service.get_circle_detail_admin(circle_id)
+
+
+@router.put(
+    "/admin/{circle_id}/status",
+    response_model=CircleResponse,
+    summary="[Admin] Update circle status",
+    tags=["Admin - Circles"],
+)
+async def update_circle_status(
+    circle_id: uuid.UUID,
+    request: UpdateCircleStatusRequest,
+    admin_user: AdminUserDep,
+    service: CircleServiceDep,
+) -> CircleResponse:
+    """Update circle's active status (Admin only)."""
+    return await service.update_circle_status(circle_id, request.is_active)
+
+
+@router.delete(
+    "/admin/{circle_id}/members/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="[Admin] Remove member from circle",
+    tags=["Admin - Circles"],
+)
+async def remove_member_admin(
+    circle_id: uuid.UUID,
+    user_id: uuid.UUID,
+    admin_user: AdminUserDep,
+    service: CircleServiceDep,
+) -> None:
+    """Remove a member from circle (Admin only)."""
+    await service.remove_member_admin(circle_id, user_id)

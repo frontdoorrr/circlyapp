@@ -4,7 +4,8 @@ import uuid
 
 from supabase_auth.errors import AuthApiError
 
-from app.core.exceptions import BadRequestException, UnauthorizedException
+from app.core.enums import UserRole
+from app.core.exceptions import BadRequestException, NotFoundException, UnauthorizedException
 from app.core.supabase import get_supabase_client
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
@@ -52,9 +53,7 @@ class AuthService:
             raise BadRequestException("Registration failed")
 
         # Check if local user already exists (handles duplicate requests)
-        existing_user = await self.repository.find_by_supabase_id(
-            auth_response.user.id
-        )
+        existing_user = await self.repository.find_by_supabase_id(auth_response.user.id)
         if existing_user is not None:
             raise BadRequestException("User already registered")
 
@@ -127,9 +126,7 @@ class AuthService:
             token_type="bearer",
         )
 
-    async def update_profile(
-        self, user_id: uuid.UUID, update_data: UserUpdate
-    ) -> UserResponse:
+    async def update_profile(self, user_id: uuid.UUID, update_data: UserUpdate) -> UserResponse:
         """Update user profile.
 
         Args:
@@ -148,3 +145,90 @@ class AuthService:
             raise BadRequestException("User not found")
 
         return UserResponse.model_validate(updated_user)
+
+    # ==================== Admin Methods ====================
+
+    async def get_all_users(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+        role: UserRole | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[UserResponse], int]:
+        """Get all users with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for email/username/display_name
+            is_active: Optional filter by active status
+            role: Optional filter by role
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (list of UserResponse, total count)
+        """
+        users = await self.repository.find_all(search, is_active, role, limit, offset)
+        total = await self.repository.count_all(search, is_active, role)
+        return [UserResponse.model_validate(u) for u in users], total
+
+    async def get_user_by_id(self, user_id: uuid.UUID) -> UserResponse:
+        """Get user by ID (Admin only).
+
+        Args:
+            user_id: UUID of the user
+
+        Returns:
+            UserResponse
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        user = await self.repository.find_by_id(user_id)
+        if user is None:
+            raise NotFoundException("User not found")
+        return UserResponse.model_validate(user)
+
+    async def update_user_status(
+        self,
+        user_id: uuid.UUID,
+        is_active: bool,
+    ) -> UserResponse:
+        """Update user's active status (Admin only).
+
+        Args:
+            user_id: UUID of the user
+            is_active: New active status
+
+        Returns:
+            Updated UserResponse
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        user = await self.repository.update_status(user_id, is_active)
+        if user is None:
+            raise NotFoundException("User not found")
+        return UserResponse.model_validate(user)
+
+    async def update_user_role(
+        self,
+        user_id: uuid.UUID,
+        role: UserRole,
+    ) -> UserResponse:
+        """Update user's role (Admin only).
+
+        Args:
+            user_id: UUID of the user
+            role: New role
+
+        Returns:
+            Updated UserResponse
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        user = await self.repository.update_role(user_id, role)
+        if user is None:
+            raise NotFoundException("User not found")
+        return UserResponse.model_validate(user)

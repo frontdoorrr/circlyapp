@@ -187,3 +187,60 @@ class ReportRepository:
         result = await self.session.execute(query)
         count = result.scalar()
         return (count or 0) > 0
+
+    # ==================== Admin Methods ====================
+
+    async def find_all(
+        self,
+        status: ReportStatus | None = None,
+        target_type: ReportTargetType | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Report]:
+        """Find all reports with optional filters (Admin only).
+
+        Args:
+            status: Optional filter by status
+            target_type: Optional filter by target type
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            List of reports matching the criteria
+        """
+        query = select(Report).order_by(Report.created_at.desc())
+
+        if status is not None:
+            query = query.where(Report.status == status)
+
+        if target_type is not None:
+            query = query.where(Report.target_type == target_type)
+
+        query = query.limit(limit).offset(offset)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_all(
+        self,
+        status: ReportStatus | None = None,
+        target_type: ReportTargetType | None = None,
+    ) -> int:
+        """Count all reports with optional filters (Admin only).
+
+        Args:
+            status: Optional filter by status
+            target_type: Optional filter by target type
+
+        Returns:
+            Total count of matching reports
+        """
+        query = select(func.count(Report.id))
+
+        if status is not None:
+            query = query.where(Report.status == status)
+
+        if target_type is not None:
+            query = query.where(Report.target_type == target_type)
+
+        result = await self.session.execute(query)
+        return result.scalar() or 0

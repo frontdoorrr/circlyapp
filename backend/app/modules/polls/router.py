@@ -5,12 +5,17 @@ import uuid
 from fastapi import APIRouter, Query, status
 
 from app.core.enums import PollStatus, TemplateCategory
-from app.deps import CurrentUserDep, PollServiceDep
+from app.deps import AdminUserDep, CurrentUserDep, PollServiceDep
 from app.modules.polls.schemas import (
     CategoryInfo,
     PollCreate,
+    PollListResponse,
     PollResponse,
     PollTemplateResponse,
+    TemplateCreate,
+    TemplateListResponse,
+    TemplateUpdate,
+    UpdatePollStatusRequest,
     VoteRequest,
     VoteResponse,
 )
@@ -86,3 +91,98 @@ async def vote(
 ) -> VoteResponse:
     """Cast a vote in a poll."""
     return await service.vote(poll_id, current_user.id, vote_data.voted_for_id)
+
+
+# ==================== Admin Endpoints ====================
+
+
+@router.get(
+    "/admin/all",
+    response_model=PollListResponse,
+    summary="[Admin] Get all polls",
+    tags=["Admin - Polls"],
+)
+async def get_all_polls(
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+    status: PollStatus | None = Query(None, description="Filter by status"),
+    circle_id: uuid.UUID | None = Query(None, description="Filter by circle"),
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> PollListResponse:
+    """Get all polls with optional filters (Admin only)."""
+    polls, total = await service.get_all_polls(status, circle_id, limit, offset)
+    return PollListResponse(items=polls, total=total, limit=limit, offset=offset)
+
+
+@router.put(
+    "/admin/{poll_id}/status",
+    response_model=PollResponse,
+    summary="[Admin] Update poll status",
+    tags=["Admin - Polls"],
+)
+async def update_poll_status(
+    poll_id: uuid.UUID,
+    request: UpdatePollStatusRequest,
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+) -> PollResponse:
+    """Update poll status (Admin only). Can force complete or cancel polls."""
+    return await service.update_poll_status(poll_id, request.status)
+
+
+@router.get(
+    "/admin/templates",
+    response_model=TemplateListResponse,
+    summary="[Admin] Get all templates",
+    tags=["Admin - Templates"],
+)
+async def get_all_templates(
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+    category: TemplateCategory | None = Query(None, description="Filter by category"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> TemplateListResponse:
+    """Get all templates including inactive ones (Admin only)."""
+    templates, total = await service.get_all_templates(category, is_active, limit, offset)
+    return TemplateListResponse(items=templates, total=total, limit=limit, offset=offset)
+
+
+@router.post(
+    "/admin/templates",
+    response_model=PollTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="[Admin] Create template",
+    tags=["Admin - Templates"],
+)
+async def create_template(
+    request: TemplateCreate,
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+) -> PollTemplateResponse:
+    """Create a new poll template (Admin only)."""
+    return await service.create_template(request.category, request.question_text, request.emoji)
+
+
+@router.put(
+    "/admin/templates/{template_id}",
+    response_model=PollTemplateResponse,
+    summary="[Admin] Update template",
+    tags=["Admin - Templates"],
+)
+async def update_template(
+    template_id: uuid.UUID,
+    request: TemplateUpdate,
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+) -> PollTemplateResponse:
+    """Update a poll template (Admin only)."""
+    return await service.update_template(
+        template_id,
+        request.category,
+        request.question_text,
+        request.emoji,
+        request.is_active,
+    )

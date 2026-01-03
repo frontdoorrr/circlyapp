@@ -2,12 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import Depends, Header
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
 from app.core.database import get_db
-from app.core.exceptions import UnauthorizedException
+from app.core.enums import UserRole
+from app.core.exceptions import AuthorizationError, UnauthorizedException
 from app.modules.auth.models import User
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.service import AuthService
@@ -20,6 +22,12 @@ from app.modules.polls.service import PollService
 from app.modules.reports.repository import ReportRepository
 from app.modules.reports.service import ReportService
 
+# HTTP Bearer scheme for Swagger UI integration
+bearer_scheme = HTTPBearer(
+    scheme_name="Bearer Token",
+    description="Supabase JWT access token. Get it from POST /auth/login",
+)
+
 # Settings dependency
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -28,13 +36,13 @@ DBSessionDep = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(
-    authorization: str = Header(..., description="Bearer token"),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """Get current authenticated user from Supabase JWT token.
 
     Args:
-        authorization: Authorization header with Bearer token
+        credentials: HTTP Bearer credentials from Authorization header
         db: Database session
 
     Returns:
@@ -45,11 +53,7 @@ async def get_current_user(
     """
     from app.core.supabase import verify_supabase_token
 
-    # Extract token from "Bearer <token>" format
-    if not authorization.startswith("Bearer "):
-        raise UnauthorizedException("Invalid authorization header format")
-
-    token = authorization.replace("Bearer ", "")
+    token = credentials.credentials
 
     # Verify Supabase token
     payload = verify_supabase_token(token)
@@ -82,6 +86,29 @@ async def get_current_user(
 
 # Current user dependency type
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+async def require_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Require admin role for the current user.
+
+    Args:
+        current_user: Current authenticated user
+
+    Returns:
+        Current user if admin
+
+    Raises:
+        AuthorizationError: If user is not an admin
+    """
+    if current_user.role != UserRole.ADMIN:
+        raise AuthorizationError("관리자 권한이 필요합니다")
+    return current_user
+
+
+# Admin user dependency type
+AdminUserDep = Annotated[User, Depends(require_admin)]
 
 
 # Service factory functions

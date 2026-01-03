@@ -85,6 +85,127 @@ class TemplateRepository:
         result = await self.session.execute(query)
         return {row[0]: row[1] for row in result.all()}
 
+    # ==================== Admin Methods ====================
+
+    async def find_all_templates(
+        self,
+        category: TemplateCategory | None = None,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[PollTemplate]:
+        """Find all templates with optional filters (Admin only).
+
+        Args:
+            category: Optional category filter
+            is_active: Optional active status filter
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            List of poll templates
+        """
+        query = select(PollTemplate).order_by(PollTemplate.created_at.desc())
+
+        if category:
+            query = query.where(PollTemplate.category == category)
+
+        if is_active is not None:
+            query = query.where(PollTemplate.is_active == is_active)
+
+        query = query.limit(limit).offset(offset)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_all_templates(
+        self,
+        category: TemplateCategory | None = None,
+        is_active: bool | None = None,
+    ) -> int:
+        """Count all templates with optional filters (Admin only).
+
+        Args:
+            category: Optional category filter
+            is_active: Optional active status filter
+
+        Returns:
+            Total count of matching templates
+        """
+        query = select(func.count(PollTemplate.id))
+
+        if category:
+            query = query.where(PollTemplate.category == category)
+
+        if is_active is not None:
+            query = query.where(PollTemplate.is_active == is_active)
+
+        result = await self.session.execute(query)
+        return result.scalar() or 0
+
+    async def create_template(
+        self,
+        category: TemplateCategory,
+        question_text: str,
+        emoji: str | None = None,
+    ) -> PollTemplate:
+        """Create a new poll template (Admin only).
+
+        Args:
+            category: Template category
+            question_text: Question text
+            emoji: Optional emoji
+
+        Returns:
+            Created PollTemplate instance
+        """
+        template = PollTemplate(
+            category=category,
+            question_text=question_text,
+            emoji=emoji,
+            is_active=True,
+        )
+        self.session.add(template)
+        await self.session.flush()
+        await self.session.refresh(template)
+        return template
+
+    async def update_template(
+        self,
+        template_id: uuid.UUID,
+        category: TemplateCategory | None = None,
+        question_text: str | None = None,
+        emoji: str | None = None,
+        is_active: bool | None = None,
+    ) -> PollTemplate | None:
+        """Update a poll template (Admin only).
+
+        Args:
+            template_id: Template UUID
+            category: Optional new category
+            question_text: Optional new question text
+            emoji: Optional new emoji
+            is_active: Optional new active status
+
+        Returns:
+            Updated PollTemplate if found, None otherwise
+        """
+        template = await self.find_by_id(template_id)
+        if template is None:
+            return None
+
+        if category is not None:
+            template.category = category
+        if question_text is not None:
+            template.question_text = question_text
+        if emoji is not None:
+            template.emoji = emoji
+        if is_active is not None:
+            template.is_active = is_active
+
+        await self.session.flush()
+        await self.session.refresh(template)
+        return template
+
 
 class PollRepository:
     """Repository for Poll model."""
@@ -236,6 +357,63 @@ class PollRepository:
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
+
+    # ==================== Admin Methods ====================
+
+    async def find_all(
+        self,
+        status: PollStatus | None = None,
+        circle_id: uuid.UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Poll]:
+        """Find all polls with optional filters (Admin only).
+
+        Args:
+            status: Optional status filter
+            circle_id: Optional circle filter
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            List of polls matching the criteria
+        """
+        query = select(Poll).order_by(Poll.created_at.desc())
+
+        if status:
+            query = query.where(Poll.status == status)
+
+        if circle_id:
+            query = query.where(Poll.circle_id == circle_id)
+
+        query = query.limit(limit).offset(offset)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_all(
+        self,
+        status: PollStatus | None = None,
+        circle_id: uuid.UUID | None = None,
+    ) -> int:
+        """Count all polls with optional filters (Admin only).
+
+        Args:
+            status: Optional status filter
+            circle_id: Optional circle filter
+
+        Returns:
+            Total count of matching polls
+        """
+        query = select(func.count(Poll.id))
+
+        if status:
+            query = query.where(Poll.status == status)
+
+        if circle_id:
+            query = query.where(Poll.circle_id == circle_id)
+
+        result = await self.session.execute(query)
+        return result.scalar() or 0
 
 
 class VoteRepository:

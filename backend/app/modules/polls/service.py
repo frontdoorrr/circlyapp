@@ -250,7 +250,9 @@ class PollService:
         # Build category info list
         categories = []
         for category in TemplateCategory:
-            metadata = CATEGORY_METADATA.get(category, {"emoji": "📝", "title": str(category.value)})
+            metadata = CATEGORY_METADATA.get(
+                category, {"emoji": "📝", "title": str(category.value)}
+            )
             count = category_counts.get(category, 0)
 
             categories.append(
@@ -287,3 +289,125 @@ class PollService:
         polls = await self.poll_repo.find_by_user_circles(circle_ids, status)
 
         return [PollResponse.model_validate(p) for p in polls]
+
+    # ==================== Admin Methods ====================
+
+    async def get_all_polls(
+        self,
+        status: PollStatus | None = None,
+        circle_id: uuid.UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[PollResponse], int]:
+        """Get all polls with optional filters (Admin only).
+
+        Args:
+            status: Optional status filter
+            circle_id: Optional circle filter
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (list of PollResponse, total count)
+        """
+        polls = await self.poll_repo.find_all(status, circle_id, limit, offset)
+        total = await self.poll_repo.count_all(status, circle_id)
+        return [PollResponse.model_validate(p) for p in polls], total
+
+    async def update_poll_status(
+        self,
+        poll_id: uuid.UUID,
+        status: PollStatus,
+    ) -> PollResponse:
+        """Update poll status (Admin only).
+
+        Args:
+            poll_id: UUID of the poll
+            status: New status
+
+        Returns:
+            Updated PollResponse
+
+        Raises:
+            PollNotFoundError: If poll not found
+        """
+        poll = await self.poll_repo.find_by_id(poll_id)
+        if poll is None:
+            raise PollNotFoundError(str(poll_id))
+
+        await self.poll_repo.update_status(poll_id, status)
+
+        # Refresh poll data
+        updated_poll = await self.poll_repo.find_by_id(poll_id)
+        return PollResponse.model_validate(updated_poll)
+
+    async def get_all_templates(
+        self,
+        category: TemplateCategory | None = None,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[PollTemplateResponse], int]:
+        """Get all templates with optional filters (Admin only).
+
+        Args:
+            category: Optional category filter
+            is_active: Optional active status filter
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (list of PollTemplateResponse, total count)
+        """
+        templates = await self.template_repo.find_all_templates(category, is_active, limit, offset)
+        total = await self.template_repo.count_all_templates(category, is_active)
+        return [PollTemplateResponse.model_validate(t) for t in templates], total
+
+    async def create_template(
+        self,
+        category: TemplateCategory,
+        question_text: str,
+        emoji: str | None = None,
+    ) -> PollTemplateResponse:
+        """Create a new poll template (Admin only).
+
+        Args:
+            category: Template category
+            question_text: Question text
+            emoji: Optional emoji
+
+        Returns:
+            Created PollTemplateResponse
+        """
+        template = await self.template_repo.create_template(category, question_text, emoji)
+        return PollTemplateResponse.model_validate(template)
+
+    async def update_template(
+        self,
+        template_id: uuid.UUID,
+        category: TemplateCategory | None = None,
+        question_text: str | None = None,
+        emoji: str | None = None,
+        is_active: bool | None = None,
+    ) -> PollTemplateResponse:
+        """Update a poll template (Admin only).
+
+        Args:
+            template_id: Template UUID
+            category: Optional new category
+            question_text: Optional new question text
+            emoji: Optional new emoji
+            is_active: Optional new active status
+
+        Returns:
+            Updated PollTemplateResponse
+
+        Raises:
+            BadRequestException: If template not found
+        """
+        template = await self.template_repo.update_template(
+            template_id, category, question_text, emoji, is_active
+        )
+        if template is None:
+            raise BadRequestException("Template not found")
+        return PollTemplateResponse.model_validate(template)

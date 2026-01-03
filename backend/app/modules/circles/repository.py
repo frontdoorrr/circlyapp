@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -180,6 +180,94 @@ class CircleRepository:
             circle.member_count -= 1
             await self.session.flush()
         return True
+
+    # ==================== Admin Methods ====================
+
+    async def find_all(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Circle]:
+        """Find all circles with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for name/description
+            is_active: Optional filter by active status
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            List of circles matching the criteria
+        """
+        stmt = select(Circle).order_by(Circle.created_at.desc())
+
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    Circle.name.ilike(search_term),
+                    Circle.description.ilike(search_term),
+                )
+            )
+
+        if is_active is not None:
+            stmt = stmt.where(Circle.is_active == is_active)
+
+        stmt = stmt.limit(limit).offset(offset)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_all(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+    ) -> int:
+        """Count all circles with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for name/description
+            is_active: Optional filter by active status
+
+        Returns:
+            Total count of matching circles
+        """
+        stmt = select(func.count(Circle.id))
+
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    Circle.name.ilike(search_term),
+                    Circle.description.ilike(search_term),
+                )
+            )
+
+        if is_active is not None:
+            stmt = stmt.where(Circle.is_active == is_active)
+
+        result = await self.session.execute(stmt)
+        return result.scalar() or 0
+
+    async def update_status(self, circle_id: uuid.UUID, is_active: bool) -> Circle | None:
+        """Update circle's active status (Admin only).
+
+        Args:
+            circle_id: UUID of the circle
+            is_active: New active status
+
+        Returns:
+            Updated circle if found, None otherwise
+        """
+        circle = await self.find_by_id(circle_id)
+        if circle is None:
+            return None
+
+        circle.is_active = is_active
+        await self.session.flush()
+        await self.session.refresh(circle)
+        return circle
 
 
 class MembershipRepository:

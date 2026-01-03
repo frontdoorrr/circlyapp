@@ -47,3 +47,15 @@ class ReportReview(BaseModel):
 
     status: ReportStatus = Field(..., description="New status after review")
     notes: str | None = Field(None, max_length=500, description="Admin notes")
+
+
+# ==================== Admin Schemas ====================
+
+
+class ReportListAdminResponse(BaseModel):
+    """Schema for paginated report list response (Admin)."""
+
+    items: list[ReportResponse]
+    total: int
+    limit: int
+    offset: int

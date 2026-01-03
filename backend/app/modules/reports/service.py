@@ -172,3 +172,27 @@ class ReportService:
         """
         count = await self.get_report_count_for_target(target_type, target_id)
         return self.should_auto_block(count)
+
+    # ==================== Admin Methods ====================
+
+    async def get_all_reports(
+        self,
+        status: ReportStatus | None = None,
+        target_type: ReportTargetType | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[ReportResponse], int]:
+        """Get all reports with optional filters (Admin only).
+
+        Args:
+            status: Optional filter by status
+            target_type: Optional filter by target type
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (list of ReportResponse, total count)
+        """
+        reports = await self.report_repo.find_all(status, target_type, limit, offset)
+        total = await self.report_repo.count_all(status, target_type)
+        return [ReportResponse.model_validate(r) for r in reports], total

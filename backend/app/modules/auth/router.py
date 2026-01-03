@@ -1,13 +1,19 @@
 """API routes for authentication."""
 
-from fastapi import APIRouter, status
+import uuid
 
-from app.deps import CurrentUserDep, DBSessionDep
+from fastapi import APIRouter, Query, status
+
+from app.core.enums import UserRole
+from app.deps import AdminUserDep, CurrentUserDep, DBSessionDep
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
     AuthResponse,
     LoginRequest,
+    UpdateUserRoleRequest,
+    UpdateUserStatusRequest,
     UserCreate,
+    UserListResponse,
     UserResponse,
     UserUpdate,
 )
@@ -118,3 +124,81 @@ async def update_me(
     repo = UserRepository(db)
     service = AuthService(repo)
     return await service.update_profile(current_user.id, update_data)
+
+
+# ==================== Admin Endpoints ====================
+
+
+@router.get(
+    "/admin/users",
+    response_model=UserListResponse,
+    summary="[Admin] Get all users",
+    tags=["Admin - Users"],
+)
+async def get_all_users(
+    admin_user: AdminUserDep,
+    db: DBSessionDep,
+    search: str | None = Query(None, description="Search in email/username/display_name"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
+    role: UserRole | None = Query(None, description="Filter by role"),
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> UserListResponse:
+    """Get all users with optional filters (Admin only)."""
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    users, total = await service.get_all_users(search, is_active, role, limit, offset)
+    return UserListResponse(items=users, total=total, limit=limit, offset=offset)
+
+
+@router.get(
+    "/admin/users/{user_id}",
+    response_model=UserResponse,
+    summary="[Admin] Get user by ID",
+    tags=["Admin - Users"],
+)
+async def get_user_by_id(
+    user_id: uuid.UUID,
+    admin_user: AdminUserDep,
+    db: DBSessionDep,
+) -> UserResponse:
+    """Get user by ID (Admin only)."""
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    return await service.get_user_by_id(user_id)
+
+
+@router.put(
+    "/admin/users/{user_id}/status",
+    response_model=UserResponse,
+    summary="[Admin] Update user status",
+    tags=["Admin - Users"],
+)
+async def update_user_status(
+    user_id: uuid.UUID,
+    request: UpdateUserStatusRequest,
+    admin_user: AdminUserDep,
+    db: DBSessionDep,
+) -> UserResponse:
+    """Update user's active status (Admin only)."""
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    return await service.update_user_status(user_id, request.is_active)
+
+
+@router.put(
+    "/admin/users/{user_id}/role",
+    response_model=UserResponse,
+    summary="[Admin] Update user role",
+    tags=["Admin - Users"],
+)
+async def update_user_role(
+    user_id: uuid.UUID,
+    request: UpdateUserRoleRequest,
+    admin_user: AdminUserDep,
+    db: DBSessionDep,
+) -> UserResponse:
+    """Update user's role (Admin only)."""
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    return await service.update_user_role(user_id, request.role)

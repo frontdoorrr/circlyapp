@@ -139,3 +139,47 @@ CATEGORY_METADATA: dict[TemplateCategory, dict[str, str]] = {
         "title": "능력 관련",
     },
 }
+
+
+# ==================== Admin Schemas ====================
+
+
+class PollListResponse(BaseModel):
+    """Schema for paginated poll list response (Admin)."""
+
+    items: list[PollResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class TemplateListResponse(BaseModel):
+    """Schema for paginated template list response (Admin)."""
+
+    items: list[PollTemplateResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class UpdatePollStatusRequest(BaseModel):
+    """Schema for updating poll status (Admin)."""
+
+    status: PollStatus
+
+
+class TemplateCreate(BaseModel):
+    """Schema for creating a new poll template (Admin)."""
+
+    category: TemplateCategory
+    question_text: str
+    emoji: str | None = None
+
+
+class TemplateUpdate(BaseModel):
+    """Schema for updating a poll template (Admin)."""
+
+    category: TemplateCategory | None = None
+    question_text: str | None = None
+    emoji: str | None = None
+    is_active: bool | None = None

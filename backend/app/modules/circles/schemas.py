@@ -108,3 +108,21 @@ class ValidateInviteCodeResponse(BaseModel):
     member_count: int | None = None
     max_members: int | None = None
     message: str | None = None
+
+
+# ==================== Admin Schemas ====================
+
+
+class CircleListResponse(BaseModel):
+    """Schema for paginated circle list response (Admin)."""
+
+    items: list[CircleResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class UpdateCircleStatusRequest(BaseModel):
+    """Schema for updating circle status (Admin)."""
+
+    is_active: bool

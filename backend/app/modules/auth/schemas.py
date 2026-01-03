@@ -5,6 +5,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.enums import UserRole
+
 
 class UserCreate(BaseModel):
     """Schema for creating a new user."""
@@ -72,3 +74,27 @@ class PushTokenUpdate(BaseModel):
     """Schema for updating push notification token."""
 
     push_token: str = Field(..., min_length=1)
+
+
+# ==================== Admin Schemas ====================
+
+
+class UserListResponse(BaseModel):
+    """Schema for paginated user list response (Admin)."""
+
+    items: list[UserResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class UpdateUserStatusRequest(BaseModel):
+    """Schema for updating user status (Admin)."""
+
+    is_active: bool
+
+
+class UpdateUserRoleRequest(BaseModel):
+    """Schema for updating user role (Admin)."""
+
+    role: UserRole

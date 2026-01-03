@@ -96,9 +96,7 @@ class CircleService:
             raise CircleFullError(circle.max_members)
 
         # Add member
-        await self.membership_repo.create(
-            circle.id, user_id, MemberRole.MEMBER, nickname
-        )
+        await self.membership_repo.create(circle.id, user_id, MemberRole.MEMBER, nickname)
 
         # Increment member count
         await self.circle_repo.increment_member_count(circle.id)
@@ -224,9 +222,7 @@ class CircleService:
 
         # Check if user is owner
         if circle.owner_id != user_id:
-            raise BadRequestException(
-                "Only the circle owner can regenerate invite code"
-            )
+            raise BadRequestException("Only the circle owner can regenerate invite code")
 
         # Generate new invite code
         new_code = generate_invite_code()
@@ -275,3 +271,117 @@ class CircleService:
             member_count=circle.member_count,
             max_members=circle.max_members,
         )
+
+    # ==================== Admin Methods ====================
+
+    async def get_all_circles(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[CircleResponse], int]:
+        """Get all circles with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for name/description
+            is_active: Optional filter by active status
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (list of CircleResponse, total count)
+        """
+        circles = await self.circle_repo.find_all(search, is_active, limit, offset)
+        total = await self.circle_repo.count_all(search, is_active)
+        return [CircleResponse.model_validate(c) for c in circles], total
+
+    async def get_circle_detail_admin(
+        self,
+        circle_id: uuid.UUID,
+    ) -> CircleDetail:
+        """Get detailed circle information with members (Admin only).
+
+        Args:
+            circle_id: UUID of the circle
+
+        Returns:
+            CircleDetail with members list
+
+        Raises:
+            CircleNotFoundError: If circle not found
+        """
+        # Get circle with members (no membership check for admin)
+        circle = await self.circle_repo.find_with_members(circle_id)
+        if circle is None:
+            raise CircleNotFoundError(str(circle_id))
+
+        # Build response with member info
+        circle_dict = CircleResponse.model_validate(circle).model_dump()
+
+        # Add members with user info
+        members_info = []
+        for membership in circle.members:
+            member_info = MemberInfo.model_validate(membership)
+            if membership.user:
+                member_info.username = membership.user.username
+                member_info.display_name = membership.user.display_name
+                member_info.profile_emoji = membership.user.profile_emoji
+            members_info.append(member_info)
+
+        circle_dict["members"] = members_info
+        return CircleDetail(**circle_dict)
+
+    async def update_circle_status(
+        self,
+        circle_id: uuid.UUID,
+        is_active: bool,
+    ) -> CircleResponse:
+        """Update circle's active status (Admin only).
+
+        Args:
+            circle_id: UUID of the circle
+            is_active: New active status
+
+        Returns:
+            Updated CircleResponse
+
+        Raises:
+            CircleNotFoundError: If circle not found
+        """
+        circle = await self.circle_repo.update_status(circle_id, is_active)
+        if circle is None:
+            raise CircleNotFoundError(str(circle_id))
+        return CircleResponse.model_validate(circle)
+
+    async def remove_member_admin(
+        self,
+        circle_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> None:
+        """Remove a member from circle (Admin only).
+
+        Args:
+            circle_id: UUID of the circle
+            user_id: UUID of the user to remove
+
+        Raises:
+            CircleNotFoundError: If circle not found
+            BadRequestException: If user is the owner or not a member
+        """
+        circle = await self.circle_repo.find_by_id(circle_id)
+        if circle is None:
+            raise CircleNotFoundError(str(circle_id))
+
+        # Cannot remove owner
+        if circle.owner_id == user_id:
+            raise BadRequestException("Circle owner cannot be removed")
+
+        # Check if user is a member
+        membership = await self.membership_repo.find_membership(circle_id, user_id)
+        if membership is None:
+            raise BadRequestException("User is not a member of this circle")
+
+        # Remove membership
+        await self.membership_repo.delete(circle_id, user_id)
+        await self.circle_repo.decrement_member_count(circle_id)

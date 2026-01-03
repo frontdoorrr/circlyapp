@@ -2,9 +2,10 @@
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.enums import UserRole
 from app.modules.auth.models import User
 from app.modules.auth.schemas import UserCreate, UserUpdate
 
@@ -159,3 +160,122 @@ class UserRepository:
         user.is_active = False
         await self.session.flush()
         return True
+
+    # ==================== Admin Methods ====================
+
+    async def find_all(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+        role: UserRole | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[User]:
+        """Find all users with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for email/username/display_name
+            is_active: Optional filter by active status
+            role: Optional filter by role
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            List of users matching the criteria
+        """
+        stmt = select(User).order_by(User.created_at.desc())
+
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    User.email.ilike(search_term),
+                    User.username.ilike(search_term),
+                    User.display_name.ilike(search_term),
+                )
+            )
+
+        if is_active is not None:
+            stmt = stmt.where(User.is_active == is_active)
+
+        if role is not None:
+            stmt = stmt.where(User.role == role)
+
+        stmt = stmt.limit(limit).offset(offset)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_all(
+        self,
+        search: str | None = None,
+        is_active: bool | None = None,
+        role: UserRole | None = None,
+    ) -> int:
+        """Count all users with optional filters (Admin only).
+
+        Args:
+            search: Optional search term for email/username/display_name
+            is_active: Optional filter by active status
+            role: Optional filter by role
+
+        Returns:
+            Total count of matching users
+        """
+        stmt = select(func.count(User.id))
+
+        if search:
+            search_term = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    User.email.ilike(search_term),
+                    User.username.ilike(search_term),
+                    User.display_name.ilike(search_term),
+                )
+            )
+
+        if is_active is not None:
+            stmt = stmt.where(User.is_active == is_active)
+
+        if role is not None:
+            stmt = stmt.where(User.role == role)
+
+        result = await self.session.execute(stmt)
+        return result.scalar() or 0
+
+    async def update_status(self, user_id: uuid.UUID, is_active: bool) -> User | None:
+        """Update user's active status (Admin only).
+
+        Args:
+            user_id: UUID of the user
+            is_active: New active status
+
+        Returns:
+            Updated user if found, None otherwise
+        """
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return None
+
+        user.is_active = is_active
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def update_role(self, user_id: uuid.UUID, role: UserRole) -> User | None:
+        """Update user's role (Admin only).
+
+        Args:
+            user_id: UUID of the user
+            role: New role
+
+        Returns:
+            Updated user if found, None otherwise
+        """
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return None
+
+        user.role = role
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
