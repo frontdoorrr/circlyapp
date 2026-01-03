@@ -108,3 +108,25 @@ export function useUpdateProfile() {
     },
   });
 }
+
+/**
+ * 회원 탈퇴 훅
+ * TODO: 백엔드 API 구현 후 연동 필요
+ */
+export function useDeleteAccount() {
+  const { logout } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      console.log('[useDeleteAccount] 회원 탈퇴 호출');
+      // TODO: 백엔드 API 호출
+      // await authApi.deleteAccount();
+      await logout();
+    },
+    onSuccess: () => {
+      console.log('[useDeleteAccount] 회원 탈퇴 성공 - 캐시 초기화');
+      queryClient.clear();
+    },
+  });
+}

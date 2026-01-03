@@ -43,6 +43,12 @@ export default function CreateLayout() {
         }}
       />
       <Stack.Screen
+        name="preview"
+        options={{
+          title: '미리보기',
+        }}
+      />
+      <Stack.Screen
         name="success"
         options={{
           title: '투표 생성 완료',

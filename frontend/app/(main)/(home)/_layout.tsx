@@ -6,8 +6,8 @@ import { tokens } from '../../../src/theme';
  *
  * 홈 탭 내부 화면 레이아웃
  * - 진행 중인 투표 목록
- * - 투표 상세 화면
- * - 투표 결과 화면
+ *
+ * Note: poll/[id]와 results/[id]는 root _layout.tsx에서 정의됨
  */
 export default function HomeLayout() {
   return (
@@ -22,21 +22,6 @@ export default function HomeLayout() {
         name="index"
         options={{
           title: '홈',
-        }}
-      />
-      <Stack.Screen
-        name="poll/[id]"
-        options={{
-          title: '투표 참여',
-          animation: 'slide_from_bottom',
-        }}
-      />
-      <Stack.Screen
-        name="results/[id]"
-        options={{
-          title: '투표 결과',
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
         }}
       />
     </Stack>

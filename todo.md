@@ -1155,6 +1155,46 @@
 
 ---
 
+## Phase 12: Unmatched Route 수정 (P0 - 긴급)
+
+> **문제**: _layout.tsx에 정의된 라우트와 실제 파일이 불일치하여 "Unmatched Route" 에러 발생
+
+### 12.1 중복 라우트 정의 제거 (Root에 이미 존재)
+
+#### 12.1.1 `(main)/(home)/_layout.tsx` 수정
+- [x] `poll/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/poll/[id]` 이미 존재)
+- [x] `results/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/results/[id]` 이미 존재)
+- [ ] **커밋**: `fix(frontend): remove duplicate route definitions in home layout`
+
+#### 12.1.2 `(main)/(profile)/_layout.tsx` 수정
+- [x] `circle/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/circle/[id]` 이미 존재)
+- [ ] **커밋**: `fix(frontend): remove duplicate route definition in profile layout`
+
+### 12.2 누락된 라우트 파일 생성
+
+> **참고 문서**: `prd/design/04-user-flow.md` (👤 프로필 플로우 섹션)
+
+#### 12.2.1 Profile 탭 하위 화면 (P1)
+- [x] `app/(main)/(profile)/circles.tsx` - 내 Circle 목록/관리 화면
+  - → `prd/design/04-user-flow.md#Circle 관리` (초대 링크, Circle 설정, 나가기/삭제)
+- [x] `app/(main)/(profile)/settings.tsx` - 설정 화면
+  - → `prd/design/04-user-flow.md#3. [설정]` (계정관리, 앱설정, 정보, 로그아웃/탈퇴)
+- [x] `app/(main)/(profile)/notifications.tsx` - 알림 설정 화면
+  - → `prd/features/03-push-notification.md`, `prd/design/04-user-flow.md#알림 및 푸시 플로우`
+- [ ] **커밋**: `feat(frontend): add profile sub-screens`
+
+#### 12.2.2 Dev 디렉토리 레이아웃 (P2)
+- [x] `app/(dev)/_layout.tsx` - 개발 도구 레이아웃 추가
+- [ ] **커밋**: `fix(frontend): add dev layout for development screens`
+
+### 12.3 라우트 구조 검증
+- [x] 모든 _layout.tsx 파일과 실제 파일 매칭 확인
+- [x] `(create)/_layout.tsx`에 누락된 `preview` 라우트 추가
+- [ ] `npx expo start` 실행하여 Unmatched Route 에러 해결 확인
+- [ ] **커밋**: `fix(frontend): resolve all unmatched route errors`
+
+---
+
 ## 고도화 작업 (TODO)
 
 - [ ] **Supabase Auth**: anon key → Publishable key로 변경 (보안 강화)

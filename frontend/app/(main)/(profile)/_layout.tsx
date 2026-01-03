@@ -8,6 +8,9 @@ import { tokens } from '../../../src/theme';
  * - 내 프로필
  * - Circle 관리
  * - 설정
+ * - 알림 설정
+ *
+ * Note: circle/[id]는 root _layout.tsx에서 정의됨
  */
 export default function ProfileLayout() {
   return (
@@ -28,12 +31,6 @@ export default function ProfileLayout() {
         name="circles"
         options={{
           title: '내 Circle',
-        }}
-      />
-      <Stack.Screen
-        name="circle/[id]"
-        options={{
-          title: 'Circle 상세',
         }}
       />
       <Stack.Screen
