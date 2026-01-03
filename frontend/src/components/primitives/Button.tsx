@@ -5,6 +5,8 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  AccessibilityRole,
+  AccessibilityState,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -28,6 +30,11 @@ interface ButtonProps {
   loading?: boolean;
   fullWidth?: boolean;
   style?: ViewStyle;
+  // Accessibility props
+  accessibilityRole?: AccessibilityRole;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityState?: AccessibilityState;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -41,6 +48,10 @@ export function Button({
   loading = false,
   fullWidth = false,
   style,
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
 }: ButtonProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -94,6 +105,10 @@ export function Button({
       onPressOut={handlePressOut}
       disabled={disabled || loading}
       style={[buttonStyles, animatedStyle]}
+      accessibilityRole={accessibilityRole || 'button'}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={accessibilityState}
     >
       {loading ? (
         <ActivityIndicator
