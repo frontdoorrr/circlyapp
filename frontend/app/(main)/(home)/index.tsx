@@ -180,7 +180,7 @@ export default function HomeScreen() {
   const handleActivePollPress = useCallback(
     (pollId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      router.push(`/poll/${pollId}/vote` as any);
+      router.push(`/poll/${pollId}` as any);
     },
     [router]
   );
@@ -189,7 +189,7 @@ export default function HomeScreen() {
   const handleCompletedPollPress = useCallback(
     (pollId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      router.push(`/poll/${pollId}/result` as any);
+      router.push(`/results/${pollId}` as any);
     },
     [router]
   );

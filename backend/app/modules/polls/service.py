@@ -54,6 +54,35 @@ class PollService:
         templates = await self.template_repo.find_all(category)
         return [PollTemplateResponse.model_validate(t) for t in templates]
 
+    async def get_poll(
+        self,
+        poll_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> PollResponse:
+        """Get a poll by ID.
+
+        Args:
+            poll_id: UUID of the poll
+            user_id: UUID of the requesting user (for membership check)
+
+        Returns:
+            PollResponse with poll data
+
+        Raises:
+            PollNotFoundError: If poll not found
+            BadRequestException: If user is not a member of the poll's circle
+        """
+        poll = await self.poll_repo.find_by_id(poll_id)
+        if poll is None:
+            raise PollNotFoundError()
+
+        # Verify user is a member of the circle
+        is_member = await self.membership_repo.exists(poll.circle_id, user_id)
+        if not is_member:
+            raise BadRequestException("You are not a member of this circle")
+
+        return PollResponse.model_validate(poll)
+
     async def create_poll(
         self,
         circle_id: uuid.UUID,

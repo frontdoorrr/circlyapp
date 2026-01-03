@@ -1164,11 +1164,9 @@
 #### 12.1.1 `(main)/(home)/_layout.tsx` 수정
 - [x] `poll/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/poll/[id]` 이미 존재)
 - [x] `results/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/results/[id]` 이미 존재)
-- [ ] **커밋**: `fix(frontend): remove duplicate route definitions in home layout`
 
 #### 12.1.2 `(main)/(profile)/_layout.tsx` 수정
 - [x] `circle/[id]` 라우트 정의 제거 (root `_layout.tsx`에 `/circle/[id]` 이미 존재)
-- [ ] **커밋**: `fix(frontend): remove duplicate route definition in profile layout`
 
 ### 12.2 누락된 라우트 파일 생성
 
@@ -1181,17 +1179,15 @@
   - → `prd/design/04-user-flow.md#3. [설정]` (계정관리, 앱설정, 정보, 로그아웃/탈퇴)
 - [x] `app/(main)/(profile)/notifications.tsx` - 알림 설정 화면
   - → `prd/features/03-push-notification.md`, `prd/design/04-user-flow.md#알림 및 푸시 플로우`
-- [ ] **커밋**: `feat(frontend): add profile sub-screens`
 
 #### 12.2.2 Dev 디렉토리 레이아웃 (P2)
 - [x] `app/(dev)/_layout.tsx` - 개발 도구 레이아웃 추가
-- [ ] **커밋**: `fix(frontend): add dev layout for development screens`
 
 ### 12.3 라우트 구조 검증
 - [x] 모든 _layout.tsx 파일과 실제 파일 매칭 확인
 - [x] `(create)/_layout.tsx`에 누락된 `preview` 라우트 추가
 - [ ] `npx expo start` 실행하여 Unmatched Route 에러 해결 확인
-- [ ] **커밋**: `fix(frontend): resolve all unmatched route errors`
+- [x] **커밋**: `fix(frontend): resolve unmatched route errors and add profile sub-screens`
 
 ---
 

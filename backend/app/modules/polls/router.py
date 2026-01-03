@@ -78,6 +78,20 @@ async def create_poll(
     return await service.create_poll(circle_id, current_user.id, poll_data)
 
 
+@router.get(
+    "/{poll_id}",
+    response_model=PollResponse,
+    summary="Get poll by ID",
+)
+async def get_poll(
+    poll_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> PollResponse:
+    """Get a poll by ID. User must be a member of the poll's circle."""
+    return await service.get_poll(poll_id, current_user.id)
+
+
 @router.post(
     "/{poll_id}/vote",
     response_model=VoteResponse,
