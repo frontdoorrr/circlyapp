@@ -16,7 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.config import get_settings
 from app.core.enums import TemplateCategory
-from app.modules.polls.models import PollTemplate
+
+# Import all models to ensure SQLAlchemy relationships are resolved
+from app.modules.auth.models import User  # noqa: F401
+from app.modules.circles.models import Circle, CircleMember  # noqa: F401
+from app.modules.notifications.models import Notification  # noqa: F401
+from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
+from app.modules.reports.models import Report  # noqa: F401
 
 # Poll templates data as defined in DSL.md
 POLL_TEMPLATES = [

@@ -46,6 +46,16 @@ def verify_supabase_token(token: str) -> dict[str, Any] | None:
         print("[JWT] Warning: supabase_jwt_secret not configured")
         return None
 
+    # Debug: decode without verification to see token contents
+    try:
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        expected_issuer = f"{settings.supabase_url}/auth/v1"
+        print(f"[JWT] Token issuer: {unverified.get('iss')}")
+        print(f"[JWT] Expected issuer: {expected_issuer}")
+        print(f"[JWT] Token audience: {unverified.get('aud')}")
+    except Exception as e:
+        print(f"[JWT] Failed to decode token for debugging: {e}")
+
     try:
         payload = jwt.decode(
             token,
@@ -53,16 +63,21 @@ def verify_supabase_token(token: str) -> dict[str, Any] | None:
             algorithms=["HS256"],
             audience="authenticated",
             issuer=f"{settings.supabase_url}/auth/v1",
+            leeway=60,  # Allow 60 seconds clock skew
         )
+        print("[JWT] Token verified successfully")
         return payload
     except jwt.exceptions.ExpiredSignatureError:
         print("[JWT] Token expired")
         return None
-    except jwt.exceptions.InvalidAudienceError:
-        print("[JWT] Invalid audience")
+    except jwt.exceptions.InvalidAudienceError as e:
+        print(f"[JWT] Invalid audience: {e}")
         return None
-    except jwt.exceptions.InvalidIssuerError:
-        print("[JWT] Invalid issuer")
+    except jwt.exceptions.InvalidIssuerError as e:
+        print(f"[JWT] Invalid issuer: {e}")
+        return None
+    except jwt.exceptions.InvalidSignatureError:
+        print("[JWT] Invalid signature - check SUPABASE_JWT_SECRET")
         return None
     except jwt.exceptions.PyJWTError as e:
         print(f"[JWT] Verification failed: {e}")
