@@ -22,6 +22,7 @@ import {
   PollCard,
   ActivePollData,
   CompletedPollData,
+  VoteStatus,
 } from '../../../src/components/patterns/PollCard';
 import { EmptyState } from '../../../src/components/states/EmptyState';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
@@ -128,7 +129,7 @@ export default function HomeScreen() {
         participationRate: Math.round(
           ((poll.vote_count || 0) / (poll.total_members || 15)) * 100
         ),
-        voteStatus: poll.has_voted ? 'voted' : 'not_voted',
+        voteStatus: (poll.has_voted ? 'voted' : 'not_voted') as VoteStatus,
         rawEndsAt: poll.ends_at,
       }))
       .sort((a, b) => new Date(a.rawEndsAt).getTime() - new Date(b.rawEndsAt).getTime());
@@ -206,6 +207,12 @@ export default function HomeScreen() {
   // 투표 만들기
   const handleCreatePoll = useCallback(() => {
     router.push('/(main)/(create)' as any);
+  }, [router]);
+
+  // Circle 참여 (코드로 참여)
+  const handleJoinCircle = useCallback(() => {
+    Haptics.selectionAsync();
+    router.push('/join/invite-code' as any);
   }, [router]);
 
   // ============================================================================
@@ -313,20 +320,23 @@ export default function HomeScreen() {
         onProfilePress={handleProfilePress}
       />
 
-      {/* Tab Selector */}
-      <View style={styles.tabContainer}>
-        <TabButton
-          label="진행 중"
-          count={transformedActivePolls.length}
-          isActive={activeTab === 'active'}
-          onPress={() => handleTabChange('active')}
-        />
-        <TabButton
-          label="완료됨"
-          count={transformedCompletedPolls.length}
-          isActive={activeTab === 'completed'}
-          onPress={() => handleTabChange('completed')}
-        />
+      {/* Tab Selector with Join Button */}
+      <View style={styles.tabRow}>
+        <View style={styles.tabContainer}>
+          <TabButton
+            label="진행 중"
+            count={transformedActivePolls.length}
+            isActive={activeTab === 'active'}
+            onPress={() => handleTabChange('active')}
+          />
+          <TabButton
+            label="완료됨"
+            count={transformedCompletedPolls.length}
+            isActive={activeTab === 'completed'}
+            onPress={() => handleTabChange('completed')}
+          />
+        </View>
+        <JoinCircleButton onPress={handleJoinCircle} />
       </View>
 
       {/* Content */}
@@ -375,6 +385,43 @@ export default function HomeScreen() {
         />
       )}
     </View>
+  );
+}
+
+// ============================================================================
+// Join Circle Button Component
+// ============================================================================
+
+interface JoinCircleButtonProps {
+  onPress: () => void;
+}
+
+function JoinCircleButton({ onPress }: JoinCircleButtonProps) {
+  return (
+    <Animated.View entering={FadeIn.duration(300)}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onPress={onPress}
+        style={styles.joinButton}
+        accessibilityRole="button"
+        accessibilityLabel="코드로 Circle 참여하기"
+        accessibilityHint="초대 코드를 입력하여 새로운 Circle에 참여합니다"
+      >
+        <View style={styles.joinButtonContent}>
+          <Text variant="lg" style={styles.joinButtonEmoji}>
+            🎯
+          </Text>
+          <Text
+            variant="sm"
+            weight="medium"
+            color={tokens.colors.primary[600]}
+          >
+            참여
+          </Text>
+        </View>
+      </Button>
+    </Animated.View>
   );
 }
 
@@ -466,11 +513,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     flex: 1,
   },
-  // Tab styles
-  tabContainer: {
+  // Tab row with join button
+  tabRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    gap: spacing[3],
+  },
+  // Tab styles
+  tabContainer: {
+    flex: 1,
+    flexDirection: 'row',
     gap: spacing[2],
   },
   tabButton: {
@@ -503,5 +557,22 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: spacing[3], // 12px
+  },
+  // Join Circle Button styles
+  joinButton: {
+    backgroundColor: tokens.colors.primary[50],
+    borderRadius: 12,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderWidth: 1,
+    borderColor: tokens.colors.primary[200],
+  },
+  joinButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+  },
+  joinButtonEmoji: {
+    fontSize: 16,
   },
 });

@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { QueryProvider } from '../src/providers/QueryProvider';
 import { AppInitializer } from '../src/providers/AppInitializer';
@@ -35,11 +37,75 @@ export default function RootLayout() {
 }
 
 /**
+ * Deep Link Handler Hook
+ *
+ * 딥링크 처리:
+ * - circly://join?code={code}
+ * - https://circly.app/join/{unique_id}
+ */
+function useDeepLinkHandler() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Handle deep link when app is opened from link
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('[DeepLink] Received URL:', url);
+
+      try {
+        const parsedUrl = Linking.parse(url);
+        console.log('[DeepLink] Parsed URL:', parsedUrl);
+
+        // Handle circly://join?code={code}
+        if (parsedUrl.path === 'join' && parsedUrl.queryParams?.code) {
+          const code = String(parsedUrl.queryParams.code).toUpperCase();
+          console.log('[DeepLink] Navigating to invite-code with code:', code);
+          router.push({
+            pathname: '/join/invite-code',
+            params: { code },
+          });
+          return;
+        }
+
+        // Handle https://circly.app/join/{unique_id} or circly://join/{id}
+        if (parsedUrl.path?.startsWith('join/')) {
+          const uniqueId = parsedUrl.path.replace('join/', '');
+          console.log('[DeepLink] Navigating with unique ID:', uniqueId);
+          // TODO: Convert unique_id to invite_code via API
+          router.push('/join/invite-code');
+          return;
+        }
+      } catch (error) {
+        console.error('[DeepLink] Error parsing URL:', error);
+      }
+    };
+
+    // Subscribe to deep link events
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened from deep link (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('[DeepLink] Initial URL:', url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
+}
+
+/**
  * Themed App Component
  * ThemeProvider 내부에서만 useTheme 사용 가능
  */
 function ThemedApp() {
   const { theme, isDark } = useTheme();
+
+  // Initialize deep link handler
+  useDeepLinkHandler();
 
   return (
     <>
