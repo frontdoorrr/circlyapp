@@ -12,6 +12,7 @@ from app.modules.circles.schemas import (
     JoinByCodeRequest,
     MemberInfo,
     RegenerateInviteCodeResponse,
+    ValidateInviteCodeResponse,
 )
 
 router = APIRouter(prefix="/circles", tags=["Circles"])
@@ -60,6 +61,23 @@ async def get_circle(
 ) -> CircleDetail:
     """Get detailed circle information including members."""
     return await service.get_circle_detail(circle_id, current_user.id)
+
+
+@router.get(
+    "/validate-code/{invite_code}",
+    response_model=ValidateInviteCodeResponse,
+    summary="Validate invite code",
+)
+async def validate_invite_code(
+    invite_code: str,
+    service: CircleServiceDep,
+) -> ValidateInviteCodeResponse:
+    """Validate an invite code and return circle info if valid.
+
+    This endpoint does not require authentication, allowing users to check
+    invite codes before signing in.
+    """
+    return await service.validate_invite_code(invite_code.upper())
 
 
 @router.post(

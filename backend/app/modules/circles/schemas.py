@@ -97,3 +97,14 @@ class RegenerateInviteCodeResponse(BaseModel):
 
     invite_code: str
     message: str = "Invite code regenerated successfully"
+
+
+class ValidateInviteCodeResponse(BaseModel):
+    """Schema for validate invite code response."""
+
+    valid: bool
+    circle_name: str | None = None
+    circle_id: uuid.UUID | None = None
+    member_count: int | None = None
+    max_members: int | None = None
+    message: str | None = None

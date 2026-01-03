@@ -18,6 +18,7 @@ from app.modules.circles.schemas import (
     CircleResponse,
     MemberInfo,
     RegenerateInviteCodeResponse,
+    ValidateInviteCodeResponse,
 )
 
 
@@ -234,3 +235,43 @@ class CircleService:
         await self.circle_repo.update_invite_code(circle_id, new_code)
 
         return RegenerateInviteCodeResponse(invite_code=new_code)
+
+    async def validate_invite_code(
+        self,
+        invite_code: str,
+    ) -> ValidateInviteCodeResponse:
+        """Validate an invite code and return circle info if valid.
+
+        Args:
+            invite_code: 6-character invite code
+
+        Returns:
+            ValidateInviteCodeResponse with validation result and circle info
+        """
+        # Find circle by invite code
+        circle = await self.circle_repo.find_by_invite_code(invite_code)
+
+        if circle is None or not circle.is_active:
+            return ValidateInviteCodeResponse(
+                valid=False,
+                message="Invalid or expired invite code",
+            )
+
+        # Check if circle is full
+        if circle.member_count >= circle.max_members:
+            return ValidateInviteCodeResponse(
+                valid=False,
+                circle_name=circle.name,
+                circle_id=circle.id,
+                member_count=circle.member_count,
+                max_members=circle.max_members,
+                message="This circle is full",
+            )
+
+        return ValidateInviteCodeResponse(
+            valid=True,
+            circle_name=circle.name,
+            circle_id=circle.id,
+            member_count=circle.member_count,
+            max_members=circle.max_members,
+        )
