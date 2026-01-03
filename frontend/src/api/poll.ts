@@ -91,7 +91,7 @@ export async function getPollDetail(pollId: string): Promise<PollDetailResponse>
   console.log('[API] GET /polls/:pollId 요청:', pollId);
   const response = await apiClient.get<ApiResponse<PollDetailResponse>>(`/polls/${pollId}`);
   console.log('[API] GET /polls/:pollId 응답:', { status: response.status });
-  return extractData<PollDetailResponse>(response.data, (d) => d.id && d.question);
+  return extractData<PollDetailResponse>(response.data, (d) => d.id && d.question_text);
 }
 
 /**
