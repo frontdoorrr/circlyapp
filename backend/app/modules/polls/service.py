@@ -263,3 +263,27 @@ class PollService:
             )
 
         return categories
+
+    async def get_my_polls(
+        self, user_id: uuid.UUID, status: PollStatus | None = None
+    ) -> list[PollResponse]:
+        """Get all polls from circles the user belongs to.
+
+        Args:
+            user_id: UUID of the user
+            status: Optional status filter (ACTIVE or COMPLETED)
+
+        Returns:
+            List of PollResponse from user's circles
+        """
+        # Get all circle IDs the user belongs to
+        memberships = await self.membership_repo.find_by_user_id(user_id)
+        circle_ids = [m.circle_id for m in memberships]
+
+        if not circle_ids:
+            return []
+
+        # Get polls from user's circles
+        polls = await self.poll_repo.find_by_user_circles(circle_ids, status)
+
+        return [PollResponse.model_validate(p) for p in polls]

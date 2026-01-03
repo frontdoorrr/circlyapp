@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Query, status
 
-from app.core.enums import TemplateCategory
+from app.core.enums import PollStatus, TemplateCategory
 from app.deps import CurrentUserDep, PollServiceDep
 from app.modules.polls.schemas import (
     CategoryInfo,
@@ -16,6 +16,20 @@ from app.modules.polls.schemas import (
 )
 
 router = APIRouter(prefix="/polls", tags=["Polls"])
+
+
+@router.get(
+    "/me",
+    response_model=list[PollResponse],
+    summary="Get my polls",
+)
+async def get_my_polls(
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+    status: PollStatus | None = Query(None, description="Filter by status (ACTIVE or COMPLETED)"),
+) -> list[PollResponse]:
+    """Get all polls from circles the current user belongs to."""
+    return await service.get_my_polls(current_user.id, status)
 
 
 @router.get(

@@ -212,6 +212,31 @@ class PollRepository:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    async def find_by_user_circles(
+        self, circle_ids: list[uuid.UUID], status: PollStatus | None = None
+    ) -> list[Poll]:
+        """Find polls from user's circles.
+
+        Args:
+            circle_ids: List of circle UUIDs the user belongs to
+            status: Optional status filter
+
+        Returns:
+            List of polls from user's circles
+        """
+        if not circle_ids:
+            return []
+
+        query = select(Poll).where(Poll.circle_id.in_(circle_ids))
+
+        if status:
+            query = query.where(Poll.status == status)
+
+        query = query.order_by(Poll.created_at.desc())
+
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
 
 class VoteRepository:
     """Repository for Vote model."""
