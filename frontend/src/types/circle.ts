@@ -52,3 +52,12 @@ export interface RegenerateInviteCodeResponse {
   message: string; // 성공 메시지
   invite_code_expires_at?: string; // 만료 시간 (선택, 백엔드 확인 필요)
 }
+
+export interface ValidateInviteCodeResponse {
+  valid: boolean;
+  circle_name: string | null;
+  circle_id: string | null; // UUID
+  member_count: number | null;
+  max_members: number | null;
+  message: string | null;
+}

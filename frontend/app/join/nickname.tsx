@@ -1,28 +1,39 @@
 import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { tokens } from '../../src/theme';
+import { useJoinCircle } from '../../src/hooks/useCircles';
 
 /**
  * 닉네임 설정 화면
  *
  * Circle 참여를 위한 닉네임을 설정합니다.
  * - 2-10자 닉네임 입력
- * - 중복 확인
- * - 완료 시 메인 화면으로 이동
+ * - Circle 가입 API 호출
+ * - 완료 시 성공 화면으로 이동
  */
 export default function NicknameScreen() {
-  const { inviteCode, circleName } = useLocalSearchParams<{
+  const { inviteCode, circleName, circleId, memberCount, maxMembers } = useLocalSearchParams<{
     inviteCode: string;
     circleName: string;
+    circleId: string;
+    memberCount: string;
+    maxMembers: string;
   }>();
 
   const [nickname, setNickname] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState('');
 
+  const joinMutation = useJoinCircle();
+  const isJoining = joinMutation.isPending;
+
+  // Animation values
+  const buttonScale = useSharedValue(1);
+
   const handleNicknameChange = (text: string) => {
-    // 2-10자 제한, 특수문자 제한
+    // 2-10자 제한
     const cleaned = text.slice(0, 10);
     setNickname(cleaned);
     setError('');
@@ -31,41 +42,63 @@ export default function NicknameScreen() {
   const handleJoin = async () => {
     if (nickname.length < 2) {
       setError('닉네임은 2자 이상이어야 해요');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
     if (nickname.length > 10) {
       setError('닉네임은 10자 이하여야 해요');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
-    setIsJoining(true);
-    setError('');
+    // Button press animation
+    buttonScale.value = withSpring(0.95, { damping: 15 }, () => {
+      buttonScale.value = withSpring(1);
+    });
 
     try {
-      // TODO: API 호출하여 Circle 참여
-      // const response = await joinCircle({
-      //   inviteCode,
-      //   nickname,
-      // });
+      await joinMutation.mutateAsync({
+        invite_code: inviteCode,
+        nickname: nickname,
+      });
 
-      // 임시로 딜레이
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // 성공 시 메인 화면으로 이동 (replace로 뒤로가기 방지)
-      router.replace('/(main)/(home)');
+      // 성공 시 성공 화면으로 이동 (뒤로가기 방지를 위해 replace)
+      router.replace({
+        pathname: '/join/success',
+        params: {
+          circleName: circleName,
+          nickname: nickname,
+        },
+      });
     } catch (err: any) {
-      if (err.message?.includes('duplicate')) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      console.error('[Nickname] Join error:', err);
+
+      // 에러 처리
+      const errorMessage = err?.response?.data?.error?.message || err?.message || '';
+
+      if (errorMessage.includes('already') || errorMessage.includes('ALREADY_MEMBER')) {
+        setError('이미 참여 중인 Circle이에요');
+      } else if (errorMessage.includes('duplicate') || errorMessage.includes('nickname')) {
         setError('이미 사용 중인 닉네임이에요');
+      } else if (errorMessage.includes('full') || errorMessage.includes('CIRCLE_FULL')) {
+        setError('이 Circle은 인원이 가득 찼어요');
+      } else if (errorMessage.includes('invalid') || errorMessage.includes('INVALID_INVITE_CODE')) {
+        setError('초대 코드가 만료되었어요');
       } else {
         setError('참여에 실패했어요. 다시 시도해주세요');
       }
-    } finally {
-      setIsJoining(false);
     }
   };
 
   const isNicknameValid = nickname.length >= 2 && nickname.length <= 10;
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
 
   return (
     <>
@@ -80,29 +113,37 @@ export default function NicknameScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           {/* 헤더 */}
-          <View style={styles.header}>
+          <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
             <Text style={styles.emoji}>👋</Text>
             <Text style={styles.title}>반가워요!</Text>
             <Text style={styles.description}>
               {circleName}에서 사용할{'\n'}닉네임을 정해주세요
             </Text>
-          </View>
+          </Animated.View>
 
           {/* Circle 정보 */}
-          <View style={styles.circleCard}>
+          <Animated.View entering={FadeIn.delay(100).duration(400)} style={styles.circleCard}>
             <Text style={styles.circleLabel}>참여할 Circle</Text>
             <Text style={styles.circleName}>{circleName}</Text>
-            <Text style={styles.circleCode}>초대 코드: {inviteCode}</Text>
-          </View>
+            <View style={styles.circleInfo}>
+              <Text style={styles.circleInfoText}>
+                👥 {memberCount}/{maxMembers}명
+              </Text>
+              <Text style={styles.circleInfoDot}>•</Text>
+              <Text style={styles.circleInfoText}>
+                📝 {inviteCode}
+              </Text>
+            </View>
+          </Animated.View>
 
           {/* 닉네임 입력 */}
-          <View style={styles.inputSection}>
+          <Animated.View entering={FadeIn.delay(200).duration(400)} style={styles.inputSection}>
             <Text style={styles.inputLabel}>닉네임</Text>
             <TextInput
               style={[
                 styles.input,
                 error && styles.inputError,
-                isNicknameValid && styles.inputValid,
+                isNicknameValid && !error && styles.inputValid,
               ]}
               value={nickname}
               onChangeText={handleNicknameChange}
@@ -112,11 +153,15 @@ export default function NicknameScreen() {
               autoCorrect={false}
               maxLength={10}
               editable={!isJoining}
+              accessibilityLabel="닉네임 입력"
+              accessibilityHint="2-10자로 입력하세요"
             />
 
             <View style={styles.inputFooter}>
               {error ? (
-                <Text style={styles.errorText}>{error}</Text>
+                <Animated.Text entering={FadeIn.duration(200)} style={styles.errorText}>
+                  {error}
+                </Animated.Text>
               ) : (
                 <Text style={styles.hint}>2-10자로 입력해주세요</Text>
               )}
@@ -129,38 +174,43 @@ export default function NicknameScreen() {
                 {nickname.length}/10
               </Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* 안내 사항 */}
-          <View style={styles.infoCard}>
+          <Animated.View entering={FadeIn.delay(300).duration(400)} style={styles.infoCard}>
             <Text style={styles.infoTitle}>💡 닉네임 안내</Text>
             <Text style={styles.infoText}>
               • 같은 Circle 내에서 중복될 수 없어요{'\n'}
               • 나중에 프로필에서 변경할 수 있어요{'\n'}
               • 친구들이 알아볼 수 있는 이름을 추천해요
             </Text>
-          </View>
+          </Animated.View>
         </View>
 
         {/* 완료 버튼 */}
         <View style={styles.footer}>
-          <Pressable
-            style={[
-              styles.joinButton,
-              (!isNicknameValid || isJoining) && styles.joinButtonDisabled,
-            ]}
-            onPress={handleJoin}
-            disabled={!isNicknameValid || isJoining}
-          >
-            <Text
+          <Animated.View style={buttonAnimatedStyle}>
+            <Pressable
               style={[
-                styles.joinButtonText,
-                (!isNicknameValid || isJoining) && styles.joinButtonTextDisabled,
+                styles.joinButton,
+                (!isNicknameValid || isJoining) && styles.joinButtonDisabled,
               ]}
+              onPress={handleJoin}
+              disabled={!isNicknameValid || isJoining}
+              accessibilityRole="button"
+              accessibilityLabel={isJoining ? '참여 중' : '시작하기'}
+              accessibilityState={{ disabled: !isNicknameValid || isJoining }}
             >
-              {isJoining ? '참여 중...' : '시작하기'}
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.joinButtonText,
+                  (!isNicknameValid || isJoining) && styles.joinButtonTextDisabled,
+                ]}
+              >
+                {isJoining ? '참여 중...' : '시작하기'}
+              </Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </View>
     </>
@@ -203,6 +253,8 @@ const styles = StyleSheet.create({
     borderRadius: tokens.borderRadius.lg,
     marginBottom: tokens.spacing.xl,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: tokens.colors.primary[100],
   },
   circleLabel: {
     fontSize: tokens.typography.fontSize.sm,
@@ -213,11 +265,20 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.fontSize.xl,
     fontWeight: tokens.typography.fontWeight.semibold,
     color: tokens.colors.primary[700],
-    marginBottom: tokens.spacing.xs,
+    marginBottom: tokens.spacing.sm,
   },
-  circleCode: {
+  circleInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.sm,
+  },
+  circleInfoText: {
     fontSize: tokens.typography.fontSize.sm,
     color: tokens.colors.primary[500],
+  },
+  circleInfoDot: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.primary[300],
   },
   inputSection: {
     marginBottom: tokens.spacing.xl,

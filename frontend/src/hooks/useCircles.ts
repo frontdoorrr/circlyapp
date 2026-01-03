@@ -3,7 +3,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as circleApi from '../api/circle';
-import { CircleCreate, JoinByCodeRequest } from '../types/circle';
+import { CircleCreate, JoinByCodeRequest, ValidateInviteCodeResponse } from '../types/circle';
 
 /**
  * 내 Circle 목록 조회
@@ -44,6 +44,15 @@ export function useCreateCircle() {
 }
 
 /**
+ * 초대 코드 검증
+ */
+export function useValidateInviteCode() {
+  return useMutation({
+    mutationFn: (code: string) => circleApi.validateInviteCode(code),
+  });
+}
+
+/**
  * Circle 참여 (초대 코드)
  */
 export function useJoinCircle() {
@@ -53,6 +62,7 @@ export function useJoinCircle() {
     mutationFn: (data: JoinByCodeRequest) => circleApi.joinCircleByCode(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['circles', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
     },
   });
 }

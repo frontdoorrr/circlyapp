@@ -10,6 +10,7 @@ import {
   JoinByCodeRequest,
   MemberInfo,
   RegenerateInviteCodeResponse,
+  ValidateInviteCodeResponse,
 } from '../types/circle';
 import { ApiResponse } from '../types/api';
 import { apiClient } from './client';
@@ -56,6 +57,18 @@ export async function getCircleDetail(circleId: string): Promise<CircleDetail> {
   const response = await apiClient.get<ApiResponse<CircleDetail>>(`/circles/${circleId}`);
   console.log('[API] GET /circles/:id 응답:', { status: response.status });
   return extractData<CircleDetail>(response.data, (d) => d.id && d.members);
+}
+
+/**
+ * 초대 코드 검증
+ */
+export async function validateInviteCode(code: string): Promise<ValidateInviteCodeResponse> {
+  console.log('[API] GET /circles/validate-code/:code 요청:', code);
+  const response = await apiClient.get<ApiResponse<ValidateInviteCodeResponse>>(
+    `/circles/validate-code/${code.toUpperCase()}`
+  );
+  console.log('[API] GET /circles/validate-code/:code 응답:', { status: response.status });
+  return extractData<ValidateInviteCodeResponse>(response.data, (d) => typeof d.valid === 'boolean');
 }
 
 /**
