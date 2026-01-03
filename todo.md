@@ -1074,6 +1074,70 @@
 - [ ] **테스트**: 애니메이션 부드러움 및 성능 확인
 - [ ] **커밋**: `feat(frontend): add Home Tab animations`
 
+### 11.12 Circle 참여 플로우 (P0)
+
+> **참고 문서**: `prd/features/02-circle-invite.md`, `prd/design/04-user-flow.md`
+
+#### 11.12.1 Home 탭 진입점 추가 (P0)
+- [x] `app/(main)/(home)/index.tsx` - "코드로 참여" 버튼 추가
+  - [x] 탭 영역 오른쪽에 아이콘 버튼 배치
+  - [x] 🎯 이모지 + "참여" 텍스트
+  - [x] Press 애니메이션 및 Haptic feedback
+  - [x] router.push('/join/invite-code') 연결
+- [ ] **테스트**: 버튼 탭 동작 및 화면 전환 확인
+- [ ] **커밋**: `feat(frontend): add join by code button to Home Tab`
+
+#### 11.12.2 초대 코드 입력 API 연동 (P0)
+- [x] `backend/app/modules/circles/router.py` - GET /circles/validate-code/{code} 엔드포인트 추가
+- [x] `backend/app/modules/circles/service.py` - validate_invite_code 메서드 추가
+- [x] `backend/app/modules/circles/schemas.py` - ValidateInviteCodeResponse 스키마 추가
+- [x] `src/api/circle.ts` - validateInviteCode 함수 구현
+  - [x] GET /circles/validate-code/{code}
+  - [x] 응답: Circle 정보 (이름, 멤버 수, 유효성)
+- [x] `src/types/circle.ts` - ValidateInviteCodeResponse 타입 추가
+- [x] `src/hooks/useCircles.ts` - useValidateInviteCode 훅 추가
+- [x] `app/join/invite-code.tsx` - API 연동 완료
+  - [x] 코드 유효성 검증 API 호출
+  - [x] 에러 처리 (만료, 잘못된 코드, 인원 초과)
+  - [x] Circle 정보 표시 후 닉네임 화면으로 전달
+  - [x] 딥링크 코드 자동 입력 지원
+- [ ] **테스트**: 유효/무효 코드 케이스 확인
+- [ ] **커밋**: `feat(frontend): integrate invite code validation API`
+
+#### 11.12.3 닉네임 설정 및 Circle 가입 API 연동 (P0)
+- [x] `src/api/circle.ts` - joinCircleByCode 함수 (이미 존재)
+  - [x] POST /circles/join/code → `docs/DSL.md#3.2 (CircleRouter)`
+  - [x] Request: { invite_code, nickname }
+  - [x] Response: CircleResponse
+- [x] `src/hooks/useCircles.ts` - useJoinCircle 훅 (이미 존재, 개선됨)
+- [x] `app/join/nickname.tsx` - API 연동 완료
+  - [x] Circle 가입 API 호출
+  - [x] 닉네임 중복 에러 처리
+  - [x] 성공 시 성공 화면으로 이동 (router.replace)
+  - [x] Circle 목록 및 Poll 캐시 무효화 (queryClient.invalidateQueries)
+- [ ] **테스트**: 가입 성공/실패 케이스 확인
+- [ ] **커밋**: `feat(frontend): integrate circle join API`
+
+#### 11.12.4 딥링크 처리 (P1)
+- [x] `app/_layout.tsx` - 딥링크 핸들링 설정
+  - [x] Expo Linking 설정: `circly://join?code={code}`
+  - [x] Universal Link: `https://circly.app/join/{unique_id}` (기본 구조)
+- [x] 딥링크 파라미터 파싱 및 라우팅
+  - [x] 유효한 코드 → /join/invite-code?code={code} (자동 입력)
+  - [x] useDeepLinkHandler 훅 구현
+- [ ] **테스트**: 딥링크 클릭 시 앱 실행 및 화면 이동 확인
+- [ ] **커밋**: `feat(frontend): add deep link handling for circle invite`
+
+#### 11.12.5 가입 성공 화면 (P2)
+- [x] `app/join/success.tsx` - 가입 완료 화면
+  - [x] 🎉 축하 애니메이션 (bounce + rotate)
+  - [x] Confetti 파티클 효과
+  - [x] Circle 정보 및 닉네임 표시
+  - [x] 프로그레스 바 애니메이션
+  - [x] 자동 전환 (3초 후 Home)
+  - [x] Haptic feedback (success)
+- [ ] **커밋**: `feat(frontend): add circle join success screen`
+
 ---
 
 ## 참고 문서 목록
