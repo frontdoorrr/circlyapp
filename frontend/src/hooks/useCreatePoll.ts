@@ -60,7 +60,7 @@ export const useCreatePoll = () => {
       queryClient.invalidateQueries({ queryKey: ['circles', data.circle_id] });
 
       // Navigate to success screen
-      router.push('/create/success');
+      router.push('/(main)/(create)/success');
     },
 
     onError: async (error: any) => {
