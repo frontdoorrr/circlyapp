@@ -7,7 +7,7 @@ import type { PollDuration } from '../stores/pollCreate';
 /**
  * 투표 생성 API 연동 훅
  *
- * POST /circles/{circleId}/polls 엔드포인트를 호출하여
+ * POST /polls/circles/{circleId} 엔드포인트를 호출하여
  * 새로운 투표를 생성합니다.
  */
 
@@ -56,7 +56,7 @@ export const useCreatePoll = () => {
       };
 
       const response = await apiClient.post<CreatePollResponse>(
-        `/circles/${circleId}/polls`,
+        `/polls/circles/${circleId}`,
         request
       );
 

@@ -5,11 +5,8 @@
  */
 import {
   CategoryInfo,
-  PollCreate,
   PollDetailResponse,
   PollResponse,
-  PollTemplateResponse,
-  TemplateCategory,
   VoteRequest,
   VoteResponse,
 } from '../types/poll';
@@ -31,22 +28,6 @@ function extractData<T>(responseData: any, validator: (data: any) => boolean): T
 }
 
 /**
- * 투표 템플릿 목록 조회
- */
-export async function getPollTemplates(
-  category?: TemplateCategory
-): Promise<PollTemplateResponse[]> {
-  console.log('[API] GET /polls/templates 요청:', { category });
-  const params = category ? { category } : {};
-  const response = await apiClient.get<ApiResponse<PollTemplateResponse[]>>(
-    '/polls/templates',
-    { params }
-  );
-  console.log('[API] GET /polls/templates 응답:', { status: response.status });
-  return extractData<PollTemplateResponse[]>(response.data, (d) => Array.isArray(d));
-}
-
-/**
  * 템플릿 카테고리 목록 조회
  */
 export async function getCategories(): Promise<CategoryInfo[]> {
@@ -56,32 +37,6 @@ export async function getCategories(): Promise<CategoryInfo[]> {
   );
   console.log('[API] GET /polls/templates/categories 응답:', { status: response.status });
   return extractData<CategoryInfo[]>(response.data, (d) => Array.isArray(d));
-}
-
-/**
- * 투표 생성
- */
-export async function createPoll(circleId: string, data: PollCreate): Promise<PollResponse> {
-  console.log('[API] POST /polls/circles/:circleId/polls 요청:', { circleId, data });
-  const response = await apiClient.post<ApiResponse<PollResponse>>(
-    `/polls/circles/${circleId}/polls`,
-    data
-  );
-  console.log('[API] POST /polls/circles/:circleId/polls 응답:', { status: response.status });
-  return extractData<PollResponse>(response.data, (d) => d.id && d.question);
-}
-
-/**
- * Circle의 진행 중인 투표 목록
- */
-export async function getActivePolls(circleId: string): Promise<PollResponse[]> {
-  console.log('[API] GET /polls/circles/:circleId/polls 요청:', { circleId });
-  const response = await apiClient.get<ApiResponse<PollResponse[]>>(
-    `/polls/circles/${circleId}/polls`,
-    { params: { status: 'ACTIVE' } }
-  );
-  console.log('[API] GET /polls/circles/:circleId/polls 응답:', { status: response.status });
-  return extractData<PollResponse[]>(response.data, (d) => Array.isArray(d));
 }
 
 /**
@@ -104,7 +59,8 @@ export async function vote(pollId: string, data: VoteRequest): Promise<VoteRespo
     data
   );
   console.log('[API] POST /polls/:pollId/vote 응답:', { status: response.status });
-  return extractData<VoteResponse>(response.data, (d) => d.poll_id && d.voted_user_id);
+  // 백엔드는 { success, results, message } 형식으로 응답
+  return extractData<VoteResponse>(response.data, (d) => d.success !== undefined && d.results);
 }
 
 /**
@@ -122,27 +78,4 @@ export async function getMyPolls(
   );
   console.log('[API] GET /polls/me 응답:', { status: response.status });
   return extractData<PollResponse[]>(response.data, (d) => Array.isArray(d));
-}
-
-/**
- * Circle의 완료된 투표 목록
- */
-export async function getCompletedPolls(circleId: string): Promise<PollResponse[]> {
-  console.log('[API] GET /polls/circles/:circleId/polls 완료된 투표 요청:', { circleId });
-  const response = await apiClient.get<ApiResponse<PollResponse[]>>(
-    `/polls/circles/${circleId}/polls`,
-    { params: { status: 'COMPLETED' } }
-  );
-  console.log('[API] GET /polls/circles/:circleId/polls 응답:', { status: response.status });
-  return extractData<PollResponse[]>(response.data, (d) => Array.isArray(d));
-}
-
-/**
- * 투표 결과 조회
- */
-export async function getPollResults(pollId: string): Promise<any> {
-  console.log('[API] GET /polls/:pollId/results 요청:', pollId);
-  const response = await apiClient.get<ApiResponse<any>>(`/polls/${pollId}/results`);
-  console.log('[API] GET /polls/:pollId/results 응답:', { status: response.status });
-  return extractData<any>(response.data, (d) => Array.isArray(d));
 }
