@@ -8,6 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -32,6 +33,12 @@ export default function SuccessScreen() {
   const rotate = useSharedValue(-15);
   const opacity = useSharedValue(0);
   const progressWidth = useSharedValue(0);
+
+  // 홈으로 이동하는 함수 (worklet에서 호출 가능하도록 분리)
+  const navigateToHome = () => {
+    reset();
+    router.replace('/(main)/(home)');
+  };
 
   // Success 햅틱 피드백
   useEffect(() => {
@@ -59,10 +66,8 @@ export default function SuccessScreen() {
     // 3초 후 홈으로 자동 전환
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 500 }, () => {
-        // Store 초기화
-        reset();
-        // 페이드 아웃 완료 후 홈으로 이동
-        router.replace('/(main)/(home)');
+        // worklet에서 JS 함수 호출 시 runOnJS 필요
+        runOnJS(navigateToHome)();
       });
     }, 3000);
 
