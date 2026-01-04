@@ -2,7 +2,6 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.core.exceptions import (
@@ -40,6 +39,28 @@ class PollService:
         self.vote_repo = vote_repo
         self.membership_repo = membership_repo
 
+    @staticmethod
+    def _poll_to_response(
+        poll: "Poll",  # type: ignore
+        has_voted: bool | None = None,
+        results: list[PollResultItem] | None = None,
+    ) -> PollResponse:
+        """Convert Poll ORM object to PollResponse safely (without triggering lazy loads)."""
+        return PollResponse(
+            id=poll.id,
+            circle_id=poll.circle_id,
+            template_id=poll.template_id,
+            creator_id=poll.creator_id,
+            question_text=poll.question_text,
+            status=poll.status,
+            ends_at=poll.ends_at,
+            vote_count=poll.vote_count,
+            created_at=poll.created_at,
+            updated_at=poll.updated_at,
+            has_voted=has_voted,
+            results=results,
+        )
+
     async def get_templates(
         self, category: TemplateCategory | None = None
     ) -> list[PollTemplateResponse]:
@@ -66,7 +87,7 @@ class PollService:
             user_id: UUID of the requesting user (for membership check)
 
         Returns:
-            PollResponse with poll data
+            PollResponse with poll data including has_voted and results
 
         Raises:
             PollNotFoundError: If poll not found
@@ -81,7 +102,17 @@ class PollService:
         if not is_member:
             raise BadRequestException("You are not a member of this circle")
 
-        return PollResponse.model_validate(poll)
+        # Check if user has voted
+        voter_hash = generate_voter_hash(user_id, poll_id, salt=str(poll_id))
+        has_voted = await self.vote_repo.exists_by_voter_hash(poll_id, voter_hash)
+
+        # Get results if user has voted or poll is completed
+        results = None
+        if has_voted or poll.status == PollStatus.COMPLETED:
+            results = await self.get_results(poll_id)
+
+        # Build response with additional fields
+        return self._poll_to_response(poll, has_voted=has_voted, results=results)
 
     async def create_poll(
         self,
@@ -127,7 +158,7 @@ class PollService:
         # Increment template usage count
         await self.template_repo.increment_usage_count(poll_data.template_id)
 
-        return PollResponse.model_validate(poll)
+        return self._poll_to_response(poll, has_voted=False)
 
     def _calculate_end_time(self, duration: PollDuration) -> datetime:
         """Calculate poll end time based on duration.
@@ -186,9 +217,10 @@ class PollService:
         if has_voted:
             raise BadRequestException("You have already voted in this poll")
 
-        # Create vote
+        # Create vote (with voter_id for God Mode feature)
         await self.vote_repo.create(
             poll_id=poll_id,
+            voter_id=voter_id,
             voter_hash=voter_hash,
             voted_for_id=voted_for_id,
         )
@@ -232,9 +264,9 @@ class PollService:
         result_items: list[PollResultItem] = []
         for idx, result in enumerate(vote_results):
             percentage = (
-                Decimal(result["vote_count"]) / Decimal(total_votes) * Decimal(100)
+                result["vote_count"] / total_votes * 100.0
                 if total_votes > 0
-                else Decimal(0)
+                else 0.0
             )
 
             result_items.append(
@@ -243,7 +275,7 @@ class PollService:
                     nickname=None,  # Will be populated by router/service if needed
                     profile_emoji="",  # Will be populated by router/service if needed
                     vote_count=result["vote_count"],
-                    vote_percentage=percentage.quantize(Decimal("0.01")),
+                    vote_percentage=round(percentage, 2),  # float rounded to 2 decimals
                     rank=idx + 1,
                 )
             )
@@ -317,7 +349,14 @@ class PollService:
         # Get polls from user's circles
         polls = await self.poll_repo.find_by_user_circles(circle_ids, status)
 
-        return [PollResponse.model_validate(p) for p in polls]
+        # Build responses with has_voted for each poll
+        responses = []
+        for poll in polls:
+            voter_hash = generate_voter_hash(user_id, poll.id, salt=str(poll.id))
+            has_voted = await self.vote_repo.exists_by_voter_hash(poll.id, voter_hash)
+            responses.append(self._poll_to_response(poll, has_voted=has_voted))
+
+        return responses
 
     # ==================== Admin Methods ====================
 
@@ -341,7 +380,7 @@ class PollService:
         """
         polls = await self.poll_repo.find_all(status, circle_id, limit, offset)
         total = await self.poll_repo.count_all(status, circle_id)
-        return [PollResponse.model_validate(p) for p in polls], total
+        return [self._poll_to_response(p) for p in polls], total
 
     async def update_poll_status(
         self,
@@ -368,7 +407,7 @@ class PollService:
 
         # Refresh poll data
         updated_poll = await self.poll_repo.find_by_id(poll_id)
-        return PollResponse.model_validate(updated_poll)
+        return self._poll_to_response(updated_poll)
 
     async def get_all_templates(
         self,

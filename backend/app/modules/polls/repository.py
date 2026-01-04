@@ -423,18 +423,30 @@ class VoteRepository:
         """Initialize repository with database session."""
         self.session = session
 
-    async def create(self, poll_id: uuid.UUID, voter_hash: str, voted_for_id: uuid.UUID) -> Vote:
+    async def create(
+        self,
+        poll_id: uuid.UUID,
+        voter_id: uuid.UUID,
+        voter_hash: str,
+        voted_for_id: uuid.UUID,
+    ) -> Vote:
         """Create a new vote.
 
         Args:
             poll_id: Poll UUID
-            voter_hash: SHA-256 hash of voter
+            voter_id: Voter user UUID (for God Mode feature)
+            voter_hash: SHA-256 hash of voter (for duplicate prevention)
             voted_for_id: User UUID being voted for
 
         Returns:
             Created Vote instance
         """
-        vote = Vote(poll_id=poll_id, voter_hash=voter_hash, voted_for_id=voted_for_id)
+        vote = Vote(
+            poll_id=poll_id,
+            voter_id=voter_id,
+            voter_hash=voter_hash,
+            voted_for_id=voted_for_id,
+        )
         self.session.add(vote)
         await self.session.flush()
         await self.session.refresh(vote)

@@ -94,8 +94,14 @@ class User(BaseModel):
         "Poll",
         back_populates="creator",
     )
+    votes_cast: Mapped[list["Vote"]] = relationship(
+        "Vote",
+        foreign_keys="[Vote.voter_id]",
+        back_populates="voter",
+    )
     votes_received: Mapped[list["Vote"]] = relationship(
         "Vote",
+        foreign_keys="[Vote.voted_for_id]",
         back_populates="voted_for",
     )
     poll_results: Mapped[list["PollResult"]] = relationship(

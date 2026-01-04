@@ -49,7 +49,12 @@ class TestVoteRepository:
         # Create vote
         repo = VoteRepository(db_session)
         voter_hash = "test_hash_12345"
-        vote = await repo.create(poll_id=poll.id, voter_hash=voter_hash, voted_for_id=voted_for.id)
+        vote = await repo.create(
+            poll_id=poll.id,
+            voter_id=voter.id,
+            voter_hash=voter_hash,
+            voted_for_id=voted_for.id,
+        )
 
         assert vote is not None
         assert vote.poll_id == poll.id
@@ -85,7 +90,7 @@ class TestVoteRepository:
 
         # Create vote
         voter_hash = "existing_hash"
-        vote = Vote(poll_id=poll.id, voter_hash=voter_hash, voted_for_id=voted_for.id)
+        vote = Vote(poll_id=poll.id, voter_id=voter.id, voter_hash=voter_hash, voted_for_id=voted_for.id)
         db_session.add(vote)
         await db_session.commit()
 
@@ -156,8 +161,8 @@ class TestVoteRepository:
         await db_session.refresh(poll)
 
         # Create votes
-        vote1 = Vote(poll_id=poll.id, voter_hash="hash1", voted_for_id=voted_for.id)
-        vote2 = Vote(poll_id=poll.id, voter_hash="hash2", voted_for_id=voted_for.id)
+        vote1 = Vote(poll_id=poll.id, voter_id=voter1.id, voter_hash="hash1", voted_for_id=voted_for.id)
+        vote2 = Vote(poll_id=poll.id, voter_id=voter2.id, voter_hash="hash2", voted_for_id=voted_for.id)
         db_session.add_all([vote1, vote2])
         await db_session.commit()
 
@@ -199,9 +204,9 @@ class TestVoteRepository:
 
         # Create votes: member1 gets 2 votes, member2 gets 1 vote
         votes = [
-            Vote(poll_id=poll.id, voter_hash="hash1", voted_for_id=member1.id),
-            Vote(poll_id=poll.id, voter_hash="hash2", voted_for_id=member1.id),
-            Vote(poll_id=poll.id, voter_hash="hash3", voted_for_id=member2.id),
+            Vote(poll_id=poll.id, voter_id=creator.id, voter_hash="hash1", voted_for_id=member1.id),
+            Vote(poll_id=poll.id, voter_id=member1.id, voter_hash="hash2", voted_for_id=member1.id),
+            Vote(poll_id=poll.id, voter_id=member2.id, voter_hash="hash3", voted_for_id=member2.id),
         ]
         db_session.add_all(votes)
         await db_session.commit()

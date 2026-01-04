@@ -2,7 +2,6 @@
 
 import uuid
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
@@ -53,6 +52,9 @@ class PollResponse(BaseModel):
     vote_count: int
     created_at: datetime
     updated_at: datetime
+    # Optional fields populated by service layer
+    has_voted: bool | None = None
+    results: list["PollResultItem"] | None = None
 
 
 class VoteOption(BaseModel):
@@ -70,7 +72,7 @@ class PollResultItem(BaseModel):
     nickname: str | None
     profile_emoji: str
     vote_count: int
-    vote_percentage: Decimal
+    vote_percentage: float  # Decimal → float for JSON serialization
     rank: int | None
 
 

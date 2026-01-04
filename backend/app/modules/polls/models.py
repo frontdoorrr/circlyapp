@@ -168,12 +168,13 @@ class Poll(BaseModel):
 
 
 class Vote(UUIDMixin, Base):
-    """Vote model (anonymized).
+    """Vote model (with voter_id for God Mode feature).
 
     Attributes:
         id: UUID primary key
         poll_id: Foreign key to polls table
-        voter_hash: SHA-256 hash of voter_id + poll_id + salt
+        voter_id: Foreign key to users table (who cast the vote, for God Mode)
+        voter_hash: SHA-256 hash of voter_id + poll_id + salt (for duplicate prevention)
         voted_for_id: Foreign key to users table (who received the vote)
         created_at: Timestamp when voted
     """
@@ -184,6 +185,12 @@ class Vote(UUIDMixin, Base):
     poll_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("polls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    voter_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -208,8 +215,14 @@ class Vote(UUIDMixin, Base):
         "Poll",
         back_populates="votes",
     )
+    voter: Mapped["User"] = relationship(  # noqa: F821
+        "User",
+        foreign_keys=[voter_id],
+        back_populates="votes_cast",
+    )
     voted_for: Mapped["User"] = relationship(  # noqa: F821
         "User",
+        foreign_keys=[voted_for_id],
         back_populates="votes_received",
     )
 
