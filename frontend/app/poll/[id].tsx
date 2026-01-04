@@ -72,11 +72,31 @@ export default function PollDetailScreen() {
   // 투표하기
   const voteMutation = useVote();
 
+  // 중복 요청 방지를 위한 ref (React 상태보다 빠르게 업데이트)
+  const isVotingRef = React.useRef(false);
+  // 디버깅용 호출 카운터
+  const callCountRef = React.useRef(0);
+
   const handleVote = async () => {
+    // 호출 추적
+    callCountRef.current += 1;
+    const callId = callCountRef.current;
+    console.log(`[Vote] handleVote 호출됨 #${callId}, isVoting: ${isVotingRef.current}, isPending: ${voteMutation.isPending}`);
+
+    // 이미 투표 진행 중이면 무시 (중복 요청 방지)
+    if (isVotingRef.current || voteMutation.isPending) {
+      console.log(`[Vote] 중복 요청 방지됨 #${callId}`);
+      return;
+    }
+
     if (!selectedUserId) {
       Alert.alert('선택 오류', '투표할 친구를 선택해주세요');
       return;
     }
+
+    // 동기적으로 플래그 설정 (React 상태 업데이트보다 빠름)
+    isVotingRef.current = true;
+    console.log(`[Vote] 투표 시작 #${callId}`);
 
     try {
       await voteMutation.mutateAsync({
@@ -84,13 +104,19 @@ export default function PollDetailScreen() {
         data: { voted_for_id: selectedUserId }
       });
 
+      console.log(`[Vote] 투표 성공 #${callId}`);
       Alert.alert('완료', '투표가 완료되었습니다!');
     } catch (error) {
+      console.log(`[Vote] 투표 실패 #${callId}`, error);
       if (error instanceof ApiError) {
         Alert.alert('투표 실패', error.message);
       } else {
         Alert.alert('오류', '투표 중 문제가 발생했습니다');
       }
+    } finally {
+      // 투표 완료 후 플래그 해제
+      isVotingRef.current = false;
+      console.log(`[Vote] 투표 완료, 플래그 해제 #${callId}`);
     }
   };
 
@@ -232,7 +258,7 @@ export default function PollDetailScreen() {
             <Button
               onPress={handleVote}
               loading={voteMutation.isPending}
-              disabled={!selectedUserId}
+              disabled={!selectedUserId || voteMutation.isPending}
               fullWidth
             >
               투표하기

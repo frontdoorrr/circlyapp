@@ -49,11 +49,9 @@ export interface VoteRequest {
 }
 
 export interface VoteResponse {
-  poll_id: string;
-  voted_user_id: string;
   success: boolean;
-  results?: PollResultItem[]; // 투표 후 실시간 결과
-  message?: string;
+  results: PollResultItem[]; // 투표 후 실시간 결과
+  message: string;
 }
 
 export interface PollResultItem {
