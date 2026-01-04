@@ -107,11 +107,12 @@ database Schema {
         updated_at: TIMESTAMPTZ DEFAULT NOW()
     }
 
-    // 투표 참여 테이블 (익명화)
+    // 투표 참여 테이블 (God Mode용 voter_id 포함)
     table votes {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
         poll_id: UUID FOREIGN KEY -> polls(id)
-        voter_hash: VARCHAR(64) NOT NULL  // SHA-256(voter_id + poll_id + salt)
+        voter_id: UUID FOREIGN KEY -> users(id)  // God Mode에서 공개
+        voter_hash: VARCHAR(64) NOT NULL  // SHA-256(voter_id + poll_id + salt), 중복 투표 방지용
         voted_for_id: UUID FOREIGN KEY -> users(id)
         created_at: TIMESTAMPTZ DEFAULT NOW()
 
@@ -589,13 +590,15 @@ module Poll {
     type Vote {
         id: UUID
         pollId: UUID
-        voterHash: String
+        voterId: UUID       // God Mode 구독자에게만 공개
+        voterHash: String   // 중복 투표 방지용
         votedForId: UUID
         createdAt: DateTime
     }
 
     type VoteCreate {
         pollId: UUID
+        voterId: UUID
         voterHash: String
         votedForId: UUID
     }
@@ -1267,14 +1270,20 @@ api_standards APIResponseFormat {
 ```dsl
 security SecurityPolicy {
 
-    // 투표 익명성 보장
+    // 투표 익명성 및 God Mode
     vote_anonymity {
-        principle: "투표자 신원 역추적 불가"
+        principle: "기본 익명, God Mode 구독자에게만 투표자 공개"
         implementation: {
-            - voter_id 직접 저장 금지
-            - SHA-256(voter_id + poll_id + random_salt) 해시만 저장
-            - salt는 투표별로 생성, 별도 저장 금지 (메모리에서만 사용)
-            - 결과에서 투표자 정보 제외
+            - voter_id 저장 (God Mode용)
+            - voter_hash = SHA-256(voter_id + poll_id + salt) 저장 (중복 투표 방지)
+            - 일반 사용자: 투표자 정보 비공개 (익명)
+            - God Mode 구독자: 자신에게 투표한 사람 조회 가능
+            - RevenueCat 연동으로 구독 상태 확인
+        }
+        god_mode: {
+            - 구독자가 "누가 나를 선택했는지" 볼 수 있음
+            - 핵심 수익화 모델
+            - API: GET /api/v1/polls/{id}/voters (God Mode only)
         }
     }
 
