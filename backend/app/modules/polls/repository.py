@@ -26,7 +26,9 @@ class TemplateRepository:
         """Initialize repository with database session."""
         self.session = session
 
-    async def find_all(self, category: TemplateCategory | None = None) -> list[PollTemplate]:
+    async def find_all(
+        self, category: TemplateCategory | None = None
+    ) -> list[PollTemplate]:
         """Find all active templates, optionally filtered by category.
 
         Args:
@@ -300,7 +302,9 @@ class PollRepository:
             poll_id: Poll UUID
             status: New status
         """
-        await self.session.execute(update(Poll).where(Poll.id == poll_id).values(status=status))
+        await self.session.execute(
+            update(Poll).where(Poll.id == poll_id).values(status=status)
+        )
         await self.session.flush()
 
     async def increment_vote_count(self, poll_id: uuid.UUID) -> None:
@@ -310,7 +314,9 @@ class PollRepository:
             poll_id: Poll UUID
         """
         await self.session.execute(
-            update(Poll).where(Poll.id == poll_id).values(vote_count=Poll.vote_count + 1)
+            update(Poll)
+            .where(Poll.id == poll_id)
+            .values(vote_count=Poll.vote_count + 1)
         )
         await self.session.flush()
 
@@ -435,7 +441,7 @@ class VoteRepository:
 
         Args:
             poll_id: Poll UUID
-            voter_id: Voter user UUID (for God Mode feature)
+            voter_id: Voter user UUID (for Orb Mode feature)
             voter_hash: SHA-256 hash of voter (for duplicate prevention)
             voted_for_id: User UUID being voted for
 
@@ -498,12 +504,15 @@ class VoteRepository:
             .order_by(func.count(Vote.id).desc())
         )
 
-        return [{"user_id": row.voted_for_id, "vote_count": row.vote_count} for row in result.all()]
+        return [
+            {"user_id": row.voted_for_id, "vote_count": row.vote_count}
+            for row in result.all()
+        ]
 
     async def find_voters_for_user(
         self, poll_id: uuid.UUID, voted_for_id: uuid.UUID
     ) -> list["Vote"]:
-        """God Mode: 특정 poll에서 user에게 투표한 사람들 조회.
+        """Orb Mode: 특정 poll에서 user에게 투표한 사람들 조회.
 
         Args:
             poll_id: Poll UUID

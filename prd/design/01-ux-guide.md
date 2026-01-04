@@ -334,10 +334,10 @@ const offlineStrategy = {
 
 ## 5. 프로필 / 결과
 - 화면: Flame 누적 수, 주간 랭킹
-- 액션: [God Mode 열기]
+- 액션: [Orb Mode 열기]
 - 전환: → 결제 화면
 
-## 6. God Mode (프리미엄)
+## 6. Orb Mode (프리미엄)
 - 화면: “See Who Likes You” CTA
 - 액션: [결제 진행]
 - 전환: → 투표자 힌트 제공 화면

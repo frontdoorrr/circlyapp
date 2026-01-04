@@ -1142,14 +1142,14 @@
 
 ---
 
-## Phase 13: God Mode 수익화 구현
+## Phase 13: Orb Mode 수익화 구현
 
-> **핵심 기능**: 유료 구독자(God Mode)가 "누가 나를 선택했는지" 볼 수 있는 기능
+> **핵심 기능**: 유료 구독자(Orb Mode)가 "누가 나를 선택했는지" 볼 수 있는 기능
 > **참고 문서**: `docs/DSL.md` (votes 테이블, 보안 정책), `prd/business/01-business-model.md`
 
 ### 13.1 Backend: Vote 모델 수정 (P0)
 
-> **변경사항**: `voter_id` 컬럼 추가 (God Mode에서 투표자 조회용)
+> **변경사항**: `voter_id` 컬럼 추가 (Orb Mode에서 투표자 조회용)
 
 #### 13.1.1 모델 수정
 - [x] `app/modules/polls/models.py` - Vote 모델에 `voter_id` 컬럼 추가
@@ -1187,60 +1187,55 @@
 
 #### 13.1.4 Service 수정
 - [x] `app/modules/polls/service.py` - `vote()` 함수에서 `voter_id` 저장하도록 수정
-- [ ] **커밋**: `feat(polls): add voter_id column for God Mode feature`
+- [ ] **커밋**: `feat(polls): add voter_id column for Orb Mode feature`
 
-### 13.2 Backend: God Mode API 추가 (P1)
+### 13.2 Backend: Orb Mode API 추가 (P1)
 
-> **엔드포인트**: `GET /api/v1/polls/{id}/voters` (God Mode 구독자 전용)
+> **엔드포인트**: `GET /api/v1/polls/{id}/voters` (Orb Mode 구독자 전용)
+> **참고**: Orb Mode → Orb Mode로 네이밍 변경
 
 #### 13.2.1 스키마 추가
 - [x] `app/modules/polls/schemas.py` - `VoterInfo`, `VoterRevealResponse` 스키마 추가
-  ```python
-  class VoterInfo(BaseModel):
-      user_id: UUID
-      nickname: str
-      profile_emoji: str
-      voted_at: datetime
-  
-  class VoterRevealResponse(BaseModel):
-      poll_id: UUID
-      question_text: str
-      voters: list[VoterInfo]  # 나를 선택한 사람들
-  ```
 
 #### 13.2.2 라우터 추가
-- [x] `app/modules/polls/router.py` - God Mode 전용 엔드포인트 추가 (GET /{poll_id}/voters)
-  ```python
-  @router.get("/{poll_id}/voters", response_model=VoterRevealResponse)
-  async def get_my_voters(
-      poll_id: UUID,
-      current_user: User = Depends(get_current_user),
-      # TODO: God Mode 구독 여부 확인 (RevenueCat)
-  ):
-      ...
-  ```
+- [x] `app/modules/polls/router.py` - Orb Mode 전용 엔드포인트 추가 (GET /{poll_id}/voters)
+- [x] `app/modules/polls/router.py` - `is_orb_mode` 권한 체크 추가
 
 #### 13.2.3 서비스 로직
 - [x] `app/modules/polls/service.py` - `get_voters_for_user()` 함수 구현
 - [x] `app/modules/polls/repository.py` - `find_voters_for_user()` 쿼리 추가
-- [ ] **커밋**: `feat(polls): add God Mode voter reveal API`
+- [x] **커밋**: `feat(polls): add Orb Mode voter reveal API`
+
+#### 13.2.4 User 모델 is_orb_mode 플래그 추가
+- [x] `app/modules/auth/models.py` - `is_orb_mode` 필드 추가
+- [x] `app/modules/auth/schemas.py` - `UserResponse`에 `is_orb_mode` 추가
+- [x] 마이그레이션 생성 및 적용
+- [x] **커밋**: `feat: add Orb Mode feature for voter reveal`
 
 ### 13.3 RevenueCat 연동 (P2)
 
 > **참고**: `docs/DSL.md` (external_services: RevenueCat)
 
 - [ ] RevenueCat SDK 설치 및 설정
-- [ ] God Mode 구독 상태 확인 미들웨어/의존성 추가
+- [ ] Orb Mode 구독 상태 확인 미들웨어/의존성 추가
 - [ ] 구독 상태에 따른 API 접근 제어
-- [ ] **커밋**: `feat(subscription): integrate RevenueCat for God Mode`
+- [ ] **커밋**: `feat(subscription): integrate RevenueCat for Orb Mode`
 
-### 13.4 Frontend: God Mode UI (P2)
+### 13.4 Frontend: Orb Mode UI (P2)
 
-> **참고**: `prd/business/01-business-model.md#God Mode 구현 가이드`
+> **참고**: `prd/business/01-business-model.md#Orb Mode 구현 가이드`
 
-- [ ] 투표 결과 화면에 "누가 선택했는지 보기" 버튼 추가
-- [ ] God Mode 페이월 화면 구현
-- [ ] 투표자 공개 화면 구현
+- [x] `frontend/src/types/poll.ts` - `VoterInfo`, `VoterRevealResponse` 타입 추가
+- [x] `frontend/src/types/auth.ts` - `is_orb_mode` 필드 추가
+- [x] `frontend/src/api/poll.ts` - `getMyVoters()` API 함수 추가
+- [x] `frontend/src/hooks/usePolls.ts` - `useMyVoters()` 훅 추가
+- [x] `frontend/app/results/[id].tsx` - "누가 선택했는지 보기" 버튼 추가
+- [x] `frontend/app/poll/[id].tsx` - "누가 선택했는지 보기" 버튼 추가
+- [x] `frontend/app/results/[id]/voters.tsx` - 투표자 공개 화면 구현
+- [x] `useCurrentUser` 훅으로 `is_orb_mode` 조회 방식 개선
+- [x] **커밋**: `feat(frontend): add Orb Mode button to poll detail screen`
+- [x] **커밋**: `refactor(frontend): use useCurrentUser hook for Orb Mode`
+- [ ] Orb Mode 페이월/구독 화면 구현 (RevenueCat 연동 시)
 - [ ] RevenueCat SDK 연동 (Expo)
 
 ---
@@ -1249,9 +1244,9 @@
 
 | 문서 | 수정 내용 |
 |------|----------|
-| `docs/DSL.md` | votes 테이블에 `voter_id` 추가, 보안 정책 God Mode 반영 |
-| `prd/00-prd.md` | "기본 익명성 + God Mode" 차별화 포인트 |
-| `prd/business/01-business-model.md` | God Mode 수익화 상세 (단계별 힌트, 가격 등) |
+| `docs/DSL.md` | votes 테이블에 `voter_id` 추가, 보안 정책 Orb Mode 반영 |
+| `prd/00-prd.md` | "기본 익명성 + Orb Mode" 차별화 포인트 |
+| `prd/business/01-business-model.md` | Orb Mode 수익화 상세 (단계별 힌트, 가격 등) |
 
 
 ---

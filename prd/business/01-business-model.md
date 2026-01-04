@@ -38,7 +38,7 @@ const freeFeatures = {
 ### Phase 2: 프리미엄 모델 도입 (12-24개월)
 **목표**: 15% 사용자의 유료 전환, ARR $1.2M 달성
 
-#### 🎯 핵심 수익 모델: "God Mode" 호기심 기반 결제
+#### 🎯 핵심 수익 모델: "Orb Mode" 호기심 기반 결제
 ```javascript
 const godModeRevenue = {
   core_concept: {
@@ -91,12 +91,12 @@ const godModeRevenue = {
 
 const proSubscription = {
   pricing: {
-    monthly: 4.99,    // $4.99/월 (God Mode 무제한 + 추가 기능)
+    monthly: 4.99,    // $4.99/월 (Orb Mode 무제한 + 추가 기능)
     annual: 49.99,    // $49.99/년 (17% 할인)
   },
   
   enhanced_features: {
-    unlimited_god_mode: '무제한 God Mode 사용',
+    unlimited_god_mode: '무제한 Orb Mode 사용',
     premium_templates: '50+ 프리미엄 질문 템플릿', 
     advanced_cards: '10가지 결과 카드 디자인',
     secret_messaging: '익명 메시지 발송 기능',
@@ -197,7 +197,7 @@ const competitiveAdvantage = {
 ```markdown
 | 요소 | Circly | 경쟁사 A | 경쟁사 B |
 |------|--------|---------|---------|
-| 익명성 보장 | ✅ 기본 익명 (God Mode로 수익화) | ⚠️ 부분 익명 | ❌ 공개 투표 |
+| 익명성 보장 | ✅ 기본 익명 (Orb Mode로 수익화) | ⚠️ 부분 익명 | ❌ 공개 투표 |
 | 안전 시스템 | ✅ AI+인간 검토 | ⚠️ 기본 신고 | ❌ 최소한 조치 |
 | 한국 문화 최적화 | ✅ 완전 최적화 | ❌ 번역만 | ❌ 글로벌 표준 |
 | 교육 기관 지원 | ✅ 전문 기능 | ❌ 없음 | ❌ 없음 |
@@ -206,7 +206,7 @@ const competitiveAdvantage = {
 
 ## 📊 수익 예측 모델
 
-### 3년 재무 전망 (God Mode 중심 수익 모델)
+### 3년 재무 전망 (Orb Mode 중심 수익 모델)
 ```javascript
 const financialProjection = {
   year1: {
@@ -254,7 +254,7 @@ const financialProjection = {
 
 const keyMetrics = {
   customer_acquisition_cost: 3,        // $3 CAC (바이럴 효과로 낮음)
-  god_mode_ltv: 85,                    // God Mode 사용자 $85 LTV
+  god_mode_ltv: 85,                    // Orb Mode 사용자 $85 LTV
   subscription_ltv: 180,               // 구독자 $180 LTV  
   blended_ltv: 95,                     // 혼합 LTV
   ltv_cac_ratio: 32,                   // 32:1 (매우 건강한 수준)
@@ -346,7 +346,7 @@ const globalizationPlan = {
 };
 ```
 
-## 💡 God Mode 구현 가이드
+## 💡 Orb Mode 구현 가이드
 
 ### UX/UI 설계 원칙
 ```javascript
@@ -398,7 +398,7 @@ const implementationPhases = {
 
 ### 데이터베이스 설계
 ```sql
--- God Mode 구매 내역
+-- Orb Mode 구매 내역
 CREATE TABLE god_mode_purchases (
     id UUID PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
@@ -432,7 +432,7 @@ const revenueOptimization = {
   
   bundle_strategies: {
     curiosity_pack: '3개 힌트 패키지 30% 할인',
-    monthly_unlimited: '월 무제한 God Mode $9.99',
+    monthly_unlimited: '월 무제한 Orb Mode $9.99',
     friend_group_deal: '친구와 함께 구매 시 50% 할인',
     seasonal_special: '시험기간/방학 특가 패키지'
   },
@@ -441,7 +441,7 @@ const revenueOptimization = {
     hint_addiction: '첫 구매 후 24시간 내 50% 할인',
     loyalty_program: '구매 횟수별 등급 시스템',
     exclusive_preview: 'VIP 사용자 신기능 먼저 체험',
-    social_status: 'God Mode 사용자 전용 배지/아이콘'
+    social_status: 'Orb Mode 사용자 전용 배지/아이콘'
   }
 };
 ```

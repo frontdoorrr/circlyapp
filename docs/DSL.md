@@ -27,7 +27,7 @@ system Architecture {
 
     external_services: [
         ExpoPushService,    // 푸시 알림
-        RevenueCat,         // 결제 (God Mode)
+        RevenueCat,         // 결제 (Orb Mode)
         Sentry,             // 에러 모니터링
         FirebaseAnalytics   // 사용자 분석
     ]
@@ -107,11 +107,11 @@ database Schema {
         updated_at: TIMESTAMPTZ DEFAULT NOW()
     }
 
-    // 투표 참여 테이블 (God Mode용 voter_id 포함)
+    // 투표 참여 테이블 (Orb Mode용 voter_id 포함)
     table votes {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
         poll_id: UUID FOREIGN KEY -> polls(id)
-        voter_id: UUID FOREIGN KEY -> users(id)  // God Mode에서 공개
+        voter_id: UUID FOREIGN KEY -> users(id)  // Orb Mode에서 공개
         voter_hash: VARCHAR(64) NOT NULL  // SHA-256(voter_id + poll_id + salt), 중복 투표 방지용
         voted_for_id: UUID FOREIGN KEY -> users(id)
         created_at: TIMESTAMPTZ DEFAULT NOW()
@@ -590,7 +590,7 @@ module Poll {
     type Vote {
         id: UUID
         pollId: UUID
-        voterId: UUID       // God Mode 구독자에게만 공개
+        voterId: UUID       // Orb Mode 구독자에게만 공개
         voterHash: String   // 중복 투표 방지용
         votedForId: UUID
         createdAt: DateTime
@@ -1270,20 +1270,20 @@ api_standards APIResponseFormat {
 ```dsl
 security SecurityPolicy {
 
-    // 투표 익명성 및 God Mode
+    // 투표 익명성 및 Orb Mode
     vote_anonymity {
-        principle: "기본 익명, God Mode 구독자에게만 투표자 공개"
+        principle: "기본 익명, Orb Mode 구독자에게만 투표자 공개"
         implementation: {
-            - voter_id 저장 (God Mode용)
+            - voter_id 저장 (Orb Mode용)
             - voter_hash = SHA-256(voter_id + poll_id + salt) 저장 (중복 투표 방지)
             - 일반 사용자: 투표자 정보 비공개 (익명)
-            - God Mode 구독자: 자신에게 투표한 사람 조회 가능
+            - Orb Mode 구독자: 자신에게 투표한 사람 조회 가능
             - RevenueCat 연동으로 구독 상태 확인
         }
         god_mode: {
             - 구독자가 "누가 나를 선택했는지" 볼 수 있음
             - 핵심 수익화 모델
-            - API: GET /api/v1/polls/{id}/voters (God Mode only)
+            - API: GET /api/v1/polls/{id}/voters (Orb Mode only)
         }
     }
 

@@ -10,7 +10,11 @@ from app.core.exceptions import (
 )
 from app.core.security import generate_voter_hash
 from app.modules.circles.repository import MembershipRepository
-from app.modules.polls.repository import PollRepository, TemplateRepository, VoteRepository
+from app.modules.polls.repository import (
+    PollRepository,
+    TemplateRepository,
+    VoteRepository,
+)
 from app.modules.polls.schemas import (
     CATEGORY_METADATA,
     CategoryInfo,
@@ -218,7 +222,7 @@ class PollService:
         if has_voted:
             raise BadRequestException("You have already voted in this poll")
 
-        # Create vote (with voter_id for God Mode feature)
+        # Create vote (with voter_id for Orb Mode feature)
         await self.vote_repo.create(
             poll_id=poll_id,
             voter_id=voter_id,
@@ -265,9 +269,7 @@ class PollService:
         result_items: list[PollResultItem] = []
         for idx, result in enumerate(vote_results):
             percentage = (
-                result["vote_count"] / total_votes * 100.0
-                if total_votes > 0
-                else 0.0
+                result["vote_count"] / total_votes * 100.0 if total_votes > 0 else 0.0
             )
 
             result_items.append(
@@ -428,7 +430,9 @@ class PollService:
         Returns:
             Tuple of (list of PollTemplateResponse, total count)
         """
-        templates = await self.template_repo.find_all_templates(category, is_active, limit, offset)
+        templates = await self.template_repo.find_all_templates(
+            category, is_active, limit, offset
+        )
         total = await self.template_repo.count_all_templates(category, is_active)
         return [PollTemplateResponse.model_validate(t) for t in templates], total
 
@@ -448,7 +452,9 @@ class PollService:
         Returns:
             Created PollTemplateResponse
         """
-        template = await self.template_repo.create_template(category, question_text, emoji)
+        template = await self.template_repo.create_template(
+            category, question_text, emoji
+        )
         return PollTemplateResponse.model_validate(template)
 
     async def update_template(

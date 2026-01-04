@@ -168,12 +168,12 @@ class Poll(BaseModel):
 
 
 class Vote(UUIDMixin, Base):
-    """Vote model (with voter_id for God Mode feature).
+    """Vote model (with voter_id for Orb Mode feature).
 
     Attributes:
         id: UUID primary key
         poll_id: Foreign key to polls table
-        voter_id: Foreign key to users table (who cast the vote, for God Mode)
+        voter_id: Foreign key to users table (who cast the vote, for Orb Mode)
         voter_hash: SHA-256 hash of voter_id + poll_id + salt (for duplicate prevention)
         voted_for_id: Foreign key to users table (who received the vote)
         created_at: Timestamp when voted
