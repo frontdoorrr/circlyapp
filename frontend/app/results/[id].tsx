@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { tokens } from '../../src/theme';
+import { useAuthStore } from '../../src/stores/auth';
 
 /**
  * 투표 결과 화면
@@ -13,6 +14,8 @@ import { tokens } from '../../src/theme';
  */
 export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const user = useAuthStore((state) => state.user);
+  const isOrbMode = user?.is_orb_mode ?? false;
 
   // TODO: 실제 투표 결과 가져오기
   const pollResults = {
@@ -35,6 +38,16 @@ export default function ResultsScreen() {
 
   const handleCreateNew = () => {
     router.push('/(main)/(create)');
+  };
+
+  const handleOrbMode = () => {
+    if (isOrbMode) {
+      // Orb Mode 활성화됨 - 투표자 공개 화면으로 이동
+      router.push(`/results/${id}/voters`);
+    } else {
+      // Orb Mode 필요 안내 (TODO: 구독 유도 모달)
+      console.log('Orb Mode subscription required');
+    }
   };
 
   const getBarWidth = (percentage: number) => {
@@ -111,6 +124,36 @@ export default function ResultsScreen() {
               결과를 친구들과 공유해보세요!
             </Text>
           </View>
+
+          {/* Orb Mode 버튼 */}
+          <Pressable
+            style={[
+              styles.orbModeButton,
+              !isOrbMode && styles.orbModeButtonDisabled,
+            ]}
+            onPress={handleOrbMode}
+          >
+            <View style={styles.orbModeContent}>
+              <Text style={styles.orbModeIcon}>
+                {isOrbMode ? '🔮' : '🔒'}
+              </Text>
+              <View style={styles.orbModeTextContainer}>
+                <Text style={[
+                  styles.orbModeTitle,
+                  !isOrbMode && styles.orbModeTitleDisabled,
+                ]}>
+                  누가 나를 선택했는지 보기
+                </Text>
+                <Text style={[
+                  styles.orbModeSubtitle,
+                  !isOrbMode && styles.orbModeSubtitleDisabled,
+                ]}>
+                  {isOrbMode ? '투표자를 확인해보세요' : 'Orb Mode 구독 필요'}
+                </Text>
+              </View>
+              <Text style={styles.orbModeArrow}>→</Text>
+            </View>
+          </Pressable>
         </ScrollView>
 
         {/* 하단 액션 버튼 */}
@@ -266,5 +309,49 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.fontSize.base,
     fontWeight: tokens.typography.fontWeight.semibold,
     color: tokens.colors.primary[500],
+  },
+  // Orb Mode 버튼 스타일
+  orbModeButton: {
+    marginTop: tokens.spacing.lg,
+    backgroundColor: tokens.colors.white,
+    borderRadius: tokens.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: tokens.colors.primary[400],
+    padding: tokens.spacing.lg,
+  },
+  orbModeButtonDisabled: {
+    borderColor: tokens.colors.neutral[300],
+    backgroundColor: tokens.colors.neutral[100],
+  },
+  orbModeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.md,
+  },
+  orbModeIcon: {
+    fontSize: 32,
+  },
+  orbModeTextContainer: {
+    flex: 1,
+  },
+  orbModeTitle: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.primary[700],
+    marginBottom: 2,
+  },
+  orbModeTitleDisabled: {
+    color: tokens.colors.neutral[500],
+  },
+  orbModeSubtitle: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.primary[500],
+  },
+  orbModeSubtitleDisabled: {
+    color: tokens.colors.neutral[400],
+  },
+  orbModeArrow: {
+    fontSize: tokens.typography.fontSize.xl,
+    color: tokens.colors.primary[400],
   },
 });

@@ -38,6 +38,7 @@ class UserResponse(BaseModel):
     profile_emoji: str
     role: str
     is_active: bool
+    is_orb_mode: bool
     created_at: datetime
 
 

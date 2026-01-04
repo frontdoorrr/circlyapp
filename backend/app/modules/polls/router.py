@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Query, status
 
 from app.core.enums import PollStatus, TemplateCategory
+from app.core.exceptions import AuthorizationError
 from app.deps import AdminUserDep, CurrentUserDep, PollServiceDep
 from app.modules.polls.schemas import (
     CategoryInfo,
@@ -111,18 +112,20 @@ async def vote(
 @router.get(
     "/{poll_id}/voters",
     response_model=VoterRevealResponse,
-    summary="[God Mode] Get voters who selected me",
-    tags=["God Mode"],
+    summary="[Orb Mode] Get voters who selected me",
+    tags=["Orb Mode"],
 )
 async def get_my_voters(
     poll_id: uuid.UUID,
     current_user: CurrentUserDep,
     service: PollServiceDep,
 ) -> VoterRevealResponse:
-    """God Mode 전용: 특정 투표에서 나를 선택한 사람들 조회.
+    """Orb Mode 전용: 특정 투표에서 나를 선택한 사람들 조회.
 
-    권한: God Mode 구독자 전용 (TODO: RevenueCat 연동)
+    권한: Orb Mode 구독자 전용
     """
+    if not current_user.is_orb_mode:
+        raise AuthorizationError("Orb Mode subscription required")
     return await service.get_voters_for_user(poll_id, current_user.id)
 
 

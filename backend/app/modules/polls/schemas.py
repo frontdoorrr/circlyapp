@@ -70,9 +70,9 @@ class VoteOption(BaseModel):
 
 
 class VoterInfo(BaseModel):
-    """God Mode 투표자 정보 - 나를 선택한 사람.
+    """Orb Mode 투표자 정보 - 나를 선택한 사람.
 
-    용도: God Mode 구독자가 "누가 나를 선택했는지" 조회
+    용도: Orb Mode 구독자가 "누가 나를 선택했는지" 조회
     사용처: VoterRevealResponse.voters
     """
 
@@ -83,10 +83,10 @@ class VoterInfo(BaseModel):
 
 
 class VoterRevealResponse(BaseModel):
-    """God Mode API 응답 - 나를 선택한 투표자 목록.
+    """Orb Mode API 응답 - 나를 선택한 투표자 목록.
 
     용도: GET /polls/{id}/voters 엔드포인트 응답
-    권한: God Mode 구독자 전용
+    권한: Orb Mode 구독자 전용
     """
 
     poll_id: uuid.UUID

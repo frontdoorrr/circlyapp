@@ -27,6 +27,7 @@ export interface UserResponse {
   profile_emoji: string;
   role: UserRole;
   is_active: boolean;
+  is_orb_mode: boolean; // Orb Mode 구독 여부
   created_at: string; // ISO 8601
 }
 

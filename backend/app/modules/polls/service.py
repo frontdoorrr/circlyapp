@@ -486,7 +486,7 @@ class PollService:
         poll_id: uuid.UUID,
         user_id: uuid.UUID,
     ) -> VoterRevealResponse:
-        """God Mode: 특정 투표에서 나를 선택한 사람들 조회.
+        """Orb Mode: 특정 투표에서 나를 선택한 사람들 조회.
 
         Args:
             poll_id: Poll UUID
@@ -499,7 +499,7 @@ class PollService:
             PollNotFoundError: If poll not found
             BadRequestException: If user not in circle
 
-        TODO: RevenueCat 구독 검증 추가
+        Note: Orb Mode 검증은 router에서 수행
         """
         from app.modules.polls.schemas import VoterInfo
 

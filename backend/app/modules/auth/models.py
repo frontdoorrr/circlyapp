@@ -29,6 +29,7 @@ class User(BaseModel):
         role: User role (USER or ADMIN)
         is_active: Whether the user is active
         push_token: Expo push notification token
+        is_orb_mode: Whether user has Orb Mode subscription
         created_at: Timestamp when created (from BaseModel)
         updated_at: Timestamp when last updated (from BaseModel)
     """
@@ -78,6 +79,12 @@ class User(BaseModel):
     push_token: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
+    )
+    is_orb_mode: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
     )
 
     # Relationships

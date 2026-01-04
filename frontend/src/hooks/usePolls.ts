@@ -95,3 +95,19 @@ export function useRefreshPolls() {
     refreshAllPolls: () => queryClient.invalidateQueries({ queryKey: ['polls'] }),
   };
 }
+
+// ==================== Orb Mode Hooks ====================
+
+/**
+ * [Orb Mode] 나를 선택한 투표자 목록 조회
+ * - Orb Mode 구독자 전용
+ * - enabled: false로 시작, 필요 시 수동 호출
+ */
+export function useMyVoters(pollId: string, enabled = false) {
+  return useQuery({
+    queryKey: ['polls', pollId, 'voters'],
+    queryFn: () => pollApi.getMyVoters(pollId),
+    enabled: !!pollId && enabled,
+    staleTime: 5 * 60 * 1000, // 5분 (투표자 목록은 자주 변경되지 않음)
+  });
+}

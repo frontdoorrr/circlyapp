@@ -11,6 +11,7 @@ import {
   TemplateCategory,
   VoteRequest,
   VoteResponse,
+  VoterRevealResponse,
 } from '../types/poll';
 import { ApiResponse } from '../types/api';
 import { apiClient } from './client';
@@ -96,4 +97,19 @@ export async function getMyPolls(
   );
   console.log('[API] GET /polls/me 응답:', { status: response.status });
   return extractData<PollResponse[]>(response.data, (d) => Array.isArray(d));
+}
+
+// ==================== Orb Mode API ====================
+
+/**
+ * [Orb Mode] 나를 선택한 투표자 목록 조회
+ * - Orb Mode 구독자 전용
+ */
+export async function getMyVoters(pollId: string): Promise<VoterRevealResponse> {
+  console.log('[API] GET /polls/:pollId/voters 요청:', pollId);
+  const response = await apiClient.get<ApiResponse<VoterRevealResponse>>(
+    `/polls/${pollId}/voters`
+  );
+  console.log('[API] GET /polls/:pollId/voters 응답:', { status: response.status });
+  return extractData<VoterRevealResponse>(response.data, (d) => d.poll_id && d.voters);
 }
