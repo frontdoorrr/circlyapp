@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   Alert,
 } from 'react-native';
 import Animated, {
@@ -28,6 +29,7 @@ import { Button } from '../../src/components/primitives/Button';
 import { ResultCard } from '../../src/components/share/ResultCard';
 import { tokens } from '../../src/theme';
 import { ApiError } from '../../src/types/api';
+import { useCurrentUser } from '../../src/hooks/useAuth';
 
 // 애니메이션 결과 바 컴포넌트
 function AnimatedResultBar({ percentage }: { percentage: number }) {
@@ -54,6 +56,10 @@ function AnimatedResultBar({ percentage }: { percentage: number }) {
 export default function PollDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  // 사용자 정보 (Orb Mode 확인용)
+  const { data: currentUser } = useCurrentUser();
+  const isOrbMode = currentUser?.is_orb_mode ?? false;
 
   // Poll 정보 조회
   const { data: poll, isLoading: pollLoading } = usePollDetail(id);
@@ -146,6 +152,15 @@ export default function PollDetailScreen() {
     }
 
     return `${seconds}초`;
+  };
+
+  // Orb Mode - 투표자 보기
+  const handleOrbMode = () => {
+    if (isOrbMode) {
+      router.push(`/results/${id}/voters`);
+    } else {
+      Alert.alert('Orb Mode 필요', 'Orb Mode 구독이 필요합니다.');
+    }
   };
 
   // 결과 카드 공유
@@ -334,6 +349,36 @@ export default function PollDetailScreen() {
             📤 결과 공유하기
           </Button>
         </View>
+
+        {/* Orb Mode 버튼 */}
+        <Pressable
+          style={[
+            styles.orbModeButton,
+            !isOrbMode && styles.orbModeButtonDisabled,
+          ]}
+          onPress={handleOrbMode}
+        >
+          <View style={styles.orbModeContent}>
+            <Text style={styles.orbModeIcon}>
+              {isOrbMode ? '🔮' : '🔒'}
+            </Text>
+            <View style={styles.orbModeTextContainer}>
+              <Text style={[
+                styles.orbModeTitle,
+                !isOrbMode && styles.orbModeTitleDisabled,
+              ]}>
+                누가 나를 선택했는지 보기
+              </Text>
+              <Text style={[
+                styles.orbModeSubtitle,
+                !isOrbMode && styles.orbModeSubtitleDisabled,
+              ]}>
+                {isOrbMode ? '투표자를 확인해보세요' : 'Orb Mode 구독 필요'}
+              </Text>
+            </View>
+            <Text style={styles.orbModeArrow}>→</Text>
+          </View>
+        </Pressable>
       </ScrollView>
 
       {/* 결과 카드 (화면 밖에 숨김 - 캡처용) */}
@@ -512,5 +557,49 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -10000, // 화면 밖으로 숨김
     top: 0,
+  },
+  // Orb Mode 버튼 스타일
+  orbModeButton: {
+    marginBottom: tokens.spacing.xl,
+    backgroundColor: tokens.colors.white,
+    borderRadius: tokens.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: tokens.colors.primary[400],
+    padding: tokens.spacing.lg,
+  },
+  orbModeButtonDisabled: {
+    borderColor: tokens.colors.neutral[300],
+    backgroundColor: tokens.colors.neutral[100],
+  },
+  orbModeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.md,
+  },
+  orbModeIcon: {
+    fontSize: 32,
+  },
+  orbModeTextContainer: {
+    flex: 1,
+  },
+  orbModeTitle: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.primary[700],
+    marginBottom: 2,
+  },
+  orbModeTitleDisabled: {
+    color: tokens.colors.neutral[500],
+  },
+  orbModeSubtitle: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.primary[500],
+  },
+  orbModeSubtitleDisabled: {
+    color: tokens.colors.neutral[400],
+  },
+  orbModeArrow: {
+    fontSize: tokens.typography.fontSize.xl,
+    color: tokens.colors.primary[400],
   },
 });
