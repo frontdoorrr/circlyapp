@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { tokens } from '../../src/theme';
-import { useAuthStore } from '../../src/stores/auth';
+import { useCurrentUser } from '../../src/hooks/useAuth';
 
 /**
  * 투표 결과 화면
@@ -14,8 +14,8 @@ import { useAuthStore } from '../../src/stores/auth';
  */
 export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const user = useAuthStore((state) => state.user);
-  const isOrbMode = user?.is_orb_mode ?? false;
+  const { data: currentUser } = useCurrentUser();
+  const isOrbMode = currentUser?.is_orb_mode ?? false;
 
   // TODO: 실제 투표 결과 가져오기
   const pollResults = {
