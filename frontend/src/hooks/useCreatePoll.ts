@@ -13,8 +13,7 @@ import type { PollDuration } from '../stores/pollCreate';
 
 interface CreatePollRequest {
   template_id: string;
-  duration_hours: number;
-  circle_id: string;
+  duration: string; // "1H" | "3H" | "6H" | "24H"
 }
 
 interface CreatePollResponse {
@@ -28,13 +27,6 @@ interface CreatePollResponse {
     ends_at: string;
   };
 }
-
-const durationToHours: Record<PollDuration, number> = {
-  '1H': 1,
-  '3H': 3,
-  '6H': 6,
-  '24H': 24,
-};
 
 export const useCreatePoll = () => {
   const queryClient = useQueryClient();
@@ -51,8 +43,7 @@ export const useCreatePoll = () => {
     }) => {
       const request: CreatePollRequest = {
         template_id: templateId,
-        duration_hours: durationToHours[duration],
-        circle_id: circleId,
+        duration: duration, // "1H" | "3H" | "6H" | "24H" 그대로 전송
       };
 
       const response = await apiClient.post<CreatePollResponse>(
