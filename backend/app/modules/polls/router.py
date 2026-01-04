@@ -63,7 +63,7 @@ async def get_categories(
 
 
 @router.post(
-    "/circles/{circle_id}/polls",
+    "/circles/{circle_id}",
     response_model=PollResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new poll",
