@@ -58,11 +58,40 @@ class PollResponse(BaseModel):
 
 
 class VoteOption(BaseModel):
-    """Schema for vote option (circle member)."""
+    """투표 선택지 - Circle 멤버 정보.
+
+    용도: 투표 화면에서 "누구에게 투표할지" 선택지로 표시
+    사용처: PollDetail.options
+    """
 
     user_id: uuid.UUID
     nickname: str | None
     profile_emoji: str
+
+
+class VoterInfo(BaseModel):
+    """God Mode 투표자 정보 - 나를 선택한 사람.
+
+    용도: God Mode 구독자가 "누가 나를 선택했는지" 조회
+    사용처: VoterRevealResponse.voters
+    """
+
+    user_id: uuid.UUID
+    nickname: str | None
+    profile_emoji: str
+    voted_at: datetime
+
+
+class VoterRevealResponse(BaseModel):
+    """God Mode API 응답 - 나를 선택한 투표자 목록.
+
+    용도: GET /polls/{id}/voters 엔드포인트 응답
+    권한: God Mode 구독자 전용
+    """
+
+    poll_id: uuid.UUID
+    question_text: str
+    voters: list[VoterInfo]
 
 
 class PollResultItem(BaseModel):

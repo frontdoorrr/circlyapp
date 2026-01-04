@@ -6,6 +6,7 @@ from typing import TypedDict
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.polls.models import Poll, PollTemplate, Vote
@@ -498,3 +499,25 @@ class VoteRepository:
         )
 
         return [{"user_id": row.voted_for_id, "vote_count": row.vote_count} for row in result.all()]
+
+    async def find_voters_for_user(
+        self, poll_id: uuid.UUID, voted_for_id: uuid.UUID
+    ) -> list["Vote"]:
+        """God Mode: 특정 poll에서 user에게 투표한 사람들 조회.
+
+        Args:
+            poll_id: Poll UUID
+            voted_for_id: 투표 받은 사람 UUID
+
+        Returns:
+            List of Vote objects with voter relationship loaded
+        """
+        from app.modules.polls.models import Vote
+
+        result = await self.session.execute(
+            select(Vote)
+            .options(selectinload(Vote.voter))
+            .where(Vote.poll_id == poll_id, Vote.voted_for_id == voted_for_id)
+            .order_by(Vote.created_at.desc())
+        )
+        return list(result.scalars().all())

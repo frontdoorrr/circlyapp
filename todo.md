@@ -1194,7 +1194,7 @@
 > **엔드포인트**: `GET /api/v1/polls/{id}/voters` (God Mode 구독자 전용)
 
 #### 13.2.1 스키마 추가
-- [ ] `app/modules/polls/schemas.py` - `VoterRevealResponse` 스키마 추가
+- [x] `app/modules/polls/schemas.py` - `VoterInfo`, `VoterRevealResponse` 스키마 추가
   ```python
   class VoterInfo(BaseModel):
       user_id: UUID
@@ -1209,7 +1209,7 @@
   ```
 
 #### 13.2.2 라우터 추가
-- [ ] `app/modules/polls/router.py` - God Mode 전용 엔드포인트 추가
+- [x] `app/modules/polls/router.py` - God Mode 전용 엔드포인트 추가 (GET /{poll_id}/voters)
   ```python
   @router.get("/{poll_id}/voters", response_model=VoterRevealResponse)
   async def get_my_voters(
@@ -1221,7 +1221,8 @@
   ```
 
 #### 13.2.3 서비스 로직
-- [ ] `app/modules/polls/service.py` - `get_voters_for_user()` 함수 추가
+- [x] `app/modules/polls/service.py` - `get_voters_for_user()` 함수 구현
+- [x] `app/modules/polls/repository.py` - `find_voters_for_user()` 쿼리 추가
 - [ ] **커밋**: `feat(polls): add God Mode voter reveal API`
 
 ### 13.3 RevenueCat 연동 (P2)

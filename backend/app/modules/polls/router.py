@@ -18,6 +18,7 @@ from app.modules.polls.schemas import (
     UpdatePollStatusRequest,
     VoteRequest,
     VoteResponse,
+    VoterRevealResponse,
 )
 
 router = APIRouter(prefix="/polls", tags=["Polls"])
@@ -105,6 +106,24 @@ async def vote(
 ) -> VoteResponse:
     """Cast a vote in a poll."""
     return await service.vote(poll_id, current_user.id, vote_data.voted_for_id)
+
+
+@router.get(
+    "/{poll_id}/voters",
+    response_model=VoterRevealResponse,
+    summary="[God Mode] Get voters who selected me",
+    tags=["God Mode"],
+)
+async def get_my_voters(
+    poll_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoterRevealResponse:
+    """God Mode 전용: 특정 투표에서 나를 선택한 사람들 조회.
+
+    권한: God Mode 구독자 전용 (TODO: RevenueCat 연동)
+    """
+    return await service.get_voters_for_user(poll_id, current_user.id)
 
 
 # ==================== Admin Endpoints ====================
