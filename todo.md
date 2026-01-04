@@ -17,16 +17,12 @@
 - [x] `uv sync` 의존성 설치
 - [x] `.env.example` 파일 생성 → `trd/07-development-deployment-setup.md#4.1`
 - [x] `.gitignore` 설정
-- [x] **테스트**: `uv run python --version` 확인
-- [x] **커밋**: `chore: initialize backend project with uv`
 
 ### 1.2 FastAPI 기본 구조 생성
 - [x] `app/__init__.py` 생성
 - [x] `app/main.py` - FastAPI 앱 팩토리 생성 → `docs/DSL.md#6`
 - [x] `app/config.py` - Pydantic Settings 설정
 - [x] `app/deps.py` - 공통 의존성
-- [x] **테스트**: `uv run uvicorn app.main:app --reload` 서버 실행 확인
-- [x] **커밋**: `feat: create FastAPI application skeleton`
 
 ### 1.3 Core 모듈 구조 생성
 - [x] `app/core/__init__.py`
@@ -34,13 +30,10 @@
 - [x] `app/core/security.py` - JWT, 비밀번호 해싱 유틸 → `trd/06-authentication-architecture.md`, `docs/DSL.md#10`
 - [x] `app/core/exceptions.py` - 커스텀 예외 클래스 → `docs/DSL.md#9`
 - [x] `app/core/responses.py` - 표준 응답 포맷 → `docs/DSL.md#9`
-- [x] **커밋**: `feat: add core module with database and security utilities`
 
 ### 1.4 Docker 개발 환경
 - [x] `Dockerfile` 작성 → `trd/07-development-deployment-setup.md#1.5`
 - [x] `docker-compose.yml` 작성 (PostgreSQL, Redis) → `trd/07-development-deployment-setup.md#1.4`
-- [x] **테스트**: `docker-compose up -d db redis` 실행 확인
-- [x] **커밋**: `chore: add Docker development environment`
 
 ---
 
@@ -52,15 +45,11 @@
 - [x] `tests/__init__.py` 생성
 - [x] `tests/conftest.py` - 공통 fixture 설정 → `docs/DSL.md#8`
 - [x] pytest 설정 (`pyproject.toml`에 추가) → `trd/07-development-deployment-setup.md#1.2`
-- [x] **테스트**: `uv run pytest --version` 확인
-- [x] **커밋**: `test: setup pytest configuration`
 
 ### 2.2 테스트 DB 설정
 - [x] `tests/conftest.py` - 테스트용 DB fixture
 - [x] `tests/conftest.py` - 테스트용 FastAPI client fixture
 - [x] `tests/conftest.py` - 테스트용 async session fixture
-- [x] **테스트**: `uv run pytest tests/ -v` 빈 테스트 실행
-- [x] **커밋**: `test: add test database and client fixtures`
 
 ---
 
@@ -72,8 +61,6 @@
 - [x] `alembic init migrations` 실행
 - [x] `alembic.ini` 설정
 - [x] `migrations/env.py` async 설정
-- [x] **테스트**: `uv run alembic --help` 확인
-- [x] **커밋**: `chore: setup Alembic for database migrations`
 
 ### 3.2 Enum 타입 정의
 - [x] `app/core/enums.py` - UserRole enum → `docs/DSL.md#2 (enum 정의)`
@@ -82,18 +69,14 @@
 - [x] `app/core/enums.py` - TemplateCategory enum → `docs/DSL.md#2 (template_category)`
 - [x] `app/core/enums.py` - NotificationType enum → `docs/DSL.md#2 (notification_type)`
 - [x] `app/core/enums.py` - ReportStatus, ReportReason enum → `docs/DSL.md#2 (report_*)`
-- [x] **커밋**: `feat: define database enum types`
 
 ### 3.3 Base 모델 정의
 - [x] `app/core/models.py` - Base, TimestampMixin 정의
-- [x] **커밋**: `feat: add SQLAlchemy base model and mixins`
 
 ### 3.4 Users 모델
 - [x] `app/modules/auth/__init__.py`
 - [x] `app/modules/auth/models.py` - User 모델 → `docs/DSL.md#2 (users 테이블)`
 - [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create users table"`
-- [x] **테스트**: `uv run alembic upgrade head`
-- [x] **커밋**: `feat(auth): add User model and migration`
 
 ### 3.5 Circles 모델
 - [x] `app/modules/circles/__init__.py`
@@ -110,22 +93,16 @@
 - [x] `app/modules/polls/models.py` - Vote 모델 → `docs/DSL.md#2 (votes 테이블)`
 - [x] `app/modules/polls/models.py` - PollResult 모델 → `docs/DSL.md#2 (poll_results 테이블)`
 - [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create polls tables"`
-- [x] **테스트**: `uv run alembic upgrade head`
-- [x] **커밋**: `feat(polls): add Poll, PollTemplate, Vote models`
 
 ### 3.7 Notifications 모델
 - [x] `app/modules/notifications/__init__.py`
 - [x] `app/modules/notifications/models.py` - Notification 모델 → `docs/DSL.md#2 (notifications 테이블)`
 - [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create notifications tables"`
-- [x] **테스트**: `uv run alembic upgrade head`
-- [x] **커밋**: `feat(notifications): add Notification models`
 
 ### 3.8 Reports 모델
 - [x] `app/modules/reports/__init__.py`
 - [x] `app/modules/reports/models.py` - Report 모델 → `docs/DSL.md#2 (reports)`
 - [x] **마이그레이션**: `uv run alembic revision --autogenerate -m "create reports table"`
-- [x] **테스트**: `uv run alembic upgrade head`
-- [x] **커밋**: `feat(reports): add Report model`
 
 ---
 
@@ -139,64 +116,54 @@
 - [x] `app/modules/auth/schemas.py` - UserUpdate schema → `docs/DSL.md#3.1 (UserUpdate)`
 - [x] `app/modules/auth/schemas.py` - TokenResponse schema → `docs/DSL.md#3.1 (TokenResponse)`
 - [x] `app/modules/auth/schemas.py` - LoginRequest schema → `trd/00-interface-specifications.md`
-- [x] **커밋**: `feat(auth): add Pydantic schemas`
 
 ### 4.2 Auth Repository (TDD)
 - [x] `tests/modules/auth/test_repository.py` - create user 테스트 작성
 - [x] `app/modules/auth/repository.py` - UserRepository.create 구현 → `docs/DSL.md#3.1 (UserRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
 - [x] `tests/modules/auth/test_repository.py` - find by email 테스트 작성
 - [x] `app/modules/auth/repository.py` - UserRepository.find_by_email 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
 - [x] `tests/modules/auth/test_repository.py` - find by id 테스트 작성
 - [x] `app/modules/auth/repository.py` - UserRepository.find_by_id 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
 
 - [x] `tests/modules/auth/test_repository.py` - update user 테스트 작성
 - [x] `app/modules/auth/repository.py` - UserRepository.update 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_repository.py -v`
-- [x] **커밋**: `feat(auth): implement UserRepository with tests`
+
 
 ### 4.3 Auth Service (TDD)
 - [x] `tests/modules/auth/test_service.py` - register 테스트 작성
 - [x] `app/modules/auth/service.py` - AuthService.register 구현 → `docs/DSL.md#3.1 (AuthService)`
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+
 
 - [x] `tests/modules/auth/test_service.py` - login 테스트 작성
 - [x] `app/modules/auth/service.py` - AuthService.login 구현 → `trd/06-authentication-architecture.md`
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+
 
 - [x] `tests/modules/auth/test_service.py` - get_current_user 테스트 작성
 - [x] `app/modules/auth/service.py` - AuthService.get_current_user 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
+
 
 - [x] `tests/modules/auth/test_service.py` - update_profile 테스트 작성
 - [x] `app/modules/auth/service.py` - AuthService.update_profile 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_service.py -v`
-- [x] **커밋**: `feat(auth): implement AuthService with tests`
+
 
 ### 4.4 Auth Router (TDD)
 - [x] `tests/modules/auth/test_router.py` - POST /register 테스트 작성
 - [x] `app/modules/auth/router.py` - register endpoint 구현 → `docs/DSL.md#3.1 (AuthRouter)`, `trd/05-api-specification.md`
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+
 
 - [x] `tests/modules/auth/test_router.py` - POST /login 테스트 작성
 - [x] `app/modules/auth/router.py` - login endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
 
 - [x] `tests/modules/auth/test_router.py` - GET /me 테스트 작성
 - [x] `app/modules/auth/router.py` - get_me endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
+
 
 - [x] `tests/modules/auth/test_router.py` - PUT /me 테스트 작성
 - [x] `app/modules/auth/router.py` - update_me endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/auth/test_router.py -v`
-
 - [x] `app/main.py` - auth router 등록
-- [x] **테스트**: 전체 Auth 모듈 테스트 `uv run pytest tests/modules/auth/ -v`
-- [x] **커밋**: `feat(auth): implement Auth API endpoints with tests`
+
 
 ---
 
@@ -211,90 +178,84 @@
 - [x] `app/modules/circles/schemas.py` - CircleDetail schema → `docs/DSL.md#3.2 (CircleDetail)`
 - [x] `app/modules/circles/schemas.py` - MemberInfo schema → `docs/DSL.md#3.2 (MemberInfo)`
 - [x] `app/modules/circles/schemas.py` - JoinByCodeRequest schema
-- [x] **커밋**: `feat(circles): add Pydantic schemas`
+
 
 ### 5.2 Circle Repository (TDD)
 - [x] `tests/modules/circles/test_repository.py` - create circle 테스트 작성
 - [x] `app/modules/circles/repository.py` - CircleRepository.create 구현 → `docs/DSL.md#3.2 (CircleRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
+
 
 - [x] `tests/modules/circles/test_repository.py` - find by invite_code 테스트 작성
 - [x] `app/modules/circles/repository.py` - CircleRepository.find_by_invite_code 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
+
 
 - [x] `tests/modules/circles/test_repository.py` - find by user_id 테스트 작성
 - [x] `app/modules/circles/repository.py` - CircleRepository.find_by_user_id 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_repository.py -v`
-- [x] **커밋**: `feat(circles): implement CircleRepository with tests`
+
 
 ### 5.3 Membership Repository (TDD)
 - [x] `tests/modules/circles/test_membership_repository.py` - create membership 테스트 작성
 - [x] `app/modules/circles/repository.py` - MembershipRepository.create 구현 → `docs/DSL.md#3.2 (MembershipRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
 
 - [x] `tests/modules/circles/test_membership_repository.py` - find members 테스트 작성
 - [x] `app/modules/circles/repository.py` - MembershipRepository.find_by_circle_id 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
+
 
 - [x] `tests/modules/circles/test_membership_repository.py` - check membership 테스트 작성
 - [x] `app/modules/circles/repository.py` - MembershipRepository.exists 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_membership_repository.py -v`
-- [x] **커밋**: `feat(circles): implement MembershipRepository with tests`
+
 
 ### 5.4 Circle Service (TDD)
 - [x] `tests/modules/circles/test_service.py` - create_circle 테스트 작성
 - [x] `app/modules/circles/service.py` - CircleService.create_circle 구현 → `docs/DSL.md#3.2 (CircleService)`
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+
 
 - [x] `tests/modules/circles/test_service.py` - join_by_code 테스트 작성 → `docs/DSL.md#5 (JoinCircleFlow)`
 - [x] `app/modules/circles/service.py` - CircleService.join_by_code 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+
 
 - [x] `tests/modules/circles/test_service.py` - get_user_circles 테스트 작성
 - [x] `app/modules/circles/service.py` - CircleService.get_user_circles 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+
 
 - [x] `tests/modules/circles/test_service.py` - get_circle_detail 테스트 작성
 - [x] `app/modules/circles/service.py` - CircleService.get_circle_detail 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+
 
 - [x] `tests/modules/circles/test_service.py` - leave_circle 테스트 작성
 - [x] `app/modules/circles/service.py` - CircleService.leave_circle 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
+
 
 - [x] `tests/modules/circles/test_service.py` - regenerate_invite_code 테스트 작성
 - [x] `app/modules/circles/service.py` - CircleService.regenerate_invite_code 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_service.py -v`
-- [x] **커밋**: `feat(circles): implement CircleService with tests`
+
 
 ### 5.5 Circle Router (TDD)
 - [x] `tests/modules/circles/test_router.py` - POST /circles 테스트 작성
 - [x] `app/modules/circles/router.py` - create_circle endpoint 구현 → `docs/DSL.md#3.2 (CircleRouter)`, `trd/05-api-specification.md`
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+
 
 - [x] `tests/modules/circles/test_router.py` - GET /circles 테스트 작성
 - [x] `app/modules/circles/router.py` - get_circles endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+
 
 - [x] `tests/modules/circles/test_router.py` - GET /circles/{id} 테스트 작성
 - [x] `app/modules/circles/router.py` - get_circle endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+
 
 - [x] `tests/modules/circles/test_router.py` - POST /circles/join/code 테스트 작성
 - [x] `app/modules/circles/router.py` - join_by_code endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+
 
 - [x] `tests/modules/circles/test_router.py` - POST /circles/{id}/leave 테스트 작성
 - [x] `app/modules/circles/router.py` - leave_circle endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
+
 
 - [x] `tests/modules/circles/test_router.py` - GET /circles/{id}/members 테스트 작성
 - [x] `app/modules/circles/router.py` - get_members endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/circles/test_router.py -v`
 
 - [x] `app/main.py` - circles router 등록
-- [x] **테스트**: 전체 Circle 모듈 테스트 `uv run pytest tests/modules/circles/ -v`
-- [x] **커밋**: `feat(circles): implement Circle API endpoints with tests`
+
 
 ---
 
@@ -310,102 +271,88 @@
 - [x] `app/modules/polls/schemas.py` - VoteRequest schema → `docs/DSL.md#3.3 (VoteCreate)`
 - [x] `app/modules/polls/schemas.py` - VoteResponse schema → `docs/DSL.md#3.3 (VoteResponse)`
 - [x] `app/modules/polls/schemas.py` - PollResultItem schema → `docs/DSL.md#3.3 (PollResultItem)`
-- [x] **커밋**: `feat(polls): add Pydantic schemas`
+
 
 ### 6.2 Template Repository (TDD)
 - [x] `tests/modules/polls/test_template_repository.py` - find_all 테스트 작성
 - [x] `app/modules/polls/repository.py` - TemplateRepository.find_all 구현 → `docs/DSL.md#3.3 (TemplateRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
+
 
 - [x] `tests/modules/polls/test_template_repository.py` - find_by_category 테스트 작성
 - [x] `app/modules/polls/repository.py` - TemplateRepository.find_by_category 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_template_repository.py -v`
-- [x] **커밋**: `feat(polls): implement TemplateRepository with tests`
 
 ### 6.3 Poll Repository (TDD)
 - [x] `tests/modules/polls/test_poll_repository.py` - create poll 테스트 작성
 - [x] `app/modules/polls/repository.py` - PollRepository.create 구현 → `docs/DSL.md#3.3 (PollRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
+
 
 - [x] `tests/modules/polls/test_poll_repository.py` - find by circle_id 테스트 작성
 - [x] `app/modules/polls/repository.py` - PollRepository.find_by_circle_id 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
+
 
 - [x] `tests/modules/polls/test_poll_repository.py` - update status 테스트 작성
 - [x] `app/modules/polls/repository.py` - PollRepository.update_status 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_poll_repository.py -v`
-- [x] **커밋**: `feat(polls): implement PollRepository with tests`
+
 
 ### 6.4 Vote Repository (TDD)
 - [x] `tests/modules/polls/test_vote_repository.py` - create vote 테스트 작성
 - [x] `app/modules/polls/repository.py` - VoteRepository.create 구현 → `docs/DSL.md#3.3 (VoteRepository)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
 
 - [x] `tests/modules/polls/test_vote_repository.py` - check duplicate 테스트 작성 → `docs/DSL.md#10 (vote_anonymity)`
 - [x] `app/modules/polls/repository.py` - VoteRepository.exists_by_voter_hash 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
+
 
 - [x] `tests/modules/polls/test_vote_repository.py` - get results 테스트 작성
 - [x] `app/modules/polls/repository.py` - VoteRepository.get_results 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_vote_repository.py -v`
-- [x] **커밋**: `feat(polls): implement VoteRepository with tests`
+
 
 ### 6.5 Poll Service (TDD)
 - [x] `tests/modules/polls/test_service.py` - get_templates 테스트 작성
 - [x] `app/modules/polls/service.py` - PollService.get_templates 구현 → `docs/DSL.md#3.3 (PollService)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+
 
 - [x] `tests/modules/polls/test_service.py` - create_poll 테스트 작성 → `docs/DSL.md#5 (CreatePollFlow)`
 - [x] `app/modules/polls/service.py` - PollService.create_poll 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+
 
 - [x] `tests/modules/polls/test_service.py` - vote (익명 해시 포함) 테스트 작성 → `docs/DSL.md#5 (VoteFlow)`, `docs/DSL.md#10`
 - [x] `app/modules/polls/service.py` - PollService.vote 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
-
 - [x] `tests/modules/polls/test_service.py` - 중복 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 중복 투표 확인)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
-
 - [x] `tests/modules/polls/test_service.py` - 자기 자신 투표 방지 테스트 작성 → `docs/DSL.md#5 (VoteFlow - 자기 자신 투표 방지)`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+
 
 - [x] `tests/modules/polls/test_service.py` - get_results 테스트 작성
 - [x] `app/modules/polls/service.py` - PollService.get_results 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
+
 
 - [x] `tests/modules/polls/test_service.py` - close_poll 테스트 작성 → `docs/DSL.md#5 (PollEndFlow)`
 - [x] `app/modules/polls/service.py` - PollService.close_poll 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_service.py -v`
-- [x] **커밋**: `feat(polls): implement PollService with tests`
+
 
 ### 6.6 Poll Router (TDD)
 - [x] `tests/modules/polls/test_router.py` - GET /polls/templates 테스트 작성
 - [x] `app/modules/polls/router.py` - get_templates endpoint 구현 → `docs/DSL.md#3.3 (PollRouter)`, `trd/05-api-specification.md`
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+
 
 - [x] `tests/modules/polls/test_router.py` - POST /circles/{id}/polls 테스트 작성
 - [x] `app/modules/polls/router.py` - create_poll endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+
 
 - [x] `tests/modules/polls/test_router.py` - GET /circles/{id}/polls 테스트 작성
 - [x] `app/modules/polls/router.py` - get_circle_polls endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+
 
 - [x] `tests/modules/polls/test_router.py` - GET /polls/{id} 테스트 작성
 - [x] `app/modules/polls/router.py` - get_poll endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+
 
 - [x] `tests/modules/polls/test_router.py` - POST /polls/{id}/vote 테스트 작성
 - [x] `app/modules/polls/router.py` - vote endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
+
 
 - [x] `tests/modules/polls/test_router.py` - GET /polls/{id}/results 테스트 작성
 - [x] `app/modules/polls/router.py` - get_results endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/polls/test_router.py -v`
-
 - [x] `app/main.py` - polls router 등록
-- [x] **테스트**: 전체 Poll 모듈 테스트 `uv run pytest tests/modules/polls/ -v`
-- [x] **커밋**: `feat(polls): implement Poll API endpoints with tests`
 
 ---
 
@@ -444,25 +391,23 @@
 
 - [x] `tests/modules/notifications/test_service.py` - get_notifications 테스트 작성
 - [x] `app/modules/notifications/service.py` - NotificationService.get_notifications 구현
-- [x] **테스트**: `uv run pytest tests/modules/notifications/test_service.py -v`
-- [x] **커밋**: `feat(notifications): implement NotificationService with tests`
+
 
 ### 7.4 Notification Router (TDD)
 - [x] `tests/modules/notifications/test_router.py` - GET /notifications 테스트 작성
 - [x] `app/modules/notifications/router.py` - get_notifications endpoint 구현 → `docs/DSL.md#3.4 (NotificationRouter)`, `trd/05-api-specification.md`
-- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+
 
 - [x] `tests/modules/notifications/test_router.py` - PUT /notifications/{id}/read 테스트 작성
 - [x] `app/modules/notifications/router.py` - mark_as_read endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+
 
 - [x] `tests/modules/notifications/test_router.py` - GET /notifications/unread-count 테스트 작성
 - [x] `app/modules/notifications/router.py` - get_unread_count endpoint 구현
-- [x] **테스트**: `uv run pytest tests/modules/notifications/test_router.py -v`
+
 
 - [x] `app/main.py` - notifications router 등록
-- [x] **테스트**: 전체 Notification 모듈 테스트 `uv run pytest tests/modules/notifications/ -v`
-- [x] **커밋**: `feat(notifications): implement Notification API endpoints with tests`
+
 
 ---
 
@@ -1194,3 +1139,141 @@
 ## 고도화 작업 (TODO)
 
 - [ ] **Supabase Auth**: anon key → Publishable key로 변경 (보안 강화)
+
+---
+
+## Phase 13: God Mode 수익화 구현
+
+> **핵심 기능**: 유료 구독자(God Mode)가 "누가 나를 선택했는지" 볼 수 있는 기능
+> **참고 문서**: `docs/DSL.md` (votes 테이블, 보안 정책), `prd/business/01-business-model.md`
+
+### 13.1 Backend: Vote 모델 수정 (P0)
+
+> **변경사항**: `voter_id` 컬럼 추가 (God Mode에서 투표자 조회용)
+
+#### 13.1.1 모델 수정
+- [x] `app/modules/polls/models.py` - Vote 모델에 `voter_id` 컬럼 추가
+  ```python
+  # 추가할 필드
+  voter_id: Mapped[uuid.UUID] = mapped_column(
+      UUID(as_uuid=True),
+      ForeignKey("users.id", ondelete="CASCADE"),
+      nullable=False,
+      index=True,
+  )
+  
+  # Relationship 추가
+  voter: Mapped["User"] = relationship(
+      "User",
+      foreign_keys=[voter_id],
+      back_populates="votes_cast",
+  )
+  ```
+
+#### 13.1.2 User 모델 역참조 추가
+- [x] `app/modules/auth/models.py` - User 모델에 `votes_cast` relationship 추가
+  ```python
+  votes_cast: Mapped[list["Vote"]] = relationship(
+      "Vote",
+      foreign_keys="[Vote.voter_id]",
+      back_populates="voter",
+  )
+  ```
+
+#### 13.1.3 마이그레이션
+- [x] `uv run alembic revision --autogenerate -m "add voter_id to votes table"`
+- [x] `uv run alembic upgrade head`
+- [ ] **테스트**: 기존 테스트 통과 확인
+
+#### 13.1.4 Service 수정
+- [x] `app/modules/polls/service.py` - `vote()` 함수에서 `voter_id` 저장하도록 수정
+- [ ] **커밋**: `feat(polls): add voter_id column for God Mode feature`
+
+### 13.2 Backend: God Mode API 추가 (P1)
+
+> **엔드포인트**: `GET /api/v1/polls/{id}/voters` (God Mode 구독자 전용)
+
+#### 13.2.1 스키마 추가
+- [ ] `app/modules/polls/schemas.py` - `VoterRevealResponse` 스키마 추가
+  ```python
+  class VoterInfo(BaseModel):
+      user_id: UUID
+      nickname: str
+      profile_emoji: str
+      voted_at: datetime
+  
+  class VoterRevealResponse(BaseModel):
+      poll_id: UUID
+      question_text: str
+      voters: list[VoterInfo]  # 나를 선택한 사람들
+  ```
+
+#### 13.2.2 라우터 추가
+- [ ] `app/modules/polls/router.py` - God Mode 전용 엔드포인트 추가
+  ```python
+  @router.get("/{poll_id}/voters", response_model=VoterRevealResponse)
+  async def get_my_voters(
+      poll_id: UUID,
+      current_user: User = Depends(get_current_user),
+      # TODO: God Mode 구독 여부 확인 (RevenueCat)
+  ):
+      ...
+  ```
+
+#### 13.2.3 서비스 로직
+- [ ] `app/modules/polls/service.py` - `get_voters_for_user()` 함수 추가
+- [ ] **커밋**: `feat(polls): add God Mode voter reveal API`
+
+### 13.3 RevenueCat 연동 (P2)
+
+> **참고**: `docs/DSL.md` (external_services: RevenueCat)
+
+- [ ] RevenueCat SDK 설치 및 설정
+- [ ] God Mode 구독 상태 확인 미들웨어/의존성 추가
+- [ ] 구독 상태에 따른 API 접근 제어
+- [ ] **커밋**: `feat(subscription): integrate RevenueCat for God Mode`
+
+### 13.4 Frontend: God Mode UI (P2)
+
+> **참고**: `prd/business/01-business-model.md#God Mode 구현 가이드`
+
+- [ ] 투표 결과 화면에 "누가 선택했는지 보기" 버튼 추가
+- [ ] God Mode 페이월 화면 구현
+- [ ] 투표자 공개 화면 구현
+- [ ] RevenueCat SDK 연동 (Expo)
+
+---
+
+### 📚 참고 문서 링크
+
+| 문서 | 수정 내용 |
+|------|----------|
+| `docs/DSL.md` | votes 테이블에 `voter_id` 추가, 보안 정책 God Mode 반영 |
+| `prd/00-prd.md` | "기본 익명성 + God Mode" 차별화 포인트 |
+| `prd/business/01-business-model.md` | God Mode 수익화 상세 (단계별 힌트, 가격 등) |
+
+
+---
+
+## 🐛 Bug Fixes
+
+### B1. Poll 생성 API 라우트 경로 오류
+
+> **발견일**: 2025-01-04
+> **상태**: [x] 해결됨 (2025-01-04)
+
+**증상**:
+```
+POST /api/v1/circles/{circle_id}/polls → 404 Not Found
+```
+
+**원인**:
+1. `polls/router.py`의 라우트 경로 설정 오류
+2. 프론트엔드에서 두 가지 다른 경로 사용 (`useCreatePoll.ts` vs `poll.ts`)
+
+**해결**:
+- [x] 백엔드: `@router.post("/circles/{circle_id}")` 로 변경 → `/api/v1/polls/circles/{circle_id}`
+- [x] 프론트엔드: `useCreatePoll.ts` 경로 수정 → `/polls/circles/${circleId}`
+- [x] 프론트엔드: `poll.ts`, `usePolls.ts` 미사용 함수 제거
+
+**최종 API 경로**: `POST /api/v1/polls/circles/{circle_id}`
