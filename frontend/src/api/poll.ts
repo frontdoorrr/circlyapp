@@ -7,6 +7,8 @@ import {
   CategoryInfo,
   PollDetailResponse,
   PollResponse,
+  PollTemplateResponse,
+  TemplateCategory,
   VoteRequest,
   VoteResponse,
 } from '../types/poll';
@@ -25,6 +27,22 @@ function extractData<T>(responseData: any, validator: (data: any) => boolean): T
     return responseData;
   }
   throw new Error('Unexpected response format');
+}
+
+/**
+ * 투표 템플릿 목록 조회
+ */
+export async function getPollTemplates(
+  category?: TemplateCategory
+): Promise<PollTemplateResponse[]> {
+  console.log('[API] GET /polls/templates 요청:', { category });
+  const params = category ? { category } : {};
+  const response = await apiClient.get<ApiResponse<PollTemplateResponse[]>>(
+    '/polls/templates',
+    { params }
+  );
+  console.log('[API] GET /polls/templates 응답:', { status: response.status });
+  return extractData<PollTemplateResponse[]>(response.data, (d) => Array.isArray(d));
 }
 
 /**

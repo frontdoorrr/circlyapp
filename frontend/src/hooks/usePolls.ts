@@ -3,7 +3,18 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as pollApi from '../api/poll';
-import { VoteRequest } from '../types/poll';
+import { TemplateCategory, VoteRequest } from '../types/poll';
+
+/**
+ * 투표 템플릿 조회
+ */
+export function usePollTemplates(category?: TemplateCategory) {
+  return useQuery({
+    queryKey: ['polls', 'templates', category],
+    queryFn: () => pollApi.getPollTemplates(category),
+    staleTime: 10 * 60 * 1000, // 10분 (템플릿은 자주 변경되지 않음)
+  });
+}
 
 /**
  * 템플릿 카테고리 조회
