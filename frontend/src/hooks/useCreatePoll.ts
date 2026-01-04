@@ -17,15 +17,12 @@ interface CreatePollRequest {
 }
 
 interface CreatePollResponse {
-  success: boolean;
-  data: {
-    id: string;
-    template_id: string;
-    circle_id: string;
-    status: string;
-    created_at: string;
-    ends_at: string;
-  };
+  id: string;
+  template_id: string;
+  circle_id: string;
+  status: string;
+  created_at: string;
+  ends_at: string;
 }
 
 export const useCreatePoll = () => {
@@ -60,7 +57,7 @@ export const useCreatePoll = () => {
 
       // Invalidate polls query to refresh home screen
       queryClient.invalidateQueries({ queryKey: ['polls'] });
-      queryClient.invalidateQueries({ queryKey: ['circles', data.data.circle_id] });
+      queryClient.invalidateQueries({ queryKey: ['circles', data.circle_id] });
 
       // Navigate to success screen
       router.push('/create/success');
