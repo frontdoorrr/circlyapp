@@ -12,7 +12,7 @@ import {
   Alert,
   Share,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import {
   useCircleDetail,
@@ -113,24 +113,50 @@ export default function CircleDetailScreen() {
 
   if (circleLoading || membersLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <LoadingSpinner />
-      </View>
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: 'Circle',
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <LoadingSpinner />
+        </View>
+      </>
     );
   }
 
   if (!circle) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Circle을 찾을 수 없습니다</Text>
-        <Button onPress={() => router.back()}>돌아가기</Button>
-      </View>
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: 'Circle',
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Circle을 찾을 수 없습니다</Text>
+          <Button onPress={() => router.back()}>돌아가기</Button>
+        </View>
+      </>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: circle.name,
+          headerBackTitle: '뒤로',
+        }}
+      />
+      <View style={styles.container}>
+        <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
@@ -230,8 +256,9 @@ export default function CircleDetailScreen() {
             Circle 나가기
           </Button>
         </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </>
   );
 }
 

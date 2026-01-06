@@ -1250,24 +1250,25 @@
 - Android는 하드웨어 버튼 외에 화면 내 네비게이션 없음
 
 **해결 방안**:
-- [ ] 공통 `ScreenHeader` 컴포넌트 생성 (`src/components/layout/ScreenHeader.tsx`)
+- [x] ✅ Expo Router의 `Stack.Screen` 옵션으로 헤더 표시 (공통 컴포넌트 대신)
   ```tsx
-  interface ScreenHeaderProps {
-    title?: string;
-    showBackButton?: boolean;  // default: true
-    rightAction?: ReactNode;
-    onBackPress?: () => void;  // default: router.back()
-  }
+  <Stack.Screen
+    options={{
+      headerShown: true,
+      title: '화면 제목',
+      headerBackTitle: '뒤로',
+    }}
+  />
   ```
-- [ ] 적용 화면 목록:
-  - `app/poll/[id].tsx` - 투표 상세
-  - `app/results/[id].tsx` - 결과 상세
-  - `app/results/[id]/voters.tsx` - Orb Mode 투표자 보기
-  - `app/circle/[id].tsx` - Circle 상세
-  - `app/circle/create.tsx` - Circle 생성
-  - `app/join/*.tsx` - Circle 참여 플로우
-- [ ] iOS: edge swipe 제스처는 Expo Router 기본 지원 확인
-- [ ] 선택적: 뒤로 가기 스와이프 제스처 강화 (`react-native-gesture-handler`)
+- [x] ✅ 적용 화면 목록:
+  - `app/poll/[id].tsx` - 투표 상세 ✅
+  - `app/results/[id].tsx` - 결과 상세 ✅ (기존 구현)
+  - `app/results/[id]/voters.tsx` - Orb Mode 투표자 보기 ✅ (기존 구현)
+  - `app/circle/[id].tsx` - Circle 상세 ✅
+  - `app/circle/create.tsx` - Circle 생성 ✅ (기존 구현)
+  - `app/join/*.tsx` - Circle 참여 플로우 ✅ (기존 구현)
+- [x] ✅ iOS: edge swipe 제스처는 Expo Router 기본 지원 확인
+- [ ] 선택적: 뒤로 가기 스와이프 제스처 강화 (필요시)
 
 **참고 파일**:
 - `app/_layout.tsx` (Stack 설정)

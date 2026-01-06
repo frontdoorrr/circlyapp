@@ -19,7 +19,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { usePollDetail, useVote } from '../../src/hooks/usePolls';
@@ -215,29 +215,55 @@ export default function PollDetailScreen() {
 
   if (pollLoading || membersLoading) {
     return (
-      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
-        <LoadingSpinner />
-      </View>
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: '투표',
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <LoadingSpinner />
+        </View>
+      </>
     );
   }
 
   if (!poll) {
     return (
-      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
-        <Text style={styles.errorText}>투표를 찾을 수 없습니다</Text>
-        <Button onPress={() => router.back()}>돌아가기</Button>
-      </View>
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: '투표',
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>투표를 찾을 수 없습니다</Text>
+          <Button onPress={() => router.back()}>돌아가기</Button>
+        </View>
+      </>
     );
   }
 
   // 투표 전 - 투표하기 화면
   if (!poll.has_voted && poll.status === 'ACTIVE') {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
+      <>
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: '투표하기',
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.container}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+          >
           {/* 질문 */}
           <View style={styles.questionCard}>
             <Text style={styles.question}>{poll.question_text}</Text>
@@ -281,16 +307,25 @@ export default function PollDetailScreen() {
               투표하기
             </Button>
           </View>
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </View>
+      </>
     );
   }
 
   // 투표 후 - 결과 보기 화면
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView
-        style={styles.scrollView}
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: '투표 결과',
+          headerBackTitle: '뒤로',
+        }}
+      />
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
         {/* 질문 */}
@@ -381,13 +416,14 @@ export default function PollDetailScreen() {
             <Text style={styles.orbModeArrow}>→</Text>
           </View>
         </Pressable>
-      </ScrollView>
+        </ScrollView>
 
-      {/* 결과 카드 (화면 밖에 숨김 - 캡처용) */}
-      <View style={styles.hiddenCard}>
-        <ResultCard poll={poll} cardRef={resultCardRef} />
+        {/* 결과 카드 (화면 밖에 숨김 - 캡처용) */}
+        <View style={styles.hiddenCard}>
+          <ResultCard poll={poll} cardRef={resultCardRef} />
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
