@@ -3,6 +3,7 @@ import {
   Text as RNText,
   TextStyle,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { tokens, useThemedStyles } from '../../theme';
 
@@ -47,6 +48,11 @@ export function Text({
       style={textStyles}
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      // Android: 한글 단어 분리 품질 향상
+      // highQuality: 단어 단위 줄바꿈 (권장)
+      // balanced: 균형 잡힌 줄 길이
+      // simple: 기본 (빠르지만 품질 낮음)
+      {...(Platform.OS === 'android' && { textBreakStrategy: 'highQuality' })}
     >
       {children}
     </RNText>

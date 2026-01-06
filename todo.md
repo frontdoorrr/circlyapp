@@ -1451,16 +1451,12 @@ const handlePressIn = () => {
 ```
 
 **해결 방안**:
-- [ ] Android: `textBreakStrategy` prop 추가
-  ```tsx
-  <RNText
-    style={textStyles}
-    textBreakStrategy="highQuality"  // Android only
-  >
-  ```
-- [ ] iOS: 기본적으로 단어 단위 줄바꿈 지원 (확인 필요)
-- [ ] 긴 텍스트에 `numberOfLines` + `ellipsizeMode` 적용 권장
-- [ ] 한글 word-break CSS 대안 검토 (Web과 다름)
+- [x] ✅ Android: `textBreakStrategy="highQuality"` 추가 완료
+  - `src/components/primitives/Text.tsx`에 Platform 조건부 적용
+  - 모든 Text 컴포넌트에 자동 적용
+- [x] ✅ iOS: 기본적으로 단어 단위 줄바꿈 지원 (추가 작업 불필요)
+- [ ] 긴 텍스트에 `numberOfLines` + `ellipsizeMode` 적용 권장 (필요시)
+- [ ] 한글 word-break CSS 대안 검토 (Web과 다름) - 해당 없음 (Native)
 
 **테스트 문자열**:
 ```
