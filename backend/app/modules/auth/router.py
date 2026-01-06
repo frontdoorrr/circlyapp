@@ -22,57 +22,62 @@ from app.modules.auth.service import AuthService
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post(
-    "/register",
-    response_model=AuthResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
-)
-async def register(
-    user_data: UserCreate,
-    db: DBSessionDep,
-) -> AuthResponse:
-    """Register a new user account.
-
-    Args:
-        user_data: User registration data (email, password, optional username/display_name)
-        db: Database session
-
-    Returns:
-        AuthResponse with user data and access token
-
-    Raises:
-        400: Email is already registered
-    """
-    repo = UserRepository(db)
-    service = AuthService(repo)
-    return await service.register(user_data)
-
-
-@router.post(
-    "/login",
-    response_model=AuthResponse,
-    summary="Login user",
-)
-async def login(
-    login_data: LoginRequest,
-    db: DBSessionDep,
-) -> AuthResponse:
-    """Login with email and password.
-
-    Args:
-        login_data: Login credentials (email and password)
-        db: Database session
-
-    Returns:
-        AuthResponse with user data and access token
-
-    Raises:
-        401: Invalid credentials or inactive account
-    """
-    repo = UserRepository(db)
-    service = AuthService(repo)
-    return await service.login(login_data)
+# ==================== 주석 처리됨 (Supabase Auth 직접 연동으로 변경) ====================
+# 프론트엔드가 Supabase Auth를 직접 호출하므로 이 엔드포인트는 더 이상 사용되지 않음
+# 롤백이 필요한 경우 주석을 해제하세요
+#
+# @router.post(
+#     "/register",
+#     response_model=AuthResponse,
+#     status_code=status.HTTP_201_CREATED,
+#     summary="Register a new user",
+# )
+# async def register(
+#     user_data: UserCreate,
+#     db: DBSessionDep,
+# ) -> AuthResponse:
+#     """Register a new user account.
+#
+#     Args:
+#         user_data: User registration data (email, password, optional username/display_name)
+#         db: Database session
+#
+#     Returns:
+#         AuthResponse with user data and access token
+#
+#     Raises:
+#         400: Email is already registered
+#     """
+#     repo = UserRepository(db)
+#     service = AuthService(repo)
+#     return await service.register(user_data)
+#
+#
+# @router.post(
+#     "/login",
+#     response_model=AuthResponse,
+#     summary="Login user",
+# )
+# async def login(
+#     login_data: LoginRequest,
+#     db: DBSessionDep,
+# ) -> AuthResponse:
+#     """Login with email and password.
+#
+#     Args:
+#         login_data: Login credentials (email and password)
+#         db: Database session
+#
+#     Returns:
+#         AuthResponse with user data and access token
+#
+#     Raises:
+#         401: Invalid credentials or inactive account
+#     """
+#     repo = UserRepository(db)
+#     service = AuthService(repo)
+#     return await service.login(login_data)
+# ==================== 주석 처리 끝 ====================
 
 
 @router.get(

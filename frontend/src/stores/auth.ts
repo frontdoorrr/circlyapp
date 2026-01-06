@@ -1,81 +1,68 @@
 /**
  * Authentication Store (Zustand)
  *
- * 전역 인증 상태 관리 - Backend Proxy 방식
- * 백엔드에서 발급받은 Supabase JWT 토큰을 저장/관리
+ * Supabase Auth 직접 연동 방식
+ * Supabase SDK가 토큰 저장/갱신 자동 처리
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { UserResponse } from '../types/auth';
-
-const ACCESS_TOKEN_KEY = '@circly:access_token';
 
 interface AuthState {
   // State
   user: UserResponse | null;
-  accessToken: string | null;
+  supabaseSession: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 
   // Actions
-  setAuth: (user: UserResponse, accessToken: string) => Promise<void>;
+  setSession: (session: Session | null) => void;
   setUser: (user: UserResponse | null) => void;
-  logout: () => Promise<void>;
-  initialize: () => Promise<void>;
+  logout: () => void;
+  setLoading: (isLoading: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   // Initial state
   user: null,
-  accessToken: null,
+  supabaseSession: null,
   isLoading: true,
   isAuthenticated: false,
 
-  // 로그인 성공 시 호출
-  setAuth: async (user, accessToken) => {
-    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    set({ user, accessToken, isAuthenticated: true });
+  // Supabase 세션 설정 (onAuthStateChange에서 호출)
+  setSession: (session) => {
+    set({
+      supabaseSession: session,
+      isAuthenticated: !!session,
+      isLoading: false,
+    });
   },
 
-  // Set user profile
+  // 사용자 프로필 설정 (백엔드에서 가져온 UserResponse)
   setUser: (user) => {
     set({ user });
   },
 
-  // 로그아웃
-  logout: async () => {
-    try {
-      await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-      set({ user: null, accessToken: null, isLoading: false, isAuthenticated: false });
-    } catch (error) {
-      console.error('Failed to logout:', error);
-      // Force clear state even on error
-      set({ user: null, accessToken: null, isLoading: false, isAuthenticated: false });
-    }
+  // 로그아웃 (상태 초기화)
+  logout: () => {
+    set({
+      user: null,
+      supabaseSession: null,
+      isLoading: false,
+      isAuthenticated: false,
+    });
   },
 
-  // 앱 시작 시 저장된 토큰 로드
-  initialize: async () => {
-    try {
-      const storedToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
-
-      if (storedToken) {
-        set({
-          accessToken: storedToken,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } else {
-        set({ isLoading: false });
-      }
-    } catch (error) {
-      console.error('Failed to initialize auth:', error);
-      set({ isLoading: false });
-    }
+  // 로딩 상태 설정
+  setLoading: (isLoading) => {
+    set({ isLoading });
   },
 }));
 
-// API Client에서 사용할 토큰 getter
+/**
+ * API Client에서 사용할 토큰 getter
+ * Supabase 세션에서 access_token 추출
+ */
 export const getAccessToken = (): string | null => {
-  return useAuthStore.getState().accessToken;
+  return useAuthStore.getState().supabaseSession?.access_token ?? null;
 };

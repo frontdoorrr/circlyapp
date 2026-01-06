@@ -13,12 +13,18 @@ import { useRegister } from '../../src/hooks/useAuth';
 import { Button } from '../../src/components/primitives/Button';
 import { Input } from '../../src/components/primitives/Input';
 import { tokens } from '../../src/theme';
-import { ApiError } from '../../src/types/api';
+import {
+  SupabaseAuthError,
+  translateSupabaseError,
+  isSupabaseAuthError,
+} from '../../src/utils/supabaseErrors';
 
 /**
  * Register Screen
  *
- * 회원가입 (이메일, 비밀번호, 사용자명)
+ * Supabase Auth 직접 연동 (2단계 방식)
+ * 1단계: Supabase Auth 회원가입
+ * 2단계: 백엔드 프로필 업데이트 (username, display_name)
  */
 export default function RegisterScreen() {
   const router = useRouter();
@@ -40,7 +46,7 @@ export default function RegisterScreen() {
 
     // 중복 제출 방지
     if (isSubmitting || registerMutation.isPending) {
-      console.log('[Register] 🚫 이미 제출 중입니다. 중복 요청 무시.');
+      console.log('[Register] 이미 제출 중입니다. 중복 요청 무시.');
       return;
     }
 
@@ -72,21 +78,17 @@ export default function RegisterScreen() {
         display_name: displayName.trim() || undefined,
       });
 
-      console.log('[Register] 회원가입 성공');
-      // 성공 시 자동으로 메인 화면으로 리다이렉트
-      router.replace('/(main)/(home)');
+      console.log('[Register] 회원가입 성공 - AppInitializer가 리다이렉트 처리');
+      // 성공 시 onAuthStateChange 리스너가 isAuthenticated를 true로 설정
+      // → AppInitializer가 자동으로 홈 화면으로 리다이렉트
     } catch (error) {
       console.error('[Register] 회원가입 실패:', error);
 
-      if (error instanceof ApiError) {
-        console.error('[Register] API 에러:', {
-          message: error.message,
-          status: error.status,
-          code: error.code,
-        });
-        Alert.alert('회원가입 실패', error.message);
+      if (isSupabaseAuthError(error)) {
+        Alert.alert('회원가입 실패', translateSupabaseError(error));
+      } else if (error instanceof SupabaseAuthError) {
+        Alert.alert('회원가입 실패', translateSupabaseError(error));
       } else {
-        console.error('[Register] 알 수 없는 에러:', error);
         Alert.alert('오류', '회원가입 중 문제가 발생했습니다');
       }
     } finally {

@@ -5,11 +5,16 @@ import { useLogin } from '../../src/hooks/useAuth';
 import { Button } from '../../src/components/primitives/Button';
 import { Input } from '../../src/components/primitives/Input';
 import { tokens } from '../../src/theme';
-import { ApiError } from '../../src/types/api';
+import {
+  SupabaseAuthError,
+  translateSupabaseError,
+  isSupabaseAuthError,
+} from '../../src/utils/supabaseErrors';
 
 /**
  * Login Screen
  *
+ * Supabase Auth 직접 연동
  * 이메일/비밀번호로 로그인
  */
 export default function LoginScreen() {
@@ -29,7 +34,7 @@ export default function LoginScreen() {
 
     // 중복 제출 방지
     if (isSubmitting || loginMutation.isPending) {
-      console.log('[Login] 🚫 이미 제출 중입니다. 중복 요청 무시.');
+      console.log('[Login] 이미 제출 중입니다. 중복 요청 무시.');
       return;
     }
 
@@ -43,11 +48,16 @@ export default function LoginScreen() {
 
     try {
       await loginMutation.mutateAsync({ email, password });
-      // 성공 시 자동으로 메인 화면으로 리다이렉트됨 (useAuthStore가 처리)
-      router.replace('/(main)/(home)');
+      // 성공 시 onAuthStateChange 리스너가 isAuthenticated를 true로 설정
+      // → AppInitializer가 자동으로 홈 화면으로 리다이렉트
+      console.log('[Login] 로그인 성공 - AppInitializer가 리다이렉트 처리');
     } catch (error) {
-      if (error instanceof ApiError) {
-        Alert.alert('로그인 실패', error.message);
+      console.error('[Login] 로그인 실패:', error);
+
+      if (isSupabaseAuthError(error)) {
+        Alert.alert('로그인 실패', translateSupabaseError(error));
+      } else if (error instanceof SupabaseAuthError) {
+        Alert.alert('로그인 실패', translateSupabaseError(error));
       } else {
         Alert.alert('오류', '로그인 중 문제가 발생했습니다');
       }
