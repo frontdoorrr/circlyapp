@@ -7,7 +7,8 @@ import {
   ListRenderItem,
   AccessibilityInfo,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -71,8 +72,18 @@ interface TransformedCompletedPoll extends CompletedPollData {}
  */
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
+  const [focusKey, setFocusKey] = useState(0);
+
+  // 화면 복귀 시 FlatList 강제 리렌더링
+  // Expo Router Stack Navigation에서 화면이 리마운트되지 않고 focus만 됨
+  useFocusEffect(
+    useCallback(() => {
+      setFocusKey(prev => prev + 1);
+    }, [])
+  );
 
   // API 연동
   const {
@@ -224,35 +235,31 @@ export default function HomeScreen() {
   const polls = activeTab === 'active' ? transformedActivePolls : transformedCompletedPolls;
 
   // Active Poll Render Item
+  // Note: 이중 Animated.View 충돌 방지 - PollCard 내부에서 애니메이션 처리
   const renderActiveItem: ListRenderItem<TransformedActivePoll> = useCallback(
-    ({ item, index }) => (
-      <Animated.View
-        entering={FadeIn.delay(index * 50).duration(300)}
-        style={styles.cardWrapper}
-      >
+    ({ item }) => (
+      <View style={styles.cardWrapper}>
         <PollCard
           variant="active"
           poll={item}
           onPress={() => handleActivePollPress(item.id)}
         />
-      </Animated.View>
+      </View>
     ),
     [handleActivePollPress]
   );
 
   // Completed Poll Render Item
+  // Note: 이중 Animated.View 충돌 방지 - PollCard 내부에서 애니메이션 처리
   const renderCompletedItem: ListRenderItem<TransformedCompletedPoll> = useCallback(
-    ({ item, index }) => (
-      <Animated.View
-        entering={FadeIn.delay(index * 50).duration(300)}
-        style={styles.cardWrapper}
-      >
+    ({ item }) => (
+      <View style={styles.cardWrapper}>
         <PollCard
           variant="completed"
           poll={item}
           onPress={() => handleCompletedPollPress(item.id)}
         />
-      </Animated.View>
+      </View>
     ),
     [handleCompletedPollPress]
   );
@@ -267,7 +274,7 @@ export default function HomeScreen() {
 
   if (isLoading && !refreshing) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <HomeHeader
           circleName={circleName}
           notificationCount={0}
@@ -289,7 +296,7 @@ export default function HomeScreen() {
 
   if (isError) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <HomeHeader
           circleName={circleName}
           notificationCount={0}
@@ -311,7 +318,7 @@ export default function HomeScreen() {
   // ============================================================================
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <HomeHeader
         circleName={circleName}
@@ -356,6 +363,7 @@ export default function HomeScreen() {
           keyExtractor={keyExtractor}
           ItemSeparatorComponent={ItemSeparatorComponent}
           contentContainerStyle={styles.listContent}
+          extraData={`${activeTab}-${focusKey}`}  // 탭 변경 + 화면 복귀 시 리렌더 강제
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -366,7 +374,7 @@ export default function HomeScreen() {
           }
           showsVerticalScrollIndicator={false}
           // Performance optimizations
-          removeClippedSubviews={true}
+          removeClippedSubviews={false}  // Reanimated 애니메이션과 충돌 방지
           maxToRenderPerBatch={10}
           windowSize={5}
           initialNumToRender={5}

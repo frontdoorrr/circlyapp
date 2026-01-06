@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Pressable, AccessibilityRole } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -108,8 +108,6 @@ type PollCardProps = ActivePollCardProps | CompletedPollCardProps | LegacyPollCa
 // PollCard Component
 // ============================================================================
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 /**
  * PollCard Component
  *
@@ -156,6 +154,15 @@ export function PollCard(props: PollCardProps) {
 
   const scale = useSharedValue(1);
 
+  // FlatList 아이템 재활용 시 Reanimated shared value 리셋
+  // poll.id가 변경되면 scale을 1로 초기화하여 투명화 버그 방지
+  useEffect(() => {
+    scale.value = 1;
+    return () => {
+      scale.value = 1;
+    };
+  }, [poll.id, scale]);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -188,22 +195,24 @@ export function PollCard(props: PollCardProps) {
     }
   };
 
+  // Pressable + Animated.View 분리 + key prop으로 강제 재생성
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.card, animatedStyle]}
-      accessibilityRole="button" as AccessibilityRole
+      accessibilityRole={'button' as AccessibilityRole}
       accessibilityLabel={getAccessibilityLabel()}
       accessibilityHint={variant === 'completed' ? '결과를 확인하려면 두 번 탭하세요' : '투표에 참여하려면 두 번 탭하세요'}
     >
-      {variant === 'completed' ? (
-        <CompletedCardContent poll={poll as CompletedPollData} />
-      ) : (
-        <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} />
-      )}
-    </AnimatedPressable>
+      <Animated.View key={poll.id} style={[styles.card, animatedStyle]}>
+        {variant === 'completed' ? (
+          <CompletedCardContent poll={poll as CompletedPollData} />
+        ) : (
+          <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} />
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -223,9 +232,11 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
     <>
       {/* Question Header */}
       <View style={styles.questionHeader}>
-        <Text variant="2xl" style={styles.emoji}>
-          {poll.emoji}
-        </Text>
+        <View style={styles.emojiContainer}>
+          <Text variant="2xl" style={styles.emoji}>
+            {poll.emoji}
+          </Text>
+        </View>
         <View style={styles.questionContent}>
           <Text
             variant="lg"
@@ -297,9 +308,11 @@ function CompletedCardContent({ poll }: CompletedCardContentProps) {
     <>
       {/* Question Header */}
       <View style={styles.questionHeader}>
-        <Text variant="2xl" style={styles.emoji}>
-          {poll.emoji}
-        </Text>
+        <View style={styles.emojiContainer}>
+          <Text variant="2xl" style={styles.emoji}>
+            {poll.emoji}
+          </Text>
+        </View>
         <View style={styles.questionContent}>
           <Text
             variant="lg"
@@ -420,9 +433,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing[3], // 12px
   },
-  emoji: {
+  emojiContainer: {
+    width: 40,      // 32 → 40 (iOS 이모지 렌더링 여유 공간)
+    height: 40,     // 32 → 40
     marginRight: spacing[2], // 8px
-    lineHeight: 28, // Align with text
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Note: overflow: 'visible'은 iOS에서 무시되므로 제거
+  },
+  emoji: {
+    fontSize: 28,   // 24 → 28
+    lineHeight: 32, // 28 → 32 (1.15 배수)
+    textAlign: 'center',
+    // Note: includeFontPadding은 Android 전용이므로 제거
   },
   questionContent: {
     flex: 1,
