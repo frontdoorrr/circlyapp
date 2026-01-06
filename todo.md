@@ -1294,26 +1294,15 @@ app/results/[id].tsx            - SafeArea 처리 없음
 ```
 
 **해결 방안**:
-- [ ] `useSafeAreaInsets` 훅 활용한 동적 패딩 적용
-  ```tsx
-  import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-  export default function HomeScreen() {
-    const insets = useSafeAreaInsets();
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <HomeHeader />
-        ...
-      </View>
-    );
-  }
-  ```
-- [ ] 또는 `SafeAreaView` 래퍼 사용 (edges prop으로 세밀 제어)
-  ```tsx
-  <SafeAreaView edges={['top']} style={styles.container}>
-  ```
-- [ ] `HomeHeader` 컴포넌트 내부에서 insets.top 적용 옵션 추가
-- [x] ✅ 프로필 화면 SafeAreaView 중복 제거 완료 (`app/(main)/(profile)/index.tsx`)
+- [x] ✅ `useSafeAreaInsets` 훅 활용한 동적 패딩 적용 완료
+  - `(home)/index.tsx`: `paddingTop: insets.top` ✅
+  - `(create)/index.tsx`: `paddingTop: insets.top` ✅
+  - `(profile)/index.tsx`: `paddingTop: insets.top` ✅
+- [x] ✅ `SafeAreaView` 래퍼 사용 (프로필 하위 화면)
+  - `notifications.tsx`, `settings.tsx`, `circles.tsx`: `edges={['top']}` ✅
+- [x] ✅ Stack 화면 헤더로 Safe Area 자동 처리
+  - `poll/[id].tsx`, `results/[id].tsx`, `circle/[id].tsx`: `headerShown: true` ✅
+- [x] ✅ 프로필 화면 SafeAreaView 중복 제거 완료
 
 **테스트 기기**:
 - iPhone SE (노치 없음)
