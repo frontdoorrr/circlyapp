@@ -1482,9 +1482,9 @@ const handlePressIn = () => {
 
 **해결 방안** (2가지 선택지):
 
-**Option A: Supabase Auth 직접 연동 (권장)**
-- [ ] `src/lib/supabase.ts` 활성화
-- [ ] `src/stores/auth.ts` 수정: Supabase session 사용
+**Option A: Supabase Auth 직접 연동 (권장)** ✅ 완료
+- [x] ✅ `src/lib/supabase.ts` 활성화
+- [x] ✅ `src/stores/auth.ts` 수정: Supabase session 사용
   ```tsx
   // Supabase가 자동으로 토큰 갱신 처리
   supabase.auth.onAuthStateChange((event, session) => {
@@ -1495,8 +1495,8 @@ const handlePressIn = () => {
     }
   });
   ```
-- [ ] `src/api/client.ts` 수정: Supabase session에서 토큰 가져오기
-- [ ] `trd/06-authentication-architecture.md` 문서대로 구현
+- [x] ✅ `src/api/client.ts` 수정: Supabase session에서 토큰 가져오기
+- [x] ✅ `trd/06-authentication-architecture.md` 문서대로 구현
 
 **Option B: Backend Proxy 방식 유지 + Refresh Token 구현**
 - [ ] 백엔드에 `/auth/refresh` 엔드포인트 추가
