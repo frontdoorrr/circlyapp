@@ -1312,6 +1312,7 @@ app/results/[id].tsx            - SafeArea 처리 없음
   <SafeAreaView edges={['top']} style={styles.container}>
   ```
 - [ ] `HomeHeader` 컴포넌트 내부에서 insets.top 적용 옵션 추가
+- [x] ✅ 프로필 화면 SafeAreaView 중복 제거 완료 (`app/(main)/(profile)/index.tsx`)
 
 **테스트 기기**:
 - iPhone SE (노치 없음)
@@ -1337,7 +1338,7 @@ src/components/profile/ProfileInfo.tsx - 프로필 이모지
 ```
 
 **해결 방안**:
-- [ ] 이모지 컨테이너에 적절한 `lineHeight` 설정
+- [x] ✅ 이모지 컨테이너에 적절한 `lineHeight` 설정 완료
   ```tsx
   memberCardEmoji: {
     fontSize: 40,
@@ -1352,8 +1353,12 @@ src/components/profile/ProfileInfo.tsx - 프로필 이모지
     overflow: 'visible',  // 이모지가 잘리지 않도록
   },
   ```
-- [ ] 또는 이모지 fontSize를 컨테이너에 맞게 조정 (fontSize: 32 권장)
-- [ ] 공통 `EmojiAvatar` 컴포넌트 추출하여 일관성 유지
+- [x] ✅ 전체 프로젝트 이모지 스타일 점검 완료 (15+ 파일)
+  - ProfileInfo, ProfileEditModal, PollCard, CircleCard
+  - JoinCircleModal, ResultCard, poll/[id], results/[id], voters
+  - create (index, preview, select-template, success)
+  - join (invite-code, nickname), circle/create
+- [ ] 공통 `EmojiAvatar` 컴포넌트 추출하여 일관성 유지 (선택)
 
 ---
 
@@ -1375,18 +1380,12 @@ src/components/profile/ProfileInfo.tsx - 프로필 이모지
 ```
 
 **해결 방안**:
-- [ ] Expo Router v3에서 `initialRouteName` 설정 확인
+- [x] ✅ Expo Router v3에서 `initialRouteName="(home)"` 설정 완료
   ```tsx
   <Tabs initialRouteName="(home)">
   ```
-- [ ] 또는 폴더 네이밍 변경으로 순서 강제:
-  ```
-  (main)/
-    (1-home)/     → (home) 대신
-    (2-create)/
-    (3-profile)/
-  ```
-- [ ] `redirect` 설정 검토 (`app/(main)/index.tsx` 파일 존재 여부)
+- [ ] 또는 폴더 네이밍 변경으로 순서 강제 (불필요)
+- [ ] `redirect` 설정 검토 (불필요)
 - [ ] 테스트: 앱 완전 종료 후 재시작, 로그인 후 리다이렉트 확인
 
 **참고 문서**: [Expo Router Tabs](https://docs.expo.dev/router/advanced/tabs/)
@@ -1451,10 +1450,12 @@ const handlePressIn = () => {
 3. Reanimated 애니메이션과 React Native 기본 스타일 충돌
 
 **해결 방안**:
-- [ ] `removeClippedSubviews={false}`로 변경하여 테스트
-- [ ] `scale` 애니메이션 대신 `opacity` 또는 `backgroundColor` 변경 테스트
+- [x] ✅ `removeClippedSubviews={false}`로 변경 완료
+- [x] ✅ `useFocusEffect` + `focusKey` 상태로 화면 복귀 시 FlatList 강제 리렌더링
+- [x] ✅ PollCard에 `useEffect`로 scale 초기화 추가 (poll.id 변경/언마운트 시)
+- [x] ✅ Animated.View에 `key={poll.id}` prop 추가
+- [x] ✅ renderItem에서 Animated.View → plain View 변경
 - [ ] ⚠️ **실기기 테스트 필요**: 시뮬레이터와 실기기 동작 차이 확인
-- [ ] ⚠️ **논의 필요**: 정확한 재현 조건 파악 (어떤 카드, 어떤 상황)
 
 ---
 
