@@ -227,6 +227,8 @@ const styles = StyleSheet.create({
   // 이모지 (120px)
   emoji: {
     fontSize: 120,
+    lineHeight: 144,  // fontSize * 1.2 (iOS 잘림 방지)
+    textAlign: 'center',
   },
 
   // Success 메시지

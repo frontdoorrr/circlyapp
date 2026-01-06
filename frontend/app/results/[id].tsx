@@ -195,7 +195,9 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 64,
+    lineHeight: 76,  // fontSize * 1.2 (iOS 잘림 방지)
     marginBottom: tokens.spacing.md,
+    textAlign: 'center',
   },
   question: {
     fontSize: tokens.typography.fontSize['2xl'],
@@ -330,6 +332,8 @@ const styles = StyleSheet.create({
   },
   orbModeIcon: {
     fontSize: 32,
+    lineHeight: 40,  // fontSize * 1.25 (iOS 잘림 방지)
+    textAlign: 'center',
   },
   orbModeTextContainer: {
     flex: 1,

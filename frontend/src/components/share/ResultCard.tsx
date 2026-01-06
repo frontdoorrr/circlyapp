@@ -133,6 +133,8 @@ const styles = StyleSheet.create({
   },
   rankEmoji: {
     fontSize: 80,
+    lineHeight: 96,
+    textAlign: 'center',
   },
   resultContent: {
     flex: 1,

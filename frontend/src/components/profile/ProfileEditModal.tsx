@@ -220,9 +220,9 @@ const styles = StyleSheet.create({
     gap: tokens.spacing.sm,
   },
   emojiOption: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,      // 56 → 64 (iOS 이모지 렌더링 여유 공간)
+    height: 64,     // 56 → 64
+    borderRadius: 32,
     backgroundColor: tokens.colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
@@ -235,6 +235,8 @@ const styles = StyleSheet.create({
   },
   emojiText: {
     fontSize: 32,
+    lineHeight: 40,  // fontSize * 1.25 (iOS 잘림 방지)
+    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',

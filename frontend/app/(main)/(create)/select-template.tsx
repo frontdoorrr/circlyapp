@@ -486,8 +486,10 @@ const styles = StyleSheet.create({
   },
   cardEmoji: {
     fontSize: 80,
+    lineHeight: 96,  // fontSize * 1.2 (iOS 잘림 방지)
     marginTop: 40,
     marginBottom: 24,
+    textAlign: 'center',
   },
   cardQuestion: {
     fontSize: tokens.typography.fontSize['2xl'], // 24px

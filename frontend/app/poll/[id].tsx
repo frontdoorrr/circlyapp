@@ -12,6 +12,7 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -55,6 +56,7 @@ function AnimatedResultBar({ percentage }: { percentage: number }) {
 
 export default function PollDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   // 사용자 정보 (Orb Mode 확인용)
@@ -213,7 +215,7 @@ export default function PollDetailScreen() {
 
   if (pollLoading || membersLoading) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
         <LoadingSpinner />
       </View>
     );
@@ -221,7 +223,7 @@ export default function PollDetailScreen() {
 
   if (!poll) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
         <Text style={styles.errorText}>투표를 찾을 수 없습니다</Text>
         <Button onPress={() => router.back()}>돌아가기</Button>
       </View>
@@ -231,7 +233,7 @@ export default function PollDetailScreen() {
   // 투표 전 - 투표하기 화면
   if (!poll.has_voted && poll.status === 'ACTIVE') {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -286,7 +288,7 @@ export default function PollDetailScreen() {
 
   // 투표 후 - 결과 보기 화면
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -458,16 +460,20 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.primary[500],
   },
   memberCardAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,      // 64 → 72 (iOS 이모지 렌더링 여유 공간)
+    height: 72,     // 64 → 72
+    borderRadius: 36,
     backgroundColor: tokens.colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: tokens.spacing.sm,
+    // Note: overflow: 'visible'은 iOS에서 무시되므로 제거
   },
   memberCardEmoji: {
-    fontSize: 40,
+    fontSize: 36,   // 32 → 36
+    lineHeight: 40,
+    textAlign: 'center',
+    // Note: includeFontPadding은 Android 전용이므로 제거
   },
   memberCardName: {
     fontSize: tokens.typography.fontSize.base,
@@ -578,6 +584,8 @@ const styles = StyleSheet.create({
   },
   orbModeIcon: {
     fontSize: 32,
+    lineHeight: 40,
+    textAlign: 'center',
   },
   orbModeTextContainer: {
     flex: 1,

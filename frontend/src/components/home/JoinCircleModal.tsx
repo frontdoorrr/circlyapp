@@ -189,6 +189,8 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 64,
+    lineHeight: 76,
+    textAlign: 'center',
   },
   description: {
     fontSize: tokens.typography.fontSize.base,

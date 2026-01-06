@@ -144,6 +144,8 @@ const styles = StyleSheet.create({
   },
   errorEmoji: {
     fontSize: 64,
+    lineHeight: 76,
+    textAlign: 'center',
   },
   errorText: {
     fontSize: tokens.typography.fontSize.lg,
@@ -164,7 +166,9 @@ const styles = StyleSheet.create({
   },
   headerEmoji: {
     fontSize: 64,
+    lineHeight: 76,
     marginBottom: tokens.spacing.md,
+    textAlign: 'center',
   },
   headerTitle: {
     fontSize: tokens.typography.fontSize['2xl'],
@@ -200,6 +204,8 @@ const styles = StyleSheet.create({
   },
   voterEmoji: {
     fontSize: 40,
+    lineHeight: 48,
+    textAlign: 'center',
   },
   voterInfo: {
     flex: 1,
@@ -220,7 +226,9 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: {
     fontSize: 64,
+    lineHeight: 76,
     marginBottom: tokens.spacing.md,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: tokens.typography.fontSize.lg,

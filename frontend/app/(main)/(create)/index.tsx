@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
@@ -130,6 +131,7 @@ function CategoryCard({ category, onPress, index }: CategoryCardProps) {
 
 export default function CreateScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: categories, isLoading, isError, refetch } = useCategories();
 
   // API에서 데이터를 가져오거나 fallback 사용
@@ -146,7 +148,7 @@ export default function CreateScreen() {
   // Loading State
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Text style={styles.title}>새 투표 만들기</Text>
           <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
@@ -163,7 +165,7 @@ export default function CreateScreen() {
   // Error State
   if (isError) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Text style={styles.title}>새 투표 만들기</Text>
           <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
@@ -179,7 +181,7 @@ export default function CreateScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -283,7 +285,9 @@ const styles = StyleSheet.create({
 
   // 이모지
   categoryEmoji: {
-    fontSize: 32, // 32px
+    fontSize: 32,
+    lineHeight: 40,  // fontSize * 1.25 (iOS 잘림 방지)
+    textAlign: 'center',
   },
 
   // 텍스트 정보

@@ -254,7 +254,9 @@ const styles = StyleSheet.create({
   },
   previewEmoji: {
     fontSize: 80,
+    lineHeight: 96,  // fontSize * 1.2 (iOS 잘림 방지)
     marginBottom: 24,
+    textAlign: 'center',
   },
   previewQuestion: {
     fontSize: tokens.typography.fontSize['2xl'], // 24px

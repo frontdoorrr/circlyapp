@@ -233,7 +233,9 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 64,
+    lineHeight: 76,
     marginBottom: tokens.spacing.lg,
+    textAlign: 'center',
   },
   title: {
     fontSize: tokens.typography.fontSize['2xl'],

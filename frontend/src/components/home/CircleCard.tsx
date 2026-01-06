@@ -117,9 +117,9 @@ const styles = StyleSheet.create({
     ...tokens.shadows.sm,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,      // 56 → 64 (iOS 이모지 렌더링 여유 공간)
+    height: 64,     // 56 → 64
+    borderRadius: 32,
     backgroundColor: tokens.colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
@@ -127,6 +127,8 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 32,
+    lineHeight: 40,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
