@@ -1238,6 +1238,312 @@
 - [ ] Orb Mode 페이월/구독 화면 구현 (RevenueCat 연동 시)
 - [ ] RevenueCat SDK 연동 (Expo)
 
+
+13.5 Frontend: UX / UI 개선점
+
+#### 13.5.1 🔙 뒤로 가기 네비게이션 구현
+> **우선순위**: 🔴 높음 | **영향 범위**: 모든 Stack 화면
+
+**문제점**:
+- `poll/[id].tsx`, `results/[id].tsx`, `circle/[id].tsx` 등 Stack 화면에 뒤로 가기 버튼 없음
+- iOS 스와이프 백은 동작하지만 명시적 UI 없음
+- Android는 하드웨어 버튼 외에 화면 내 네비게이션 없음
+
+**해결 방안**:
+- [ ] 공통 `ScreenHeader` 컴포넌트 생성 (`src/components/layout/ScreenHeader.tsx`)
+  ```tsx
+  interface ScreenHeaderProps {
+    title?: string;
+    showBackButton?: boolean;  // default: true
+    rightAction?: ReactNode;
+    onBackPress?: () => void;  // default: router.back()
+  }
+  ```
+- [ ] 적용 화면 목록:
+  - `app/poll/[id].tsx` - 투표 상세
+  - `app/results/[id].tsx` - 결과 상세
+  - `app/results/[id]/voters.tsx` - Orb Mode 투표자 보기
+  - `app/circle/[id].tsx` - Circle 상세
+  - `app/circle/create.tsx` - Circle 생성
+  - `app/join/*.tsx` - Circle 참여 플로우
+- [ ] iOS: edge swipe 제스처는 Expo Router 기본 지원 확인
+- [ ] 선택적: 뒤로 가기 스와이프 제스처 강화 (`react-native-gesture-handler`)
+
+**참고 파일**:
+- `app/_layout.tsx` (Stack 설정)
+- `app/poll/[id].tsx` (현재 헤더 없음)
+
+---
+
+#### 13.5.2 📱 Safe Area 미적용 (화면 상단 잘림)
+> **우선순위**: 🔴 높음 | **영향 범위**: 모든 화면
+
+**문제점**:
+- `SafeAreaProvider`는 root `_layout.tsx`에 있으나, 개별 화면에서 `SafeAreaView` 또는 `useSafeAreaInsets` 미사용
+- `HomeHeader` 높이 56px 고정 → 노치/Dynamic Island 영역 침범
+- iPhone 14 Pro 이상 Dynamic Island (59pt), iPhone X~13 노치 (44pt) 미대응
+
+**영향받는 파일**:
+```
+app/(main)/(home)/index.tsx     - HomeHeader가 상단에 바로 붙음
+app/(main)/(create)/index.tsx   - 동일
+app/(main)/(profile)/index.tsx  - 동일
+app/poll/[id].tsx               - SafeArea 처리 없음
+app/results/[id].tsx            - SafeArea 처리 없음
+```
+
+**해결 방안**:
+- [ ] `useSafeAreaInsets` 훅 활용한 동적 패딩 적용
+  ```tsx
+  import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+  export default function HomeScreen() {
+    const insets = useSafeAreaInsets();
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <HomeHeader />
+        ...
+      </View>
+    );
+  }
+  ```
+- [ ] 또는 `SafeAreaView` 래퍼 사용 (edges prop으로 세밀 제어)
+  ```tsx
+  <SafeAreaView edges={['top']} style={styles.container}>
+  ```
+- [ ] `HomeHeader` 컴포넌트 내부에서 insets.top 적용 옵션 추가
+
+**테스트 기기**:
+- iPhone SE (노치 없음)
+- iPhone 14 (노치)
+- iPhone 14 Pro/15 (Dynamic Island)
+
+---
+
+#### 13.5.3 😊 이모지 이미지 상단 잘림
+> **우선순위**: 🟡 중간 | **영향 범위**: PollCard, MemberCard, ProfileInfo
+
+**문제점**:
+- `poll/[id].tsx` 내 `memberCardEmoji`: `fontSize: 40` 사용
+- `memberCardAvatar`: `width: 64, height: 64` 컨테이너
+- 이모지 렌더링 시 `lineHeight` 미설정으로 상단 잘림 발생
+- `overflow: 'hidden'` 미설정 시 이모지가 컨테이너 밖으로 나감
+
+**영향받는 컴포넌트**:
+```
+app/poll/[id].tsx - memberCardEmoji (fontSize: 40)
+src/components/patterns/PollCard.tsx - emoji 스타일 (lineHeight: 28)
+src/components/profile/ProfileInfo.tsx - 프로필 이모지
+```
+
+**해결 방안**:
+- [ ] 이모지 컨테이너에 적절한 `lineHeight` 설정
+  ```tsx
+  memberCardEmoji: {
+    fontSize: 40,
+    lineHeight: 48,  // fontSize * 1.2
+    textAlign: 'center',
+  },
+  memberCardAvatar: {
+    width: 64,
+    height: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',  // 이모지가 잘리지 않도록
+  },
+  ```
+- [ ] 또는 이모지 fontSize를 컨테이너에 맞게 조정 (fontSize: 32 권장)
+- [ ] 공통 `EmojiAvatar` 컴포넌트 추출하여 일관성 유지
+
+---
+
+#### 13.5.4 🏠 앱 시작 시 초기 탭이 '만들기'로 표시됨
+> **우선순위**: 🔴 높음 | **영향 범위**: 메인 탭 네비게이션
+
+**문제점**:
+- `app/(main)/_layout.tsx`에서 탭 순서: `(home)`, `(create)`, `(profile)`
+- Expo Router가 알파벳/파일시스템 순서로 초기 탭 결정 가능성
+- 사용자 기대: 홈 탭이 첫 화면
+
+**현재 코드** (`app/(main)/_layout.tsx`):
+```tsx
+<Tabs>
+  <Tabs.Screen name="(home)" />
+  <Tabs.Screen name="(create)" />
+  <Tabs.Screen name="(profile)" />
+</Tabs>
+```
+
+**해결 방안**:
+- [ ] Expo Router v3에서 `initialRouteName` 설정 확인
+  ```tsx
+  <Tabs initialRouteName="(home)">
+  ```
+- [ ] 또는 폴더 네이밍 변경으로 순서 강제:
+  ```
+  (main)/
+    (1-home)/     → (home) 대신
+    (2-create)/
+    (3-profile)/
+  ```
+- [ ] `redirect` 설정 검토 (`app/(main)/index.tsx` 파일 존재 여부)
+- [ ] 테스트: 앱 완전 종료 후 재시작, 로그인 후 리다이렉트 확인
+
+**참고 문서**: [Expo Router Tabs](https://docs.expo.dev/router/advanced/tabs/)
+
+---
+
+#### 13.5.5 👆 홈 탭 스와이프 (진행 중 ↔ 완료됨) 부자연스러움
+> **우선순위**: 🟡 중간 | **영향 범위**: 홈 화면
+
+**문제점**:
+- 현재 `TabButton` 컴포넌트로 탭 전환 구현 (터치만 가능)
+- 좌우 스와이프로 탭 전환하는 제스처 미구현
+- 사용자가 기대하는 자연스러운 페이지 스와이프 없음
+
+**현재 구현** (`app/(main)/(home)/index.tsx`):
+```tsx
+<TabButton label="진행 중" onPress={() => handleTabChange('active')} />
+<TabButton label="완료됨" onPress={() => handleTabChange('completed')} />
+// FlatList로 각 탭 콘텐츠 표시
+```
+
+**해결 방안**:
+- [ ] **Option A**: `react-native-pager-view` 사용 (권장)
+  ```bash
+  npx expo install react-native-pager-view
+  ```
+  ```tsx
+  import PagerView from 'react-native-pager-view';
+
+  <PagerView
+    style={{ flex: 1 }}
+    initialPage={0}
+    onPageSelected={(e) => setActiveTab(e.nativeEvent.position === 0 ? 'active' : 'completed')}
+  >
+    <View key="1"><ActivePollList /></View>
+    <View key="2"><CompletedPollList /></View>
+  </PagerView>
+  ```
+- [ ] **Option B**: `react-native-tab-view` 사용
+- [ ] 탭 인디케이터 애니메이션 연동 (스와이프 진행률 반영)
+- [ ] ⚠️ **논의 필요**: 스와이프 방향, 감도, 바운스 효과 등 세부 UX
+
+---
+
+#### 13.5.6 👻 투표 카드 클릭 시 Box가 사라지는 현상
+> **우선순위**: 🟡 중간 | **영향 범위**: PollCard 컴포넌트
+
+**문제점**:
+- `PollCard`에서 `onPressIn` 시 `scale: 0.98` 애니메이션 적용
+- 특정 상황에서 카드가 완전히 사라지거나 투명해지는 것처럼 보임
+
+**현재 코드** (`src/components/patterns/PollCard.tsx`):
+```tsx
+const handlePressIn = () => {
+  scale.value = withTiming(0.98, { duration: animations.duration.faster });
+};
+```
+
+**가능한 원인**:
+1. `AnimatedPressable` 스타일 충돌
+2. FlatList의 `removeClippedSubviews={true}` 최적화로 인한 렌더링 이슈
+3. Reanimated 애니메이션과 React Native 기본 스타일 충돌
+
+**해결 방안**:
+- [ ] `removeClippedSubviews={false}`로 변경하여 테스트
+- [ ] `scale` 애니메이션 대신 `opacity` 또는 `backgroundColor` 변경 테스트
+- [ ] ⚠️ **실기기 테스트 필요**: 시뮬레이터와 실기기 동작 차이 확인
+- [ ] ⚠️ **논의 필요**: 정확한 재현 조건 파악 (어떤 카드, 어떤 상황)
+
+---
+
+#### 13.5.7 📝 한글 텍스트 단어 분리 (Word Break)
+> **우선순위**: 🟢 낮음 | **영향 범위**: Text 컴포넌트 전역
+
+**문제점**:
+- 한글 단어가 줄바꿈 시 중간에서 분리됨
+- 예: "안녕하세요" → "안녕하" / "세요"
+- 띄어쓰기가 없는 연속 단어도 중간 분리
+
+**현재 코드** (`src/components/primitives/Text.tsx`):
+```tsx
+// textBreakStrategy 설정 없음
+<RNText style={textStyles}>{children}</RNText>
+```
+
+**해결 방안**:
+- [ ] Android: `textBreakStrategy` prop 추가
+  ```tsx
+  <RNText
+    style={textStyles}
+    textBreakStrategy="highQuality"  // Android only
+  >
+  ```
+- [ ] iOS: 기본적으로 단어 단위 줄바꿈 지원 (확인 필요)
+- [ ] 긴 텍스트에 `numberOfLines` + `ellipsizeMode` 적용 권장
+- [ ] 한글 word-break CSS 대안 검토 (Web과 다름)
+
+**테스트 문자열**:
+```
+"가장 친절한 사람은 누구일까요?"
+"안녕하세요반갑습니다" (띄어쓰기 없음)
+```
+
+---
+
+#### 13.5.8 🔐 로그인 세션 유지 (Supabase Auth)
+> **우선순위**: 🔴 높음 | **영향 범위**: 인증 시스템 전체
+
+**현재 상태**:
+- **Backend Proxy 방식** 사용 중 (Supabase 직접 연동 아님)
+- `src/lib/supabase.ts`: 미사용 상태 (주석: "향후 직접 연동 시 사용 예정")
+- `src/stores/auth.ts`: `AsyncStorage`에 `access_token`만 저장
+- 토큰 만료 시 자동 갱신 로직 없음
+
+**문제점**:
+1. 백엔드 JWT 만료 시 자동 갱신 없음 → 세션 끊김
+2. Supabase의 `autoRefreshToken` 기능 미활용
+3. 앱 재시작 시 토큰 유효성 검증 없음
+
+**해결 방안** (2가지 선택지):
+
+**Option A: Supabase Auth 직접 연동 (권장)**
+- [ ] `src/lib/supabase.ts` 활성화
+- [ ] `src/stores/auth.ts` 수정: Supabase session 사용
+  ```tsx
+  // Supabase가 자동으로 토큰 갱신 처리
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      setAuth(session.user, session.access_token);
+    } else {
+      logout();
+    }
+  });
+  ```
+- [ ] `src/api/client.ts` 수정: Supabase session에서 토큰 가져오기
+- [ ] `trd/06-authentication-architecture.md` 문서대로 구현
+
+**Option B: Backend Proxy 방식 유지 + Refresh Token 구현**
+- [ ] 백엔드에 `/auth/refresh` 엔드포인트 추가
+- [ ] `AsyncStorage`에 `refresh_token` 추가 저장
+- [ ] API 클라이언트 인터셉터에서 401 에러 시 자동 갱신
+  ```tsx
+  apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response?.status === 401) {
+        const newToken = await refreshToken();
+        // 원래 요청 재시도
+      }
+    }
+  );
+  ```
+
+**참고 문서**:
+- `trd/06-authentication-architecture.md` (Supabase Auth 아키텍처)
+- 토큰 만료: Access Token 7일 (604,800초)
+
 ---
 
 ### 📚 참고 문서 링크

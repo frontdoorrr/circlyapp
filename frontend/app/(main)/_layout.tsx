@@ -13,6 +13,7 @@ import { tokens } from '../../src/theme';
 export default function MainLayout() {
   return (
     <Tabs
+      initialRouteName="(home)"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {

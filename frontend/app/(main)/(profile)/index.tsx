@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCurrentUser, useUpdateProfile, useLogout } from '../../../src/hooks/useAuth';
 import { useMyCircles } from '../../../src/hooks/useCircles';
@@ -20,6 +21,7 @@ import { UserUpdate } from '../../../src/types/auth';
  */
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isDark, toggleTheme } = useTheme();
   const [isEditModalOpen, setEditModalOpen] = useState(false);
 
@@ -66,7 +68,7 @@ export default function ProfileScreen() {
 
   if (userLoading) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
         <LoadingSpinner />
       </View>
     );
@@ -74,14 +76,14 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
         <Text style={styles.errorText}>사용자 정보를 불러올 수 없습니다</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
