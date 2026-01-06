@@ -1398,25 +1398,12 @@ src/components/profile/ProfileInfo.tsx - 프로필 이모지
 ```
 
 **해결 방안**:
-- [ ] **Option A**: `react-native-pager-view` 사용 (권장)
-  ```bash
-  npx expo install react-native-pager-view
-  ```
-  ```tsx
-  import PagerView from 'react-native-pager-view';
-
-  <PagerView
-    style={{ flex: 1 }}
-    initialPage={0}
-    onPageSelected={(e) => setActiveTab(e.nativeEvent.position === 0 ? 'active' : 'completed')}
-  >
-    <View key="1"><ActivePollList /></View>
-    <View key="2"><CompletedPollList /></View>
-  </PagerView>
-  ```
-- [ ] **Option B**: `react-native-tab-view` 사용
-- [ ] 탭 인디케이터 애니메이션 연동 (스와이프 진행률 반영)
-- [ ] ⚠️ **논의 필요**: 스와이프 방향, 감도, 바운스 효과 등 세부 UX
+- [x] ✅ `react-native-pager-view` 사용으로 구현 완료
+- [x] ✅ PagerView로 2개 FlatList 래핑 (진행 중/완료됨 탭)
+- [x] ✅ 탭 버튼 클릭 시 `pagerRef.current?.setPage()` 호출
+- [x] ✅ `onPageSelected`로 스와이프 시 탭 상태 동기화
+- [x] ✅ 각 탭별 독립 Pull-to-Refresh 적용
+- [x] ✅ Haptic 피드백 적용 (탭 전환 시)
 
 ---
 

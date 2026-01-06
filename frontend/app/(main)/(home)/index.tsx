@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
   FadeIn,
 } from 'react-native-reanimated';
+import PagerView from 'react-native-pager-view';
 
 import { HomeHeader } from '../../../src/components/home/HomeHeader';
 import { SectionHeader } from '../../../src/components/home/SectionHeader';
@@ -76,6 +77,7 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [focusKey, setFocusKey] = useState(0);
+  const pagerRef = useRef<PagerView>(null);
 
   // 화면 복귀 시 FlatList 강제 리렌더링
   // Expo Router Stack Navigation에서 화면이 리마운트되지 않고 focus만 됨
@@ -185,7 +187,17 @@ export default function HomeScreen() {
   const handleTabChange = useCallback((tab: TabType) => {
     Haptics.selectionAsync();
     setActiveTab(tab);
+    pagerRef.current?.setPage(tab === 'active' ? 0 : 1);
   }, []);
+
+  // 페이지 스와이프 시 탭 상태 동기화
+  const handlePageSelected = useCallback((e: { nativeEvent: { position: number } }) => {
+    const tab = e.nativeEvent.position === 0 ? 'active' : 'completed';
+    if (tab !== activeTab) {
+      Haptics.selectionAsync();
+      setActiveTab(tab);
+    }
+  }, [activeTab]);
 
   // 투표 카드 클릭 - Active
   const handleActivePollPress = useCallback(
@@ -230,9 +242,8 @@ export default function HomeScreen() {
   // Render Helpers
   // ============================================================================
 
-  const isLoading = activeTab === 'active' ? isLoadingActive : isLoadingCompleted;
-  const isError = activeTab === 'active' ? isErrorActive : isErrorCompleted;
-  const polls = activeTab === 'active' ? transformedActivePolls : transformedCompletedPolls;
+  const isLoading = isLoadingActive || isLoadingCompleted;
+  const isError = isErrorActive || isErrorCompleted;
 
   // Active Poll Render Item
   // Note: 이중 Animated.View 충돌 방지 - PollCard 내부에서 애니메이션 처리
@@ -346,52 +357,98 @@ export default function HomeScreen() {
         <JoinCircleButton onPress={handleJoinCircle} />
       </View>
 
-      {/* Content */}
-      {polls.length === 0 ? (
-        // Empty State
-        <View style={styles.emptyContainer}>
-          <EmptyState
-            variant={activeTab === 'active' ? 'no-active-polls' : 'no-completed-polls'}
-            onAction={activeTab === 'active' ? handleCreatePoll : undefined}
-          />
-        </View>
-      ) : (
-        // Poll List
-        <FlatList
-          data={polls as any}
-          renderItem={activeTab === 'active' ? (renderActiveItem as any) : (renderCompletedItem as any)}
-          keyExtractor={keyExtractor}
-          ItemSeparatorComponent={ItemSeparatorComponent}
-          contentContainerStyle={styles.listContent}
-          extraData={`${activeTab}-${focusKey}`}  // 탭 변경 + 화면 복귀 시 리렌더 강제
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={tokens.colors.primary[500]}
-              colors={[tokens.colors.primary[500]]}
+      {/* Content - PagerView로 스와이프 지원 */}
+      <PagerView
+        ref={pagerRef}
+        style={styles.pagerView}
+        initialPage={0}
+        onPageSelected={handlePageSelected}
+      >
+        {/* 진행 중 탭 */}
+        <View key="active" style={styles.pageContainer}>
+          {transformedActivePolls.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <EmptyState
+                variant="no-active-polls"
+                onAction={handleCreatePoll}
+              />
+            </View>
+          ) : (
+            <FlatList
+              data={transformedActivePolls}
+              renderItem={renderActiveItem}
+              keyExtractor={keyExtractor}
+              ItemSeparatorComponent={ItemSeparatorComponent}
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing && activeTab === 'active'}
+                  onRefresh={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRefreshing(true);
+                    refetchActive().finally(() => setRefreshing(false));
+                  }}
+                  tintColor={tokens.colors.primary[500]}
+                  colors={[tokens.colors.primary[500]]}
+                />
+              }
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={false}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              initialNumToRender={5}
+              getItemLayout={(_, index) => ({
+                length: 140,
+                offset: 140 * index + 12 * index,
+                index,
+              })}
+              accessibilityRole="list"
+              accessibilityLabel={`진행 중인 투표 목록, ${transformedActivePolls.length}개`}
             />
-          }
-          showsVerticalScrollIndicator={false}
-          // Performance optimizations
-          removeClippedSubviews={false}  // Reanimated 애니메이션과 충돌 방지
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          initialNumToRender={5}
-          getItemLayout={(_, index) => ({
-            length: 140, // Estimated item height
-            offset: 140 * index + 12 * index, // height + separator
-            index,
-          })}
-          // Accessibility
-          accessibilityRole="list"
-          accessibilityLabel={
-            activeTab === 'active'
-              ? `진행 중인 투표 목록, ${polls.length}개`
-              : `완료된 투표 목록, ${polls.length}개`
-          }
-        />
-      )}
+          )}
+        </View>
+
+        {/* 완료됨 탭 */}
+        <View key="completed" style={styles.pageContainer}>
+          {transformedCompletedPolls.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <EmptyState variant="no-completed-polls" />
+            </View>
+          ) : (
+            <FlatList
+              data={transformedCompletedPolls}
+              renderItem={renderCompletedItem}
+              keyExtractor={keyExtractor}
+              ItemSeparatorComponent={ItemSeparatorComponent}
+              contentContainerStyle={styles.listContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing && activeTab === 'completed'}
+                  onRefresh={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setRefreshing(true);
+                    refetchCompleted().finally(() => setRefreshing(false));
+                  }}
+                  tintColor={tokens.colors.primary[500]}
+                  colors={[tokens.colors.primary[500]]}
+                />
+              }
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={false}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              initialNumToRender={5}
+              getItemLayout={(_, index) => ({
+                length: 140,
+                offset: 140 * index + 12 * index,
+                index,
+              })}
+              accessibilityRole="list"
+              accessibilityLabel={`완료된 투표 목록, ${transformedCompletedPolls.length}개`}
+            />
+          )}
+        </View>
+      </PagerView>
     </View>
   );
 }
@@ -519,6 +576,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // PagerView styles
+  pagerView: {
+    flex: 1,
+  },
+  pageContainer: {
     flex: 1,
   },
   // Tab row with join button
