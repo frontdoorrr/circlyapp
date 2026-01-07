@@ -5,6 +5,6 @@
   },
   "exclude": [
     "node_modules",
-    "app/(main)/(create)/_archived"
+    "_archived"
   ]
 }
