@@ -212,3 +212,10 @@ circly-app/.env
 test.db
 *.test.db
 backend/test.db
+
+# Claude Code
+.claude/
+
+# Local test scripts
+backend/test_*.py
+backend/scripts/
