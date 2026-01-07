@@ -1553,3 +1553,43 @@ POST /api/v1/circles/{circle_id}/polls → 404 Not Found
 - [x] 프론트엔드: `poll.ts`, `usePolls.ts` 미사용 함수 제거
 
 **최종 API 경로**: `POST /api/v1/polls/circles/{circle_id}`
+
+---
+
+## 🧹 Frontend Code TODO 정리
+
+> **점검일**: 2025-01-07
+> **발견된 TODO**: 14개 (활성 코드 기준)
+
+### 🔴 심각 (핵심 기능 미완성)
+
+| 파일 | 라인 | TODO 내용 |
+|------|------|-----------|
+| `frontend/src/services/notification/pushNotification.ts` | 51 | `'your-project-id'` 하드코딩 → app.json에서 가져오기 |
+| `frontend/app/results/[id].tsx` | 20 | 실제 투표 결과 API 연동 |
+| `frontend/app/results/[id].tsx` | 35 | 결과 공유 기능 구현 |
+| `frontend/app/circle/create.tsx` | 48, 61 | Circle 생성 API 연동 (`'temp-circle-id'` 하드코딩) |
+
+### 🟡 중간 (부가 기능 미완성)
+
+| 파일 | 라인 | TODO 내용 |
+|------|------|-----------|
+| `frontend/src/hooks/useAuth.ts` | 168, 177 | 회원탈퇴 API 구현 필요 |
+| `frontend/app/_layout.tsx` | 74 | 딥링크 unique_id → invite_code 변환 API |
+| `frontend/app/(main)/(profile)/notifications.tsx` | 26 | 알림 설정 API 연동 |
+
+### 🟢 낮음 (UI/UX 개선)
+
+| 파일 | 라인 | TODO 내용 |
+|------|------|-----------|
+| `frontend/app/(main)/_layout.tsx` | 46, 53, 60 | 탭바 아이콘 추가 (Ionicons) |
+| `frontend/app/(main)/(home)/index.tsx` | 107 | 활성 Circle 이름 useCircle 훅에서 가져오기 |
+| `frontend/src/hooks/useCreatePoll.ts` | 72 | 에러 토스트/알림 표시 |
+| `frontend/src/components/home/CircleCard.tsx` | 64 | active_polls_count 백엔드 추가 후 활성화 |
+| `frontend/app/results/[id].tsx` | 48 | Orb Mode 구독 유도 모달 |
+
+### ⚠️ 기타 (정리 필요)
+
+| 파일 | 내용 |
+|------|------|
+| `frontend/src/theme/index.ts:117-137` | 임시 더미 애니메이션 exports 정리 필요 |
