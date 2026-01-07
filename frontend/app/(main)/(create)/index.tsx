@@ -1,315 +1,352 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  FadeIn,
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
-import { TemplateCategory, CategoryInfo } from '../../../src/types/poll';
-import { useCategories } from '../../../src/hooks/usePolls';
-import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
-import { EmptyState } from '../../../src/components/states/EmptyState';
-import { SkeletonCard } from '../../../src/components/states/Skeleton';
+import { useCreateCircle } from '../../../src/hooks/useCircles';
 
 /**
- * Create Tab - Main Screen (Category Exploration)
+ * Create Tab - 서클 만들기
  *
- * 카테고리별로 투표 템플릿을 탐색하는 메인 화면
+ * Gas 앱 모델: 사용자는 서클만 만들고, 질문/템플릿은 어드민이 관리
  *
- * 참고: prd/design/05-complete-ui-specification.md#2.6.1
+ * 새로운 Circle을 만듭니다:
+ * - Circle 이름 입력 (2-30자)
+ * - 설명 입력 (선택, 0-100자)
+ * - 생성 완료 시 Circle 상세 화면으로 이동
  */
+export default function CreateCircleScreen() {
+  const insets = useSafeAreaInsets();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [error, setError] = useState('');
 
-// Fallback categories (API 실패 시 사용)
-const FALLBACK_CATEGORIES: CategoryInfo[] = [
-  {
-    category: 'PERSONALITY',
-    emoji: '😊',
-    title: '성격 관련',
-    question_count: 8,
-  },
-  {
-    category: 'APPEARANCE',
-    emoji: '✨',
-    title: '외모 관련',
-    question_count: 6,
-  },
-  {
-    category: 'SPECIAL',
-    emoji: '🎉',
-    title: '특별한 날',
-    question_count: 4,
-  },
-  {
-    category: 'TALENT',
-    emoji: '🏆',
-    title: '능력 관련',
-    question_count: 5,
-  },
-];
+  const createCircleMutation = useCreateCircle();
 
-// 카테고리 카드 컴포넌트
-interface CategoryCardProps {
-  category: CategoryInfo;
-  onPress: () => void;
-  index: number;
-}
+  const handleNameChange = (text: string) => {
+    // 30자 제한
+    const cleaned = text.slice(0, 30);
+    setName(cleaned);
+    setError('');
+  };
 
-function CategoryCard({ category, onPress, index }: CategoryCardProps) {
-  const scale = useSharedValue(1);
-  const shadowOpacity = useSharedValue(0.05);
+  const handleDescriptionChange = (text: string) => {
+    // 100자 제한
+    const cleaned = text.slice(0, 100);
+    setDescription(cleaned);
+  };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const handleCreate = async () => {
+    // 유효성 검사
+    if (name.length < 2) {
+      setError('서클 이름은 2자 이상이어야 해요');
+      return;
+    }
 
-  const shadowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: shadowOpacity.value,
-  }));
+    if (name.length > 30) {
+      setError('서클 이름은 30자 이하여야 해요');
+      return;
+    }
 
-  const handlePressIn = () => {
-    // Press animation: scale 0.98 + shadow-lg
-    scale.value = withSpring(0.98, {
-      stiffness: 300,
-      damping: 30,
-    });
-    shadowOpacity.value = withTiming(0.15, { duration: 150 });
+    setError('');
 
-    // Haptic feedback
-    if (Platform.OS === 'ios') {
-      Haptics.selectionAsync();
+    try {
+      const result = await createCircleMutation.mutateAsync({
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
+
+      console.log('[CreateCircle] 서클 생성 성공:', result.id);
+
+      // 성공 시 서클 상세 화면으로 이동
+      router.push({
+        pathname: '/circle/[id]',
+        params: { id: result.id },
+      });
+
+      // 폼 초기화
+      setName('');
+      setDescription('');
+    } catch (err) {
+      console.error('[CreateCircle] 서클 생성 실패:', err);
+      Alert.alert('오류', '서클 생성에 실패했어요. 다시 시도해주세요');
     }
   };
 
-  const handlePressOut = () => {
-    // Restore original state
-    scale.value = withSpring(1, {
-      stiffness: 300,
-      damping: 30,
-    });
-    shadowOpacity.value = withTiming(0.05, { duration: 150 });
-  };
+  const isNameValid = name.length >= 2 && name.length <= 30;
+  const isCreating = createCircleMutation.isPending;
 
   return (
-    <Animated.View
-      entering={FadeIn.delay(index * 80).duration(300)}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={`${category.title}, ${category.question_count}개의 질문`}
-        accessibilityHint="이 카테고리의 질문을 보려면 두 번 탭하세요"
-      >
-        <Animated.View style={[styles.categoryCard, shadowStyle, animatedStyle]}>
-          <View style={styles.cardContent}>
-            {/* 이모지 */}
-            <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-
-            {/* 텍스트 정보 */}
-            <View style={styles.categoryInfo}>
-              <Text style={styles.categoryTitle}>{category.title}</Text>
-              <Text style={styles.categoryCount}>{category.question_count}개의 질문</Text>
-            </View>
-
-            {/* 화살표 */}
-            <Text style={styles.arrow}>→</Text>
-          </View>
-        </Animated.View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-export default function CreateScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { data: categories, isLoading, isError, refetch } = useCategories();
-
-  // API에서 데이터를 가져오거나 fallback 사용
-  const displayCategories = categories || FALLBACK_CATEGORIES;
-
-  const handleCategoryPress = (category: TemplateCategory) => {
-    // 질문 선택 화면으로 이동 (slide-right transition)
-    router.push({
-      pathname: '/(main)/(create)/select-template',
-      params: { category },
-    });
-  };
-
-  // Loading State
-  if (isLoading) {
-    return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>새 투표 만들기</Text>
-          <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          {[1, 2, 3, 4].map((i) => (
-            <SkeletonCard key={i} style={styles.skeletonCard} />
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  // Error State
-  if (isError) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>새 투표 만들기</Text>
-          <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
-        </View>
-        <View style={styles.errorContainer}>
-          <EmptyState
-            variant="network-error"
-            onAction={() => refetch()}
-          />
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
         {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.title}>새 투표 만들기</Text>
-          <Text style={styles.subtitle}>질문을 선택해서 투표를 시작해보세요</Text>
+        <View style={styles.headerBar}>
+          <Text style={styles.headerTitle}>서클 만들기</Text>
         </View>
 
-        {/* 카테고리 카드 리스트 */}
-        <View style={styles.categoryList}>
-          {displayCategories.map((category, index) => (
-            <CategoryCard
-              key={category.category}
-              category={category}
-              index={index}
-              onPress={() => handleCategoryPress(category.category as TemplateCategory)}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 메인 헤더 */}
+          <View style={styles.header}>
+            <Text style={styles.emoji}>🎉</Text>
+            <Text style={styles.title}>새로운 서클을 만들어요</Text>
+            <Text style={styles.description}>
+              친구들과 함께 즐길 수 있는{'\n'}나만의 서클을 만들어보세요
+            </Text>
+          </View>
+
+          {/* 서클 이름 입력 */}
+          <View style={styles.inputSection}>
+            <Text style={styles.inputLabel}>
+              서클 이름 <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                error && styles.inputError,
+                isNameValid && styles.inputValid,
+              ]}
+              value={name}
+              onChangeText={handleNameChange}
+              placeholder="예: 3-2반 친구들"
+              placeholderTextColor={tokens.colors.neutral[400]}
+              maxLength={30}
+              editable={!isCreating}
             />
-          ))}
+
+            <View style={styles.inputFooter}>
+              {error ? (
+                <Text style={styles.errorText}>{error}</Text>
+              ) : (
+                <Text style={styles.hint}>2-30자로 입력해주세요</Text>
+              )}
+              <Text
+                style={[
+                  styles.charCount,
+                  name.length > 30 && styles.charCountError,
+                ]}
+              >
+                {name.length}/30
+              </Text>
+            </View>
+          </View>
+
+          {/* 서클 설명 입력 (선택) */}
+          <View style={styles.inputSection}>
+            <Text style={styles.inputLabel}>서클 소개 (선택)</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={handleDescriptionChange}
+              placeholder="이 서클에 대해 간단히 소개해주세요"
+              placeholderTextColor={tokens.colors.neutral[400]}
+              multiline
+              numberOfLines={4}
+              maxLength={100}
+              textAlignVertical="top"
+              editable={!isCreating}
+            />
+
+            <View style={styles.inputFooter}>
+              <Text style={styles.hint}>서클 멤버들에게 보여져요</Text>
+              <Text style={styles.charCount}>{description.length}/100</Text>
+            </View>
+          </View>
+
+          {/* 안내 카드 */}
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>💡 서클 생성 후에는</Text>
+            <Text style={styles.infoText}>
+              • 초대 코드가 자동으로 생성돼요{'\n'}
+              • 친구들을 초대하여 함께 투표를 즐겨보세요{'\n'}
+              • 서클 이름과 설명은 나중에 변경할 수 있어요
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* 생성 버튼 */}
+        <View style={[styles.footer, { paddingBottom: insets.bottom + tokens.spacing.lg }]}>
+          <Pressable
+            style={[
+              styles.createButton,
+              (!isNameValid || isCreating) && styles.createButtonDisabled,
+            ]}
+            onPress={handleCreate}
+            disabled={!isNameValid || isCreating}
+          >
+            <Text
+              style={[
+                styles.createButtonText,
+                (!isNameValid || isCreating) && styles.createButtonTextDisabled,
+              ]}
+            >
+              {isCreating ? '서클 만드는 중...' : '서클 만들기'}
+            </Text>
+          </Pressable>
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
+    backgroundColor: tokens.colors.white,
+  },
+  headerBar: {
+    paddingHorizontal: tokens.spacing.lg,
+    paddingVertical: tokens.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.neutral[200],
+  },
+  headerTitle: {
+    fontSize: tokens.typography.fontSize.xl,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.neutral[900],
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: tokens.spacing.xl * 2,
+    padding: tokens.spacing.lg,
+    paddingBottom: 120,
   },
-  loadingContainer: {
-    paddingHorizontal: tokens.spacing.md,
-    gap: tokens.spacing.sm * 1.5,
-  },
-  errorContainer: {
-    flex: 1,
-  },
-  skeletonCard: {
-    height: 80,
-    borderRadius: 20,
-  },
-
-  // 헤더
   header: {
-    paddingTop: tokens.spacing.xl,
-    paddingHorizontal: tokens.spacing.lg,
     alignItems: 'center',
+    marginTop: tokens.spacing.md,
     marginBottom: tokens.spacing.xl,
   },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'], // 24px
-    fontWeight: tokens.typography.fontWeight.bold, // 700
-    color: tokens.colors.neutral[900],
+  emoji: {
+    fontSize: 64,
+    lineHeight: 76,
+    marginBottom: tokens.spacing.lg,
     textAlign: 'center',
   },
-  subtitle: {
-    fontSize: tokens.typography.fontSize.sm, // 14px
-    fontWeight: tokens.typography.fontWeight.normal, // 400
+  title: {
+    fontSize: tokens.typography.fontSize['2xl'],
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.neutral[900],
+    marginBottom: tokens.spacing.sm,
+  },
+  description: {
+    fontSize: tokens.typography.fontSize.base,
     color: tokens.colors.neutral[500],
     textAlign: 'center',
-    marginTop: tokens.spacing.xs, // 8px
+    lineHeight: 24,
   },
-
-  // 카테고리 리스트
-  categoryList: {
-    paddingHorizontal: tokens.spacing.md, // 16px
-    gap: tokens.spacing.sm * 1.5, // 12px
+  inputSection: {
+    marginBottom: tokens.spacing.xl,
   },
-
-  // 카테고리 카드
-  categoryCard: {
-    paddingHorizontal: tokens.spacing.xl, // 24px
-    paddingVertical: tokens.spacing.xl, // 24px
+  inputLabel: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.neutral[900],
+    marginBottom: tokens.spacing.sm,
+  },
+  required: {
+    color: tokens.colors.red[500],
+  },
+  input: {
     backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius['2xl'], // 20px
-    // Shadow (shadow-sm)
-    ...Platform.select({
-      ios: {
-        shadowColor: tokens.colors.neutral[900],
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  // 이모지
-  categoryEmoji: {
-    fontSize: 32,
-    lineHeight: 40,  // fontSize * 1.25 (iOS 잘림 방지)
-    textAlign: 'center',
-  },
-
-  // 텍스트 정보
-  categoryInfo: {
-    marginLeft: tokens.spacing.sm * 1.5, // 12px
-    flex: 1,
-  },
-  categoryTitle: {
-    fontSize: tokens.typography.fontSize.lg, // 18px
-    fontWeight: tokens.typography.fontWeight.semibold, // 600
+    borderWidth: 2,
+    borderColor: tokens.colors.neutral[200],
+    borderRadius: tokens.borderRadius.lg,
+    paddingVertical: tokens.spacing.md,
+    paddingHorizontal: tokens.spacing.lg,
+    fontSize: tokens.typography.fontSize.base,
     color: tokens.colors.neutral[900],
   },
-  categoryCount: {
-    fontSize: tokens.typography.fontSize.sm, // 14px
-    fontWeight: tokens.typography.fontWeight.normal, // 400
-    color: tokens.colors.neutral[400],
-    marginTop: 4, // 4px
+  inputError: {
+    borderColor: tokens.colors.red[500],
+    backgroundColor: tokens.colors.red[50],
   },
-
-  // 화살표
-  arrow: {
-    fontSize: 20,
-    color: tokens.colors.neutral[300],
+  inputValid: {
+    borderColor: tokens.colors.primary[500],
+    backgroundColor: tokens.colors.primary[50],
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: tokens.spacing.md,
+  },
+  inputFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: tokens.spacing.sm,
+  },
+  hint: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.neutral[400],
+  },
+  errorText: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.red[600],
+  },
+  charCount: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.neutral[400],
+  },
+  charCountError: {
+    color: tokens.colors.red[600],
+  },
+  infoCard: {
+    backgroundColor: tokens.colors.primary[50],
+    padding: tokens.spacing.lg,
+    borderRadius: tokens.borderRadius.lg,
+  },
+  infoTitle: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.primary[700],
+    marginBottom: tokens.spacing.sm,
+  },
+  infoText: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.primary[600],
+    lineHeight: 20,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: tokens.spacing.lg,
+    backgroundColor: tokens.colors.white,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.neutral[200],
+  },
+  createButton: {
+    backgroundColor: tokens.colors.primary[500],
+    paddingVertical: tokens.spacing.md,
+    borderRadius: tokens.borderRadius.lg,
+    alignItems: 'center',
+  },
+  createButtonDisabled: {
+    backgroundColor: tokens.colors.neutral[200],
+  },
+  createButtonText: {
+    fontSize: tokens.typography.fontSize.lg,
+    fontWeight: tokens.typography.fontWeight.semibold,
+    color: tokens.colors.white,
+  },
+  createButtonTextDisabled: {
+    color: tokens.colors.neutral[400],
   },
 });
