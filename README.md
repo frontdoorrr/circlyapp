@@ -52,7 +52,7 @@ uv run alembic upgrade head
 uv run python scripts/seed_templates.py
 
 # 7. Start development server
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Backend will be running at `http://localhost:8000`
