@@ -13,7 +13,7 @@ import { tokens } from '../../src/theme';
 export default function MainLayout() {
   return (
     <Tabs
-      initialRouteName="(home)"
+      initialRouteName="(0-home)"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -40,21 +40,21 @@ export default function MainLayout() {
       }}
     >
       <Tabs.Screen
-        name="(home)"
+        name="(0-home)"
         options={{
           title: '홈',
           tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: home)
         }}
       />
       <Tabs.Screen
-        name="(create)"
+        name="(1-create)"
         options={{
-          title: '만들기',
+          title: '서클 만들기',
           tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: add-circle)
         }}
       />
       <Tabs.Screen
-        name="(profile)"
+        name="(2-profile)"
         options={{
           title: '프로필',
           tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: person)

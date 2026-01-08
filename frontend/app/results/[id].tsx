@@ -37,7 +37,7 @@ export default function ResultsScreen() {
   };
 
   const handleCreateNew = () => {
-    router.push('/(main)/(create)');
+    router.push('/(main)/(1-create)');
   };
 
   const handleOrbMode = () => {

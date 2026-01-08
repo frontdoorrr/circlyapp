@@ -119,7 +119,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     }
     // 로그인되었는데 로그인 화면에 있으면 → 홈 화면으로
     else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(main)/(home)');
+      router.replace('/(main)/(0-home)');
     }
   }, [isAuthenticated, segments, isReady, isLoading, showOnboarding, router]);
 

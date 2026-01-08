@@ -42,7 +42,7 @@ export default function JoinSuccessScreen() {
   const confetti5Y = useSharedValue(-20);
 
   const navigateToHome = () => {
-    router.replace('/(main)/(home)');
+    router.replace('/(main)/(0-home)');
   };
 
   useEffect(() => {

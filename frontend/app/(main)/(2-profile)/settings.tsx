@@ -115,7 +115,7 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.settingItem}
-              onPress={() => router.push('/(main)/(profile)' as any)}
+              onPress={() => router.push('/(main)/(2-profile)' as any)}
             >
               <Text style={styles.settingItemText}>프로필 수정</Text>
               <Text style={styles.settingItemArrow}>›</Text>

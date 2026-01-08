@@ -224,12 +224,12 @@ export default function HomeScreen() {
 
   // 프로필 클릭
   const handleProfilePress = useCallback(() => {
-    router.push('/(main)/(profile)' as any);
+    router.push('/(main)/(2-profile)' as any);
   }, [router]);
 
   // 투표 만들기
   const handleCreatePoll = useCallback(() => {
-    router.push('/(main)/(create)' as any);
+    router.push('/(main)/(1-create)' as any);
   }, [router]);
 
   // Circle 참여 (코드로 참여)
