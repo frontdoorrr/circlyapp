@@ -153,8 +153,8 @@ function getEmptyStateConfig(variant: EmptyStateVariant): EmptyStateConfig {
     'no-active-polls': {
       icon: '🎯',
       title: '진행 중인 투표가 없어요',
-      description: '친구들이 투표를 시작하면 여기에 표시됩니다',
-      actionLabel: '투표 만들기',
+      description: '서클에 참여하면 투표에 참여할 수 있어요',
+      actionLabel: '서클 참여하기',
     },
     'no-completed-polls': {
       icon: '📊',

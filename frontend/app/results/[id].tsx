@@ -36,10 +36,6 @@ export default function ResultsScreen() {
     console.log('Share results:', id);
   };
 
-  const handleCreateNew = () => {
-    router.push('/(main)/(1-create)');
-  };
-
   const handleOrbMode = () => {
     if (isOrbMode) {
       // Orb Mode 활성화됨 - 투표자 공개 화면으로 이동
@@ -163,13 +159,6 @@ export default function ResultsScreen() {
             onPress={handleShare}
           >
             <Text style={styles.shareButtonText}>📤 결과 공유하기</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.actionButton, styles.createButton]}
-            onPress={handleCreateNew}
-          >
-            <Text style={styles.createButtonText}>새 투표 만들기</Text>
           </Pressable>
         </View>
       </View>
@@ -301,16 +290,6 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.fontSize.base,
     fontWeight: tokens.typography.fontWeight.semibold,
     color: tokens.colors.white,
-  },
-  createButton: {
-    backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.primary[500],
-  },
-  createButtonText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[500],
   },
   // Orb Mode 버튼 스타일
   orbModeButton: {

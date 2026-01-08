@@ -2,12 +2,12 @@ import { Stack } from 'expo-router';
 import { tokens } from '../../../src/theme';
 
 /**
- * Create Tab Layout
+ * Circle Tab Layout
  *
- * 서클 만들기 탭 레이아웃
- * Gas 앱 모델: 사용자는 서클만 만들고, 질문/템플릿은 어드민이 관리
+ * 서클 탭 레이아웃
+ * - 내 서클 목록 화면
  */
-export default function CreateLayout() {
+export default function CircleLayout() {
   return (
     <Stack
       screenOptions={{
@@ -18,7 +18,7 @@ export default function CreateLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '서클 만들기',
+          title: '내 서클',
         }}
       />
     </Stack>

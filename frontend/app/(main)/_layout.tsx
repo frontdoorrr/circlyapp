@@ -6,7 +6,7 @@ import { tokens } from '../../src/theme';
  * Main Layout with Tabs
  *
  * 메인 화면 탭 레이아웃
- * - 3탭 구조: Home, Create, Profile
+ * - 3탭 구조: Home, Circle, Profile
  * - Gas 앱 스타일 탭바
  * - Safe Area 대응
  */
@@ -47,10 +47,10 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="(1-create)"
+        name="(1-circle)"
         options={{
-          title: '서클 만들기',
-          tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: add-circle)
+          title: '서클',
+          tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: people-circle)
         }}
       />
       <Tabs.Screen

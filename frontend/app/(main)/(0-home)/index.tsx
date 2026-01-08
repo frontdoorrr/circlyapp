@@ -227,9 +227,9 @@ export default function HomeScreen() {
     router.push('/(main)/(2-profile)' as any);
   }, [router]);
 
-  // 투표 만들기
-  const handleCreatePoll = useCallback(() => {
-    router.push('/(main)/(1-create)' as any);
+  // 서클 탭으로 이동
+  const handleGoToCircles = useCallback(() => {
+    router.push('/(main)/(1-circle)' as any);
   }, [router]);
 
   // Circle 참여 (코드로 참여)
@@ -370,7 +370,7 @@ export default function HomeScreen() {
             <View style={styles.emptyContainer}>
               <EmptyState
                 variant="no-active-polls"
-                onAction={handleCreatePoll}
+                onAction={handleJoinCircle}
               />
             </View>
           ) : (

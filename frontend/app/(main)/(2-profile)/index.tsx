@@ -3,7 +3,6 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCurrentUser, useUpdateProfile, useLogout } from '../../../src/hooks/useAuth';
-import { useMyCircles } from '../../../src/hooks/useCircles';
 import { useTheme } from '../../../src/theme/ThemeContext';
 import { ProfileInfo } from '../../../src/components/profile/ProfileInfo';
 import { ProfileEditModal } from '../../../src/components/profile/ProfileEditModal';
@@ -27,7 +26,6 @@ export default function ProfileScreen() {
 
   // 사용자 정보 조회
   const { data: user, isLoading: userLoading } = useCurrentUser();
-  const { data: circles } = useMyCircles();
 
   // 프로필 수정
   const updateProfileMutation = useUpdateProfile();
@@ -93,36 +91,6 @@ export default function ProfileScreen() {
           user={user}
           onEdit={() => setEditModalOpen(true)}
         />
-
-        {/* Circle 섹션 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>내 Circle</Text>
-          <View style={styles.card}>
-            {circles && circles.length > 0 ? (
-              <>
-                {circles.map((circle) => (
-                  <TouchableOpacity
-                    key={circle.id}
-                    style={styles.circleItem}
-                    onPress={() => router.push(`/circle/${circle.id}` as any)}
-                  >
-                    <Text style={styles.circleItemText}>
-                      {circle.name}
-                    </Text>
-                    <Text style={styles.circleItemMeta}>
-                      {circle.member_count}명
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                <Text style={styles.circleCount}>
-                  총 {circles.length}개 Circle 참여 중
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.emptyText}>참여한 Circle이 없습니다</Text>
-            )}
-          </View>
-        </View>
 
         {/* 설정 섹션 */}
         <View style={styles.section}>
@@ -208,34 +176,6 @@ const styles = StyleSheet.create({
     borderRadius: tokens.borderRadius.lg,
     padding: tokens.spacing.md,
     ...tokens.shadows.sm,
-  },
-  circleItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: tokens.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  circleItemText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  circleItemMeta: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-  },
-  circleCount: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-    textAlign: 'center',
-    marginTop: tokens.spacing.sm,
-  },
-  emptyText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-    textAlign: 'center',
-    paddingVertical: tokens.spacing.lg,
   },
   settingItem: {
     flexDirection: 'row',

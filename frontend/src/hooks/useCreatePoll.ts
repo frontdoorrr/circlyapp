@@ -59,8 +59,8 @@ export const useCreatePoll = () => {
       queryClient.invalidateQueries({ queryKey: ['polls'] });
       queryClient.invalidateQueries({ queryKey: ['circles', data.circle_id] });
 
-      // Navigate to success screen
-      router.push('/(main)/(1-create)/success');
+      // Navigate to home screen (admin-only feature)
+      router.replace('/(main)/(0-home)');
     },
 
     onError: async (error: any) => {
