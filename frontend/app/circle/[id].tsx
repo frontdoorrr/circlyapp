@@ -337,18 +337,20 @@ const styles = StyleSheet.create({
   },
   inviteCodeContainer: {
     alignItems: 'center',
+    paddingTop: tokens.spacing.sm,
     marginBottom: tokens.spacing.md,
   },
   inviteCodeLabel: {
     fontSize: tokens.typography.fontSize.sm,
     color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.xs,
+    marginBottom: tokens.spacing.sm,
   },
   inviteCode: {
     fontSize: tokens.typography.fontSize['3xl'],
     fontWeight: tokens.typography.fontWeight.bold,
     color: tokens.colors.primary[600],
     letterSpacing: 4,
+    lineHeight: tokens.typography.fontSize['3xl'] * 1.3,
     marginBottom: tokens.spacing.xs,
   },
   inviteExpiry: {
