@@ -423,7 +423,7 @@
 
 ---
 
-## 🧹 Frontend Code TODO 정리
+## Phase 14: Frontend Code TODO 정리
 
 > **점검일**: 2025-01-07
 
@@ -450,13 +450,13 @@
 
 ---
 
-## Phase 14: 푸시 알림 시스템 완성
+## Phase 15: 푸시 알림 시스템 완성
 
 > **참고 문서**: `prd/features/03-push-notification.md`
 > **기술 문서**: `trd/03-push-notification-implementation.md`
 > **현황**: 인프라 구축됨 (DB 모델, Repository, API), 실제 발송 미구현
 
-### 14.1 메시지 템플릿 한글화
+### 15.1 메시지 템플릿 한글화
 
 > **참고**: `prd/features/03-push-notification.md#1. 푸시 알림 유형별 설계`
 
@@ -469,7 +469,7 @@
 | `poll_deadline_10m` | 🚨 마지막 기회! | "{질문}" 투표 마감 10분 전 놓치면 후회할걸요? 😱 |
 | `poll_result` | 🎉 투표 결과가 나왔어요! | "{질문}" 궁금하지 않아? 결과 확인하러 가기 ✨ |
 
-### 14.2 Backend - Expo Push API 연동
+### 15.2 Backend - Expo Push API 연동
 
 > **참고**: `prd/features/03-push-notification.md#10.5 Backend 구현 명세`
 
@@ -483,7 +483,7 @@
   - [ ] `send_poll_reminder()` - Expo Push 호출 추가
 - [ ] 테스트 코드 작성
 
-### 14.3 Backend - Celery 스케줄링 설정
+### 15.3 Backend - Celery 스케줄링 설정
 
 > **참고**: `prd/features/03-push-notification.md#10.5.2 Background Tasks`
 
@@ -496,7 +496,7 @@
   - [ ] `send_poll_result_notification()` - 결과 발표 알림
 - [ ] `docker-compose.yml` - Celery worker, beat 추가
 
-### 14.4 Backend - 이벤트 연동
+### 15.4 Backend - 이벤트 연동
 
 > **참고**: `prd/features/03-push-notification.md#10.3 알림 유형별 구현 명세`
 
@@ -506,7 +506,7 @@
 - [ ] `backend/app/modules/polls/service.py` - 투표 마감 처리 시 결과 알림
   - [ ] 투표 마감 로직에서 `send_poll_ended()` 호출
 
-### 14.5 Frontend - 푸시 토큰 자동 등록
+### 15.5 Frontend - 푸시 토큰 자동 등록
 
 > **참고**: `prd/features/03-push-notification.md#10.4 Frontend 구현 명세`
 
@@ -516,7 +516,7 @@
   - [ ] 토큰 획득 후 `registerPushToken()` API 호출
 - [ ] `frontend/src/stores/auth.ts` - 로그아웃 시 `unregisterPushToken()` 호출
 
-### 14.6 Frontend - 딥링크 처리
+### 15.6 Frontend - 딥링크 처리
 
 > **참고**: `prd/features/03-push-notification.md#5. 딥링크 및 인앱 라우팅`
 
@@ -526,7 +526,7 @@
   - [ ] `poll_deadline` → `/poll-participation/{poll_id}` 이동
 - [ ] `frontend/app/_layout.tsx` - 딥링크 리스너 등록
 
-### 14.7 Frontend - 알림 설정 API 연동
+### 15.7 Frontend - 알림 설정 API 연동
 
 > **참고**: `prd/features/03-push-notification.md#3. 알림 설정 및 개인화`
 
