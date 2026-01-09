@@ -429,7 +429,7 @@
 
 ### 🔴 심각 (핵심 기능 미완성)
 - [ ] **14.1** `pushNotification.ts:51` - `'your-project-id'` 하드코딩 → app.json에서 가져오기
-- [ ] **14.2** `results/[id].tsx:20` - 실제 투표 결과 API 연동
+- [x] **14.2** `results/[id].tsx:20` - 실제 투표 결과 API 연동 ✅
 - [ ] **14.3** `results/[id].tsx:35` - 결과 공유 기능 구현
 - [ ] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동
 

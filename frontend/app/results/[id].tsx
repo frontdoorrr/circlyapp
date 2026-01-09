@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { tokens } from '../../src/theme';
 import { useCurrentUser } from '../../src/hooks/useAuth';
+import { usePollDetail } from '../../src/hooks/usePolls';
+import { LoadingSpinner, EmptyState } from '../../src/components/states';
 
 /**
  * 투표 결과 화면
@@ -17,19 +19,8 @@ export default function ResultsScreen() {
   const { data: currentUser } = useCurrentUser();
   const isOrbMode = currentUser?.is_orb_mode ?? false;
 
-  // TODO: 실제 투표 결과 가져오기
-  const pollResults = {
-    question: '가장 웃음이 예쁜 친구는?',
-    emoji: '💖',
-    totalVotes: 15,
-    endTime: '2024-12-29T12:00:00Z',
-    results: [
-      { id: '1', name: '김민지', votes: 7, percentage: 47 },
-      { id: '2', name: '이서연', votes: 5, percentage: 33 },
-      { id: '3', name: '박지민', votes: 2, percentage: 13 },
-      { id: '4', name: '최하영', votes: 1, percentage: 7 },
-    ],
-  };
+  // 투표 결과 API 연동
+  const { data: poll, isLoading, error, refetch } = usePollDetail(id ?? '');
 
   const handleShare = () => {
     // TODO: 결과 공유 기능 구현
@@ -47,8 +38,93 @@ export default function ResultsScreen() {
   };
 
   const getBarWidth = (percentage: number) => {
-    return `${percentage}%`;
+    return `${percentage}%` as const;
   };
+
+  // ID 유효성 검증
+  if (!id) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: '투표 결과',
+            headerShown: true,
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.container}>
+          <EmptyState
+            variant="network-error"
+            title="잘못된 접근이에요"
+            description="투표를 찾을 수 없습니다"
+          />
+        </View>
+      </>
+    );
+  }
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: '투표 결과',
+            headerShown: true,
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.container}>
+          <LoadingSpinner />
+        </View>
+      </>
+    );
+  }
+
+  // 에러 상태
+  if (error || !poll) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: '투표 결과',
+            headerShown: true,
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.container}>
+          <EmptyState
+            variant="network-error"
+            title="결과를 불러올 수 없어요"
+            description="잠시 후 다시 시도해주세요"
+            onAction={() => refetch()}
+          />
+        </View>
+      </>
+    );
+  }
+
+  // 결과 없음 상태 (투표 전이거나 결과가 없는 경우)
+  if (!poll.results || poll.results.length === 0) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: '투표 결과',
+            headerShown: true,
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.container}>
+          <EmptyState
+            variant="no-results"
+            title="아직 결과가 없어요"
+            description="투표에 참여하면 결과를 볼 수 있어요"
+          />
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -67,15 +143,15 @@ export default function ResultsScreen() {
         >
           {/* 질문 헤더 */}
           <View style={styles.header}>
-            <Text style={styles.emoji}>{pollResults.emoji}</Text>
-            <Text style={styles.question}>{pollResults.question}</Text>
-            <Text style={styles.stats}>총 {pollResults.totalVotes}명 참여</Text>
+            <Text style={styles.emoji}>{poll.emoji || '🗳️'}</Text>
+            <Text style={styles.question}>{poll.question_text}</Text>
+            <Text style={styles.stats}>총 {poll.vote_count}명 참여</Text>
           </View>
 
           {/* 결과 리스트 */}
           <View style={styles.resultsList}>
-            {pollResults.results.map((result, index) => (
-              <View key={result.id} style={styles.resultItem}>
+            {poll.results.map((result, index) => (
+              <View key={result.user_id} style={styles.resultItem}>
                 {/* 순위 */}
                 <View style={styles.rank}>
                   {index === 0 && <Text style={styles.rankEmoji}>👑</Text>}
@@ -85,9 +161,9 @@ export default function ResultsScreen() {
                 {/* 이름과 득표 정보 */}
                 <View style={styles.resultInfo}>
                   <View style={styles.resultHeader}>
-                    <Text style={styles.resultName}>{result.name}</Text>
+                    <Text style={styles.resultName}>{result.nickname || '익명'}</Text>
                     <Text style={styles.resultVotes}>
-                      {result.votes}표 ({result.percentage}%)
+                      {result.vote_count}표 ({result.vote_percentage}%)
                     </Text>
                   </View>
 
@@ -97,7 +173,7 @@ export default function ResultsScreen() {
                       style={[
                         styles.barFill,
                         {
-                          width: getBarWidth(result.percentage),
+                          width: getBarWidth(result.vote_percentage),
                           backgroundColor:
                             index === 0
                               ? tokens.colors.primary[500]
