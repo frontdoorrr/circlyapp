@@ -34,6 +34,7 @@ import { POLL_STATUS_LABELS } from '@/types/polls';
 interface PollsTableProps {
   polls: Poll[];
   isLoading?: boolean;
+  circleMap: Map<string, string>;
 }
 
 function getStatusBadgeVariant(status: PollStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -54,6 +55,7 @@ function TableSkeleton() {
     <>
       {Array.from({ length: 5 }).map((_, i) => (
         <TableRow key={i}>
+          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
           <TableCell><Skeleton className="h-4 w-48" /></TableCell>
           <TableCell><Skeleton className="h-4 w-16" /></TableCell>
           <TableCell><Skeleton className="h-4 w-12" /></TableCell>
@@ -66,7 +68,7 @@ function TableSkeleton() {
   );
 }
 
-export function PollsTable({ polls, isLoading }: PollsTableProps) {
+export function PollsTable({ polls, isLoading, circleMap }: PollsTableProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const updateStatus = useUpdatePollStatus();
@@ -94,6 +96,7 @@ export function PollsTable({ polls, isLoading }: PollsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Circle</TableHead>
               <TableHead>질문</TableHead>
               <TableHead>상태</TableHead>
               <TableHead>투표 수</TableHead>
@@ -107,7 +110,7 @@ export function PollsTable({ polls, isLoading }: PollsTableProps) {
               <TableSkeleton />
             ) : polls.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   투표가 없습니다.
                 </TableCell>
               </TableRow>
@@ -118,7 +121,10 @@ export function PollsTable({ polls, isLoading }: PollsTableProps) {
 
                 return (
                   <TableRow key={poll.id}>
-                    <TableCell className="font-medium max-w-xs truncate">
+                    <TableCell className="font-medium">
+                      {circleMap.get(poll.circle_id) || '-'}
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
                       {poll.question_text}
                     </TableCell>
                     <TableCell>

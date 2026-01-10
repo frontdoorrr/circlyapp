@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Vote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { PollsTable } from '@/components/polls/PollsTable';
 import { usePolls } from '@/hooks/usePolls';
+import { useCircles } from '@/hooks/useCircles';
 import type { PollStatus } from '@/types/polls';
 import { POLL_STATUS_LABELS } from '@/types/polls';
 
@@ -25,9 +26,21 @@ export function PollsPage() {
     offset: page * PAGE_SIZE,
   });
 
+  // Fetch all circles for name mapping
+  const { data: circlesData } = useCircles({ limit: 1000 });
+
   const polls = data?.items || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  // Create circle id -> name map
+  const circleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    circlesData?.items.forEach((circle) => {
+      map.set(circle.id, circle.name);
+    });
+    return map;
+  }, [circlesData]);
 
   return (
     <div className="space-y-6">
@@ -68,7 +81,7 @@ export function PollsPage() {
       </div>
 
       {/* Table */}
-      <PollsTable polls={polls} isLoading={isLoading} />
+      <PollsTable polls={polls} isLoading={isLoading} circleMap={circleMap} />
 
       {/* Pagination */}
       {totalPages > 1 && (
