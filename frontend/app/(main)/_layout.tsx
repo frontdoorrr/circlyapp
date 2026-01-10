@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { tokens } from '../../src/theme';
 
 /**
@@ -43,21 +44,27 @@ export default function MainLayout() {
         name="(0-home)"
         options={{
           title: '홈',
-          tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: home)
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="(1-circle)"
         options={{
           title: '서클',
-          tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: people-circle)
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'people-circle' : 'people-circle-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="(2-profile)"
         options={{
           title: '프로필',
-          tabBarIcon: ({ color, size }) => null, // TODO: Add icon (Ionicons: person)
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

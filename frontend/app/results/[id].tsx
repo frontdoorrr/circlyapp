@@ -1,5 +1,8 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { useRef, useState } from 'react';
+import * as Sharing from 'expo-sharing';
+import ViewShot from 'react-native-view-shot';
 import { tokens } from '../../src/theme';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 import { usePollDetail } from '../../src/hooks/usePolls';
@@ -18,13 +21,42 @@ export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: currentUser } = useCurrentUser();
   const isOrbMode = currentUser?.is_orb_mode ?? false;
+  const viewShotRef = useRef<ViewShot>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   // 투표 결과 API 연동
   const { data: poll, isLoading, error, refetch } = usePollDetail(id ?? '');
 
-  const handleShare = () => {
-    // TODO: 결과 공유 기능 구현
-    console.log('Share results:', id);
+  const handleShare = async () => {
+    if (isSharing) return;
+
+    try {
+      setIsSharing(true);
+
+      // 공유 가능 여부 확인
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('알림', '이 기기에서는 공유 기능을 사용할 수 없어요');
+        return;
+      }
+
+      // 결과 화면 캡처
+      if (viewShotRef.current?.capture) {
+        const uri = await viewShotRef.current.capture();
+
+        // 공유 실행
+        await Sharing.shareAsync(uri, {
+          mimeType: 'image/png',
+          dialogTitle: '투표 결과 공유하기',
+          UTI: 'public.png',
+        });
+      }
+    } catch (err) {
+      console.error('Share error:', err);
+      Alert.alert('오류', '공유 중 문제가 발생했어요. 다시 시도해주세요');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const handleOrbMode = () => {
@@ -32,8 +64,24 @@ export default function ResultsScreen() {
       // Orb Mode 활성화됨 - 투표자 공개 화면으로 이동
       router.push(`/results/${id}/voters`);
     } else {
-      // Orb Mode 필요 안내 (TODO: 구독 유도 모달)
-      console.log('Orb Mode subscription required');
+      // Orb Mode 구독 유도 모달
+      Alert.alert(
+        '🔮 Orb Mode',
+        '누가 나를 선택했는지 궁금하지 않아?\n\nOrb Mode를 구독하면 투표자를 확인할 수 있어!',
+        [
+          {
+            text: '나중에',
+            style: 'cancel',
+          },
+          {
+            text: '구독하기',
+            onPress: () => {
+              // TODO: RevenueCat 구독 화면으로 이동
+              console.log('Navigate to subscription screen');
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -141,51 +189,67 @@ export default function ResultsScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* 질문 헤더 */}
-          <View style={styles.header}>
-            <Text style={styles.emoji}>{poll.emoji || '🗳️'}</Text>
-            <Text style={styles.question}>{poll.question_text}</Text>
-            <Text style={styles.stats}>총 {poll.vote_count}명 참여</Text>
-          </View>
+          {/* 공유용 캡처 영역 */}
+          <ViewShot
+            ref={viewShotRef}
+            options={{
+              format: 'png',
+              quality: 0.9,
+              result: 'tmpfile',
+            }}
+            style={styles.shareableContent}
+          >
+            {/* 질문 헤더 */}
+            <View style={styles.header}>
+              <Text style={styles.emoji}>{poll.emoji || '🗳️'}</Text>
+              <Text style={styles.question}>{poll.question_text}</Text>
+              <Text style={styles.stats}>총 {poll.vote_count}명 참여</Text>
+            </View>
 
-          {/* 결과 리스트 */}
-          <View style={styles.resultsList}>
-            {poll.results.map((result, index) => (
-              <View key={result.user_id} style={styles.resultItem}>
-                {/* 순위 */}
-                <View style={styles.rank}>
-                  {index === 0 && <Text style={styles.rankEmoji}>👑</Text>}
-                  <Text style={styles.rankNumber}>{index + 1}</Text>
-                </View>
-
-                {/* 이름과 득표 정보 */}
-                <View style={styles.resultInfo}>
-                  <View style={styles.resultHeader}>
-                    <Text style={styles.resultName}>{result.nickname || '익명'}</Text>
-                    <Text style={styles.resultVotes}>
-                      {result.vote_count}표 ({result.vote_percentage}%)
-                    </Text>
+            {/* 결과 리스트 */}
+            <View style={styles.resultsList}>
+              {poll.results.map((result, index) => (
+                <View key={result.user_id} style={styles.resultItem}>
+                  {/* 순위 */}
+                  <View style={styles.rank}>
+                    {index === 0 && <Text style={styles.rankEmoji}>👑</Text>}
+                    <Text style={styles.rankNumber}>{index + 1}</Text>
                   </View>
 
-                  {/* 막대 그래프 */}
-                  <View style={styles.barContainer}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          width: getBarWidth(result.vote_percentage),
-                          backgroundColor:
-                            index === 0
-                              ? tokens.colors.primary[500]
-                              : tokens.colors.primary[300],
-                        },
-                      ]}
-                    />
+                  {/* 이름과 득표 정보 */}
+                  <View style={styles.resultInfo}>
+                    <View style={styles.resultHeader}>
+                      <Text style={styles.resultName}>{result.nickname || '익명'}</Text>
+                      <Text style={styles.resultVotes}>
+                        {result.vote_count}표 ({result.vote_percentage}%)
+                      </Text>
+                    </View>
+
+                    {/* 막대 그래프 */}
+                    <View style={styles.barContainer}>
+                      <View
+                        style={[
+                          styles.barFill,
+                          {
+                            width: getBarWidth(result.vote_percentage),
+                            backgroundColor:
+                              index === 0
+                                ? tokens.colors.primary[500]
+                                : tokens.colors.primary[300],
+                          },
+                        ]}
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+
+            {/* 브랜딩 */}
+            <View style={styles.branding}>
+              <Text style={styles.brandingText}>🗳️ Circly</Text>
+            </View>
+          </ViewShot>
 
           {/* 투표 종료 정보 */}
           <View style={styles.infoCard}>
@@ -231,10 +295,17 @@ export default function ResultsScreen() {
         {/* 하단 액션 버튼 */}
         <View style={styles.footer}>
           <Pressable
-            style={[styles.actionButton, styles.shareButton]}
+            style={[
+              styles.actionButton,
+              styles.shareButton,
+              isSharing && styles.shareButtonDisabled,
+            ]}
             onPress={handleShare}
+            disabled={isSharing}
           >
-            <Text style={styles.shareButtonText}>📤 결과 공유하기</Text>
+            <Text style={styles.shareButtonText}>
+              {isSharing ? '📤 공유 준비 중...' : '📤 결과 공유하기'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -253,6 +324,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: tokens.spacing.lg,
     paddingBottom: 140,
+  },
+  shareableContent: {
+    backgroundColor: tokens.colors.white,
+    borderRadius: tokens.borderRadius.xl,
+    padding: tokens.spacing.lg,
+    marginBottom: tokens.spacing.lg,
+    // 그림자 효과
+    shadowColor: tokens.colors.neutral[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   header: {
     alignItems: 'center',
@@ -326,6 +409,18 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: tokens.borderRadius.full,
   },
+  branding: {
+    alignItems: 'center',
+    marginTop: tokens.spacing.xl,
+    paddingTop: tokens.spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.neutral[200],
+  },
+  brandingText: {
+    fontSize: tokens.typography.fontSize.base,
+    fontWeight: tokens.typography.fontWeight.medium,
+    color: tokens.colors.neutral[400],
+  },
   infoCard: {
     backgroundColor: tokens.colors.primary[50],
     padding: tokens.spacing.lg,
@@ -361,6 +456,9 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     backgroundColor: tokens.colors.primary[500],
+  },
+  shareButtonDisabled: {
+    backgroundColor: tokens.colors.neutral[300],
   },
   shareButtonText: {
     fontSize: tokens.typography.fontSize.base,

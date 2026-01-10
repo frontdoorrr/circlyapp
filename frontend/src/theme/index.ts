@@ -77,64 +77,42 @@ export {
   type IconSize,
 } from './tokens';
 
-// TEMPORARILY DISABLED: animations.ts causing Worklets version mismatch
-// export {
-//   // Durations
-//   durations,
-//
-//   // Easing Curves
-//   easingCurves,
-//   cubicBezierValues,
-//
-//   // Spring Configs
-//   springConfigs,
-//
-//   // Animation Helpers
-//   animateValue,
-//   animateSpring,
-//
-//   // Animation Patterns
-//   fadeAnimations,
-//   slideAnimations,
-//   scaleAnimations,
-//   buttonPressAnimation,
-//   cardFlipAnimation,
-//   modalAnimations,
-//   progressBarAnimation,
-//   toastAnimation,
-//
-//   // Haptic Feedback
-//   hapticPatterns,
-//   hapticMapping,
-//
-//   // Type Exports
-//   type Duration,
-//   type EasingCurve,
-//   type SpringConfig,
-//   type HapticPattern,
-// } from './animations';
+// Animation Tokens (React Native Reanimated)
+export {
+  // Durations
+  durations,
 
-// Temporary dummy exports
-export const durations = { instant: 0, fast: 200, normal: 300, slow: 500 };
-export const easingCurves = {};
-export const cubicBezierValues = {};
-export const springConfigs = {};
-export const animateValue = () => {};
-export const animateSpring = () => {};
-export const fadeAnimations = {};
-export const slideAnimations = {};
-export const scaleAnimations = {};
-export const buttonPressAnimation = {};
-export const cardFlipAnimation = {};
-export const modalAnimations = {};
-export const progressBarAnimation = {};
-export const toastAnimation = {};
-export const hapticPatterns = {};
-export const hapticMapping = {};
-export type Duration = number;
-export type EasingCurve = any;
-export type SpringConfig = any;
-export type HapticPattern = any;
+  // Easing Curves
+  easingCurves,
+  cubicBezierValues,
+
+  // Spring Configs
+  springConfigs,
+
+  // Animation Helpers
+  animateValue,
+  animateSpring,
+
+  // Animation Patterns
+  fadeAnimations,
+  slideAnimations,
+  scaleAnimations,
+  buttonPressAnimation,
+  cardFlipAnimation,
+  modalAnimations,
+  progressBarAnimation,
+  toastAnimation,
+
+  // Haptic Feedback
+  hapticPatterns,
+  hapticMapping,
+
+  // Type Exports
+  type Duration,
+  type EasingCurve,
+  type SpringConfig,
+  type HapticPattern,
+} from './animations';
 
 // ============================================================================
 // Convenience Re-exports

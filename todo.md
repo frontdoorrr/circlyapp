@@ -430,8 +430,8 @@
 ### 🔴 심각 (핵심 기능 미완성)
 - [x] **14.1** `pushNotification.ts:51` - `'your-project-id'` 하드코딩 → Constants에서 가져오기 ✅
 - [x] **14.2** `results/[id].tsx:20` - 실제 투표 결과 API 연동 ✅
-- [ ] **14.3** `results/[id].tsx:35` - 결과 공유 기능 구현
-- [ ] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동
+- [x] **14.3** `results/[id].tsx:35` - 결과 공유 기능 구현 ✅
+- [x] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동 ✅
 
 ### 🟡 중간 (부가 기능 미완성)
 - [ ] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 필요
@@ -439,14 +439,14 @@
 - [x] **14.7** `notifications.tsx:26` - 알림 설정 API 연동 ✅
 
 ### 🟢 낮음 (UI/UX 개선)
-- [ ] **14.8** `_layout.tsx:46,53,60` - 탭바 아이콘 추가 (Ionicons)
-- [ ] **14.9** `(home)/index.tsx:107` - 활성 Circle 이름 useCircle 훅에서 가져오기
-- [ ] **14.10** `useCreatePoll.ts:72` - 에러 토스트/알림 표시
+- [x] **14.8** `_layout.tsx:46,53,60` - 탭바 아이콘 추가 (Ionicons) ✅
+- [x] **14.9** `(home)/index.tsx:107` - 활성 Circle 이름 useCircle 훅에서 가져오기 ✅
+- [x] **14.10** `useCreatePoll.ts:72` - 에러 토스트/알림 표시 ✅
 - [ ] **14.11** `CircleCard.tsx:64` - active_polls_count 백엔드 추가 후 활성화
-- [ ] **14.12** `results/[id].tsx:48` - Orb Mode 구독 유도 모달
+- [x] **14.12** `results/[id].tsx:48` - Orb Mode 구독 유도 모달 ✅
 
 ### ⚠️ 기타 (정리 필요)
-- [ ] **14.13** `theme/index.ts:117-137` - 임시 더미 애니메이션 exports 정리 필요
+- [x] **14.13** `theme/index.ts:117-137` - 임시 더미 애니메이션 exports 정리 완료 ✅
 
 ---
 

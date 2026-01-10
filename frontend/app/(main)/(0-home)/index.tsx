@@ -37,6 +37,7 @@ import {
   useMyCompletedPolls,
   useRefreshPolls,
 } from '../../../src/hooks/usePolls';
+import { useMyCircles } from '../../../src/hooks/useCircles';
 import {
   formatTimeRemaining,
   getTimeRemainingColor,
@@ -104,8 +105,11 @@ export default function HomeScreen() {
 
   const { refreshActivePolls, refreshCompletedPolls } = useRefreshPolls();
 
-  // 현재 활성 Circle 이름 (TODO: useCircle 훅에서 가져오기)
-  const circleName = 'OO고 2학년 1반';
+  // 내 Circle 목록 조회
+  const { data: myCircles } = useMyCircles();
+
+  // 현재 활성 Circle 이름 (첫 번째 Circle 사용, Circle이 없으면 기본값)
+  const circleName = myCircles?.[0]?.name ?? '내 Circle';
 
   // ============================================================================
   // 실시간 카운트다운

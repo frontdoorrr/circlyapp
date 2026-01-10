@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, ScrollView } from 'react-
 import { Stack, router } from 'expo-router';
 import { useState } from 'react';
 import { tokens } from '../../src/theme';
+import { createCircle } from '../../src/api/circle';
 
 /**
  * Circle 생성 화면
@@ -45,24 +46,26 @@ export default function CreateCircleScreen() {
     setError('');
 
     try {
-      // TODO: API 호출하여 Circle 생성
-      // const response = await createCircle({
-      //   name,
-      //   description,
-      // });
-
-      // 임시로 딜레이
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await createCircle({
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
 
       // 성공 시 Circle 상세 화면으로 이동
       router.replace({
         pathname: '/circle/[id]',
         params: {
-          id: 'temp-circle-id', // TODO: 실제 생성된 circle ID
+          id: response.id,
         },
       });
-    } catch (err) {
-      setError('Circle 생성에 실패했어요. 다시 시도해주세요');
+    } catch (err: any) {
+      // API 에러 메시지 처리
+      const errorMessage =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Circle 생성에 실패했어요. 다시 시도해주세요';
+      setError(errorMessage);
     } finally {
       setIsCreating(false);
     }

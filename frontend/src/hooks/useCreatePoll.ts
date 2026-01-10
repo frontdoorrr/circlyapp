@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { apiClient } from '../api/client';
@@ -69,8 +70,14 @@ export const useCreatePoll = () => {
 
       console.error('Failed to create poll:', error);
 
-      // TODO: Show error toast/alert to user
-      // const message = error.response?.data?.error?.message || '투표 생성에 실패했습니다';
+      // 에러 메시지 추출 및 알림 표시
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        '투표 생성에 실패했습니다';
+
+      Alert.alert('오류', message, [{ text: '확인' }]);
     },
   });
 };
