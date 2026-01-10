@@ -308,6 +308,23 @@ class UserRepository:
 
     # ==================== Notification Settings ====================
 
+    async def delete(self, user_id: uuid.UUID) -> bool:
+        """Hard delete a user (CASCADE handles related data).
+
+        Args:
+            user_id: UUID of the user to delete.
+
+        Returns:
+            True if deleted, False if user not found.
+        """
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return False
+
+        await self.session.delete(user)
+        await self.session.commit()
+        return True
+
     async def update_notification_settings(
         self,
         user_id: uuid.UUID,

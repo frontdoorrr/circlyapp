@@ -8,11 +8,8 @@ from app.core.enums import UserRole
 from app.deps import AdminUserDep, CurrentUserDep, DBSessionDep
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
-    AuthResponse,
-    LoginRequest,
     UpdateUserRoleRequest,
     UpdateUserStatusRequest,
-    UserCreate,
     UserListResponse,
     UserResponse,
     UserUpdate,
@@ -129,6 +126,39 @@ async def update_me(
     repo = UserRepository(db)
     service = AuthService(repo)
     return await service.update_profile(current_user.id, update_data)
+
+
+@router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete current user account",
+)
+async def delete_account(
+    current_user: CurrentUserDep,
+    db: DBSessionDep,
+) -> None:
+    """Delete current authenticated user's account (회원 탈퇴).
+
+    This permanently deletes:
+    - User profile
+    - All circles owned by the user
+    - All circle memberships
+    - All polls created by the user
+    - All votes cast and received
+    - All notifications
+    - All reports submitted
+
+    Args:
+        current_user: Current authenticated user from JWT token
+        db: Database session
+
+    Raises:
+        401: Invalid or expired token
+        404: User not found
+    """
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    await service.delete_account(current_user.id)
 
 
 # ==================== Admin Endpoints ====================

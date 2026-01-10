@@ -165,26 +165,29 @@ export function useUpdateProfile() {
 
 /**
  * 회원 탈퇴 훅
- * TODO: 백엔드 API 구현 후 연동 필요
+ * 백엔드에서 사용자 데이터 삭제 후 Supabase 로그아웃
  */
 export function useDeleteAccount() {
+  const { logout } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
       console.log('[useDeleteAccount] 회원 탈퇴 호출');
 
-      // TODO: 백엔드에서 사용자 데이터 삭제 API 호출
-      // await authApi.deleteAccount();
+      // 백엔드에서 사용자 데이터 삭제 (Supabase Auth도 함께 삭제됨)
+      await authApi.deleteAccount();
 
-      // Supabase Auth 로그아웃
+      // Supabase Auth 로그아웃 (로컬 세션 정리)
       const { error } = await supabase.auth.signOut();
       if (error) {
-        throw new SupabaseAuthError(error);
+        console.warn('[useDeleteAccount] Supabase 로그아웃 경고:', error);
+        // 백엔드 삭제는 성공했으므로 계속 진행
       }
     },
     onSuccess: () => {
-      console.log('[useDeleteAccount] 회원 탈퇴 성공 - 캐시 초기화');
+      console.log('[useDeleteAccount] 회원 탈퇴 성공 - 상태 초기화');
+      logout();
       queryClient.clear();
     },
   });

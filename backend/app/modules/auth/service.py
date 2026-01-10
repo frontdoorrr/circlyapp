@@ -1,12 +1,13 @@
 """Business logic for authentication via Supabase."""
 
+import logging
 import uuid
 
 from supabase_auth.errors import AuthApiError
 
 from app.core.enums import UserRole
 from app.core.exceptions import BadRequestException, NotFoundException, UnauthorizedException
-from app.core.supabase import get_supabase_client
+from app.core.supabase import get_supabase_admin_client, get_supabase_client
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
     AuthResponse,
@@ -15,6 +16,8 @@ from app.modules.auth.schemas import (
     UserResponse,
     UserUpdate,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -145,6 +148,40 @@ class AuthService:
             raise BadRequestException("User not found")
 
         return UserResponse.model_validate(updated_user)
+
+    async def delete_account(self, user_id: uuid.UUID) -> bool:
+        """Delete user account from DB and Supabase.
+
+        Args:
+            user_id: ID of user to delete.
+
+        Returns:
+            True if deleted successfully.
+
+        Raises:
+            NotFoundException: If user not found.
+        """
+        # Get user first to check existence and get supabase_user_id
+        user = await self.repository.find_by_id(user_id)
+        if user is None:
+            raise NotFoundException("User not found")
+
+        # Delete from Supabase Auth (if linked)
+        if user.supabase_user_id:
+            try:
+                supabase_admin = get_supabase_admin_client()
+                supabase_admin.auth.admin.delete_user(user.supabase_user_id)
+                logger.info(f"Deleted user from Supabase Auth: {user.supabase_user_id}")
+            except Exception as e:
+                # Log but continue - DB deletion is more important
+                logger.warning(f"Failed to delete from Supabase Auth: {e}")
+
+        # Delete from database (CASCADE handles related data)
+        deleted = await self.repository.delete(user_id)
+        if deleted:
+            logger.info(f"Deleted user from database: {user_id}")
+
+        return deleted
 
     # ==================== Admin Methods ====================
 

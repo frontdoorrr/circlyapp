@@ -85,3 +85,12 @@ export async function updateProfile(data: UserUpdate): Promise<UserResponse> {
 
   throw new Error('Unexpected response format');
 }
+
+/**
+ * 회원 탈퇴
+ */
+export async function deleteAccount(): Promise<void> {
+  console.log('[API] DELETE /auth/me 요청');
+  await apiClient.delete('/auth/me');
+  console.log('[API] DELETE /auth/me 완료');
+}
