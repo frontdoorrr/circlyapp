@@ -10,6 +10,7 @@ import {
   ReportsPage,
   UsersPage,
   CirclesPage,
+  CircleDetailPage,
   NotificationsPage,
   PollsPage,
 } from '@/pages';
@@ -53,6 +54,7 @@ function AppRoutes() {
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/circles" element={<CirclesPage />} />
+        <Route path="/circles/:circleId" element={<CircleDetailPage />} />
         <Route path="/polls" element={<PollsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
       </Route>

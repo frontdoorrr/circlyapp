@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -34,6 +35,8 @@ export function CirclesTable({
   onToggleStatus,
   onCopyInviteCode,
 }: CirclesTableProps) {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return <CirclesTableSkeleton />;
   }
@@ -62,7 +65,11 @@ export function CirclesTable({
         </TableHeader>
         <TableBody>
           {circles.map((circle) => (
-            <TableRow key={circle.id} className={!circle.is_active ? 'opacity-50' : ''}>
+            <TableRow
+              key={circle.id}
+              className={`cursor-pointer hover:bg-muted/50 ${!circle.is_active ? 'opacity-50' : ''}`}
+              onClick={() => navigate(`/circles/${circle.id}`)}
+            >
               <TableCell className="font-medium">{circle.name}</TableCell>
               <TableCell className="max-w-[200px] truncate text-muted-foreground">
                 {circle.description || '-'}
@@ -92,7 +99,7 @@ export function CirclesTable({
               <TableCell className="text-muted-foreground">
                 {formatDate(circle.created_at)}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">

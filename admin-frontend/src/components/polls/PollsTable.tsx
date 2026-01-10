@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format, isPast } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { MoreHorizontal, XCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -237,7 +238,13 @@ export function PollsTable({ polls, isLoading, circleMap }: PollsTableProps) {
                 return (
                   <TableRow key={poll.id}>
                     <TableCell className="font-medium">
-                      {circleMap.get(poll.circle_id) || '-'}
+                      <Link
+                        to={`/circles/${poll.circle_id}`}
+                        className="hover:underline text-primary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {circleMap.get(poll.circle_id) || poll.circle_id}
+                      </Link>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {poll.question_text}
