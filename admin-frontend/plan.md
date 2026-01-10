@@ -96,10 +96,11 @@ admin-frontend/
 - [x] 역할 변경 다이얼로그, 상태 변경 기능
 - [x] API 연동 (기존 `/auth/admin/*` 활용)
 
-### Phase 5: Circle 관리 (1일)
-- [ ] Circle 목록 테이블
-- [ ] 멤버 목록 모달
-- [ ] Backend: DELETE /admin/circles/{id} 추가
+### Phase 5: Circle 관리 (1일) ✅
+- [x] Circle 목록 테이블 (검색, 필터링, 페이지네이션)
+- [x] 멤버 목록 다이얼로그 (멤버 추방 기능)
+- [x] Circle 상태 변경 (활성/비활성화)
+- [x] 초대 코드 복사 기능
 
 ### Phase 6: 알림 관리 (2일)
 - [ ] Backend: broadcast API, history API

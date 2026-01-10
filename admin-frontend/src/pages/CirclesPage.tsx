@@ -1,16 +1,212 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  Search,
+} from 'lucide-react';
+import { CirclesTable } from '@/components/circles/CirclesTable';
+import { CircleMembersDialog } from '@/components/circles/CircleMembersDialog';
+import { useCircles, useUpdateCircleStatus } from '@/hooks/useCircles';
+import type { Circle, CircleFilters } from '@/types/circles';
+
+const ITEMS_PER_PAGE = 20;
 
 export function CirclesPage() {
+  const [filters, setFilters] = useState<CircleFilters>({
+    limit: ITEMS_PER_PAGE,
+    offset: 0,
+  });
+  const [searchInput, setSearchInput] = useState('');
+  const [selectedCircle, setSelectedCircle] = useState<Circle | null>(null);
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+
+  const { data, isLoading, error, refetch } = useCircles(filters);
+  const updateStatusMutation = useUpdateCircleStatus();
+
+  const handleSearch = () => {
+    setFilters((prev) => ({
+      ...prev,
+      search: searchInput || undefined,
+      offset: 0,
+    }));
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      is_active: value === 'ALL' ? undefined : value === 'ACTIVE',
+      offset: 0,
+    }));
+  };
+
+  const handleViewMembers = (circle: Circle) => {
+    setSelectedCircle(circle);
+    setIsMembersDialogOpen(true);
+  };
+
+  const handleToggleStatus = async (circle: Circle) => {
+    await updateStatusMutation.mutateAsync({
+      circleId: circle.id,
+      data: { is_active: !circle.is_active },
+    });
+  };
+
+  const handleCopyInviteCode = async (circle: Circle) => {
+    try {
+      await navigator.clipboard.writeText(circle.invite_code);
+      alert(`초대 코드가 복사되었습니다: ${circle.invite_code}`);
+    } catch {
+      alert(`초대 코드: ${circle.invite_code}`);
+    }
+  };
+
+  const handlePrevPage = () => {
+    setFilters((prev) => ({
+      ...prev,
+      offset: Math.max(0, (prev.offset || 0) - ITEMS_PER_PAGE),
+    }));
+  };
+
+  const handleNextPage = () => {
+    setFilters((prev) => ({
+      ...prev,
+      offset: (prev.offset || 0) + ITEMS_PER_PAGE,
+    }));
+  };
+
+  const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
+  const totalPages = data ? Math.ceil(data.total / ITEMS_PER_PAGE) : 0;
+  const hasNextPage = data ? (filters.offset || 0) + ITEMS_PER_PAGE < data.total : false;
+  const hasPrevPage = (filters.offset || 0) > 0;
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Circle 목록을 불러오는 중 오류가 발생했습니다. 다시 시도해주세요.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Circle 목록</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Circle 관리</CardTitle>
+              <CardDescription>
+                Circle 목록을 조회하고 상태를 관리합니다.
+                {data && ` (총 ${data.total}개)`}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="icon" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="h-96 flex items-center justify-center text-muted-foreground">
-          Phase 5에서 구현 예정
+        <CardContent className="space-y-4">
+          {/* Filters */}
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-2 flex-1 min-w-[250px]">
+              <Input
+                placeholder="Circle 이름으로 검색"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+              />
+              <Button variant="secondary" onClick={handleSearch}>
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="w-[150px]">
+              <Select
+                value={filters.is_active === undefined ? 'ALL' : filters.is_active ? 'ACTIVE' : 'INACTIVE'}
+                onValueChange={handleStatusFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="상태 필터" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">전체 상태</SelectItem>
+                  <SelectItem value="ACTIVE">활성</SelectItem>
+                  <SelectItem value="INACTIVE">비활성</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <CirclesTable
+            circles={data?.items || []}
+            isLoading={isLoading}
+            onViewMembers={handleViewMembers}
+            onToggleStatus={handleToggleStatus}
+            onCopyInviteCode={handleCopyInviteCode}
+          />
+
+          {/* Pagination */}
+          {data && data.total > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {data.total}개 중 {(filters.offset || 0) + 1} -{' '}
+                {Math.min((filters.offset || 0) + ITEMS_PER_PAGE, data.total)}개
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevPage}
+                  disabled={!hasPrevPage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  이전
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={!hasNextPage}
+                >
+                  다음
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Members Dialog */}
+      <CircleMembersDialog
+        circle={selectedCircle}
+        open={isMembersDialogOpen}
+        onOpenChange={setIsMembersDialogOpen}
+      />
     </div>
   );
 }
