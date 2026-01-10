@@ -428,7 +428,7 @@
 > **점검일**: 2025-01-07
 
 ### 🔴 심각 (핵심 기능 미완성)
-- [ ] **14.1** `pushNotification.ts:51` - `'your-project-id'` 하드코딩 → app.json에서 가져오기
+- [x] **14.1** `pushNotification.ts:51` - `'your-project-id'` 하드코딩 → Constants에서 가져오기 ✅
 - [x] **14.2** `results/[id].tsx:20` - 실제 투표 결과 API 연동 ✅
 - [ ] **14.3** `results/[id].tsx:35` - 결과 공유 기능 구현
 - [ ] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동
@@ -452,15 +452,16 @@
 
 ## Phase 15: 푸시 알림 시스템 완성
 
+
 > **참고 문서**: `prd/features/03-push-notification.md`
 > **기술 문서**: `trd/03-push-notification-implementation.md`
 > **현황**: 인프라 구축됨 (DB 모델, Repository, API), 실제 발송 미구현
 
-### 15.1 메시지 템플릿 한글화
+### 15.1 메시지 템플릿 한글화 ✅
 
 > **참고**: `prd/features/03-push-notification.md#1. 푸시 알림 유형별 설계`
 
-- [ ] `backend/app/modules/notifications/service.py` - 메시지 템플릿 한글화:
+- [x] `backend/app/modules/notifications/service.py` - 메시지 템플릿 한글화:
 
 | 유형 | Title | Body |
 |------|-------|------|
@@ -469,18 +470,18 @@
 | `poll_deadline_10m` | 🚨 마지막 기회! | "{질문}" 투표 마감 10분 전 놓치면 후회할걸요? 😱 |
 | `poll_result` | 🎉 투표 결과가 나왔어요! | "{질문}" 궁금하지 않아? 결과 확인하러 가기 ✨ |
 
-### 15.2 Backend - Expo Push API 연동
+### 15.2 Backend - Expo Push API 연동 ✅
 
 > **참고**: `prd/features/03-push-notification.md#10.5 Backend 구현 명세`
 
-- [ ] `backend/app/services/expo_push.py` - Expo Push API 클라이언트 구현
-  - [ ] `send_push_notification()` - 단일 푸시 발송
-  - [ ] `send_push_notifications_batch()` - 배치 푸시 발송
-  - [ ] 에러 핸들링 (토큰 무효화, 재시도 로직)
-- [ ] `backend/app/modules/notifications/service.py` - 실제 푸시 발송 연동
-  - [ ] `send_poll_started()` - Expo Push 호출 추가
-  - [ ] `send_poll_ended()` - Expo Push 호출 추가
-  - [ ] `send_poll_reminder()` - Expo Push 호출 추가
+- [x] `backend/app/services/expo_push.py` - Expo Push API 클라이언트 구현
+  - [x] `send_push_notification()` - 단일 푸시 발송
+  - [x] `send_push_notifications_batch()` - 배치 푸시 발송
+  - [x] 에러 핸들링 (토큰 무효화, 재시도 로직)
+- [x] `backend/app/modules/notifications/service.py` - 실제 푸시 발송 연동
+  - [x] `send_poll_started()` - Expo Push 호출 추가
+  - [x] `send_poll_ended()` - Expo Push 호출 추가
+  - [x] `send_poll_reminder()` - Expo Push 호출 추가
 - [ ] 테스트 코드 작성
 
 ### 15.3 Backend - Celery 스케줄링 설정
@@ -506,25 +507,27 @@
 - [ ] `backend/app/modules/polls/service.py` - 투표 마감 처리 시 결과 알림
   - [ ] 투표 마감 로직에서 `send_poll_ended()` 호출
 
-### 15.5 Frontend - 푸시 토큰 자동 등록
+### 15.5 Frontend - 푸시 토큰 자동 등록 ✅
 
 > **참고**: `prd/features/03-push-notification.md#10.4 Frontend 구현 명세`
 
-- [ ] `frontend/src/services/notification/pushNotification.ts:51` - projectId 수정 (app.json에서 가져오기)
-- [ ] `frontend/app/_layout.tsx` - 앱 시작 시 푸시 토큰 등록 로직 추가
-  - [ ] 로그인 상태일 때 `registerForPushNotificationsAsync()` 호출
-  - [ ] 토큰 획득 후 `registerPushToken()` API 호출
+- [x] `frontend/src/services/notification/pushNotification.ts:51` - projectId 수정 (Constants에서 가져오기)
+- [x] `frontend/src/providers/AppInitializer.tsx` - 앱 시작 시 푸시 토큰 등록 로직 추가
+  - [x] 로그인 상태일 때 `registerForPushNotificationsAsync()` 호출
+  - [x] 토큰 획득 후 `registerPushToken()` API 호출
 - [ ] `frontend/src/stores/auth.ts` - 로그아웃 시 `unregisterPushToken()` 호출
 
-### 15.6 Frontend - 딥링크 처리
+### 15.6 Frontend - 딥링크 처리 ✅
 
 > **참고**: `prd/features/03-push-notification.md#5. 딥링크 및 인앱 라우팅`
 
-- [ ] `frontend/src/services/notification/pushNotification.ts` - 알림 응답 핸들러 구현
-  - [ ] `poll_start` → `/poll-participation/{poll_id}` 이동
-  - [ ] `poll_result` → `/results/{poll_id}` 이동
-  - [ ] `poll_deadline` → `/poll-participation/{poll_id}` 이동
-- [ ] `frontend/app/_layout.tsx` - 딥링크 리스너 등록
+- [x] `frontend/src/services/notification/pushNotification.ts` - 알림 응답 핸들러 구현
+  - [x] `poll_start` → `/poll-participation/{poll_id}` 이동
+  - [x] `poll_result` → `/results/{poll_id}` 이동
+  - [x] `poll_deadline` → `/poll-participation/{poll_id}` 이동
+  - [x] `vote_received` → `/results/{poll_id}` 이동
+  - [x] `circle_invite` → `/circle/{circle_id}` 이동
+- [x] `frontend/src/providers/AppInitializer.tsx` - 딥링크 리스너 등록
 
 ### 15.7 Frontend - 알림 설정 API 연동
 

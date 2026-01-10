@@ -15,7 +15,10 @@ import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../stores/auth';
 import { supabase } from '../lib/supabase';
 import * as authApi from '../api/auth';
-import { registerForPushNotificationsAsync } from '../services/notification/pushNotification';
+import {
+  registerForPushNotificationsAsync,
+  setupNotificationListeners,
+} from '../services/notification/pushNotification';
 import * as notificationApi from '../api/notification';
 import { OnboardingScreen } from '../components/onboarding/OnboardingScreen';
 import { tokens } from '../theme';
@@ -140,6 +143,17 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
     registerPushToken();
   }, [isAuthenticated]);
+
+  // 4. 푸시 알림 리스너 설정
+  useEffect(() => {
+    console.log('[AppInitializer] 푸시 알림 리스너 설정');
+    const cleanup = setupNotificationListeners();
+
+    return () => {
+      console.log('[AppInitializer] 푸시 알림 리스너 해제');
+      cleanup();
+    };
+  }, []);
 
   // 초기화 중이면 로딩 화면 표시
   if (!isReady || isLoading) {

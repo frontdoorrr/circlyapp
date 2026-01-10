@@ -5,7 +5,9 @@
  */
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { router } from 'expo-router';
 
 // 알림 핸들러 설정 (포그라운드 알림 표시)
 Notifications.setNotificationHandler({
@@ -48,10 +50,21 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // Expo Push Token 획득
   try {
-    const projectId = 'your-project-id'; // TODO: app.json에서 가져오기
+    // EAS 프로젝트 ID 가져오기 (우선순위: easConfig > expoConfig.extra.eas)
+    const projectId =
+      Constants.easConfig?.projectId ??
+      Constants.expoConfig?.extra?.eas?.projectId;
+
+    if (!projectId) {
+      console.warn(
+        'EAS project ID not found. Run `eas build:configure` to set up EAS.',
+      );
+      // 개발 환경에서는 projectId 없이도 작동할 수 있음
+    }
+
     token = (
       await Notifications.getExpoPushTokenAsync({
-        projectId,
+        projectId: projectId ?? undefined,
       })
     ).data;
     console.log('Expo Push Token:', token);
@@ -114,4 +127,84 @@ export async function sendLocalNotification(
  */
 export async function clearBadge() {
   await Notifications.setBadgeCountAsync(0);
+}
+
+/**
+ * 알림 데이터 타입
+ */
+interface NotificationData {
+  type?: 'poll_start' | 'poll_deadline' | 'poll_result' | 'vote_received' | 'circle_invite';
+  poll_id?: string;
+  circle_id?: string;
+  action_url?: string;
+}
+
+/**
+ * 알림 응답 핸들러 - 사용자가 알림을 탭했을 때 적절한 화면으로 이동
+ */
+export function handleNotificationResponse(
+  response: Notifications.NotificationResponse,
+): void {
+  const data = response.notification.request.content.data as NotificationData;
+
+  console.log('[Push] Notification tapped:', data);
+
+  if (!data?.type) {
+    console.log('[Push] No notification type, skipping navigation');
+    return;
+  }
+
+  try {
+    switch (data.type) {
+      case 'poll_start':
+      case 'poll_deadline':
+        // 투표 참여 화면으로 이동
+        if (data.poll_id) {
+          router.push(`/poll-participation/${data.poll_id}`);
+        }
+        break;
+
+      case 'poll_result':
+      case 'vote_received':
+        // 투표 결과 화면으로 이동
+        if (data.poll_id) {
+          router.push(`/results/${data.poll_id}`);
+        }
+        break;
+
+      case 'circle_invite':
+        // 서클 상세 화면으로 이동
+        if (data.circle_id) {
+          router.push(`/circle/${data.circle_id}`);
+        }
+        break;
+
+      default:
+        console.log('[Push] Unknown notification type:', data.type);
+    }
+  } catch (error) {
+    console.error('[Push] Failed to navigate:', error);
+  }
+}
+
+/**
+ * 알림 리스너 설정 헬퍼 (앱 시작 시 호출)
+ * @returns cleanup 함수
+ */
+export function setupNotificationListeners(): () => void {
+  // 알림 수신 리스너 (포그라운드)
+  const receivedSubscription = addNotificationReceivedListener((notification) => {
+    console.log('[Push] Notification received:', notification.request.content);
+  });
+
+  // 알림 탭 리스너
+  const responseSubscription = addNotificationResponseReceivedListener(
+    handleNotificationResponse,
+  );
+
+  // cleanup 함수 반환
+  return () => {
+    receivedSubscription.remove();
+    responseSubscription.remove();
+  };
 }

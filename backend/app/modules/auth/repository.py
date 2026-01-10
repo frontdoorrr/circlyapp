@@ -104,6 +104,22 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def find_by_ids(self, user_ids: list[uuid.UUID]) -> list[User]:
+        """Find multiple users by their IDs.
+
+        Args:
+            user_ids: List of user UUIDs.
+
+        Returns:
+            List of users found (may be fewer than requested if some not found).
+        """
+        if not user_ids:
+            return []
+
+        stmt = select(User).where(User.id.in_(user_ids))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def update(self, user_id: uuid.UUID, user_data: UserUpdate) -> User | None:
         """Update a user's profile.
 

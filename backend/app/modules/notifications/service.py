@@ -1,6 +1,8 @@
 """Business logic for notifications module."""
 
+import logging
 import uuid
+from typing import Any
 
 from app.core.enums import NotificationType
 from app.core.exceptions import AuthorizationError, NotFoundException
@@ -9,6 +11,16 @@ from app.modules.circles.models import Circle
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import NotificationCreate, NotificationResponse
 from app.modules.polls.models import Poll
+from app.services.expo_push import ExpoPushClient, ExpoPushError, get_expo_push_client
+
+logger = logging.getLogger(__name__)
+
+
+def _truncate_text(text: str, max_length: int = 30) -> str:
+    """Truncate text to max_length with ellipsis if needed."""
+    if len(text) <= max_length:
+        return text
+    return text[: max_length - 3] + "..."
 
 
 class NotificationService:
@@ -18,10 +30,58 @@ class NotificationService:
         self,
         notification_repo: NotificationRepository,
         user_repo: UserRepository,
+        expo_push_client: ExpoPushClient | None = None,
     ) -> None:
         """Initialize service with repositories."""
         self.notification_repo = notification_repo
         self.user_repo = user_repo
+        self.expo_push_client = expo_push_client or get_expo_push_client()
+
+    async def _send_push_to_users(
+        self,
+        user_ids: list[uuid.UUID],
+        title: str,
+        body: str,
+        data: dict[str, Any],
+    ) -> None:
+        """Send push notifications to users who have registered tokens.
+
+        Args:
+            user_ids: List of user UUIDs to notify
+            title: Notification title
+            body: Notification body
+            data: Custom data payload for deep linking
+        """
+        if not user_ids:
+            return
+
+        # Get users with push tokens
+        users = await self.user_repo.find_by_ids(user_ids)
+        messages = []
+
+        for user in users:
+            if user.push_token and user.push_token.strip():
+                messages.append({
+                    "token": user.push_token,
+                    "title": title,
+                    "body": body,
+                    "data": data,
+                })
+
+        if not messages:
+            logger.debug("No users with push tokens to notify")
+            return
+
+        try:
+            results = await self.expo_push_client.send_batch_push_notifications(messages)
+            success_count = sum(1 for r in results if r.get("status") == "ok")
+            logger.info(
+                "Push notifications sent: %d/%d succeeded",
+                success_count,
+                len(messages),
+            )
+        except ExpoPushError as e:
+            logger.error("Failed to send push notifications: %s", e)
 
     async def get_notifications(
         self,
@@ -95,21 +155,31 @@ class NotificationService:
             return
 
         # Create notifications for all members
+        question_preview = _truncate_text(poll.question_text, 30)
+        title = "🗳️ 새로운 투표가 시작됐어요!"
+        body = f'"{question_preview}" 지금 바로 참여해보세요! 👆'
+        data = {
+            "type": "poll_start",
+            "poll_id": str(poll.id),
+            "circle_id": str(poll.circle_id),
+            "action_url": f"circly://poll-participation/{poll.id}",
+        }
+
         notifications = [
             NotificationCreate(
                 user_id=member_id,
                 type=NotificationType.POLL_STARTED,
-                title="New Poll Started! 🎉",
-                body=f"A new poll has started: {poll.question_text}",
-                data={
-                    "poll_id": str(poll.id),
-                    "circle_id": str(poll.circle_id),
-                },
+                title=title,
+                body=body,
+                data=data,
             )
             for member_id in recipient_ids
         ]
 
         await self.notification_repo.create_bulk(notifications)
+
+        # Send push notifications
+        await self._send_push_to_users(recipient_ids, title, body, data)
 
     async def send_vote_received(self, voted_for_id: uuid.UUID, poll: Poll) -> None:
         """Send vote received notification (anonymous).
@@ -118,18 +188,28 @@ class NotificationService:
             voted_for_id: UUID of user who received the vote
             poll: Poll instance
         """
+        question_preview = _truncate_text(poll.question_text, 30)
+        title = "🎊 누군가 당신을 선택했어요!"
+        body = f'"{question_preview}" 투표에서 선택받았어요'
+        data = {
+            "type": "vote_received",
+            "poll_id": str(poll.id),
+            "circle_id": str(poll.circle_id),
+            "action_url": f"circly://results/{poll.id}",
+        }
+
         notification = NotificationCreate(
             user_id=voted_for_id,
             type=NotificationType.VOTE_RECEIVED,
-            title="You received a vote! 🎊",
-            body=f"Someone voted for you in: {poll.question_text}",
-            data={
-                "poll_id": str(poll.id),
-                "circle_id": str(poll.circle_id),
-            },
+            title=title,
+            body=body,
+            data=data,
         )
 
         await self.notification_repo.create(notification)
+
+        # Send push notification
+        await self._send_push_to_users([voted_for_id], title, body, data)
 
     async def send_poll_ended(self, poll: Poll, circle_member_ids: list[uuid.UUID]) -> None:
         """Send poll ended notifications to circle members.
@@ -141,47 +221,80 @@ class NotificationService:
         if not circle_member_ids:
             return
 
+        question_preview = _truncate_text(poll.question_text, 30)
+        title = "🎉 투표 결과가 나왔어요!"
+        body = f'"{question_preview}" 결과 확인하러 가기 ✨'
+        data = {
+            "type": "poll_result",
+            "poll_id": str(poll.id),
+            "circle_id": str(poll.circle_id),
+            "action_url": f"circly://results/{poll.id}",
+        }
+
         notifications = [
             NotificationCreate(
                 user_id=member_id,
                 type=NotificationType.POLL_ENDED,
-                title="Poll Results Are In! 📊",
-                body=f"The poll has ended: {poll.question_text}",
-                data={
-                    "poll_id": str(poll.id),
-                    "circle_id": str(poll.circle_id),
-                },
+                title=title,
+                body=body,
+                data=data,
             )
             for member_id in circle_member_ids
         ]
 
         await self.notification_repo.create_bulk(notifications)
 
-    async def send_poll_reminder(self, poll: Poll, non_voter_ids: list[uuid.UUID]) -> None:
+        # Send push notifications
+        await self._send_push_to_users(circle_member_ids, title, body, data)
+
+    async def send_poll_reminder(
+        self,
+        poll: Poll,
+        non_voter_ids: list[uuid.UUID],
+        minutes_left: int = 60,
+    ) -> None:
         """Send poll reminder notifications to non-voters.
 
         Args:
             poll: Poll instance
             non_voter_ids: List of member UUIDs who haven't voted yet
+            minutes_left: Minutes until poll ends (for message customization)
         """
         if not non_voter_ids:
             return
+
+        # Customize message based on urgency
+        if minutes_left <= 10:
+            title = "🚨 마지막 기회!"
+            question_preview = _truncate_text(poll.question_text, 20)
+            body = f'"{question_preview}" 투표 마감 {minutes_left}분 전 😱'
+        else:
+            title = "⏰ 투표 마감이 다가와요!"
+            question_preview = _truncate_text(poll.question_text, 30)
+            body = f'"{question_preview}" 친구들이 기다리고 있어요 🔥'
+
+        data = {
+            "type": "poll_deadline",
+            "poll_id": str(poll.id),
+            "circle_id": str(poll.circle_id),
+            "action_url": f"circly://poll-participation/{poll.id}",
+        }
 
         notifications = [
             NotificationCreate(
                 user_id=member_id,
                 type=NotificationType.POLL_REMINDER,
-                title="Poll Ending Soon! ⏰",
-                body=f"Don't forget to vote: {poll.question_text}",
-                data={
-                    "poll_id": str(poll.id),
-                    "circle_id": str(poll.circle_id),
-                },
+                title=title,
+                body=body,
+                data=data,
             )
             for member_id in non_voter_ids
         ]
 
         await self.notification_repo.create_bulk(notifications)
+
+        # Send push notifications
+        await self._send_push_to_users(non_voter_ids, title, body, data)
 
     async def send_circle_invite(self, user_id: uuid.UUID, circle: Circle) -> None:
         """Send circle invite notification.
@@ -190,18 +303,27 @@ class NotificationService:
             user_id: UUID of user being invited
             circle: Circle instance
         """
+        title = "🎈 서클 초대가 왔어요!"
+        body = f'"{circle.name}" 서클에 초대받았어요'
+        data = {
+            "type": "circle_invite",
+            "circle_id": str(circle.id),
+            "circle_name": circle.name,
+            "action_url": f"circly://circle/{circle.id}",
+        }
+
         notification = NotificationCreate(
             user_id=user_id,
             type=NotificationType.CIRCLE_INVITE,
-            title="Circle Invitation! 🎈",
-            body=f"You've been invited to join {circle.name}",
-            data={
-                "circle_id": str(circle.id),
-                "circle_name": circle.name,
-            },
+            title=title,
+            body=body,
+            data=data,
         )
 
         await self.notification_repo.create(notification)
+
+        # Send push notification
+        await self._send_push_to_users([user_id], title, body, data)
 
     async def register_push_token(self, user_id: uuid.UUID, token: str) -> None:
         """Register or update user's push notification token.
