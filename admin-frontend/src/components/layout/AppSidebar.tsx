@@ -22,6 +22,7 @@ import {
   Flag,
   Users,
   Circle,
+  Vote,
   Bell,
   LogOut,
   ChevronUp,
@@ -34,6 +35,7 @@ const menuItems = [
   { title: '신고 관리', url: '/reports', icon: Flag },
   { title: '사용자 관리', url: '/users', icon: Users },
   { title: 'Circle 관리', url: '/circles', icon: Circle },
+  { title: '투표 관리', url: '/polls', icon: Vote },
   { title: '알림 관리', url: '/notifications', icon: Bell },
 ];
 

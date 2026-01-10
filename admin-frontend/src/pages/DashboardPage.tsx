@@ -114,6 +114,7 @@ export function DashboardPage() {
               value={overview?.active_polls || 0}
               description={`오늘 생성: ${overview?.today_new_polls || 0}개`}
               icon={Vote}
+              href="/polls"
             />
             <StatCard
               title="대기 중 신고"
