@@ -102,15 +102,15 @@ admin-frontend/
 - [x] Circle 상태 변경 (활성/비활성화)
 - [x] 초대 코드 복사 기능
 
-### Phase 6: 알림 관리 (2일)
-- [ ] Backend: broadcast API, history API
-- [ ] 발송 폼 UI
-- [ ] 발송 이력 테이블
+### Phase 6: 알림 관리 (2일) ✅
+- [x] Backend: broadcast API, history API
+- [x] 발송 폼 UI
+- [x] 발송 이력 테이블
 
-### Phase 7: 마무리 (1일)
-- [ ] 에러 처리, 로딩 상태
-- [ ] 반응형 디자인
-- [ ] 빌드/배포 설정
+### Phase 7: 마무리 (1일) ✅
+- [x] 에러 처리, 로딩 상태 (Toast 알림 시스템)
+- [x] 반응형 디자인
+- [x] 빌드/배포 설정 (Dockerfile, nginx.conf)
 
 ---
 
