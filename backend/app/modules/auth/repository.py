@@ -120,6 +120,16 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def find_all_active(self) -> list[User]:
+        """Find all active users.
+
+        Returns:
+            List of all active users.
+        """
+        stmt = select(User).where(User.is_active == True)  # noqa: E712
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def update(self, user_id: uuid.UUID, user_data: UserUpdate) -> User | None:
         """Update a user's profile.
 

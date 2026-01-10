@@ -6,8 +6,12 @@ from typing import Any
 from fastapi import APIRouter, Query, status
 
 from app.core.responses import success_response
-from app.deps import CurrentUserDep, NotificationServiceDep
+from app.deps import AdminUserDep, CurrentUserDep, NotificationServiceDep
 from app.modules.notifications.schemas import (
+    BroadcastHistoryResponse,
+    BroadcastLogResponse,
+    BroadcastRequest,
+    BroadcastResponse,
     NotificationResponse,
     NotificationSettingsResponse,
     NotificationSettingsUpdate,
@@ -173,3 +177,89 @@ async def update_notification_settings(
         circle_invite=settings_data.circle_invite,
     )
     return NotificationSettingsResponse(**settings)
+
+
+# ==================== Admin Endpoints ====================
+
+
+@router.post(
+    "/admin/broadcast",
+    response_model=BroadcastResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="[Admin] Broadcast notification to all users",
+    tags=["Admin - Notifications"],
+)
+async def broadcast_notification(
+    request: BroadcastRequest,
+    admin_user: AdminUserDep,
+    service: NotificationServiceDep,
+) -> BroadcastResponse:
+    """Broadcast a notification to all active users (Admin only).
+
+    Args:
+        request: Broadcast request containing title and body
+        admin_user: Currently authenticated admin user
+        service: Notification service instance
+
+    Returns:
+        BroadcastResponse with broadcast ID and counts
+    """
+    log_id, target_count, sent_count = await service.broadcast_notification(
+        admin_id=admin_user.id,
+        title=request.title,
+        body=request.body,
+    )
+
+    return BroadcastResponse(
+        id=log_id,
+        target_count=target_count,
+        sent_count=sent_count,
+        message=f"알림이 {target_count}명에게 발송되었습니다 (푸시: {sent_count}건)",
+    )
+
+
+@router.get(
+    "/admin/history",
+    response_model=BroadcastHistoryResponse,
+    summary="[Admin] Get broadcast history",
+    tags=["Admin - Notifications"],
+)
+async def get_broadcast_history(
+    admin_user: AdminUserDep,
+    service: NotificationServiceDep,
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> BroadcastHistoryResponse:
+    """Get broadcast notification history (Admin only).
+
+    Args:
+        admin_user: Currently authenticated admin user
+        service: Notification service instance
+        limit: Maximum number of results
+        offset: Number of results to skip
+
+    Returns:
+        BroadcastHistoryResponse with list of broadcast logs
+    """
+    logs, total = await service.get_broadcast_history(limit, offset)
+
+    items = [
+        BroadcastLogResponse(
+            id=log.id,
+            admin_id=log.admin_id,
+            title=log.title,
+            body=log.body,
+            target_count=log.target_count,
+            sent_count=log.sent_count,
+            created_at=log.created_at,
+            admin_email=log.admin.email if log.admin else None,
+        )
+        for log in logs
+    ]
+
+    return BroadcastHistoryResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )

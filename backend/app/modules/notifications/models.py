@@ -15,6 +15,59 @@ if TYPE_CHECKING:
     from app.modules.auth.models import User
 
 
+class BroadcastLog(UUIDMixin, Base):
+    """Broadcast notification log model for admin tracking.
+
+    Attributes:
+        id: UUID primary key
+        admin_id: Foreign key to users table (admin who sent)
+        title: Broadcast title
+        body: Broadcast body text
+        target_count: Number of users targeted
+        sent_count: Number of notifications actually sent
+        created_at: Timestamp when broadcast was sent
+    """
+
+    __tablename__ = "broadcast_logs"
+
+    admin_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+    body: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+    target_count: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+    )
+    sent_count: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Relationships
+    admin: Mapped["User | None"] = relationship(  # noqa: F821
+        "User",
+        foreign_keys=[admin_id],
+    )
+
+    def __repr__(self) -> str:
+        return f"<BroadcastLog(id={self.id}, title={self.title}, sent_count={self.sent_count})>"
+
+
 class Notification(UUIDMixin, Base):
     """Notification model.
 

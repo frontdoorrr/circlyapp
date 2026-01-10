@@ -84,3 +84,47 @@ class PushTokenRequest(BaseModel):
     """Schema for push token registration/update request."""
 
     expo_push_token: str = Field(..., min_length=1, max_length=500)
+
+
+# ==================== Admin Schemas ====================
+
+
+class BroadcastRequest(BaseModel):
+    """Schema for broadcasting notification to all users."""
+
+    title: str = Field(..., min_length=1, max_length=100)
+    body: str = Field(..., min_length=1, max_length=1000)
+
+
+class BroadcastResponse(BaseModel):
+    """Schema for broadcast response."""
+
+    id: uuid.UUID
+    target_count: int
+    sent_count: int
+    message: str
+
+
+class BroadcastLogResponse(BaseModel):
+    """Schema for broadcast log response."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    admin_id: uuid.UUID | None
+    title: str
+    body: str
+    target_count: int
+    sent_count: int
+    created_at: datetime
+    # Admin info (if available)
+    admin_email: str | None = None
+
+
+class BroadcastHistoryResponse(BaseModel):
+    """Schema for paginated broadcast history response."""
+
+    items: list[BroadcastLogResponse]
+    total: int
+    limit: int
+    offset: int

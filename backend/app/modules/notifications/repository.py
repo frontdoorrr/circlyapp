@@ -1,11 +1,13 @@
 """Repository for notifications module."""
 
 import uuid
+from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from app.modules.notifications.models import Notification
+from app.modules.notifications.models import BroadcastLog, Notification
 from app.modules.notifications.schemas import NotificationCreate
 
 
@@ -169,3 +171,70 @@ class NotificationRepository:
         result = await self.session.execute(query)
         count = result.scalar()
         return count or 0
+
+    # ==================== Broadcast Log Methods ====================
+
+    async def create_broadcast_log(
+        self,
+        admin_id: uuid.UUID,
+        title: str,
+        body: str,
+        target_count: int,
+        sent_count: int,
+    ) -> uuid.UUID:
+        """Create a broadcast log entry.
+
+        Args:
+            admin_id: Admin user UUID
+            title: Broadcast title
+            body: Broadcast body
+            target_count: Number of users targeted
+            sent_count: Number of notifications sent
+
+        Returns:
+            Created broadcast log UUID
+        """
+        log = BroadcastLog(
+            admin_id=admin_id,
+            title=title,
+            body=body,
+            target_count=target_count,
+            sent_count=sent_count,
+        )
+        self.session.add(log)
+        await self.session.flush()
+        await self.session.refresh(log)
+        return log.id
+
+    async def get_broadcast_history(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Any], int]:
+        """Get broadcast history with admin info.
+
+        Args:
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (broadcast_logs, total_count)
+        """
+        # Get total count
+        count_query = select(func.count()).select_from(BroadcastLog)
+        count_result = await self.session.execute(count_query)
+        total = count_result.scalar() or 0
+
+        # Get logs with admin relationship
+        query = (
+            select(BroadcastLog)
+            .options(joinedload(BroadcastLog.admin))
+            .order_by(desc(BroadcastLog.created_at))
+            .limit(limit)
+            .offset(offset)
+        )
+
+        result = await self.session.execute(query)
+        logs = result.scalars().unique().all()
+
+        return list(logs), total

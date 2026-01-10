@@ -421,3 +421,109 @@ class NotificationService:
             "vote_received": user.notify_vote_received,
             "circle_invite": user.notify_circle_invite,
         }
+
+    # ==================== Admin Methods ====================
+
+    async def broadcast_notification(
+        self,
+        admin_id: uuid.UUID,
+        title: str,
+        body: str,
+    ) -> tuple[uuid.UUID, int, int]:
+        """Broadcast notification to all active users.
+
+        Args:
+            admin_id: Admin user UUID who is sending
+            title: Notification title
+            body: Notification body
+
+        Returns:
+            Tuple of (broadcast_log_id, target_count, sent_count)
+        """
+        # Get all active users
+        all_users = await self.user_repo.find_all_active()
+        target_count = len(all_users)
+
+        if target_count == 0:
+            # Create log even if no users
+            log_id = await self.notification_repo.create_broadcast_log(
+                admin_id=admin_id,
+                title=title,
+                body=body,
+                target_count=0,
+                sent_count=0,
+            )
+            return log_id, 0, 0
+
+        # Create notifications for all users
+        user_ids = [user.id for user in all_users]
+        data = {
+            "type": "broadcast",
+            "action_url": "circly://notifications",
+        }
+
+        notifications = [
+            NotificationCreate(
+                user_id=user_id,
+                type=NotificationType.POLL_STARTED,  # Reuse type for broadcast
+                title=title,
+                body=body,
+                data=data,
+            )
+            for user_id in user_ids
+        ]
+
+        await self.notification_repo.create_bulk(notifications)
+
+        # Send push notifications
+        sent_count = 0
+        messages = []
+        for user in all_users:
+            if user.push_token and user.push_token.strip():
+                messages.append({
+                    "token": user.push_token,
+                    "title": title,
+                    "body": body,
+                    "data": data,
+                })
+
+        if messages:
+            try:
+                results = await self.expo_push_client.send_batch_push_notifications(messages)
+                sent_count = sum(1 for r in results if r.get("status") == "ok")
+            except ExpoPushError as e:
+                logger.error("Failed to send broadcast push notifications: %s", e)
+
+        # Create broadcast log
+        log_id = await self.notification_repo.create_broadcast_log(
+            admin_id=admin_id,
+            title=title,
+            body=body,
+            target_count=target_count,
+            sent_count=sent_count,
+        )
+
+        logger.info(
+            "Broadcast sent by admin %s: %d/%d users notified",
+            admin_id,
+            sent_count,
+            target_count,
+        )
+
+        return log_id, target_count, sent_count
+
+    async def get_broadcast_history(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Any], int]:
+        """Get broadcast notification history.
+
+        Args:
+            limit: Maximum number of results
+            offset: Number of results to skip
+
+        Returns:
+            Tuple of (broadcast_logs, total_count)
+        """
+        return await self.notification_repo.get_broadcast_history(limit, offset)
