@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { circlesApi } from '@/api/circles';
 import type { CircleFilters, UpdateCircleStatusRequest } from '@/types/circles';
 
@@ -39,6 +40,7 @@ export function useUpdateCircleStatus() {
     mutationFn: ({ circleId, data }: { circleId: string; data: UpdateCircleStatusRequest }) =>
       circlesApi.updateStatus(circleId, data),
     onSuccess: () => {
+      toast.success('Circle 상태가 변경되었습니다.');
       queryClient.invalidateQueries({ queryKey: circlesKeys.all });
     },
   });
@@ -54,6 +56,7 @@ export function useRemoveCircleMember() {
     mutationFn: ({ circleId, userId }: { circleId: string; userId: string }) =>
       circlesApi.removeMember(circleId, userId),
     onSuccess: (_data, variables) => {
+      toast.success('멤버가 제거되었습니다.');
       queryClient.invalidateQueries({ queryKey: circlesKeys.detail(variables.circleId) });
       queryClient.invalidateQueries({ queryKey: circlesKeys.all });
     },

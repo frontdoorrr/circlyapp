@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { reportsApi } from '@/api/reports';
 import type { ReportFilters, ReportReviewRequest } from '@/types/reports';
 
@@ -39,7 +40,7 @@ export function useReviewReport() {
     mutationFn: ({ reportId, data }: { reportId: string; data: ReportReviewRequest }) =>
       reportsApi.review(reportId, data),
     onSuccess: () => {
-      // Invalidate reports queries to refetch updated data
+      toast.success('신고 처리가 완료되었습니다.');
       queryClient.invalidateQueries({ queryKey: reportsKeys.all });
     },
   });

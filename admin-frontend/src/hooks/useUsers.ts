@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { usersApi } from '@/api/users';
 import type { UserFilters, UpdateUserStatusRequest, UpdateUserRoleRequest } from '@/types/users';
 
@@ -39,6 +40,7 @@ export function useUpdateUserStatus() {
     mutationFn: ({ userId, data }: { userId: string; data: UpdateUserStatusRequest }) =>
       usersApi.updateStatus(userId, data),
     onSuccess: () => {
+      toast.success('사용자 상태가 변경되었습니다.');
       queryClient.invalidateQueries({ queryKey: usersKeys.all });
     },
   });
@@ -54,6 +56,7 @@ export function useUpdateUserRole() {
     mutationFn: ({ userId, data }: { userId: string; data: UpdateUserRoleRequest }) =>
       usersApi.updateRole(userId, data),
     onSuccess: () => {
+      toast.success('사용자 역할이 변경되었습니다.');
       queryClient.invalidateQueries({ queryKey: usersKeys.all });
     },
   });

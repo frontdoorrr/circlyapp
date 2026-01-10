@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { notificationsApi } from '@/api/notifications';
 import type { BroadcastRequest } from '@/types/notifications';
 
@@ -25,7 +26,8 @@ export function useBroadcast() {
 
   return useMutation({
     mutationFn: (data: BroadcastRequest) => notificationsApi.broadcast(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      toast.success(result.message || '알림이 발송되었습니다.');
       queryClient.invalidateQueries({ queryKey: notificationsKeys.all });
     },
   });
