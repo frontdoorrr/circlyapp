@@ -436,7 +436,7 @@
 ### 🟡 중간 (부가 기능 미완성)
 - [ ] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 필요
 - [ ] **14.6** `_layout.tsx:74` - 딥링크 unique_id → invite_code 변환 API
-- [ ] **14.7** `notifications.tsx:26` - 알림 설정 API 연동
+- [x] **14.7** `notifications.tsx:26` - 알림 설정 API 연동 ✅
 
 ### 🟢 낮음 (UI/UX 개선)
 - [ ] **14.8** `_layout.tsx:46,53,60` - 탭바 아이콘 추가 (Ionicons)
@@ -529,15 +529,16 @@
   - [x] `circle_invite` → `/circle/{circle_id}` 이동
 - [x] `frontend/src/providers/AppInitializer.tsx` - 딥링크 리스너 등록
 
-### 15.7 Frontend - 알림 설정 API 연동
+### 15.7 Frontend - 알림 설정 API 연동 ✅
 
 > **참고**: `prd/features/03-push-notification.md#3. 알림 설정 및 개인화`
 
-- [ ] `backend/app/modules/notifications/models.py` - NotificationSettings 모델 추가
-- [ ] `backend/app/modules/notifications/router.py` - 설정 조회/업데이트 API 추가
-  - [ ] `GET /notifications/settings`
-  - [ ] `PUT /notifications/settings`
-- [ ] `frontend/src/api/notification.ts` - 설정 API 함수 추가
-- [ ] `frontend/app/(main)/(2-profile)/notifications.tsx` - API 연동
-  - [ ] 설정 조회 후 상태 초기화
-  - [ ] 토글 변경 시 API 호출
+- [x] `backend/app/modules/auth/models.py` - User 모델에 알림 설정 필드 추가
+- [x] `backend/app/modules/notifications/router.py` - 설정 조회/업데이트 API 추가
+  - [x] `GET /notifications/settings`
+  - [x] `PUT /notifications/settings`
+- [x] `frontend/src/api/notification.ts` - 설정 API 함수 추가
+- [x] `frontend/src/hooks/useNotificationSettings.ts` - React Query 훅 추가
+- [x] `frontend/app/(main)/(2-profile)/notifications.tsx` - API 연동
+  - [x] 설정 조회 후 상태 초기화
+  - [x] 토글 변경 시 API 호출 (낙관적 업데이트)

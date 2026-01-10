@@ -351,3 +351,73 @@ class NotificationService:
         success = await self.user_repo.update_push_token(user_id, "")
         if not success:
             raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+
+    async def get_notification_settings(
+        self, user_id: uuid.UUID
+    ) -> dict[str, bool]:
+        """Get user's notification settings.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            Dictionary of notification settings
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        user = await self.user_repo.find_by_id(user_id)
+        if user is None:
+            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+
+        return {
+            "poll_started": user.notify_poll_started,
+            "poll_reminder": user.notify_poll_reminder,
+            "poll_ended": user.notify_poll_ended,
+            "vote_received": user.notify_vote_received,
+            "circle_invite": user.notify_circle_invite,
+        }
+
+    async def update_notification_settings(
+        self,
+        user_id: uuid.UUID,
+        poll_started: bool | None = None,
+        poll_reminder: bool | None = None,
+        poll_ended: bool | None = None,
+        vote_received: bool | None = None,
+        circle_invite: bool | None = None,
+    ) -> dict[str, bool]:
+        """Update user's notification settings.
+
+        Args:
+            user_id: User UUID
+            poll_started: Enable poll started notifications
+            poll_reminder: Enable poll reminder notifications
+            poll_ended: Enable poll ended notifications
+            vote_received: Enable vote received notifications
+            circle_invite: Enable circle invite notifications
+
+        Returns:
+            Updated notification settings
+
+        Raises:
+            NotFoundException: If user not found
+        """
+        user = await self.user_repo.update_notification_settings(
+            user_id=user_id,
+            poll_started=poll_started,
+            poll_reminder=poll_reminder,
+            poll_ended=poll_ended,
+            vote_received=vote_received,
+            circle_invite=circle_invite,
+        )
+        if user is None:
+            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+
+        return {
+            "poll_started": user.notify_poll_started,
+            "poll_reminder": user.notify_poll_reminder,
+            "poll_ended": user.notify_poll_ended,
+            "vote_received": user.notify_vote_received,
+            "circle_invite": user.notify_circle_invite,
+        }

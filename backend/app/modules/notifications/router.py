@@ -9,6 +9,8 @@ from app.core.responses import success_response
 from app.deps import CurrentUserDep, NotificationServiceDep
 from app.modules.notifications.schemas import (
     NotificationResponse,
+    NotificationSettingsResponse,
+    NotificationSettingsUpdate,
     PushTokenRequest,
     UnreadCountResponse,
 )
@@ -118,3 +120,56 @@ async def unregister_push_token(
     """
     await service.unregister_push_token(current_user.id)
     return success_response(data={}, message="Push token unregistered successfully")
+
+
+@router.get(
+    "/settings",
+    response_model=NotificationSettingsResponse,
+    summary="Get notification settings",
+)
+async def get_notification_settings(
+    current_user: CurrentUserDep,
+    service: NotificationServiceDep,
+) -> NotificationSettingsResponse:
+    """Get user's notification settings.
+
+    Args:
+        current_user: Currently authenticated user
+        service: Notification service instance
+
+    Returns:
+        NotificationSettingsResponse with current settings
+    """
+    settings = await service.get_notification_settings(current_user.id)
+    return NotificationSettingsResponse(**settings)
+
+
+@router.put(
+    "/settings",
+    response_model=NotificationSettingsResponse,
+    summary="Update notification settings",
+)
+async def update_notification_settings(
+    settings_data: NotificationSettingsUpdate,
+    current_user: CurrentUserDep,
+    service: NotificationServiceDep,
+) -> NotificationSettingsResponse:
+    """Update user's notification settings.
+
+    Args:
+        settings_data: Partial update data for notification settings
+        current_user: Currently authenticated user
+        service: Notification service instance
+
+    Returns:
+        NotificationSettingsResponse with updated settings
+    """
+    settings = await service.update_notification_settings(
+        user_id=current_user.id,
+        poll_started=settings_data.poll_started,
+        poll_reminder=settings_data.poll_reminder,
+        poll_ended=settings_data.poll_ended,
+        vote_received=settings_data.vote_received,
+        circle_invite=settings_data.circle_invite,
+    )
+    return NotificationSettingsResponse(**settings)

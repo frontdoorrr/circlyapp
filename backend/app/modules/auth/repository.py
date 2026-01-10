@@ -295,3 +295,46 @@ class UserRepository:
         await self.session.flush()
         await self.session.refresh(user)
         return user
+
+    # ==================== Notification Settings ====================
+
+    async def update_notification_settings(
+        self,
+        user_id: uuid.UUID,
+        poll_started: bool | None = None,
+        poll_reminder: bool | None = None,
+        poll_ended: bool | None = None,
+        vote_received: bool | None = None,
+        circle_invite: bool | None = None,
+    ) -> User | None:
+        """Update user's notification settings.
+
+        Args:
+            user_id: UUID of the user
+            poll_started: Enable poll started notifications
+            poll_reminder: Enable poll reminder notifications
+            poll_ended: Enable poll ended notifications
+            vote_received: Enable vote received notifications
+            circle_invite: Enable circle invite notifications
+
+        Returns:
+            Updated user if found, None otherwise
+        """
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return None
+
+        if poll_started is not None:
+            user.notify_poll_started = poll_started
+        if poll_reminder is not None:
+            user.notify_poll_reminder = poll_reminder
+        if poll_ended is not None:
+            user.notify_poll_ended = poll_ended
+        if vote_received is not None:
+            user.notify_vote_received = vote_received
+        if circle_invite is not None:
+            user.notify_circle_invite = circle_invite
+
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user

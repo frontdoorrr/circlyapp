@@ -26,3 +26,9 @@ export {
   useFormHaptics,
   type HapticAction,
 } from './useHaptics';
+
+// Notification Settings Hooks
+export {
+  useNotificationSettings,
+  useUpdateNotificationSettings,
+} from './useNotificationSettings';

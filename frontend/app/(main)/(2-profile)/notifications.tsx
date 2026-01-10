@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,12 +6,17 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
+import {
+  useNotificationSettings,
+  useUpdateNotificationSettings,
+} from '../../../src/hooks';
 
 /**
  * Notifications Settings Screen
@@ -22,22 +27,73 @@ import { tokens } from '../../../src/theme';
  */
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { data: settings, isLoading, error, refetch } = useNotificationSettings();
+  const { mutate: updateSettings, isPending: isUpdating } = useUpdateNotificationSettings();
 
-  // 알림 설정 상태 (TODO: 실제 API 연동 필요)
-  const [settings, setSettings] = useState({
-    allNotifications: true,
+  // 로컬 상태 (API 연동 전 즉각적인 UI 반응을 위해)
+  const [localSettings, setLocalSettings] = useState({
     pollStarted: true,
-    pollEnding: true,
-    pollResult: true,
-    quietHours: false,
-    quietStart: '22:00',
-    quietEnd: '08:00',
+    pollReminder: true,
+    pollEnded: true,
+    voteReceived: true,
+    circleInvite: true,
   });
 
-  const handleToggle = async (key: keyof typeof settings) => {
+  // 서버에서 설정 로드 시 로컬 상태 동기화
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings({
+        pollStarted: settings.poll_started,
+        pollReminder: settings.poll_reminder,
+        pollEnded: settings.poll_ended,
+        voteReceived: settings.vote_received,
+        circleInvite: settings.circle_invite,
+      });
+    }
+  }, [settings]);
+
+  // 전체 알림 상태 계산
+  const allEnabled =
+    localSettings.pollStarted &&
+    localSettings.pollReminder &&
+    localSettings.pollEnded &&
+    localSettings.voteReceived &&
+    localSettings.circleInvite;
+
+  const handleToggle = async (key: keyof typeof localSettings) => {
+    await Haptics.selectionAsync();
+    const newValue = !localSettings[key];
+
+    // 즉시 로컬 상태 업데이트 (낙관적 업데이트)
+    setLocalSettings((prev) => ({
+      ...prev,
+      [key]: newValue,
+    }));
+
+    // 서버에 업데이트 요청
+    const updatePayload: Record<string, boolean> = {};
+    if (key === 'pollStarted') updatePayload.poll_started = newValue;
+    if (key === 'pollReminder') updatePayload.poll_reminder = newValue;
+    if (key === 'pollEnded') updatePayload.poll_ended = newValue;
+    if (key === 'voteReceived') updatePayload.vote_received = newValue;
+    if (key === 'circleInvite') updatePayload.circle_invite = newValue;
+
+    updateSettings(updatePayload, {
+      onError: () => {
+        // 실패 시 원복
+        setLocalSettings((prev) => ({
+          ...prev,
+          [key]: !newValue,
+        }));
+        Alert.alert('오류', '설정 변경에 실패했습니다. 다시 시도해주세요.');
+      },
+    });
+  };
+
+  const handleToggleAll = async () => {
     await Haptics.selectionAsync();
 
-    if (key === 'allNotifications' && settings.allNotifications) {
+    if (allEnabled) {
       // 전체 알림 끄기 확인
       Alert.alert(
         '알림 끄기',
@@ -47,54 +103,81 @@ export default function NotificationsScreen() {
           {
             text: '끄기',
             onPress: () => {
-              setSettings((prev) => ({
-                ...prev,
-                allNotifications: false,
+              setLocalSettings({
                 pollStarted: false,
-                pollEnding: false,
-                pollResult: false,
-              }));
+                pollReminder: false,
+                pollEnded: false,
+                voteReceived: false,
+                circleInvite: false,
+              });
+              updateSettings({
+                poll_started: false,
+                poll_reminder: false,
+                poll_ended: false,
+                vote_received: false,
+                circle_invite: false,
+              });
             },
           },
         ]
       );
-      return;
-    }
-
-    if (key === 'allNotifications' && !settings.allNotifications) {
+    } else {
       // 전체 알림 켜기
-      setSettings((prev) => ({
-        ...prev,
-        allNotifications: true,
+      setLocalSettings({
         pollStarted: true,
-        pollEnding: true,
-        pollResult: true,
-      }));
-      return;
+        pollReminder: true,
+        pollEnded: true,
+        voteReceived: true,
+        circleInvite: true,
+      });
+      updateSettings({
+        poll_started: true,
+        poll_reminder: true,
+        poll_ended: true,
+        vote_received: true,
+        circle_invite: true,
+      });
     }
-
-    setSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key as keyof typeof settings],
-    }));
   };
 
-  const handleQuietHoursToggle = async () => {
-    await Haptics.selectionAsync();
-    if (!settings.quietHours) {
-      Alert.alert(
-        '조용한 시간',
-        `${settings.quietStart} ~ ${settings.quietEnd} 동안 알림을 받지 않습니다.`,
-        [{ text: '확인' }]
-      );
-    }
-    setSettings((prev) => ({
-      ...prev,
-      quietHours: !prev.quietHours,
-    }));
-  };
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>알림 설정</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={tokens.colors.primary[500]} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const isDisabled = !settings.allNotifications;
+  // 에러 상태
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>알림 설정</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>설정을 불러오지 못했습니다</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryText}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -104,7 +187,11 @@ export default function NotificationsScreen() {
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>알림 설정</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.placeholder}>
+          {isUpdating && (
+            <ActivityIndicator size="small" color={tokens.colors.primary[500]} />
+          )}
+        </View>
       </View>
 
       <ScrollView
@@ -122,8 +209,8 @@ export default function NotificationsScreen() {
                 </Text>
               </View>
               <Switch
-                value={settings.allNotifications}
-                onValueChange={() => handleToggle('allNotifications')}
+                value={allEnabled}
+                onValueChange={handleToggleAll}
                 trackColor={{
                   false: tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
@@ -141,17 +228,14 @@ export default function NotificationsScreen() {
             {/* 투표 시작 알림 */}
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingItemTitle, isDisabled && styles.disabled]}>
-                  🗳️ 새 투표 시작
-                </Text>
-                <Text style={[styles.settingItemDesc, isDisabled && styles.disabled]}>
+                <Text style={styles.settingItemTitle}>🗳️ 새 투표 시작</Text>
+                <Text style={styles.settingItemDesc}>
                   Circle에서 새로운 투표가 시작되면 알림
                 </Text>
               </View>
               <Switch
-                value={settings.pollStarted}
+                value={localSettings.pollStarted}
                 onValueChange={() => handleToggle('pollStarted')}
-                disabled={isDisabled}
                 trackColor={{
                   false: tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
@@ -163,17 +247,14 @@ export default function NotificationsScreen() {
             {/* 마감 임박 알림 */}
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingItemTitle, isDisabled && styles.disabled]}>
-                  ⏰ 마감 임박
-                </Text>
-                <Text style={[styles.settingItemDesc, isDisabled && styles.disabled]}>
+                <Text style={styles.settingItemTitle}>⏰ 마감 임박</Text>
+                <Text style={styles.settingItemDesc}>
                   투표 마감 1시간 전, 10분 전 알림
                 </Text>
               </View>
               <Switch
-                value={settings.pollEnding}
-                onValueChange={() => handleToggle('pollEnding')}
-                disabled={isDisabled}
+                value={localSettings.pollReminder}
+                onValueChange={() => handleToggle('pollReminder')}
                 trackColor={{
                   false: tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
@@ -183,19 +264,16 @@ export default function NotificationsScreen() {
             </View>
 
             {/* 결과 발표 알림 */}
-            <View style={[styles.settingItem, styles.noBorder]}>
+            <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingItemTitle, isDisabled && styles.disabled]}>
-                  🎉 결과 발표
-                </Text>
-                <Text style={[styles.settingItemDesc, isDisabled && styles.disabled]}>
+                <Text style={styles.settingItemTitle}>🎉 결과 발표</Text>
+                <Text style={styles.settingItemDesc}>
                   투표가 끝나고 결과가 나오면 알림
                 </Text>
               </View>
               <Switch
-                value={settings.pollResult}
-                onValueChange={() => handleToggle('pollResult')}
-                disabled={isDisabled}
+                value={localSettings.pollEnded}
+                onValueChange={() => handleToggle('pollEnded')}
                 trackColor={{
                   false: tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
@@ -203,26 +281,37 @@ export default function NotificationsScreen() {
                 thumbColor={tokens.colors.white}
               />
             </View>
-          </View>
-        </View>
 
-        {/* 조용한 시간 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>조용한 시간</Text>
-          <View style={styles.card}>
-            <View style={[styles.settingItem, styles.noBorder]}>
+            {/* 투표 받음 알림 */}
+            <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <Text style={[styles.settingItemTitle, isDisabled && styles.disabled]}>
-                  🌙 조용한 시간
-                </Text>
-                <Text style={[styles.settingItemDesc, isDisabled && styles.disabled]}>
-                  {settings.quietStart} ~ {settings.quietEnd} 알림 끄기
+                <Text style={styles.settingItemTitle}>🎊 누군가 나를 선택</Text>
+                <Text style={styles.settingItemDesc}>
+                  누군가 나를 선택했을 때 알림
                 </Text>
               </View>
               <Switch
-                value={settings.quietHours}
-                onValueChange={handleQuietHoursToggle}
-                disabled={isDisabled}
+                value={localSettings.voteReceived}
+                onValueChange={() => handleToggle('voteReceived')}
+                trackColor={{
+                  false: tokens.colors.neutral[300],
+                  true: tokens.colors.primary[500],
+                }}
+                thumbColor={tokens.colors.white}
+              />
+            </View>
+
+            {/* 서클 초대 알림 */}
+            <View style={[styles.settingItem, styles.noBorder]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingItemTitle}>🎈 서클 초대</Text>
+                <Text style={styles.settingItemDesc}>
+                  새로운 서클에 초대받으면 알림
+                </Text>
+              </View>
+              <Switch
+                value={localSettings.circleInvite}
+                onValueChange={() => handleToggle('circleInvite')}
                 trackColor={{
                   false: tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
@@ -231,9 +320,6 @@ export default function NotificationsScreen() {
               />
             </View>
           </View>
-          <Text style={styles.hint}>
-            조용한 시간에는 알림이 오지 않아요. 알림은 나중에 확인할 수 있습니다.
-          </Text>
         </View>
 
         {/* 안내 문구 */}
@@ -277,6 +363,34 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: tokens.spacing.xl,
+  },
+  errorText: {
+    fontSize: tokens.typography.fontSize.base,
+    color: tokens.colors.neutral[600],
+    marginBottom: tokens.spacing.md,
+  },
+  retryButton: {
+    paddingVertical: tokens.spacing.sm,
+    paddingHorizontal: tokens.spacing.lg,
+    backgroundColor: tokens.colors.primary[500],
+    borderRadius: tokens.borderRadius.md,
+  },
+  retryText: {
+    fontSize: tokens.typography.fontSize.sm,
+    fontWeight: tokens.typography.fontWeight.medium,
+    color: tokens.colors.white,
   },
   scrollView: {
     flex: 1,
@@ -324,15 +438,6 @@ const styles = StyleSheet.create({
   settingItemDesc: {
     fontSize: tokens.typography.fontSize.sm,
     color: tokens.colors.neutral[500],
-  },
-  disabled: {
-    color: tokens.colors.neutral[400],
-  },
-  hint: {
-    fontSize: tokens.typography.fontSize.xs,
-    color: tokens.colors.neutral[500],
-    marginTop: tokens.spacing.sm,
-    marginLeft: tokens.spacing.xs,
   },
   infoSection: {
     backgroundColor: tokens.colors.primary[50],
