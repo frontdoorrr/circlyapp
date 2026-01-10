@@ -86,10 +86,10 @@ admin-frontend/
   - StatCard, ChartCard 컴포넌트
   - useStatsOverview, useUserStats, usePollStats, useReportStats 훅
 
-### Phase 3: 신고 관리 (1일)
-- [ ] 신고 목록 테이블 (필터, 페이지네이션)
-- [ ] 상태 변경 다이얼로그
-- [ ] API 연동 (기존 `/reports/admin/*` 활용)
+### Phase 3: 신고 관리 (1일) ✅
+- [x] 신고 목록 테이블 (필터, 페이지네이션)
+- [x] 상태 변경 다이얼로그
+- [x] API 연동 (기존 `/reports/admin/*` 활용)
 
 ### Phase 4: 사용자 관리 (1일)
 - [ ] 사용자 목록 테이블
