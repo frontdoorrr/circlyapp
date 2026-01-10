@@ -5,6 +5,8 @@ import type {
   PollFilters,
   UpdatePollStatusRequest,
   TemplateListResponse,
+  AdminPollCreate,
+  BroadcastPollResponse,
 } from '@/types/polls';
 
 export const pollsApi = {
@@ -44,6 +46,17 @@ export const pollsApi = {
 
     const response = await apiClient.get<TemplateListResponse>(
       `/polls/admin/templates?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Broadcast poll to circles (Admin)
+   */
+  async broadcastPoll(data: AdminPollCreate): Promise<BroadcastPollResponse> {
+    const response = await apiClient.post<BroadcastPollResponse>(
+      '/polls/admin/broadcast',
+      data
     );
     return response.data;
   },

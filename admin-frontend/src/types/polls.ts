@@ -74,3 +74,27 @@ export const TEMPLATE_CATEGORY_LABELS: Record<TemplateCategory, { emoji: string;
   SPECIAL: { emoji: '🎉', title: '특별한 날' },
   TALENT: { emoji: '🏆', title: '능력 관련' },
 };
+
+// Duration labels for UI
+export const POLL_DURATION_LABELS: Record<PollDuration, string> = {
+  '1H': '1시간',
+  '3H': '3시간',
+  '6H': '6시간',
+  '24H': '24시간',
+};
+
+// Admin poll creation request
+export interface AdminPollCreate {
+  template_id?: string;
+  custom_question?: string;
+  duration: PollDuration;
+  circle_ids?: string[];
+  apply_to_all: boolean;
+}
+
+// Broadcast poll response
+export interface BroadcastPollResponse {
+  created_count: number;
+  failed_count: number;
+  polls: Poll[];
+}

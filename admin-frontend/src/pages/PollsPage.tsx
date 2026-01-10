@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Vote, Search } from 'lucide-react';
+import { Vote, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PollsTable } from '@/components/polls/PollsTable';
+import { PollCreateDialog } from '@/components/polls/PollCreateDialog';
 import { usePolls } from '@/hooks/usePolls';
 import { useCircles } from '@/hooks/useCircles';
 import type { PollStatus } from '@/types/polls';
@@ -22,6 +23,7 @@ export function PollsPage() {
   const [circleFilter, setCircleFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data, isLoading } = usePolls({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
@@ -68,6 +70,10 @@ export function PollsPage() {
             전체 {total}개의 투표
           </p>
         </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          투표 생성
+        </Button>
       </div>
 
       {/* Filters */}
@@ -155,6 +161,12 @@ export function PollsPage() {
           </div>
         </div>
       )}
+
+      {/* Create Poll Dialog */}
+      <PollCreateDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </div>
   );
 }

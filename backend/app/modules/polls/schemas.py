@@ -214,3 +214,21 @@ class TemplateUpdate(BaseModel):
     question_text: str | None = None
     emoji: str | None = None
     is_active: bool | None = None
+
+
+class AdminPollCreate(BaseModel):
+    """Schema for admin poll creation (broadcast to circles)."""
+
+    template_id: uuid.UUID | None = None  # 템플릿 사용 시
+    custom_question: str | None = None  # 직접 입력 시
+    duration: PollDuration
+    circle_ids: list[uuid.UUID] | None = None  # 선택한 Circle만
+    apply_to_all: bool = False  # True면 모든 Circle
+
+
+class BroadcastPollResponse(BaseModel):
+    """Schema for broadcast poll response."""
+
+    created_count: int
+    failed_count: int
+    polls: list[PollResponse]

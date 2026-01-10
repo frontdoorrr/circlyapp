@@ -9,13 +9,15 @@ from app.core.exceptions import (
     PollNotFoundError,
 )
 from app.core.security import generate_voter_hash
-from app.modules.circles.repository import MembershipRepository
+from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.polls.repository import (
     PollRepository,
     TemplateRepository,
     VoteRepository,
 )
 from app.modules.polls.schemas import (
+    AdminPollCreate,
+    BroadcastPollResponse,
     CATEGORY_METADATA,
     CategoryInfo,
     PollCreate,
@@ -37,12 +39,14 @@ class PollService:
         poll_repo: PollRepository,
         vote_repo: VoteRepository,
         membership_repo: MembershipRepository,
+        circle_repo: CircleRepository | None = None,
     ) -> None:
         """Initialize service with repositories."""
         self.template_repo = template_repo
         self.poll_repo = poll_repo
         self.vote_repo = vote_repo
         self.membership_repo = membership_repo
+        self.circle_repo = circle_repo
 
     @staticmethod
     def _poll_to_response(
@@ -537,4 +541,82 @@ class PollService:
             poll_id=poll_id,
             question_text=poll.question_text,
             voters=voters,
+        )
+
+    async def broadcast_poll(
+        self,
+        admin_id: uuid.UUID,
+        data: AdminPollCreate,
+    ) -> BroadcastPollResponse:
+        """Broadcast a poll to multiple circles (Admin only).
+
+        Args:
+            admin_id: UUID of the admin user
+            data: Admin poll creation data
+
+        Returns:
+            BroadcastPollResponse with created polls
+
+        Raises:
+            BadRequestException: If no question provided or no circles selected
+        """
+        # 1. 질문 텍스트 결정
+        question_text: str | None = None
+        template_id: uuid.UUID | None = None
+
+        if data.template_id:
+            template = await self.template_repo.find_by_id(data.template_id)
+            if template is None:
+                raise BadRequestException("Template not found")
+            question_text = template.question_text
+            template_id = data.template_id
+        elif data.custom_question:
+            question_text = data.custom_question
+        else:
+            raise BadRequestException("Either template_id or custom_question is required")
+
+        # 2. 대상 Circle 결정
+        circle_ids: list[uuid.UUID] = []
+
+        if data.apply_to_all:
+            if self.circle_repo is None:
+                raise BadRequestException("Circle repository not available")
+            circles = await self.circle_repo.find_all(is_active=True, limit=1000)
+            circle_ids = [c.id for c in circles]
+        elif data.circle_ids:
+            circle_ids = data.circle_ids
+        else:
+            raise BadRequestException("Either apply_to_all or circle_ids is required")
+
+        if not circle_ids:
+            raise BadRequestException("No circles to broadcast to")
+
+        # 3. 투표 종료 시간 계산
+        ends_at = self._calculate_end_time(data.duration)
+
+        # 4. 각 Circle에 투표 생성
+        created_polls: list[PollResponse] = []
+        failed_count = 0
+
+        for circle_id in circle_ids:
+            try:
+                poll = await self.poll_repo.create(
+                    circle_id=circle_id,
+                    template_id=template_id,
+                    creator_id=admin_id,
+                    question_text=question_text,
+                    ends_at=ends_at,
+                )
+                created_polls.append(self._poll_to_response(poll))
+
+                # 템플릿 사용 시 usage count 증가
+                if template_id:
+                    await self.template_repo.increment_usage_count(template_id)
+            except Exception:
+                failed_count += 1
+
+        return BroadcastPollResponse(
+            created_count=len(created_polls),
+            failed_count=failed_count,
+            polls=created_polls,
         )

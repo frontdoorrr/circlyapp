@@ -8,6 +8,8 @@ from app.core.enums import PollStatus, TemplateCategory
 from app.core.exceptions import AuthorizationError
 from app.deps import AdminUserDep, CurrentUserDep, PollServiceDep
 from app.modules.polls.schemas import (
+    AdminPollCreate,
+    BroadcastPollResponse,
     CategoryInfo,
     PollCreate,
     PollListResponse,
@@ -222,3 +224,23 @@ async def update_template(
         request.emoji,
         request.is_active,
     )
+
+
+@router.post(
+    "/admin/broadcast",
+    response_model=BroadcastPollResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="[Admin] Broadcast poll to circles",
+    tags=["Admin - Polls"],
+)
+async def broadcast_poll(
+    request: AdminPollCreate,
+    admin_user: AdminUserDep,
+    service: PollServiceDep,
+) -> BroadcastPollResponse:
+    """Broadcast a poll to multiple circles (Admin only).
+
+    Can apply to all active circles or selected circles.
+    Supports both template-based and custom questions.
+    """
+    return await service.broadcast_poll(admin_user.id, request)
