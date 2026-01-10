@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ResponsiveContainer,
@@ -21,18 +23,34 @@ interface ChartCardProps {
   description?: string;
   className?: string;
   children: React.ReactNode;
+  href?: string;
 }
 
-export function ChartCard({ title, description, className, children }: ChartCardProps) {
-  return (
-    <Card className={cn('', className)}>
+export function ChartCard({ title, description, className, children, href }: ChartCardProps) {
+  const cardContent = (
+    <Card className={cn(
+      'transition-all',
+      href && 'cursor-pointer hover:shadow-md',
+      className
+    )}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
+          </div>
+          {href && <ArrowRight className="h-5 w-5 text-muted-foreground" />}
+        </div>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link to={href}>{cardContent}</Link>;
+  }
+
+  return cardContent;
 }
 
 // Pre-configured chart components

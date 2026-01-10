@@ -64,7 +64,12 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         if not v:
             # Default origins for development only
-            return ["http://localhost:19006", "exp://localhost:19000"]
+            return [
+                "http://localhost:19006",  # Expo web
+                "exp://localhost:19000",   # Expo app
+                "http://localhost:5173",   # Admin frontend (Vite)
+                "http://localhost:3000",   # Admin frontend (alt port)
+            ]
         return v
 
 

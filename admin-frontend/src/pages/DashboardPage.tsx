@@ -100,12 +100,14 @@ export function DashboardPage() {
               value={overview?.total_users || 0}
               description={`오늘 신규: ${overview?.today_new_users || 0}명`}
               icon={Users}
+              href="/users"
             />
             <StatCard
               title="활성 Circle"
               value={overview?.total_circles || 0}
               description="전체 Circle 수"
               icon={Circle}
+              href="/circles"
             />
             <StatCard
               title="진행 중 투표"
@@ -118,6 +120,7 @@ export function DashboardPage() {
               value={overview?.pending_reports || 0}
               description="검토 필요"
               icon={Flag}
+              href="/reports"
               className={overview?.pending_reports && overview.pending_reports > 0 ? 'border-red-200 bg-red-50' : ''}
             />
           </>
@@ -132,6 +135,7 @@ export function DashboardPage() {
           <ChartCard
             title="사용자 추이"
             description="최근 30일 신규/활성 사용자 수"
+            href="/users"
           >
             {userChartData.length > 0 ? (
               <StatsLineChart
@@ -191,6 +195,7 @@ export function DashboardPage() {
             <ChartCard
               title="신고 상태별 현황"
               description={`총 ${reportStats?.total || 0}건`}
+              href="/reports"
             >
               {reportStatusData.length > 0 ? (
                 <StatsPieChart
@@ -210,6 +215,7 @@ export function DashboardPage() {
             <ChartCard
               title="신고 유형별 현황"
               description="대상 유형별 분포"
+              href="/reports"
             >
               {reportTypeData.length > 0 ? (
                 <StatsBarChart

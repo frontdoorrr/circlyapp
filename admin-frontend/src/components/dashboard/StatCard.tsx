@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,6 +13,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   className?: string;
+  href?: string;
 }
 
 export function StatCard({
@@ -21,9 +23,14 @@ export function StatCard({
   icon: Icon,
   trend,
   className,
+  href,
 }: StatCardProps) {
-  return (
-    <Card className={cn('', className)}>
+  const cardContent = (
+    <Card className={cn(
+      'transition-all',
+      href && 'cursor-pointer hover:scale-[1.02] hover:shadow-md',
+      className
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
@@ -49,4 +56,10 @@ export function StatCard({
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link to={href}>{cardContent}</Link>;
+  }
+
+  return cardContent;
 }
