@@ -1,73 +1,138 @@
-# React + TypeScript + Vite
+# Circly Admin Dashboard 구현 계획
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 목표
+React 기반 웹 관리자 대시보드 구축
 
-Currently, two official plugins are available:
+## 기능 범위 (우선순위 순)
+1. **통계 대시보드** - DAU, MAU, 투표 수, Circle 수, 신고 현황
+2. **신고 관리** - 목록 조회, 상태 변경, 사용자 제재
+3. **사용자 관리** - 목록, 역할 변경, 활성화/비활성화
+4. **Circle 관리** - 목록, 강제 삭제, 멤버 관리
+5. **알림 관리** - 전체 알림 발송, 발송 이력
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 기술 스택
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| 영역 | 기술 | 이유 |
+|------|------|------|
+| Framework | React 18 + TypeScript + Vite | 빠른 개발, 타입 안전성 |
+| Styling | Tailwind CSS + shadcn/ui | 모던 UI, 커스터마이징 용이 |
+| State | React Query + Zustand | 기존 모바일 앱과 동일 패턴 |
+| Charts | Recharts | 통계 시각화 |
+| Auth | Supabase Auth | 기존 인증 시스템 재사용 |
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 디렉토리 구조
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+admin-frontend/
+├── src/
+│   ├── api/           # API 클라이언트 (client, stats, users, reports...)
+│   ├── components/
+│   │   ├── ui/        # shadcn/ui 컴포넌트
+│   │   ├── layout/    # Sidebar, Header, Layout
+│   │   └── [feature]/ # 기능별 컴포넌트
+│   ├── hooks/         # React Query 훅 (useStats, useUsers...)
+│   ├── pages/         # 페이지 컴포넌트
+│   ├── stores/        # Zustand (auth)
+│   ├── types/         # TypeScript 타입
+│   └── lib/           # supabase, utils
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 백엔드 API 추가 필요
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 1. Stats 모듈 (신규)
+
+| Endpoint | 설명 |
+|----------|------|
+| `GET /admin/stats/overview` | 전체 통계 (사용자, Circle, 투표, 신고 수) |
+| `GET /admin/stats/users?period=daily` | 사용자 추이 (신규/활성) |
+| `GET /admin/stats/polls?period=daily` | 투표 추이 |
+| `GET /admin/stats/reports` | 신고 통계 (상태별, 유형별) |
+
+### 2. Notifications 확장
+
+| Endpoint | 설명 |
+|----------|------|
+| `POST /admin/notifications/broadcast` | 전체 알림 발송 |
+| `GET /admin/notifications/history` | 발송 이력 조회 |
+
+### 3. 기존 API 확장
+
+| Endpoint | 설명 |
+|----------|------|
+| `DELETE /admin/circles/{id}` | Circle 강제 삭제 |
+| `GET /admin/circles/{id}/members` | Circle 멤버 목록 |
+
+---
+
+## 구현 단계
+
+### Phase 1: 프로젝트 초기화 (1일) ✅
+- [x] Vite + React + TypeScript 생성
+- [x] Tailwind + shadcn/ui 설정
+- [x] 기본 레이아웃 (Sidebar, Header)
+- [x] Supabase Auth 연동 + 로그인 페이지
+- [x] Protected Route 구현
+
+### Phase 2: 통계 대시보드 (2일) ✅
+- [x] Backend: stats 모듈 생성
+  - `backend/app/modules/stats/` (router, service, schemas)
+- [x] Frontend: 대시보드 페이지
+  - StatCard, ChartCard 컴포넌트
+  - useStatsOverview, useUserStats, usePollStats, useReportStats 훅
+
+### Phase 3: 신고 관리 (1일)
+- [ ] 신고 목록 테이블 (필터, 페이지네이션)
+- [ ] 상태 변경 다이얼로그
+- [ ] API 연동 (기존 `/reports/admin/*` 활용)
+
+### Phase 4: 사용자 관리 (1일)
+- [ ] 사용자 목록 테이블
+- [ ] 역할 변경, 상태 변경 UI
+- [ ] API 연동 (기존 `/auth/admin/*` 활용)
+
+### Phase 5: Circle 관리 (1일)
+- [ ] Circle 목록 테이블
+- [ ] 멤버 목록 모달
+- [ ] Backend: DELETE /admin/circles/{id} 추가
+
+### Phase 6: 알림 관리 (2일)
+- [ ] Backend: broadcast API, history API
+- [ ] 발송 폼 UI
+- [ ] 발송 이력 테이블
+
+### Phase 7: 마무리 (1일)
+- [ ] 에러 처리, 로딩 상태
+- [ ] 반응형 디자인
+- [ ] 빌드/배포 설정
+
+---
+
+## 핵심 파일 (참조)
+
+| 파일 | 용도 |
+|------|------|
+| `backend/app/deps.py` | `AdminUserDep` - Admin 인증 의존성 |
+| `backend/app/modules/reports/router.py` | Admin API 라우팅 패턴 참조 |
+| `frontend/src/api/client.ts` | Axios 인터셉터 패턴 참조 |
+| `docs/DSL.md` | 도메인 모델 정의 |
+
+---
+
+## 검증 계획
+
+1. **로컬 테스트**: Backend 서버 + Admin 웹 동시 실행
+2. **API 검증**: Swagger UI (`/docs`)로 각 엔드포인트 테스트
+3. **권한 테스트**: 일반 사용자로 Admin API 접근 시 403 확인
+4. **E2E 테스트**: 전체 관리 워크플로우 수동 검증
+
+---
+
+## 예상 일정
+- 총 **8-10일** (풀타임 기준)
+- Phase 1-2 (통계 대시보드)를 먼저 완료하여 핵심 가치 확인
