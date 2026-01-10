@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Vote } from 'lucide-react';
+import { Vote, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -18,16 +19,19 @@ const PAGE_SIZE = 20;
 
 export function PollsPage() {
   const [statusFilter, setStatusFilter] = useState<PollStatus | 'ALL'>('ALL');
+  const [circleFilter, setCircleFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
 
   const { data, isLoading } = usePolls({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
+    circle_id: circleFilter === 'ALL' ? undefined : circleFilter,
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
   });
 
-  // Fetch all circles for name mapping
-  const { data: circlesData } = useCircles({ limit: 1000 });
+  // Fetch circles for name mapping and dropdown (max 100 per API limit)
+  const { data: circlesData } = useCircles({ limit: 100 });
 
   const polls = data?.items || [];
   const total = data?.total || 0;
@@ -41,6 +45,15 @@ export function PollsPage() {
     });
     return map;
   }, [circlesData]);
+
+  // 검색 필터링 (프론트엔드)
+  const filteredPolls = useMemo(() => {
+    if (!searchQuery.trim()) return polls;
+    const query = searchQuery.toLowerCase();
+    return polls.filter((poll) =>
+      poll.question_text.toLowerCase().includes(query)
+    );
+  }, [polls, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -59,6 +72,39 @@ export function PollsPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-4">
+        {/* 검색창 */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="질문 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Circle 필터 */}
+        <Select
+          value={circleFilter}
+          onValueChange={(value) => {
+            setCircleFilter(value);
+            setPage(0);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Circle 필터" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">전체 Circle</SelectItem>
+            {circlesData?.items.map((circle) => (
+              <SelectItem key={circle.id} value={circle.id}>
+                {circle.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* 상태 필터 */}
         <Select
           value={statusFilter}
           onValueChange={(value) => {
@@ -81,7 +127,7 @@ export function PollsPage() {
       </div>
 
       {/* Table */}
-      <PollsTable polls={polls} isLoading={isLoading} circleMap={circleMap} />
+      <PollsTable polls={filteredPolls} isLoading={isLoading} circleMap={circleMap} />
 
       {/* Pagination */}
       {totalPages > 1 && (

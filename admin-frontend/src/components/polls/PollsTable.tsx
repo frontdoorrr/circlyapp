@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { formatDistanceToNow, format, isPast } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { MoreHorizontal, XCircle } from 'lucide-react';
+import { MoreHorizontal, XCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -35,6 +35,14 @@ interface PollsTableProps {
   polls: Poll[];
   isLoading?: boolean;
   circleMap: Map<string, string>;
+}
+
+type SortKey = 'circle' | 'question' | 'status' | 'vote_count' | 'ends_at' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
+interface SortState {
+  key: SortKey | null;
+  direction: SortDirection;
 }
 
 function getStatusBadgeVariant(status: PollStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -71,7 +79,60 @@ function TableSkeleton() {
 export function PollsTable({ polls, isLoading, circleMap }: PollsTableProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
+  const [sort, setSort] = useState<SortState>({ key: null, direction: 'desc' });
   const updateStatus = useUpdatePollStatus();
+
+  // 정렬된 데이터
+  const sortedPolls = useMemo(() => {
+    if (!sort.key) return polls;
+
+    return [...polls].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sort.key) {
+        case 'circle':
+          const circleA = circleMap.get(a.circle_id) || '';
+          const circleB = circleMap.get(b.circle_id) || '';
+          comparison = circleA.localeCompare(circleB, 'ko');
+          break;
+        case 'question':
+          comparison = a.question_text.localeCompare(b.question_text, 'ko');
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'vote_count':
+          comparison = a.vote_count - b.vote_count;
+          break;
+        case 'ends_at':
+          comparison = new Date(a.ends_at).getTime() - new Date(b.ends_at).getTime();
+          break;
+        case 'created_at':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+      }
+
+      return sort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [polls, sort, circleMap]);
+
+  // 더블클릭 정렬 핸들러
+  const handleSort = (key: SortKey) => {
+    setSort((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc',
+    }));
+  };
+
+  // 정렬 아이콘 렌더링
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sort.key !== columnKey) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
+    }
+    return sort.direction === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />;
+  };
 
   const handleCancelClick = (poll: Poll) => {
     setSelectedPoll(poll);
@@ -96,26 +157,80 @@ export function PollsTable({ polls, isLoading, circleMap }: PollsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Circle</TableHead>
-              <TableHead>질문</TableHead>
-              <TableHead>상태</TableHead>
-              <TableHead>투표 수</TableHead>
-              <TableHead>종료 시간</TableHead>
-              <TableHead>생성일</TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('circle')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  Circle
+                  <SortIcon columnKey="circle" />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('question')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  질문
+                  <SortIcon columnKey="question" />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('status')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  상태
+                  <SortIcon columnKey="status" />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('vote_count')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  투표 수
+                  <SortIcon columnKey="vote_count" />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('ends_at')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  종료 시간
+                  <SortIcon columnKey="ends_at" />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:bg-muted/50"
+                onDoubleClick={() => handleSort('created_at')}
+                title="더블클릭하여 정렬"
+              >
+                <span className="flex items-center">
+                  생성일
+                  <SortIcon columnKey="created_at" />
+                </span>
+              </TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableSkeleton />
-            ) : polls.length === 0 ? (
+            ) : sortedPolls.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   투표가 없습니다.
                 </TableCell>
               </TableRow>
             ) : (
-              polls.map((poll) => {
+              sortedPolls.map((poll) => {
                 const endsAt = new Date(poll.ends_at);
                 const isEnded = isPast(endsAt);
 

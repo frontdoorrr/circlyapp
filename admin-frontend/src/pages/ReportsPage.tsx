@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -9,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import { ReportsTable } from '@/components/reports/ReportsTable';
 import { ReviewDialog } from '@/components/reports/ReviewDialog';
 import { useReports, useReviewReport } from '@/hooks/useReports';
@@ -22,11 +23,21 @@ export function ReportsPage() {
     limit: ITEMS_PER_PAGE,
     offset: 0,
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useReports(filters);
   const reviewMutation = useReviewReport();
+
+  // 검색 필터링 (프론트엔드) - 신고 사유로 검색
+  const filteredReports = useMemo(() => {
+    if (!searchQuery.trim()) return data?.items || [];
+    const query = searchQuery.toLowerCase();
+    return (data?.items || []).filter((report) =>
+      report.reason.toLowerCase().includes(query)
+    );
+  }, [data?.items, searchQuery]);
 
   const handleStatusFilter = (value: string) => {
     setFilters((prev) => ({
@@ -112,7 +123,17 @@ export function ReportsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
+            {/* 검색창 */}
+            <div className="relative flex-1 min-w-[250px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="신고 사유 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="w-[180px]">
               <Select
                 value={filters.status || 'ALL'}
@@ -150,7 +171,7 @@ export function ReportsPage() {
 
           {/* Table */}
           <ReportsTable
-            reports={data?.items || []}
+            reports={filteredReports}
             isLoading={isLoading}
             onReview={handleReview}
             onViewDetails={handleViewDetails}
