@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCurrentUser, useUpdateProfile, useLogout } from '../../../src/hooks/useAuth';
-import { useTheme } from '../../../src/theme/ThemeContext';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import { ProfileInfo } from '../../../src/components/profile/ProfileInfo';
 import { ProfileEditModal } from '../../../src/components/profile/ProfileEditModal';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
@@ -13,6 +13,7 @@ import { Toast, ToastType } from '../../../src/components/primitives/Toast';
 import { tokens } from '../../../src/theme';
 import { ApiError } from '../../../src/types/api';
 import { UserUpdate } from '../../../src/types/auth';
+import type { Theme } from '../../../src/theme/tokens';
 
 /**
  * Profile Screen
@@ -22,7 +23,8 @@ import { UserUpdate } from '../../../src/types/auth';
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
 
   // Toast 상태
@@ -180,71 +182,73 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  section: {
-    marginBottom: tokens.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  card: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.md,
-    ...tokens.shadows.sm,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: tokens.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  settingItemText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  settingItemValue: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[600],
-  },
-  settingItemArrow: {
-    fontSize: 24,
-    color: tokens.colors.neutral[400],
-  },
-  lastItem: {
-    borderBottomWidth: 0,
-  },
-  logoutSection: {
-    marginTop: tokens.spacing.md,
-    marginBottom: tokens.spacing.xl,
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    textAlign: 'center',
-  },
-});
-
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      padding: tokens.spacing.lg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.md,
+    },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.md,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    settingItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: tokens.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    settingItemText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.text,
+    },
+    settingItemValue: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    settingItemArrow: {
+      fontSize: 24,
+      color: theme.textTertiary,
+    },
+    lastItem: {
+      borderBottomWidth: 0,
+    },
+    logoutSection: {
+      marginTop: tokens.spacing.md,
+      marginBottom: tokens.spacing.xl,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+  });

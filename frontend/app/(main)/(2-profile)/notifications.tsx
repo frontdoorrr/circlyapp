@@ -13,10 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../../../src/components/primitives/Text';
 import { tokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import {
   useNotificationSettings,
   useUpdateNotificationSettings,
 } from '../../../src/hooks';
+import type { Theme } from '../../../src/theme/tokens';
 
 /**
  * Notifications Settings Screen
@@ -27,6 +29,8 @@ import {
  */
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { data: settings, isLoading, error, refetch } = useNotificationSettings();
   const { mutate: updateSettings, isPending: isUpdating } = useUpdateNotificationSettings();
 
@@ -140,6 +144,12 @@ export default function NotificationsScreen() {
     }
   };
 
+  // Switch track 색상
+  const switchTrackColor = {
+    false: isDark ? tokens.colors.neutral[600] : tokens.colors.neutral[300],
+    true: tokens.colors.primary[500],
+  };
+
   // 로딩 상태
   if (isLoading) {
     return (
@@ -211,10 +221,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={allEnabled}
                 onValueChange={handleToggleAll}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -236,10 +243,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollStarted}
                 onValueChange={() => handleToggle('pollStarted')}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -255,10 +259,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollReminder}
                 onValueChange={() => handleToggle('pollReminder')}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -274,10 +275,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollEnded}
                 onValueChange={() => handleToggle('pollEnded')}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -293,10 +291,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.voteReceived}
                 onValueChange={() => handleToggle('voteReceived')}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -312,10 +307,7 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.circleInvite}
                 onValueChange={() => handleToggle('circleInvite')}
-                trackColor={{
-                  false: tokens.colors.neutral[300],
-                  true: tokens.colors.primary[500],
-                }}
+                trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
               />
             </View>
@@ -334,120 +326,126 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: tokens.spacing.md,
-    paddingVertical: tokens.spacing.sm,
-    backgroundColor: tokens.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[200],
-  },
-  backButton: {
-    padding: tokens.spacing.sm,
-  },
-  backText: {
-    fontSize: 24,
-    color: tokens.colors.neutral[900],
-  },
-  headerTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-  },
-  placeholder: {
-    width: 40,
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: tokens.spacing.xl,
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.md,
-  },
-  retryButton: {
-    paddingVertical: tokens.spacing.sm,
-    paddingHorizontal: tokens.spacing.lg,
-    backgroundColor: tokens.colors.primary[500],
-    borderRadius: tokens.borderRadius.md,
-  },
-  retryText: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  section: {
-    marginBottom: tokens.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.sm,
-    marginLeft: tokens.spacing.xs,
-  },
-  card: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    ...tokens.shadows.sm,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: tokens.spacing.md,
-    paddingHorizontal: tokens.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  noBorder: {
-    borderBottomWidth: 0,
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: tokens.spacing.md,
-  },
-  settingItemTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.xs,
-  },
-  settingItemDesc: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-  },
-  infoSection: {
-    backgroundColor: tokens.colors.primary[50],
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.md,
-    marginBottom: tokens.spacing.xl,
-  },
-  infoText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[700],
-    lineHeight: 20,
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: tokens.spacing.md,
+      paddingVertical: tokens.spacing.sm,
+      backgroundColor: theme.card,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    backButton: {
+      padding: tokens.spacing.sm,
+    },
+    backText: {
+      fontSize: 24,
+      color: theme.text,
+    },
+    headerTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    placeholder: {
+      width: 40,
+      alignItems: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: tokens.spacing.xl,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.md,
+    },
+    retryButton: {
+      paddingVertical: tokens.spacing.sm,
+      paddingHorizontal: tokens.spacing.lg,
+      backgroundColor: tokens.colors.primary[500],
+      borderRadius: tokens.borderRadius.md,
+    },
+    retryText: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.white,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.sm,
+      marginLeft: tokens.spacing.xs,
+    },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    settingItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: tokens.spacing.md,
+      paddingHorizontal: tokens.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    noBorder: {
+      borderBottomWidth: 0,
+    },
+    settingInfo: {
+      flex: 1,
+      marginRight: tokens.spacing.md,
+    },
+    settingItemTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: theme.text,
+      marginBottom: tokens.spacing.xs,
+    },
+    settingItemDesc: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    infoSection: {
+      backgroundColor: isDark
+        ? 'rgba(102, 126, 234, 0.1)'
+        : tokens.colors.primary[50],
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.md,
+      marginBottom: tokens.spacing.xl,
+      ...(isDark && { borderWidth: 1, borderColor: tokens.colors.primary[800] }),
+    },
+    infoText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+      lineHeight: 20,
+    },
+  });

@@ -13,11 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
-import { useTheme } from '../../../src/theme/ThemeContext';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import { useLogout, useDeleteAccount } from '../../../src/hooks/useAuth';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { tokens } from '../../../src/theme';
+import type { Theme } from '../../../src/theme/tokens';
 
 // 앱 버전 (컴포넌트 외부에서 상수로 정의)
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -30,7 +31,8 @@ const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
  */
 export default function SettingsScreen() {
   const router = useRouter();
-  const { isDark, toggleTheme, followSystem, setFollowSystem } = useTheme();
+  const { theme, isDark, toggleTheme, followSystem, setFollowSystem } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
 
@@ -145,7 +147,7 @@ export default function SettingsScreen() {
                 onValueChange={handleDarkModeToggle}
                 disabled={followSystem}
                 trackColor={{
-                  false: tokens.colors.neutral[300],
+                  false: isDark ? tokens.colors.neutral[600] : tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
                 }}
                 thumbColor={tokens.colors.white}
@@ -157,7 +159,7 @@ export default function SettingsScreen() {
                 value={followSystem}
                 onValueChange={handleFollowSystemToggle}
                 trackColor={{
-                  false: tokens.colors.neutral[300],
+                  false: isDark ? tokens.colors.neutral[600] : tokens.colors.neutral[300],
                   true: tokens.colors.primary[500],
                 }}
                 thumbColor={tokens.colors.white}
@@ -235,7 +237,7 @@ export default function SettingsScreen() {
               value={deleteConfirmText}
               onChangeText={setDeleteConfirmText}
               placeholder="탈퇴합니다"
-              placeholderTextColor={tokens.colors.neutral[400]}
+              placeholderTextColor={theme.textTertiary}
             />
             <View style={styles.deleteButtonRow}>
               <Button
@@ -253,7 +255,7 @@ export default function SettingsScreen() {
                 variant="primary"
                 size="md"
                 onPress={handleDeleteAccount}
-                style={[styles.deleteButton, styles.deleteConfirmButton]}
+                style={styles.deleteConfirmButton}
               >
                 탈퇴하기
               </Button>
@@ -265,137 +267,145 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: tokens.spacing.md,
-    paddingVertical: tokens.spacing.sm,
-    backgroundColor: tokens.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[200],
-  },
-  backButton: {
-    padding: tokens.spacing.sm,
-  },
-  backText: {
-    fontSize: 24,
-    color: tokens.colors.neutral[900],
-  },
-  headerTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  section: {
-    marginBottom: tokens.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.sm,
-    marginLeft: tokens.spacing.xs,
-  },
-  sectionTitleDanger: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.error[600],
-    marginBottom: tokens.spacing.sm,
-    marginLeft: tokens.spacing.xs,
-  },
-  card: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    ...tokens.shadows.sm,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: tokens.spacing.md,
-    paddingHorizontal: tokens.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  noBorder: {
-    borderBottomWidth: 0,
-  },
-  settingItemText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  settingItemValue: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-  },
-  settingItemArrow: {
-    fontSize: 20,
-    color: tokens.colors.neutral[400],
-  },
-  dangerText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.error[600],
-  },
-  deleteConfirmSection: {
-    backgroundColor: tokens.colors.error[50],
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.lg,
-    marginBottom: tokens.spacing.xl,
-    borderWidth: 1,
-    borderColor: tokens.colors.error[200],
-  },
-  deleteWarning: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.error[700],
-    marginBottom: tokens.spacing.sm,
-  },
-  deleteWarningItem: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.error[600],
-    marginLeft: tokens.spacing.sm,
-    marginBottom: tokens.spacing.xs,
-  },
-  deleteConfirmLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[700],
-    marginTop: tokens.spacing.md,
-    marginBottom: tokens.spacing.sm,
-  },
-  deleteConfirmInput: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.md,
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[300],
-    paddingVertical: tokens.spacing.sm,
-    paddingHorizontal: tokens.spacing.md,
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  deleteButtonRow: {
-    flexDirection: 'row',
-    gap: tokens.spacing.sm,
-  },
-  deleteButton: {
-    flex: 1,
-  },
-  deleteConfirmButton: {
-    backgroundColor: tokens.colors.error[600],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: tokens.spacing.md,
+      paddingVertical: tokens.spacing.sm,
+      backgroundColor: theme.card,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    backButton: {
+      padding: tokens.spacing.sm,
+    },
+    backText: {
+      fontSize: 24,
+      color: theme.text,
+    },
+    headerTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    placeholder: {
+      width: 40,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.sm,
+      marginLeft: tokens.spacing.xs,
+    },
+    sectionTitleDanger: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.error[isDark ? 400 : 600],
+      marginBottom: tokens.spacing.sm,
+      marginLeft: tokens.spacing.xs,
+    },
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    settingItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: tokens.spacing.md,
+      paddingHorizontal: tokens.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    noBorder: {
+      borderBottomWidth: 0,
+    },
+    settingItemText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.text,
+    },
+    settingItemValue: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    settingItemArrow: {
+      fontSize: 20,
+      color: theme.textTertiary,
+    },
+    dangerText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.error[isDark ? 400 : 600],
+    },
+    deleteConfirmSection: {
+      backgroundColor: isDark
+        ? 'rgba(239, 68, 68, 0.1)'
+        : tokens.colors.error[50],
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.lg,
+      marginBottom: tokens.spacing.xl,
+      borderWidth: 1,
+      borderColor: isDark
+        ? tokens.colors.error[800]
+        : tokens.colors.error[200],
+    },
+    deleteWarning: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.error[isDark ? 400 : 700],
+      marginBottom: tokens.spacing.sm,
+    },
+    deleteWarningItem: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.error[isDark ? 400 : 600],
+      marginLeft: tokens.spacing.sm,
+      marginBottom: tokens.spacing.xs,
+    },
+    deleteConfirmLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      marginTop: tokens.spacing.md,
+      marginBottom: tokens.spacing.sm,
+    },
+    deleteConfirmInput: {
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.white,
+      borderRadius: tokens.borderRadius.md,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingVertical: tokens.spacing.sm,
+      paddingHorizontal: tokens.spacing.md,
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.text,
+      marginBottom: tokens.spacing.md,
+    },
+    deleteButtonRow: {
+      flexDirection: 'row',
+      gap: tokens.spacing.sm,
+    },
+    deleteButton: {
+      flex: 1,
+    },
+    deleteConfirmButton: {
+      flex: 1,
+      backgroundColor: tokens.colors.error[600],
+    },
+  });

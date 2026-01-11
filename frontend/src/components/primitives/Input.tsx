@@ -11,8 +11,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { tokens, animations } from '../../theme';
+import { tokens, animations, useThemedStyles, useTheme } from '../../theme';
 import { Text } from './Text';
+import type { Theme } from '../../theme/tokens';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -32,10 +33,13 @@ export function Input({
   onBlur,
   ...textInputProps
 }: InputProps) {
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [isFocused, setIsFocused] = useState(false);
-  const borderColor = useSharedValue<string>(tokens.colors.neutral[300]);
-  const labelScale = useSharedValue(1);
-  const labelY = useSharedValue(0);
+
+  // 테마에 맞는 기본 테두리 색상
+  const defaultBorderColor = isDark ? theme.border : tokens.colors.neutral[300];
+  const borderColor = useSharedValue<string>(defaultBorderColor);
 
   const animatedBorderStyle = useAnimatedStyle(() => ({
     borderColor: borderColor.value as string,
@@ -54,7 +58,7 @@ export function Input({
   const handleBlur = (e: any) => {
     setIsFocused(false);
     borderColor.value = withTiming(
-      error ? tokens.colors.error[500] : tokens.colors.neutral[300],
+      error ? tokens.colors.error[500] : defaultBorderColor,
       { duration: animations.duration.normal }
     );
 
@@ -75,7 +79,7 @@ export function Input({
           variant="sm"
           weight="medium"
           style={styles.label}
-          color={error ? tokens.colors.error[600] : tokens.colors.neutral[700]}
+          color={error ? tokens.colors.error[600] : theme.textSecondary}
         >
           {label}
         </Text>
@@ -88,7 +92,7 @@ export function Input({
           onBlur={handleBlur}
           editable={!disabled}
           style={inputStyles}
-          placeholderTextColor={tokens.colors.neutral[400]}
+          placeholderTextColor={theme.textTertiary}
         />
       </Animated.View>
 
@@ -99,7 +103,7 @@ export function Input({
               {error}
             </Text>
           ) : helperText ? (
-            <Text variant="xs" color={tokens.colors.neutral[500]} style={styles.message}>
+            <Text variant="xs" color={theme.textTertiary} style={styles.message}>
               {helperText}
             </Text>
           ) : null}
@@ -109,38 +113,39 @@ export function Input({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  label: {
-    marginBottom: tokens.spacing.xs,
-  },
-  inputWrapper: {
-    borderWidth: 1.5,
-    borderRadius: tokens.borderRadius.md,
-    backgroundColor: tokens.colors.white,
-    overflow: 'hidden',
-  },
-  input: {
-    height: tokens.touchTarget.md,
-    paddingHorizontal: tokens.spacing.md,
-    fontSize: tokens.typography.fontSize.base,
-    fontFamily: tokens.typography.fontFamily.sans,
-    color: tokens.colors.neutral[900],
-  },
-  inputDisabled: {
-    backgroundColor: tokens.colors.neutral[100],
-    color: tokens.colors.neutral[400],
-  },
-  inputError: {
-    borderColor: tokens.colors.error[500],
-  },
-  messageContainer: {
-    marginTop: tokens.spacing.xs,
-    minHeight: 16,
-  },
-  message: {
-    lineHeight: 16,
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+    },
+    label: {
+      marginBottom: tokens.spacing.xs,
+    },
+    inputWrapper: {
+      borderWidth: 1.5,
+      borderRadius: tokens.borderRadius.md,
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.white,
+      overflow: 'hidden',
+    },
+    input: {
+      height: tokens.touchTarget.md,
+      paddingHorizontal: tokens.spacing.md,
+      fontSize: tokens.typography.fontSize.base,
+      fontFamily: tokens.typography.fontFamily.sans,
+      color: theme.text,
+    },
+    inputDisabled: {
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[100],
+      color: theme.textTertiary,
+    },
+    inputError: {
+      borderColor: tokens.colors.error[500],
+    },
+    messageContainer: {
+      marginTop: tokens.spacing.xs,
+      minHeight: 16,
+    },
+    message: {
+      lineHeight: 16,
+    },
+  });

@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Animated, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from './Text';
-import { tokens } from '../../theme';
+import { tokens, useTheme } from '../../theme';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -20,21 +20,6 @@ interface ToastProps {
   onHide: () => void;
 }
 
-const TOAST_COLORS: Record<ToastType, { bg: string; text: string }> = {
-  success: {
-    bg: tokens.colors.success[500],
-    text: tokens.colors.white,
-  },
-  error: {
-    bg: tokens.colors.error[500],
-    text: tokens.colors.white,
-  },
-  info: {
-    bg: tokens.colors.neutral[800],
-    text: tokens.colors.white,
-  },
-};
-
 export function Toast({
   message,
   type = 'success',
@@ -42,9 +27,26 @@ export function Toast({
   duration = 3000,
   onHide,
 }: ToastProps) {
+  const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
+
+  // 테마에 맞는 info 토스트 색상
+  const TOAST_COLORS: Record<ToastType, { bg: string; text: string }> = {
+    success: {
+      bg: tokens.colors.success[500],
+      text: tokens.colors.white,
+    },
+    error: {
+      bg: tokens.colors.error[500],
+      text: tokens.colors.white,
+    },
+    info: {
+      bg: isDark ? tokens.colors.neutral[700] : tokens.colors.neutral[800],
+      text: tokens.colors.white,
+    },
+  };
 
   useEffect(() => {
     if (visible) {

@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
-  TextStyle,
   AccessibilityRole,
   AccessibilityState,
 } from 'react-native';
@@ -15,8 +14,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { tokens, animations } from '../../theme';
+import { tokens, animations, useThemedStyles, useTheme } from '../../theme';
 import { Text } from './Text';
+import type { Theme } from '../../theme/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -53,6 +53,8 @@ export function Button({
   accessibilityHint,
   accessibilityState,
 }: ButtonProps) {
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
@@ -90,13 +92,13 @@ export function Button({
   const buttonStyles = [
     styles.base,
     styles[variant],
-    styles[`size_${size}`],
+    styles[`size_${size}` as keyof typeof styles],
     fullWidth && styles.fullWidth,
     (disabled || loading) && styles.disabled,
     style,
   ];
 
-  const textColor = getTextColor(variant, disabled || loading);
+  const textColor = getTextColor(variant, disabled || loading, isDark, theme);
 
   return (
     <AnimatedPressable
@@ -128,68 +130,82 @@ export function Button({
   );
 }
 
-function getTextColor(variant: ButtonVariant, disabled: boolean): string {
+function getTextColor(
+  variant: ButtonVariant,
+  disabled: boolean,
+  isDark: boolean,
+  theme: Theme
+): string {
   if (disabled) {
-    return tokens.colors.neutral[400];
+    return theme.textTertiary;
   }
 
   switch (variant) {
     case 'primary':
       return tokens.colors.white;
     case 'secondary':
-      return tokens.colors.primary[600];
+      return tokens.colors.primary[isDark ? 400 : 600];
     case 'ghost':
-      return tokens.colors.primary[600];
+      return tokens.colors.primary[isDark ? 400 : 600];
     default:
       return tokens.colors.white;
   }
 }
 
-const styles = StyleSheet.create({
-  base: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: tokens.borderRadius.lg,
-    flexDirection: 'row',
-  },
-  primary: {
-    backgroundColor: tokens.colors.primary[500],
-    shadowColor: tokens.colors.primary[500],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  secondary: {
-    backgroundColor: tokens.colors.primary[50],
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[200],
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  size_sm: {
-    height: tokens.touchTarget.sm,
-    paddingHorizontal: tokens.spacing.md,
-    minWidth: 80,
-  },
-  size_md: {
-    height: tokens.touchTarget.md,
-    paddingHorizontal: tokens.spacing.lg,
-    minWidth: 120,
-  },
-  size_lg: {
-    height: tokens.touchTarget.lg,
-    paddingHorizontal: tokens.spacing.xl,
-    minWidth: 160,
-  },
-  fullWidth: {
-    width: '100%',
-  },
-  disabled: {
-    backgroundColor: tokens.colors.neutral[200],
-    shadowOpacity: 0,
-    elevation: 0,
-    borderColor: tokens.colors.neutral[300],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    base: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: tokens.borderRadius.lg,
+      flexDirection: 'row',
+    },
+    primary: {
+      backgroundColor: tokens.colors.primary[500],
+      shadowColor: tokens.colors.primary[500],
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.2 : 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    secondary: {
+      backgroundColor: isDark
+        ? tokens.colors.primary[900]
+        : tokens.colors.primary[50],
+      borderWidth: 1,
+      borderColor: isDark
+        ? tokens.colors.primary[700]
+        : tokens.colors.primary[200],
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+    },
+    size_sm: {
+      height: tokens.touchTarget.sm,
+      paddingHorizontal: tokens.spacing.md,
+      minWidth: 80,
+    },
+    size_md: {
+      height: tokens.touchTarget.md,
+      paddingHorizontal: tokens.spacing.lg,
+      minWidth: 120,
+    },
+    size_lg: {
+      height: tokens.touchTarget.lg,
+      paddingHorizontal: tokens.spacing.xl,
+      minWidth: 160,
+    },
+    fullWidth: {
+      width: '100%',
+    },
+    disabled: {
+      backgroundColor: isDark
+        ? theme.backgroundTertiary
+        : tokens.colors.neutral[200],
+      shadowOpacity: 0,
+      elevation: 0,
+      borderColor: isDark
+        ? theme.border
+        : tokens.colors.neutral[300],
+    },
+  });
