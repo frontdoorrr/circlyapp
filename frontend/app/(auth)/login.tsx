@@ -5,6 +5,8 @@ import { useLogin } from '../../src/hooks/useAuth';
 import { Button } from '../../src/components/primitives/Button';
 import { Input } from '../../src/components/primitives/Input';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import {
   SupabaseAuthError,
   translateSupabaseError,
@@ -19,6 +21,8 @@ import {
  */
 export default function LoginScreen() {
   const router = useRouter();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 제출 방지
@@ -127,40 +131,41 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: tokens.spacing.lg,
-  },
-  header: {
-    marginBottom: tokens.spacing.xl,
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['4xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  subtitle: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-  },
-  form: {
-    gap: tokens.spacing.md,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: tokens.spacing.lg,
-  },
-  footerText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: tokens.spacing.lg,
+    },
+    header: {
+      marginBottom: tokens.spacing.xl,
+    },
+    title: {
+      fontSize: tokens.typography.fontSize['4xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    subtitle: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+    },
+    form: {
+      gap: tokens.spacing.md,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: tokens.spacing.lg,
+    },
+    footerText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+    },
+  });
