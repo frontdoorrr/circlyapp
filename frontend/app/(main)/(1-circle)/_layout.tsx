@@ -4,8 +4,8 @@ import { tokens } from '../../../src/theme';
 /**
  * Circle Tab Layout
  *
- * 서클 탭 레이아웃
- * - 내 서클 목록 화면
+ * Circle 탭 레이아웃
+ * - 내 Circle 목록 화면
  */
 export default function CircleLayout() {
   return (
@@ -18,7 +18,7 @@ export default function CircleLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '내 서클',
+          title: '내 Circle',
         }}
       />
     </Stack>

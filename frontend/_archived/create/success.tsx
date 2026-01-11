@@ -19,7 +19,7 @@ import { usePollCreateStore } from '../../../src/stores/pollCreate';
 /**
  * Poll Success Screen (투표 발행 완료 화면)
  *
- * 투표 생성 성공을 축하하고 3초 후 자동으로 홈으로 전환합니다.
+ * 투표 생성 성공을 축하하고 3초 후 자동으로 Home으로 전환합니다.
  *
  * 참고: prd/design/05-complete-ui-specification.md#2.6.5
  */
@@ -34,7 +34,7 @@ export default function SuccessScreen() {
   const opacity = useSharedValue(0);
   const progressWidth = useSharedValue(0);
 
-  // 홈으로 이동하는 함수 (worklet에서 호출 가능하도록 분리)
+  // Home으로 이동하는 함수 (worklet에서 호출 가능하도록 분리)
   const navigateToHome = () => {
     reset();
     router.replace('/(main)/(home)');
@@ -63,7 +63,7 @@ export default function SuccessScreen() {
       easing: Easing.linear,
     });
 
-    // 3초 후 홈으로 자동 전환
+    // 3초 후 Home으로 자동 전환
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 500 }, () => {
         // worklet에서 JS 함수 호출 시 runOnJS 필요

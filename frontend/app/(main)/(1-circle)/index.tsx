@@ -19,20 +19,20 @@ import { SkeletonCard } from '../../../src/components/states/Skeleton';
 import { tokens } from '../../../src/theme';
 
 /**
- * Circle Tab - 내 서클 목록
+ * Circle Tab - 내 Circle 목록
  *
- * 참여 중인 서클 목록을 표시하고 관리합니다:
- * - 서클 목록 조회
- * - 서클 카드 클릭 → 상세 화면
+ * 참여 중인 Circle 목록을 표시하고 관리합니다:
+ * - Circle 목록 조회
+ * - Circle 카드 클릭 → 상세 화면
  * - Pull-to-refresh
- * - FAB으로 새 서클 만들기
+ * - FAB으로 새 Circle 만들기
  */
 export default function CircleListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: circles, isLoading, refetch, isRefetching } = useMyCircles();
 
-  // 서클 카드 클릭
+  // Circle 카드 클릭
   const handleCirclePress = useCallback(
     (circleId: string) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -47,7 +47,7 @@ export default function CircleListScreen() {
     router.push('/join/invite-code' as any);
   }, [router]);
 
-  // FAB 클릭 - 새 서클 만들기
+  // FAB 클릭 - 새 Circle 만들기
   const handleCreateCircle = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/circle/create' as any);
@@ -64,7 +64,7 @@ export default function CircleListScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>내 서클</Text>
+          <Text style={styles.headerTitle}>내 Circle</Text>
         </View>
         <View style={styles.loadingContainer}>
           {[1, 2, 3].map((i) => (
@@ -79,7 +79,7 @@ export default function CircleListScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>내 서클</Text>
+        <Text style={styles.headerTitle}>내 Circle</Text>
         <TouchableOpacity
           style={styles.joinButton}
           onPress={handleJoinByCode}
@@ -89,7 +89,7 @@ export default function CircleListScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 서클 목록 */}
+      {/* Circle 목록 */}
       {circles && circles.length > 0 ? (
         <FlatList
           data={circles}
@@ -118,15 +118,15 @@ export default function CircleListScreen() {
         <View style={styles.emptyContainer}>
           <EmptyState
             emoji="👥"
-            title="참여한 서클이 없어요"
-            description="친구의 초대 코드로 서클에 참여하거나\n새로운 서클을 만들어보세요"
+            title="참여한 Circle이 없어요"
+            description="친구의 초대 코드로 Circle에 참여하거나\n새로운 Circle을 만들어보세요"
             actionLabel="코드로 참여하기"
             onAction={handleJoinByCode}
           />
         </View>
       )}
 
-      {/* FAB - 새 서클 만들기 */}
+      {/* FAB - 새 Circle 만들기 */}
       <Animated.View
         entering={FadeIn.delay(300).duration(300)}
         style={[
@@ -141,7 +141,7 @@ export default function CircleListScreen() {
           ]}
           onPress={handleCreateCircle}
           accessibilityRole="button"
-          accessibilityLabel="새 서클 만들기"
+          accessibilityLabel="새 Circle 만들기"
         >
           <Text style={styles.fabIcon}>+</Text>
         </Pressable>
@@ -172,7 +172,7 @@ function CircleCard({ circle, onPress }: CircleCardProps) {
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`${circle.name} 서클, ${circle.member_count}명 참여중`}
+      accessibilityLabel={`${circle.name} Circle, ${circle.member_count}명 참여중`}
     >
       <View style={styles.circleInfo}>
         <View style={styles.circleHeader}>

@@ -173,7 +173,7 @@ export function handleNotificationResponse(
         break;
 
       case 'circle_invite':
-        // 서클 상세 화면으로 이동
+        // Circle 상세 화면으로 이동
         if (data.circle_id) {
           router.push(`/circle/${data.circle_id}`);
         }

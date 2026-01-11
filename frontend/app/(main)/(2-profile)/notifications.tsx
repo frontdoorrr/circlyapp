@@ -301,12 +301,12 @@ export default function NotificationsScreen() {
               />
             </View>
 
-            {/* 서클 초대 알림 */}
+            {/* Circle 초대 알림 */}
             <View style={[styles.settingItem, styles.noBorder]}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingItemTitle}>🎈 서클 초대</Text>
+                <Text style={styles.settingItemTitle}>🎈 Circle 초대</Text>
                 <Text style={styles.settingItemDesc}>
-                  새로운 서클에 초대받으면 알림
+                  새로운 Circle에 초대받으면 알림
                 </Text>
               </View>
               <Switch

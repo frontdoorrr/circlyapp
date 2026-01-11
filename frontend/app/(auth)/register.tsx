@@ -80,7 +80,7 @@ export default function RegisterScreen() {
 
       console.log('[Register] 회원가입 성공 - AppInitializer가 리다이렉트 처리');
       // 성공 시 onAuthStateChange 리스너가 isAuthenticated를 true로 설정
-      // → AppInitializer가 자동으로 홈 화면으로 리다이렉트
+      // → AppInitializer가 자동으로 Home 화면으로 리다이렉트
     } catch (error) {
       console.error('[Register] 회원가입 실패:', error);
 

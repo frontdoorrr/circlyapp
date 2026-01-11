@@ -111,7 +111,7 @@ type PollCardProps = ActivePollCardProps | CompletedPollCardProps | LegacyPollCa
 /**
  * PollCard Component
  *
- * 홈 화면에 표시되는 투표 카드
+ * Home 화면에 표시되는 투표 카드
  * Spec: prd/design/05-complete-ui-specification.md - 섹션 2.2
  *
  * @example Active variant

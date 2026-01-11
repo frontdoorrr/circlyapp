@@ -143,7 +143,7 @@ function PreviewScreen() {
 
 ### 플로우 완료 시 자동 초기화
 
-성공 화면에서 3초 후 홈으로 이동하면서 자동으로 store를 초기화합니다:
+성공 화면에서 3초 후 Home으로 이동하면서 자동으로 store를 초기화합니다:
 
 ```typescript
 // app/(main)/(create)/success.tsx

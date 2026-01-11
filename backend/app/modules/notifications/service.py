@@ -61,19 +61,23 @@ class NotificationService:
 
         for user in users:
             if user.push_token and user.push_token.strip():
-                messages.append({
-                    "token": user.push_token,
-                    "title": title,
-                    "body": body,
-                    "data": data,
-                })
+                messages.append(
+                    {
+                        "token": user.push_token,
+                        "title": title,
+                        "body": body,
+                        "data": data,
+                    }
+                )
 
         if not messages:
             logger.debug("No users with push tokens to notify")
             return
 
         try:
-            results = await self.expo_push_client.send_batch_push_notifications(messages)
+            results = await self.expo_push_client.send_batch_push_notifications(
+                messages
+            )
             success_count = sum(1 for r in results if r.get("status") == "ok")
             logger.info(
                 "Push notifications sent: %d/%d succeeded",
@@ -99,7 +103,9 @@ class NotificationService:
         Returns:
             List of NotificationResponse
         """
-        notifications = await self.notification_repo.find_by_user_id(user_id, limit, offset)
+        notifications = await self.notification_repo.find_by_user_id(
+            user_id, limit, offset
+        )
         return [NotificationResponse.model_validate(n) for n in notifications]
 
     async def get_unread_count(self, user_id: uuid.UUID) -> int:
@@ -113,7 +119,9 @@ class NotificationService:
         """
         return await self.notification_repo.count_unread(user_id)
 
-    async def mark_as_read(self, notification_id: uuid.UUID, user_id: uuid.UUID) -> None:
+    async def mark_as_read(
+        self, notification_id: uuid.UUID, user_id: uuid.UUID
+    ) -> None:
         """Mark a notification as read.
 
         Args:
@@ -126,7 +134,9 @@ class NotificationService:
         """
         notification = await self.notification_repo.find_by_id(notification_id)
         if notification is None:
-            raise NotFoundException(message="알림을 찾을 수 없습니다", code="NOTIFICATION_NOT_FOUND")
+            raise NotFoundException(
+                message="알림을 찾을 수 없습니다", code="NOTIFICATION_NOT_FOUND"
+            )
 
         if notification.user_id != user_id:
             raise AuthorizationError(message="해당 알림에 대한 접근 권한이 없습니다")
@@ -141,7 +151,9 @@ class NotificationService:
         """
         await self.notification_repo.mark_all_as_read(user_id)
 
-    async def send_poll_started(self, poll: Poll, circle_member_ids: list[uuid.UUID]) -> None:
+    async def send_poll_started(
+        self, poll: Poll, circle_member_ids: list[uuid.UUID]
+    ) -> None:
         """Send poll started notifications to circle members.
 
         Args:
@@ -211,7 +223,9 @@ class NotificationService:
         # Send push notification
         await self._send_push_to_users([voted_for_id], title, body, data)
 
-    async def send_poll_ended(self, poll: Poll, circle_member_ids: list[uuid.UUID]) -> None:
+    async def send_poll_ended(
+        self, poll: Poll, circle_member_ids: list[uuid.UUID]
+    ) -> None:
         """Send poll ended notifications to circle members.
 
         Args:
@@ -303,8 +317,8 @@ class NotificationService:
             user_id: UUID of user being invited
             circle: Circle instance
         """
-        title = "🎈 서클 초대가 왔어요!"
-        body = f'"{circle.name}" 서클에 초대받았어요'
+        title = "🎈 Circle 초대가 왔어요!"
+        body = f'"{circle.name}" Circle에 초대받았어요'
         data = {
             "type": "circle_invite",
             "circle_id": str(circle.id),
@@ -337,7 +351,9 @@ class NotificationService:
         """
         success = await self.user_repo.update_push_token(user_id, token)
         if not success:
-            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+            raise NotFoundException(
+                message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND"
+            )
 
     async def unregister_push_token(self, user_id: uuid.UUID) -> None:
         """Unregister user's push notification token (set to empty string).
@@ -350,11 +366,11 @@ class NotificationService:
         """
         success = await self.user_repo.update_push_token(user_id, "")
         if not success:
-            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+            raise NotFoundException(
+                message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND"
+            )
 
-    async def get_notification_settings(
-        self, user_id: uuid.UUID
-    ) -> dict[str, bool]:
+    async def get_notification_settings(self, user_id: uuid.UUID) -> dict[str, bool]:
         """Get user's notification settings.
 
         Args:
@@ -368,7 +384,9 @@ class NotificationService:
         """
         user = await self.user_repo.find_by_id(user_id)
         if user is None:
-            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+            raise NotFoundException(
+                message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND"
+            )
 
         return {
             "poll_started": user.notify_poll_started,
@@ -412,7 +430,9 @@ class NotificationService:
             circle_invite=circle_invite,
         )
         if user is None:
-            raise NotFoundException(message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND")
+            raise NotFoundException(
+                message="사용자를 찾을 수 없습니다", code="USER_NOT_FOUND"
+            )
 
         return {
             "poll_started": user.notify_poll_started,
@@ -480,16 +500,20 @@ class NotificationService:
         messages = []
         for user in all_users:
             if user.push_token and user.push_token.strip():
-                messages.append({
-                    "token": user.push_token,
-                    "title": title,
-                    "body": body,
-                    "data": data,
-                })
+                messages.append(
+                    {
+                        "token": user.push_token,
+                        "title": title,
+                        "body": body,
+                        "data": data,
+                    }
+                )
 
         if messages:
             try:
-                results = await self.expo_push_client.send_batch_push_notifications(messages)
+                results = await self.expo_push_client.send_batch_push_notifications(
+                    messages
+                )
                 sent_count = sum(1 for r in results if r.get("status") == "ok")
             except ExpoPushError as e:
                 logger.error("Failed to send broadcast push notifications: %s", e)

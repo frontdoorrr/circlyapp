@@ -150,7 +150,7 @@
   - [x] `npx expo install react-native-reanimated react-native-gesture-handler`
 - [x] `frontend/app/` 디렉토리 구조 생성 → `CLAUDE.md#Architecture`
   - [x] `app/(auth)/` - 비인증 화면 (로그인, 가입)
-  - [x] `app/(main)/(home)/` - 홈 탭 (진행 중 투표)
+  - [x] `app/(main)/(home)/` - Home 탭 (진행 중 투표)
   - [x] `app/(main)/(create)/` - 투표 생성 탭
   - [x] `app/(main)/(profile)/` - 프로필 탭
 - [x] `app/_layout.tsx` - Root layout with theme provider
@@ -390,7 +390,7 @@
 #### 13.5.4 🏠 앱 시작 시 초기 탭 ✅
 - [x] `initialRouteName="(home)"` 설정
 
-#### 13.5.5 👆 홈 탭 스와이프 ✅
+#### 13.5.5 👆 Home 탭 스와이프 ✅
 - [x] `react-native-pager-view` 사용으로 구현
 
 #### 13.5.6 👻 투표 카드 클릭 시 Box 사라짐 ✅

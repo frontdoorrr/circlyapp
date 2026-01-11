@@ -326,7 +326,7 @@ frontend/
 │   ├── components/
 │   │   ├── ui/                   # 기본 UI 컴포넌트
 │   │   ├── poll/                 # 투표 관련 컴포넌트
-│   │   ├── circle/               # 서클 관련 컴포넌트
+│   │   ├── circle/               # Circle 관련 컴포넌트
 │   │   └── shared/               # 공통 컴포넌트
 │   │
 │   ├── features/                 # 기능 모듈

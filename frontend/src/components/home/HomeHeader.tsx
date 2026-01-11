@@ -23,7 +23,7 @@ interface HomeHeaderProps {
 /**
  * HomeHeader Component
  *
- * 홈 화면 상단 헤더
+ * Home 화면 상단 헤더
  * Spec: prd/design/05-complete-ui-specification.md - 섹션 2.2
  *
  * Layout:

@@ -120,7 +120,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
     }
-    // 로그인되었는데 로그인 화면에 있으면 → 홈 화면으로
+    // 로그인되었는데 로그인 화면에 있으면 → Home 화면으로
     else if (isAuthenticated && inAuthGroup) {
       router.replace('/(main)/(0-home)');
     }

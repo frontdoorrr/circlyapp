@@ -43,7 +43,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="(0-home)"
         options={{
-          title: '홈',
+          title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
           ),
@@ -52,7 +52,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="(1-circle)"
         options={{
-          title: '서클',
+          title: 'Circle',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'people-circle' : 'people-circle-outline'} size={size} color={color} />
           ),

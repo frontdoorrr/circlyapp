@@ -32,7 +32,7 @@ Backend Modules:
 
 Frontend Structure (Expo Router):
 ├── app/(auth)/           # 비인증 화면 (로그인, 가입)
-├── app/(main)/(home)/    # 홈 탭 (진행 중 투표)
+├── app/(main)/(home)/    # Home 탭 (진행 중 투표)
 ├── app/(main)/(create)/  # 투표 생성 탭
 └── app/(main)/(profile)/ # 프로필 탭
 ```

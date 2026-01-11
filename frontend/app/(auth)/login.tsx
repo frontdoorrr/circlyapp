@@ -49,7 +49,7 @@ export default function LoginScreen() {
     try {
       await loginMutation.mutateAsync({ email, password });
       // 성공 시 onAuthStateChange 리스너가 isAuthenticated를 true로 설정
-      // → AppInitializer가 자동으로 홈 화면으로 리다이렉트
+      // → AppInitializer가 자동으로 Home 화면으로 리다이렉트
       console.log('[Login] 로그인 성공 - AppInitializer가 리다이렉트 처리');
     } catch (error) {
       console.error('[Login] 로그인 실패:', error);

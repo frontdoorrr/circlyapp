@@ -367,7 +367,7 @@ const handleCreatePoll = async () => {
       }
     });
 
-    // 성공 시 홈으로 이동
+    // 성공 시 Home으로 이동
     router.replace('/(main)/(home)');
 
     // 성공 토스트

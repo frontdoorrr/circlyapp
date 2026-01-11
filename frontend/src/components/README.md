@@ -523,7 +523,7 @@ interface EmptyStateProps {
 ```
 
 **Variants:**
-- `no-circles`: "서클이 없어요" with circle icon
+- `no-circles`: "Circle이 없어요" with circle icon
 - `no-polls`: "진행 중인 투표가 없어요" with poll icon
 - `no-votes`: "아직 투표가 없어요" with ballot icon
 - `no-notifications`: "알림이 없어요" with bell icon

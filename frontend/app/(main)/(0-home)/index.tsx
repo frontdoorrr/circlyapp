@@ -54,7 +54,7 @@ interface TransformedActivePoll extends ActivePollData {
   rawEndsAt: string;
 }
 
-interface TransformedCompletedPoll extends CompletedPollData {}
+interface TransformedCompletedPoll extends CompletedPollData { }
 
 // ============================================================================
 // Home Screen Component
@@ -231,7 +231,7 @@ export default function HomeScreen() {
     router.push('/(main)/(2-profile)' as any);
   }, [router]);
 
-  // 서클 탭으로 이동
+  // Circle 탭으로 이동
   const handleGoToCircles = useCallback(() => {
     router.push('/(main)/(1-circle)' as any);
   }, [router]);

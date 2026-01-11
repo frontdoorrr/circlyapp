@@ -20,7 +20,7 @@ import { tokens } from '../../src/theme';
  * 가입 완료 후 축하 애니메이션과 함께 표시됩니다.
  * - 🎉 이모지 bounce 애니메이션
  * - Confetti 효과
- * - 3초 후 자동으로 홈 화면으로 이동
+ * - 3초 후 자동으로 Home 화면으로 이동
  */
 export default function JoinSuccessScreen() {
   const { circleName, nickname } = useLocalSearchParams<{
@@ -162,7 +162,7 @@ export default function JoinSuccessScreen() {
 
           {/* Auto-redirect notice */}
           <Animated.View style={[styles.redirectContainer, messageAnimatedStyle]}>
-            <Text style={styles.redirectText}>잠시 후 홈으로 이동합니다...</Text>
+            <Text style={styles.redirectText}>잠시 후 Home으로 이동합니다...</Text>
 
             {/* Progress bar */}
             <View style={styles.progressBarContainer}>

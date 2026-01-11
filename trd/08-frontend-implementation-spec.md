@@ -240,7 +240,7 @@ frontend/
 │   │   ├── register.tsx
 │   │   └── _layout.tsx
 │   ├── (main)/                  # 인증 필요 화면 그룹
-│   │   ├── (home)/              # 홈 탭
+│   │   ├── (home)/              # Home 탭
 │   │   │   ├── index.tsx
 │   │   │   └── _layout.tsx
 │   │   ├── (create)/            # 투표 생성 탭
@@ -749,7 +749,7 @@ export function useVote(pollId: string) {
 
 ## 🎬 화면별 구현 가이드
 
-### 1. 홈 화면 (진행중 투표 목록)
+### 1. Home 화면 (진행중 투표 목록)
 
 **파일**: `app/(main)/(home)/index.tsx`
 
