@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { tokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
+import type { Theme } from '../../../src/theme/tokens';
 import { useMyVoters } from '../../../src/hooks/usePolls';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -11,6 +13,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
  */
 export default function VotersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { data, isLoading, error } = useMyVoters(id, true);
 
   if (isLoading) {
@@ -119,119 +123,124 @@ export default function VotersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    gap: tokens.spacing.md,
-  },
-  loadingText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    gap: tokens.spacing.md,
-  },
-  errorEmoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.lg,
-    color: tokens.colors.neutral[600],
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: tokens.spacing.xl,
-    paddingBottom: tokens.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[200],
-  },
-  headerEmoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    marginBottom: tokens.spacing.md,
-    textAlign: 'center',
-  },
-  headerTitle: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.primary[600],
-    marginBottom: tokens.spacing.sm,
-  },
-  headerQuestion: {
-    fontSize: tokens.typography.fontSize.lg,
-    color: tokens.colors.neutral[700],
-    textAlign: 'center',
-    marginBottom: tokens.spacing.sm,
-  },
-  headerCount: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-  },
-  votersList: {
-    gap: tokens.spacing.md,
-  },
-  voterCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.white,
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-    shadowColor: tokens.colors.neutral[900],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    gap: tokens.spacing.md,
-  },
-  voterEmoji: {
-    fontSize: 40,
-    lineHeight: 48,
-    textAlign: 'center',
-  },
-  voterInfo: {
-    flex: 1,
-  },
-  voterName: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: 2,
-  },
-  voterTime: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: tokens.spacing['2xl'],
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    marginBottom: tokens.spacing.md,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: tokens.typography.fontSize.lg,
-    color: tokens.colors.neutral[500],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      gap: tokens.spacing.md,
+    },
+    loadingText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      gap: tokens.spacing.md,
+    },
+    errorEmoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      textAlign: 'center',
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.lg,
+      color: theme.textSecondary,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: tokens.spacing.xl,
+      paddingBottom: tokens.spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerEmoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.md,
+      textAlign: 'center',
+    },
+    headerTitle: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      marginBottom: tokens.spacing.sm,
+    },
+    headerQuestion: {
+      fontSize: tokens.typography.fontSize.lg,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      marginBottom: tokens.spacing.sm,
+    },
+    headerCount: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+    },
+    votersList: {
+      gap: tokens.spacing.md,
+    },
+    voterCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      gap: tokens.spacing.md,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : {
+            shadowColor: tokens.colors.neutral[900],
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 2,
+          }),
+    },
+    voterEmoji: {
+      fontSize: 40,
+      lineHeight: 48,
+      textAlign: 'center',
+    },
+    voterInfo: {
+      flex: 1,
+    },
+    voterName: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: 2,
+    },
+    voterTime: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    emptyContainer: {
+      alignItems: 'center',
+      paddingVertical: tokens.spacing['2xl'],
+    },
+    emptyEmoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.md,
+      textAlign: 'center',
+    },
+    emptyText: {
+      fontSize: tokens.typography.fontSize.lg,
+      color: theme.textTertiary,
+    },
+  });

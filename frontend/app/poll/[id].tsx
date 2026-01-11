@@ -29,11 +29,13 @@ import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { ResultCard } from '../../src/components/share/ResultCard';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import { ApiError } from '../../src/types/api';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 
 // 애니메이션 결과 바 컴포넌트
-function AnimatedResultBar({ percentage }: { percentage: number }) {
+function AnimatedResultBar({ percentage, isDark, theme }: { percentage: number; isDark: boolean; theme: Theme }) {
   const width = useSharedValue(0);
 
   useEffect(() => {
@@ -47,9 +49,22 @@ function AnimatedResultBar({ percentage }: { percentage: number }) {
     width: `${width.value}%`,
   }));
 
+  const containerStyle = {
+    height: 8,
+    backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+    borderRadius: 4,
+    overflow: 'hidden' as const,
+  };
+
+  const barStyle = {
+    height: '100%' as const,
+    backgroundColor: tokens.colors.primary[500],
+    borderRadius: 4,
+  };
+
   return (
-    <View style={styles.resultBarContainer}>
-      <Animated.View style={[styles.resultBar, animatedStyle]} />
+    <View style={containerStyle}>
+      <Animated.View style={[barStyle, animatedStyle]} />
     </View>
   );
 }
@@ -58,6 +73,8 @@ export default function PollDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   // 사용자 정보 (Orb Mode 확인용)
   const { data: currentUser } = useCurrentUser();
@@ -361,7 +378,7 @@ export default function PollDetailScreen() {
                   </Text>
 
                   {/* 득표율 바 (애니메이션) */}
-                  <AnimatedResultBar percentage={result.vote_percentage} />
+                  <AnimatedResultBar percentage={result.vote_percentage} isDark={isDark} theme={theme} />
                 </View>
 
                 <View style={styles.resultStats}>
@@ -427,223 +444,226 @@ export default function PollDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  questionCard: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.lg,
-    marginBottom: tokens.spacing.lg,
-    alignItems: 'center',
-    ...tokens.shadows.sm,
-  },
-  question: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-    textAlign: 'center',
-    marginBottom: tokens.spacing.sm,
-  },
-  timeRemaining: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.primary[600],
-  },
-  resultStatus: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.success[600],
-  },
-  section: {
-    marginBottom: tokens.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  memberGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: tokens.spacing.sm,
-  },
-  memberCard: {
-    width: '48%',
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.md,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-  },
-  memberCardSelected: {
-    backgroundColor: tokens.colors.primary[50],
-    borderColor: tokens.colors.primary[500],
-  },
-  memberCardAvatar: {
-    width: 72,      // 64 → 72 (iOS 이모지 렌더링 여유 공간)
-    height: 72,     // 64 → 72
-    borderRadius: 36,
-    backgroundColor: tokens.colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: tokens.spacing.sm,
-    // Note: overflow: 'visible'은 iOS에서 무시되므로 제거
-  },
-  memberCardEmoji: {
-    fontSize: 36,   // 32 → 36
-    lineHeight: 40,
-    textAlign: 'center',
-    // Note: includeFontPadding은 Android 전용이므로 제거
-  },
-  memberCardName: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    textAlign: 'center',
-  },
-  voteButtonContainer: {
-    marginTop: tokens.spacing.lg,
-  },
-  resultList: {
-    gap: tokens.spacing.sm,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.md,
-    ...tokens.shadows.sm,
-  },
-  resultRank: {
-    width: 40,
-    alignItems: 'center',
-    marginRight: tokens.spacing.sm,
-  },
-  resultRankText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.bold,
-  },
-  resultAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: tokens.colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: tokens.spacing.md,
-  },
-  resultEmoji: {
-    fontSize: 24,
-  },
-  resultInfo: {
-    flex: 1,
-    marginRight: tokens.spacing.md,
-  },
-  resultName: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.xs,
-  },
-  resultBarContainer: {
-    height: 8,
-    backgroundColor: tokens.colors.neutral[200],
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  resultBar: {
-    height: '100%',
-    backgroundColor: tokens.colors.primary[500],
-    borderRadius: 4,
-  },
-  resultStats: {
-    alignItems: 'flex-end',
-  },
-  resultVotes: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.primary[600],
-  },
-  resultPercentage: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-  },
-  shareSection: {
-    marginTop: tokens.spacing.lg,
-    marginBottom: tokens.spacing.xl,
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
-  },
-  hiddenCard: {
-    position: 'absolute',
-    left: -10000, // 화면 밖으로 숨김
-    top: 0,
-  },
-  // Orb Mode 버튼 스타일
-  orbModeButton: {
-    marginBottom: tokens.spacing.xl,
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: tokens.colors.primary[400],
-    padding: tokens.spacing.lg,
-  },
-  orbModeButtonDisabled: {
-    borderColor: tokens.colors.neutral[300],
-    backgroundColor: tokens.colors.neutral[100],
-  },
-  orbModeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.md,
-  },
-  orbModeIcon: {
-    fontSize: 32,
-    lineHeight: 40,
-    textAlign: 'center',
-  },
-  orbModeTextContainer: {
-    flex: 1,
-  },
-  orbModeTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-    marginBottom: 2,
-  },
-  orbModeTitleDisabled: {
-    color: tokens.colors.neutral[500],
-  },
-  orbModeSubtitle: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[500],
-  },
-  orbModeSubtitleDisabled: {
-    color: tokens.colors.neutral[400],
-  },
-  orbModeArrow: {
-    fontSize: tokens.typography.fontSize.xl,
-    color: tokens.colors.primary[400],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      padding: tokens.spacing.lg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    questionCard: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.lg,
+      marginBottom: tokens.spacing.lg,
+      alignItems: 'center',
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    question: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+      textAlign: 'center',
+      marginBottom: tokens.spacing.sm,
+    },
+    timeRemaining: {
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    resultStatus: {
+      fontSize: tokens.typography.fontSize.base,
+      color: tokens.colors.success[isDark ? 400 : 600],
+    },
+    section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.md,
+    },
+    memberGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: tokens.spacing.sm,
+    },
+    memberCard: {
+      width: '48%',
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.md,
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: theme.border,
+    },
+    memberCardSelected: {
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.15)' : tokens.colors.primary[50],
+      borderColor: tokens.colors.primary[500],
+    },
+    memberCardAvatar: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: tokens.spacing.sm,
+    },
+    memberCardEmoji: {
+      fontSize: 36,
+      lineHeight: 40,
+      textAlign: 'center',
+    },
+    memberCardName: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      textAlign: 'center',
+    },
+    voteButtonContainer: {
+      marginTop: tokens.spacing.lg,
+    },
+    resultList: {
+      gap: tokens.spacing.sm,
+    },
+    resultItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.md,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    resultRank: {
+      width: 40,
+      alignItems: 'center',
+      marginRight: tokens.spacing.sm,
+    },
+    resultRankText: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.bold,
+    },
+    resultAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: tokens.spacing.md,
+    },
+    resultEmoji: {
+      fontSize: 24,
+    },
+    resultInfo: {
+      flex: 1,
+      marginRight: tokens.spacing.md,
+    },
+    resultName: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.xs,
+    },
+    resultBarContainer: {
+      height: 8,
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+      borderRadius: 4,
+      overflow: 'hidden',
+    },
+    resultBar: {
+      height: '100%',
+      backgroundColor: tokens.colors.primary[500],
+      borderRadius: 4,
+    },
+    resultStats: {
+      alignItems: 'flex-end',
+    },
+    resultVotes: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    resultPercentage: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+    },
+    shareSection: {
+      marginTop: tokens.spacing.lg,
+      marginBottom: tokens.spacing.xl,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.lg,
+      textAlign: 'center',
+    },
+    hiddenCard: {
+      position: 'absolute',
+      left: -10000,
+      top: 0,
+    },
+    // Orb Mode 버튼 스타일
+    orbModeButton: {
+      marginBottom: tokens.spacing.xl,
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      borderWidth: 2,
+      borderColor: tokens.colors.primary[isDark ? 500 : 400],
+      padding: tokens.spacing.lg,
+    },
+    orbModeButtonDisabled: {
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundSecondary,
+    },
+    orbModeContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: tokens.spacing.md,
+    },
+    orbModeIcon: {
+      fontSize: 32,
+      lineHeight: 40,
+      textAlign: 'center',
+    },
+    orbModeTextContainer: {
+      flex: 1,
+    },
+    orbModeTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 400 : 700],
+      marginBottom: 2,
+    },
+    orbModeTitleDisabled: {
+      color: theme.textTertiary,
+    },
+    orbModeSubtitle: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 500],
+    },
+    orbModeSubtitleDisabled: {
+      color: theme.textTertiary,
+    },
+    orbModeArrow: {
+      fontSize: tokens.typography.fontSize.xl,
+      color: tokens.colors.primary[isDark ? 400 : 400],
+    },
+  });

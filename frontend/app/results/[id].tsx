@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 import { usePollDetail } from '../../src/hooks/usePolls';
 import { LoadingSpinner, EmptyState } from '../../src/components/states';
@@ -19,6 +21,8 @@ import { LoadingSpinner, EmptyState } from '../../src/components/states';
  */
 export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { data: currentUser } = useCurrentUser();
   const isOrbMode = currentUser?.is_orb_mode ?? false;
   const viewShotRef = useRef<ViewShot>(null);
@@ -313,202 +317,207 @@ export default function ResultsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-    paddingBottom: 140,
-  },
-  shareableContent: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.xl,
-    padding: tokens.spacing.lg,
-    marginBottom: tokens.spacing.lg,
-    // 그림자 효과
-    shadowColor: tokens.colors.neutral[900],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: tokens.spacing.xl,
-  },
-  emoji: {
-    fontSize: 64,
-    lineHeight: 76,  // fontSize * 1.2 (iOS 잘림 방지)
-    marginBottom: tokens.spacing.md,
-    textAlign: 'center',
-  },
-  question: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    textAlign: 'center',
-    marginBottom: tokens.spacing.sm,
-  },
-  stats: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-  },
-  resultsList: {
-    gap: tokens.spacing.lg,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    gap: tokens.spacing.md,
-  },
-  rank: {
-    width: 48,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 4,
-  },
-  rankEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  rankNumber: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[400],
-  },
-  resultInfo: {
-    flex: 1,
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: tokens.spacing.sm,
-  },
-  resultName: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-  },
-  resultVotes: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.primary[600],
-  },
-  barContainer: {
-    height: 12,
-    backgroundColor: tokens.colors.neutral[200],
-    borderRadius: tokens.borderRadius.full,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: tokens.borderRadius.full,
-  },
-  branding: {
-    alignItems: 'center',
-    marginTop: tokens.spacing.xl,
-    paddingTop: tokens.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-  },
-  brandingText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.neutral[400],
-  },
-  infoCard: {
-    backgroundColor: tokens.colors.primary[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-    marginTop: tokens.spacing.xl,
-    alignItems: 'center',
-  },
-  infoText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-    marginBottom: tokens.spacing.xs,
-  },
-  infoSubtext: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[600],
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: tokens.spacing.lg,
-    backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-    gap: tokens.spacing.sm,
-  },
-  actionButton: {
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-  },
-  shareButton: {
-    backgroundColor: tokens.colors.primary[500],
-  },
-  shareButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[300],
-  },
-  shareButtonText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.white,
-  },
-  // Orb Mode 버튼 스타일
-  orbModeButton: {
-    marginTop: tokens.spacing.lg,
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: tokens.colors.primary[400],
-    padding: tokens.spacing.lg,
-  },
-  orbModeButtonDisabled: {
-    borderColor: tokens.colors.neutral[300],
-    backgroundColor: tokens.colors.neutral[100],
-  },
-  orbModeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.md,
-  },
-  orbModeIcon: {
-    fontSize: 32,
-    lineHeight: 40,  // fontSize * 1.25 (iOS 잘림 방지)
-    textAlign: 'center',
-  },
-  orbModeTextContainer: {
-    flex: 1,
-  },
-  orbModeTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-    marginBottom: 2,
-  },
-  orbModeTitleDisabled: {
-    color: tokens.colors.neutral[500],
-  },
-  orbModeSubtitle: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[500],
-  },
-  orbModeSubtitleDisabled: {
-    color: tokens.colors.neutral[400],
-  },
-  orbModeArrow: {
-    fontSize: tokens.typography.fontSize.xl,
-    color: tokens.colors.primary[400],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+      paddingBottom: 140,
+    },
+    shareableContent: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.xl,
+      padding: tokens.spacing.lg,
+      marginBottom: tokens.spacing.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : {
+            shadowColor: tokens.colors.neutral[900],
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+          }),
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: tokens.spacing.xl,
+    },
+    emoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.md,
+      textAlign: 'center',
+    },
+    question: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      textAlign: 'center',
+      marginBottom: tokens.spacing.sm,
+    },
+    stats: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+    },
+    resultsList: {
+      gap: tokens.spacing.lg,
+    },
+    resultItem: {
+      flexDirection: 'row',
+      gap: tokens.spacing.md,
+    },
+    rank: {
+      width: 48,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingTop: 4,
+    },
+    rankEmoji: {
+      fontSize: 24,
+      marginBottom: 4,
+    },
+    rankNumber: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textTertiary,
+    },
+    resultInfo: {
+      flex: 1,
+    },
+    resultHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: tokens.spacing.sm,
+    },
+    resultName: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    resultVotes: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    barContainer: {
+      height: 12,
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+      borderRadius: tokens.borderRadius.full,
+      overflow: 'hidden',
+    },
+    barFill: {
+      height: '100%',
+      borderRadius: tokens.borderRadius.full,
+    },
+    branding: {
+      alignItems: 'center',
+      marginTop: tokens.spacing.xl,
+      paddingTop: tokens.spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    brandingText: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: theme.textTertiary,
+    },
+    infoCard: {
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      marginTop: tokens.spacing.xl,
+      alignItems: 'center',
+      ...(isDark && { borderWidth: 1, borderColor: tokens.colors.primary[800] }),
+    },
+    infoText: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+      marginBottom: tokens.spacing.xs,
+    },
+    infoSubtext: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: tokens.spacing.lg,
+      backgroundColor: theme.card,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      gap: tokens.spacing.sm,
+    },
+    actionButton: {
+      paddingVertical: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.lg,
+      alignItems: 'center',
+    },
+    shareButton: {
+      backgroundColor: tokens.colors.primary[500],
+    },
+    shareButtonDisabled: {
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[300],
+    },
+    shareButtonText: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.white,
+    },
+    // Orb Mode 버튼 스타일
+    orbModeButton: {
+      marginTop: tokens.spacing.lg,
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      borderWidth: 2,
+      borderColor: tokens.colors.primary[isDark ? 500 : 400],
+      padding: tokens.spacing.lg,
+    },
+    orbModeButtonDisabled: {
+      borderColor: theme.border,
+      backgroundColor: theme.backgroundSecondary,
+    },
+    orbModeContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: tokens.spacing.md,
+    },
+    orbModeIcon: {
+      fontSize: 32,
+      lineHeight: 40,
+      textAlign: 'center',
+    },
+    orbModeTextContainer: {
+      flex: 1,
+    },
+    orbModeTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 400 : 700],
+      marginBottom: 2,
+    },
+    orbModeTitleDisabled: {
+      color: theme.textTertiary,
+    },
+    orbModeSubtitle: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 500],
+    },
+    orbModeSubtitleDisabled: {
+      color: theme.textTertiary,
+    },
+    orbModeArrow: {
+      fontSize: tokens.typography.fontSize.xl,
+      color: tokens.colors.primary[isDark ? 400 : 400],
+    },
+  });
