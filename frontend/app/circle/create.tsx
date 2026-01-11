@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, Pressable, TextInput, ScrollView } from 'react-
 import { Stack, router } from 'expo-router';
 import { useState } from 'react';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import { createCircle } from '../../src/api/circle';
 
 /**
@@ -13,6 +15,8 @@ import { createCircle } from '../../src/api/circle';
  * - 생성 완료 시 Circle 화면으로 이동
  */
 export default function CreateCircleScreen() {
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -111,7 +115,7 @@ export default function CreateCircleScreen() {
               value={name}
               onChangeText={handleNameChange}
               placeholder="예: 3-2반 친구들"
-              placeholderTextColor={tokens.colors.neutral[400]}
+              placeholderTextColor={theme.textTertiary}
               maxLength={30}
               editable={!isCreating}
             />
@@ -141,7 +145,7 @@ export default function CreateCircleScreen() {
               value={description}
               onChangeText={handleDescriptionChange}
               placeholder="이 Circle에 대해 간단히 소개해주세요"
-              placeholderTextColor={tokens.colors.neutral[400]}
+              placeholderTextColor={theme.textTertiary}
               multiline
               numberOfLines={4}
               maxLength={100}
@@ -191,138 +195,140 @@ export default function CreateCircleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-    paddingBottom: 100,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: tokens.spacing.lg,
-    marginBottom: tokens.spacing.xl,
-  },
-  emoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  description: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  inputSection: {
-    marginBottom: tokens.spacing.xl,
-  },
-  inputLabel: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  required: {
-    color: tokens.colors.red[500],
-  },
-  input: {
-    backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.borderRadius.lg,
-    paddingVertical: tokens.spacing.md,
-    paddingHorizontal: tokens.spacing.lg,
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[900],
-  },
-  inputError: {
-    borderColor: tokens.colors.red[500],
-    backgroundColor: tokens.colors.red[50],
-  },
-  inputValid: {
-    borderColor: tokens.colors.primary[500],
-    backgroundColor: tokens.colors.primary[50],
-  },
-  textArea: {
-    minHeight: 100,
-    paddingTop: tokens.spacing.md,
-  },
-  inputFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: tokens.spacing.sm,
-  },
-  hint: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.red[600],
-  },
-  charCount: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-  },
-  charCountError: {
-    color: tokens.colors.red[600],
-  },
-  infoCard: {
-    backgroundColor: tokens.colors.primary[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  infoTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-    marginBottom: tokens.spacing.sm,
-  },
-  infoText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[600],
-    lineHeight: 20,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: tokens.spacing.lg,
-    paddingBottom: tokens.spacing.xl,
-    backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-  },
-  createButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-  },
-  createButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[200],
-  },
-  createButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.white,
-  },
-  createButtonTextDisabled: {
-    color: tokens.colors.neutral[400],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+      paddingBottom: 100,
+    },
+    header: {
+      alignItems: 'center',
+      marginTop: tokens.spacing.lg,
+      marginBottom: tokens.spacing.xl,
+    },
+    emoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.lg,
+      textAlign: 'center',
+    },
+    title: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    description: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    inputSection: {
+      marginBottom: tokens.spacing.xl,
+    },
+    inputLabel: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    required: {
+      color: tokens.colors.error[500],
+    },
+    input: {
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.white,
+      borderWidth: 2,
+      borderColor: theme.border,
+      borderRadius: tokens.borderRadius.lg,
+      paddingVertical: tokens.spacing.md,
+      paddingHorizontal: tokens.spacing.lg,
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.text,
+    },
+    inputError: {
+      borderColor: tokens.colors.error[500],
+      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : tokens.colors.error[50],
+    },
+    inputValid: {
+      borderColor: tokens.colors.primary[500],
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+    },
+    textArea: {
+      minHeight: 100,
+      paddingTop: tokens.spacing.md,
+    },
+    inputFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: tokens.spacing.sm,
+    },
+    hint: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.error[isDark ? 400 : 600],
+    },
+    charCount: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    charCountError: {
+      color: tokens.colors.error[isDark ? 400 : 600],
+    },
+    infoCard: {
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      ...(isDark && { borderWidth: 1, borderColor: tokens.colors.primary[800] }),
+    },
+    infoTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+      marginBottom: tokens.spacing.sm,
+    },
+    infoText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      lineHeight: 20,
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: tokens.spacing.lg,
+      paddingBottom: tokens.spacing.xl,
+      backgroundColor: theme.card,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    createButton: {
+      backgroundColor: tokens.colors.primary[500],
+      paddingVertical: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.lg,
+      alignItems: 'center',
+    },
+    createButtonDisabled: {
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+    },
+    createButtonText: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.white,
+    },
+    createButtonTextDisabled: {
+      color: theme.textTertiary,
+    },
+  });

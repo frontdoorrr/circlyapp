@@ -17,6 +17,8 @@ import { Text } from '../../../src/components/primitives/Text';
 import { EmptyState } from '../../../src/components/states/EmptyState';
 import { SkeletonCard } from '../../../src/components/states/Skeleton';
 import { tokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
+import type { Theme } from '../../../src/theme/tokens';
 
 /**
  * Circle Tab - 내 Circle 목록
@@ -30,6 +32,8 @@ import { tokens } from '../../../src/theme';
 export default function CircleListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { data: circles, isLoading, refetch, isRefetching } = useMyCircles();
 
   // Circle 카드 클릭
@@ -99,6 +103,9 @@ export default function CircleListScreen() {
               <CircleCard
                 circle={item}
                 onPress={() => handleCirclePress(item.id)}
+                theme={theme}
+                isDark={isDark}
+                styles={styles}
               />
             </Animated.View>
           )}
@@ -163,9 +170,12 @@ interface CircleCardProps {
     invite_code: string;
   };
   onPress: () => void;
+  theme: Theme;
+  isDark: boolean;
+  styles: ReturnType<typeof createStyles>;
 }
 
-function CircleCard({ circle, onPress }: CircleCardProps) {
+function CircleCard({ circle, onPress, theme, isDark, styles }: CircleCardProps) {
   return (
     <TouchableOpacity
       style={styles.circleCard}
@@ -177,12 +187,12 @@ function CircleCard({ circle, onPress }: CircleCardProps) {
       <View style={styles.circleInfo}>
         <View style={styles.circleHeader}>
           <Text style={styles.circleEmoji}>🎯</Text>
-          <Text style={styles.circleName} numberOfLines={1}>
+          <Text style={[styles.circleName, { color: theme.text }]} numberOfLines={1}>
             {circle.name}
           </Text>
         </View>
         {circle.description && (
-          <Text style={styles.circleDescription} numberOfLines={2}>
+          <Text style={[styles.circleDescription, { color: theme.textTertiary }]} numberOfLines={2}>
             {circle.description}
           </Text>
         )}
@@ -192,11 +202,11 @@ function CircleCard({ circle, onPress }: CircleCardProps) {
         <View style={styles.memberBadge}>
           <Text style={styles.memberCount}>👥 {circle.member_count}명</Text>
         </View>
-        <Text style={styles.inviteCode}>코드: {circle.invite_code}</Text>
+        <Text style={[styles.inviteCode, { color: theme.textTertiary }]}>코드: {circle.invite_code}</Text>
       </View>
 
       <View style={styles.circleArrow}>
-        <Text style={styles.arrowIcon}>›</Text>
+        <Text style={[styles.arrowIcon, { color: theme.textTertiary }]}>›</Text>
       </View>
     </TouchableOpacity>
   );
@@ -206,143 +216,142 @@ function CircleCard({ circle, onPress }: CircleCardProps) {
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: tokens.spacing.lg,
-    paddingVertical: tokens.spacing.md,
-    backgroundColor: tokens.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[200],
-  },
-  headerTitle: {
-    fontSize: tokens.typography.fontSize.xl,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-  },
-  joinButton: {
-    backgroundColor: tokens.colors.primary[50],
-    paddingHorizontal: tokens.spacing.md,
-    paddingVertical: tokens.spacing.sm,
-    borderRadius: tokens.borderRadius.md,
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[200],
-  },
-  joinButtonText: {
-    fontSize: tokens.typography.fontSize.sm,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.primary[600],
-  },
-  loadingContainer: {
-    flex: 1,
-    padding: tokens.spacing.lg,
-  },
-  skeletonCard: {
-    height: 120,
-    marginBottom: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  listContent: {
-    padding: tokens.spacing.lg,
-    paddingBottom: 100, // FAB 공간 확보
-  },
-  separator: {
-    height: tokens.spacing.md,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: tokens.spacing.lg,
-  },
-  // Circle Card
-  circleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.lg,
-    ...tokens.shadows.sm,
-  },
-  circleInfo: {
-    flex: 1,
-  },
-  circleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
-    marginBottom: tokens.spacing.xs,
-  },
-  circleEmoji: {
-    fontSize: 24,
-  },
-  circleName: {
-    flex: 1,
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-  },
-  circleDescription: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
-    marginLeft: 32, // emoji 너비 + gap
-    marginBottom: tokens.spacing.sm,
-  },
-  circleMeta: {
-    alignItems: 'flex-end',
-    marginRight: tokens.spacing.sm,
-  },
-  memberBadge: {
-    backgroundColor: tokens.colors.primary[50],
-    paddingHorizontal: tokens.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: tokens.borderRadius.sm,
-    marginBottom: tokens.spacing.xs,
-  },
-  memberCount: {
-    fontSize: tokens.typography.fontSize.xs,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.primary[600],
-  },
-  inviteCode: {
-    fontSize: tokens.typography.fontSize.xs,
-    color: tokens.colors.neutral[400],
-  },
-  circleArrow: {
-    paddingLeft: tokens.spacing.sm,
-  },
-  arrowIcon: {
-    fontSize: 24,
-    color: tokens.colors.neutral[300],
-  },
-  // FAB
-  fabContainer: {
-    position: 'absolute',
-    right: tokens.spacing.lg,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: tokens.colors.primary[500],
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...tokens.shadows.lg,
-  },
-  fabPressed: {
-    backgroundColor: tokens.colors.primary[600],
-    transform: [{ scale: 0.95 }],
-  },
-  fabIcon: {
-    fontSize: 32,
-    fontWeight: tokens.typography.fontWeight.light,
-    color: tokens.colors.white,
-    marginTop: -2, // 시각적 중앙 정렬
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: tokens.spacing.lg,
+      paddingVertical: tokens.spacing.md,
+      backgroundColor: theme.card,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerTitle: {
+      fontSize: tokens.typography.fontSize.xl,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+    },
+    joinButton: {
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      paddingHorizontal: tokens.spacing.md,
+      paddingVertical: tokens.spacing.sm,
+      borderRadius: tokens.borderRadius.md,
+      borderWidth: 1,
+      borderColor: isDark ? tokens.colors.primary[700] : tokens.colors.primary[200],
+    },
+    joinButtonText: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    loadingContainer: {
+      flex: 1,
+      padding: tokens.spacing.lg,
+    },
+    skeletonCard: {
+      height: 120,
+      marginBottom: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.lg,
+    },
+    listContent: {
+      padding: tokens.spacing.lg,
+      paddingBottom: 100, // FAB 공간 확보
+    },
+    separator: {
+      height: tokens.spacing.md,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: tokens.spacing.lg,
+    },
+    // Circle Card
+    circleCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    circleInfo: {
+      flex: 1,
+    },
+    circleHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: tokens.spacing.sm,
+      marginBottom: tokens.spacing.xs,
+    },
+    circleEmoji: {
+      fontSize: 24,
+    },
+    circleName: {
+      flex: 1,
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+    },
+    circleDescription: {
+      fontSize: tokens.typography.fontSize.sm,
+      marginLeft: 32, // emoji 너비 + gap
+      marginBottom: tokens.spacing.sm,
+    },
+    circleMeta: {
+      alignItems: 'flex-end',
+      marginRight: tokens.spacing.sm,
+    },
+    memberBadge: {
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      paddingHorizontal: tokens.spacing.sm,
+      paddingVertical: 2,
+      borderRadius: tokens.borderRadius.sm,
+      marginBottom: tokens.spacing.xs,
+    },
+    memberCount: {
+      fontSize: tokens.typography.fontSize.xs,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    inviteCode: {
+      fontSize: tokens.typography.fontSize.xs,
+    },
+    circleArrow: {
+      paddingLeft: tokens.spacing.sm,
+    },
+    arrowIcon: {
+      fontSize: 24,
+    },
+    // FAB
+    fabContainer: {
+      position: 'absolute',
+      right: tokens.spacing.lg,
+    },
+    fab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: tokens.colors.primary[500],
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...(isDark ? {} : tokens.shadows.lg),
+    },
+    fabPressed: {
+      backgroundColor: tokens.colors.primary[600],
+      transform: [{ scale: 0.95 }],
+    },
+    fabIcon: {
+      fontSize: 32,
+      fontWeight: tokens.typography.fontWeight.light,
+      color: tokens.colors.white,
+      marginTop: -2, // 시각적 중앙 정렬
+    },
+  });

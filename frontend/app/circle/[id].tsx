@@ -25,10 +25,14 @@ import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
 import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 
 export default function CircleDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   // 현재 사용자 정보
   const { data: currentUser } = useCurrentUser();
@@ -262,178 +266,185 @@ export default function CircleDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: tokens.spacing.lg,
-  },
-  infoCard: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.lg,
-    marginBottom: tokens.spacing.lg,
-    ...tokens.shadows.sm,
-  },
-  circleName: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-    textAlign: 'center',
-  },
-  circleDescription: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    textAlign: 'center',
-    marginBottom: tokens.spacing.lg,
-  },
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: tokens.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.primary[600],
-  },
-  statLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-    marginTop: tokens.spacing.xs,
-  },
-  section: {
-    marginBottom: tokens.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.md,
-  },
-  inviteCard: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    padding: tokens.spacing.lg,
-    ...tokens.shadows.sm,
-  },
-  inviteCodeContainer: {
-    alignItems: 'center',
-    paddingTop: tokens.spacing.sm,
-    marginBottom: tokens.spacing.md,
-  },
-  inviteCodeLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.sm,
-  },
-  inviteCode: {
-    fontSize: tokens.typography.fontSize['3xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.primary[600],
-    letterSpacing: 4,
-    lineHeight: tokens.typography.fontSize['3xl'] * 1.3,
-    marginBottom: tokens.spacing.xs,
-  },
-  inviteExpiry: {
-    fontSize: tokens.typography.fontSize.xs,
-    color: tokens.colors.neutral[500],
-  },
-  inviteActions: {
-    flexDirection: 'row',
-    gap: tokens.spacing.sm,
-  },
-  inviteButton: {
-    flex: 1,
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.md,
-    backgroundColor: tokens.colors.primary[50],
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[200],
-    alignItems: 'center',
-  },
-  inviteButtonText: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-  },
-  regenerateButton: {
-    marginTop: tokens.spacing.md,
-    paddingVertical: tokens.spacing.sm,
-    borderRadius: tokens.borderRadius.md,
-    backgroundColor: tokens.colors.neutral[100],
-    borderWidth: 1,
-    borderColor: tokens.colors.neutral[300],
-    alignItems: 'center',
-  },
-  regenerateButtonText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[700],
-  },
-  memberList: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: tokens.borderRadius.lg,
-    overflow: 'hidden',
-    ...tokens.shadows.sm,
-  },
-  memberItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: tokens.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  memberAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: tokens.colors.primary[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: tokens.spacing.md,
-  },
-  memberEmoji: {
-    fontSize: 24,
-  },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-  },
-  memberRole: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[600],
-    marginTop: tokens.spacing.xs,
-  },
-  dangerZone: {
-    marginTop: tokens.spacing.lg,
-    marginBottom: tokens.spacing.xl,
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      padding: tokens.spacing.lg,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: tokens.spacing.lg,
+    },
+    infoCard: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.lg,
+      marginBottom: tokens.spacing.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    circleName: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+      textAlign: 'center',
+    },
+    circleDescription: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      marginBottom: tokens.spacing.lg,
+    },
+    stats: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingTop: tokens.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    statItem: {
+      alignItems: 'center',
+    },
+    statValue: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+    },
+    statLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      marginTop: tokens.spacing.xs,
+    },
+    section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    sectionTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.md,
+    },
+    inviteCard: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      padding: tokens.spacing.lg,
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    inviteCodeContainer: {
+      alignItems: 'center',
+      paddingTop: tokens.spacing.sm,
+      marginBottom: tokens.spacing.md,
+    },
+    inviteCodeLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.sm,
+    },
+    inviteCode: {
+      fontSize: tokens.typography.fontSize['3xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      letterSpacing: 4,
+      lineHeight: tokens.typography.fontSize['3xl'] * 1.3,
+      marginBottom: tokens.spacing.xs,
+    },
+    inviteExpiry: {
+      fontSize: tokens.typography.fontSize.xs,
+      color: theme.textTertiary,
+    },
+    inviteActions: {
+      flexDirection: 'row',
+      gap: tokens.spacing.sm,
+    },
+    inviteButton: {
+      flex: 1,
+      paddingVertical: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.md,
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      borderWidth: 1,
+      borderColor: isDark ? tokens.colors.primary[700] : tokens.colors.primary[200],
+      alignItems: 'center',
+    },
+    inviteButtonText: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 400 : 700],
+    },
+    regenerateButton: {
+      marginTop: tokens.spacing.md,
+      paddingVertical: tokens.spacing.sm,
+      borderRadius: tokens.borderRadius.md,
+      backgroundColor: theme.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: theme.border,
+      alignItems: 'center',
+    },
+    regenerateButtonText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+    },
+    memberList: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      overflow: 'hidden',
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    memberItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: tokens.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    memberAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: tokens.spacing.md,
+    },
+    memberEmoji: {
+      fontSize: 24,
+    },
+    memberInfo: {
+      flex: 1,
+    },
+    memberName: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    memberRole: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      marginTop: tokens.spacing.xs,
+    },
+    dangerZone: {
+      marginTop: tokens.spacing.lg,
+      marginBottom: tokens.spacing.xl,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
+      marginBottom: tokens.spacing.lg,
+      textAlign: 'center',
+    },
+  });
