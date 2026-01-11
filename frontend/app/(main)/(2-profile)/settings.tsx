@@ -19,6 +19,9 @@ import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { tokens } from '../../../src/theme';
 
+// 앱 버전 (컴포넌트 외부에서 상수로 정의)
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
+
 /**
  * Settings Screen
  *
@@ -91,14 +94,15 @@ export default function SettingsScreen() {
     setFollowSystem(value);
   };
 
-  // 앱 버전 (expo-constants에서 동적 조회)
-  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
-
   const openLink = async (url: string) => {
-    await WebBrowser.openBrowserAsync(url, {
-      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-      controlsColor: tokens.colors.primary[500],
-    });
+    try {
+      await WebBrowser.openBrowserAsync(url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+        controlsColor: tokens.colors.primary[500],
+      });
+    } catch (error) {
+      console.warn('Failed to open browser:', error);
+    }
   };
 
   return (
@@ -189,7 +193,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <View style={[styles.settingItem, styles.noBorder]}>
               <Text style={styles.settingItemText}>앱 버전</Text>
-              <Text style={styles.settingItemValue}>v{appVersion}</Text>
+              <Text style={styles.settingItemValue}>v{APP_VERSION}</Text>
             </View>
           </View>
         </View>
