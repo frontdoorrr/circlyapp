@@ -497,15 +497,17 @@
   - [ ] `send_poll_result_notification()` - 결과 발표 알림
 - [ ] `docker-compose.yml` - Celery worker, beat 추가
 
-### 15.4 Backend - 이벤트 연동
+### 15.4 Backend - 이벤트 연동 (즉시 발송 ✅)
 
 > **참고**: `prd/features/03-push-notification.md#10.3 알림 유형별 구현 명세`
 
-- [ ] `backend/app/modules/polls/service.py` - 투표 생성 시 알림 트리거
-  - [ ] `create_poll()` → `notification_service.send_poll_started()` 호출
-  - [ ] `create_poll()` → 마감 알림 스케줄링 호출
-- [ ] `backend/app/modules/polls/service.py` - 투표 마감 처리 시 결과 알림
-  - [ ] 투표 마감 로직에서 `send_poll_ended()` 호출
+- [x] `backend/app/modules/polls/service.py` - 투표 생성 시 알림 트리거
+  - [x] `create_poll()` → `notification_service.send_poll_started()` 호출
+  - [ ] `create_poll()` → 마감 알림 스케줄링 호출 (Celery 필요)
+- [x] `backend/app/modules/polls/service.py` - 투표 마감 처리 시 결과 알림
+  - [x] `close_poll()` → `send_poll_ended()` 호출
+- [x] `backend/app/modules/polls/service.py` - 투표 참여 시 알림
+  - [x] `vote()` → `send_vote_received()` 호출 (누군가 나를 선택)
 
 ### 15.5 Frontend - 푸시 토큰 자동 등록 ✅
 
