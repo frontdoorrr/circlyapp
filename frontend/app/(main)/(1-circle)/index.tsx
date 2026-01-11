@@ -350,8 +350,8 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     fabIcon: {
       fontSize: 32,
+      lineHeight: 32,
       fontWeight: tokens.typography.fontWeight.light,
       color: tokens.colors.white,
-      marginTop: -2, // 시각적 중앙 정렬
     },
   });
