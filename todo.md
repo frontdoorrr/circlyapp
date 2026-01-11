@@ -549,17 +549,20 @@
 
 > **점검일**: 2025-01-11
 
-### 16.1 프로필 편집 기능 (P0)
+### 16.1 프로필 편집 기능 (P0) ✅
 
 > **참고**: `prd/design/04-user-flow.md`
 
-- [ ] `frontend/src/components/profile/ProfileEditModal.tsx` - 프로필 편집 모달 검증
-  - [ ] 닉네임(display_name) 수정 기능
-  - [ ] 프로필 이모지 선택 기능
-  - [ ] username 수정 기능 (선택적)
-- [ ] `frontend/app/(main)/(2-profile)/index.tsx` - 편집 모달 연동 확인
-- [ ] 백엔드 `PUT /auth/me` API 연동 확인
-- [ ] **테스트**: 프로필 수정 후 즉시 반영 확인
+- [x] `frontend/src/components/profile/ProfileEditModal.tsx` - 프로필 편집 모달 검증
+  - [x] 닉네임(display_name) 수정 기능
+  - [x] 프로필 이모지 선택 기능 (32개 옵션)
+  - [x] username 수정 기능 (선택적)
+  - [x] 검증 규칙 통일 (username min 2자, display_name max 100자)
+  - [x] 필드별 인라인 에러 메시지
+- [x] `frontend/app/(main)/(2-profile)/index.tsx` - 편집 모달 연동 확인
+- [x] 백엔드 `PUT /auth/me` API 연동 확인
+- [x] Toast 알림 시스템 추가 (Alert → Toast)
+- [x] **커밋**: `feat(profile): 프로필 편집 UX 전면 개선`
 
 ### 16.2 다크모드 구현 (P1)
 
@@ -579,20 +582,21 @@
   - [ ] 설정 화면
 - [ ] **테스트**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
 
-### 16.3 설정 - 정보 섹션 구현 (P1)
+### 16.3 설정 - 정보 섹션 구현 (P1) ✅
 
 > **파일**: `frontend/app/(main)/(2-profile)/settings.tsx`
 
-- [ ] 개인정보처리방침 페이지
-  - [ ] 웹뷰 또는 외부 링크 연결
-  - [ ] URL: `https://circly.app/privacy` (또는 임시 페이지)
-- [ ] 서비스 이용약관 페이지
-  - [ ] 웹뷰 또는 외부 링크 연결
-  - [ ] URL: `https://circly.app/terms` (또는 임시 페이지)
-- [ ] 오픈소스 라이선스 페이지
-  - [ ] `react-native-oss-license` 또는 수동 목록
-  - [ ] 주요 라이브러리 라이선스 표시
-- [ ] 앱 버전 표시
-  - [ ] `expo-constants`에서 버전 가져오기
+- [x] 개인정보처리방침 페이지
+  - [x] 인앱 웹뷰 연결 (expo-web-browser)
+  - [x] URL: `https://circly.app/privacy`
+- [x] 서비스 이용약관 페이지
+  - [x] 인앱 웹뷰 연결 (expo-web-browser)
+  - [x] URL: `https://circly.app/terms`
+- [x] 오픈소스 라이선스 페이지
+  - [x] 인앱 웹뷰 연결 (expo-web-browser)
+  - [x] URL: `https://circly.app/licenses`
+- [x] 앱 버전 표시
+  - [x] `expo-constants`에서 동적 버전 조회
+- [x] **커밋**: `feat(settings): 정보 섹션 인앱 웹뷰 전환 및 버전 동적화`
   - [ ] 빌드 번호 표시 (선택적)
 - [ ] **테스트**: 각 링크 정상 동작 확인

@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
-  Linking,
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import { useTheme } from '../../../src/theme/ThemeContext';
 import { useLogout, useDeleteAccount } from '../../../src/hooks/useAuth';
 import { Text } from '../../../src/components/primitives/Text';
@@ -90,8 +91,14 @@ export default function SettingsScreen() {
     setFollowSystem(value);
   };
 
-  const openLink = (url: string) => {
-    Linking.openURL(url);
+  // 앱 버전 (expo-constants에서 동적 조회)
+  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  const openLink = async (url: string) => {
+    await WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      controlsColor: tokens.colors.primary[500],
+    });
   };
 
   return (
@@ -182,7 +189,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <View style={[styles.settingItem, styles.noBorder]}>
               <Text style={styles.settingItemText}>앱 버전</Text>
-              <Text style={styles.settingItemValue}>v1.0.0</Text>
+              <Text style={styles.settingItemValue}>v{appVersion}</Text>
             </View>
           </View>
         </View>
