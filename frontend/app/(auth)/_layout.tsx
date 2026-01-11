@@ -1,20 +1,22 @@
 import { Stack } from 'expo-router';
-import { tokens } from '../../src/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 /**
  * Auth Layout
  *
  * 비인증 화면 레이아웃 (로그인, 회원가입)
  * - 헤더 숨김
- * - 흰색 배경
+ * - 테마 배경색
  * - 슬라이드 애니메이션
  */
 export default function AuthLayout() {
+  const { theme } = useTheme();
+
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: tokens.colors.white },
+        contentStyle: { backgroundColor: theme.background },
         animation: 'slide_from_right',
       }}
     >
