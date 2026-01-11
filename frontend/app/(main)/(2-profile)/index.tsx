@@ -9,6 +9,7 @@ import { ProfileEditModal } from '../../../src/components/profile/ProfileEditMod
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
+import { Toast, ToastType } from '../../../src/components/primitives/Toast';
 import { tokens } from '../../../src/theme';
 import { ApiError } from '../../../src/types/api';
 import { UserUpdate } from '../../../src/types/auth';
@@ -24,6 +25,21 @@ export default function ProfileScreen() {
   const { isDark, toggleTheme } = useTheme();
   const [isEditModalOpen, setEditModalOpen] = useState(false);
 
+  // Toast 상태
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: ToastType;
+  }>({ visible: false, message: '', type: 'success' });
+
+  const showToast = (message: string, type: ToastType = 'success') => {
+    setToast({ visible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, visible: false }));
+  };
+
   // 사용자 정보 조회
   const { data: user, isLoading: userLoading } = useCurrentUser();
 
@@ -36,12 +52,12 @@ export default function ProfileScreen() {
   const handleUpdateProfile = async (data: UserUpdate) => {
     try {
       await updateProfileMutation.mutateAsync(data);
-      Alert.alert('성공', '프로필이 업데이트되었습니다');
+      showToast('프로필이 업데이트되었습니다', 'success');
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('오류', error.message);
+        showToast(error.message, 'error');
       } else {
-        Alert.alert('오류', '프로필 업데이트 중 문제가 발생했습니다');
+        showToast('프로필 업데이트 중 문제가 발생했습니다', 'error');
       }
     }
   };
@@ -151,6 +167,14 @@ export default function ProfileScreen() {
         }}
         onSubmit={handleUpdateProfile}
         onClose={() => setEditModalOpen(false)}
+      />
+
+      {/* Toast 알림 */}
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
       />
     </View>
   );

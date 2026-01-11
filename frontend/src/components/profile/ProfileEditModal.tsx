@@ -3,13 +3,12 @@
  *
  * 프로필 수정 모달
  */
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -31,7 +30,28 @@ interface ProfileEditModalProps {
   onClose: () => void;
 }
 
-const EMOJI_OPTIONS = ['😊', '😎', '🤩', '🥳', '😇', '🤓', '😺', '🐶', '🦊', '🐼', '🐨', '🦁'];
+// 이모지 옵션 확장 (12개 → 32개)
+const EMOJI_OPTIONS = [
+  // 얼굴
+  '😊', '😎', '🥳', '😇', '🤩', '😋', '🤗', '🥰',
+  // 동물
+  '🐶', '🐱', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯',
+  // 자연/음식
+  '🌟', '🌈', '🔥', '💎', '🍀', '🌸', '🍕', '🍩',
+  // 활동
+  '⚽', '🎮', '🎨', '🎵', '📚', '💻', '🚀', '✨',
+];
+
+// 검증 규칙 (백엔드와 통일)
+const VALIDATION = {
+  username: { min: 2, max: 50 },
+  display_name: { max: 100 },
+};
+
+interface FieldErrors {
+  username?: string;
+  display_name?: string;
+}
 
 export function ProfileEditModal({
   isOpen,
@@ -43,11 +63,50 @@ export function ProfileEditModal({
   const [displayName, setDisplayName] = useState(initialData.display_name || '');
   const [selectedEmoji, setSelectedEmoji] = useState(initialData.profile_emoji || '😊');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  // 필드 검증 함수
+  const validateField = useCallback((field: 'username' | 'display_name', value: string): string | undefined => {
+    if (field === 'username' && value && value.length < VALIDATION.username.min) {
+      return `사용자명은 최소 ${VALIDATION.username.min}자 이상이어야 합니다`;
+    }
+    if (field === 'username' && value && value.length > VALIDATION.username.max) {
+      return `사용자명은 ${VALIDATION.username.max}자 이하여야 합니다`;
+    }
+    if (field === 'display_name' && value && value.length > VALIDATION.display_name.max) {
+      return `표시 이름은 ${VALIDATION.display_name.max}자 이하여야 합니다`;
+    }
+    return undefined;
+  }, []);
+
+  // 입력 변경 핸들러
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    const error = validateField('username', value);
+    setErrors(prev => ({ ...prev, username: error }));
+  };
+
+  const handleDisplayNameChange = (value: string) => {
+    setDisplayName(value);
+    const error = validateField('display_name', value);
+    setErrors(prev => ({ ...prev, display_name: error }));
+  };
+
+  // 전체 폼 검증
+  const validateForm = (): boolean => {
+    const usernameError = validateField('username', username);
+    const displayNameError = validateField('display_name', displayName);
+
+    setErrors({
+      username: usernameError,
+      display_name: displayNameError,
+    });
+
+    return !usernameError && !displayNameError;
+  };
 
   const handleSubmit = async () => {
-    // 유효성 검증
-    if (username && username.length < 3) {
-      Alert.alert('입력 오류', '사용자명은 최소 3자 이상이어야 합니다');
+    if (!validateForm()) {
       return;
     }
 
@@ -122,11 +181,14 @@ export function ProfileEditModal({
               <Input
                 placeholder="사용자명 (선택)"
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={handleUsernameChange}
                 autoCapitalize="none"
-                maxLength={20}
+                maxLength={VALIDATION.username.max}
                 editable={!isSubmitting}
               />
+              {errors.username && (
+                <Text style={styles.errorText}>{errors.username}</Text>
+              )}
             </View>
 
             <View style={styles.section}>
@@ -134,10 +196,13 @@ export function ProfileEditModal({
               <Input
                 placeholder="표시 이름 (선택)"
                 value={displayName}
-                onChangeText={setDisplayName}
-                maxLength={30}
+                onChangeText={handleDisplayNameChange}
+                maxLength={VALIDATION.display_name.max}
                 editable={!isSubmitting}
               />
+              {errors.display_name && (
+                <Text style={styles.errorText}>{errors.display_name}</Text>
+              )}
             </View>
 
             {/* 버튼 */}
@@ -242,5 +307,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: tokens.spacing.sm,
     marginTop: tokens.spacing.md,
+  },
+  errorText: {
+    fontSize: tokens.typography.fontSize.xs,
+    color: tokens.colors.error[600],
+    marginTop: tokens.spacing.xs,
   },
 });

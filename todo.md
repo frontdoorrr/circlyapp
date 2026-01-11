@@ -434,7 +434,7 @@
 - [x] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동 ✅
 
 ### 🟡 중간 (부가 기능 미완성)
-- [ ] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 필요
+- [x] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 ✅ (프로필→설정 경로 추가)
 - [ ] **14.6** `_layout.tsx:74` - 딥링크 unique_id → invite_code 변환 API
 - [x] **14.7** `notifications.tsx:26` - 알림 설정 API 연동 ✅
 
@@ -442,7 +442,7 @@
 - [x] **14.8** `_layout.tsx:46,53,60` - 탭바 아이콘 추가 (Ionicons) ✅
 - [x] **14.9** `(home)/index.tsx:107` - 활성 Circle 이름 useCircle 훅에서 가져오기 ✅
 - [x] **14.10** `useCreatePoll.ts:72` - 에러 토스트/알림 표시 ✅
-- [ ] **14.11** `CircleCard.tsx:64` - active_polls_count 백엔드 추가 후 활성화
+- [x] **14.11** `CircleCard.tsx:64` - active_polls_count 백엔드 추가 후 활성화 ✅
 - [x] **14.12** `results/[id].tsx:48` - Orb Mode 구독 유도 모달 ✅
 
 ### ⚠️ 기타 (정리 필요)
@@ -542,3 +542,57 @@
 - [x] `frontend/app/(main)/(2-profile)/notifications.tsx` - API 연동
   - [x] 설정 조회 후 상태 초기화
   - [x] 토글 변경 시 API 호출 (낙관적 업데이트)
+
+---
+
+## Phase 16: 프로필 및 설정 기능 완성
+
+> **점검일**: 2025-01-11
+
+### 16.1 프로필 편집 기능 (P0)
+
+> **참고**: `prd/design/04-user-flow.md`
+
+- [ ] `frontend/src/components/profile/ProfileEditModal.tsx` - 프로필 편집 모달 검증
+  - [ ] 닉네임(display_name) 수정 기능
+  - [ ] 프로필 이모지 선택 기능
+  - [ ] username 수정 기능 (선택적)
+- [ ] `frontend/app/(main)/(2-profile)/index.tsx` - 편집 모달 연동 확인
+- [ ] 백엔드 `PUT /auth/me` API 연동 확인
+- [ ] **테스트**: 프로필 수정 후 즉시 반영 확인
+
+### 16.2 다크모드 구현 (P1)
+
+> **참고**: `prd/design/02-ui-design-system.md#Dark Theme`
+
+- [ ] `frontend/src/theme/ThemeContext.tsx` - 다크모드 Context 검증
+  - [ ] 시스템 설정 따르기 기능
+  - [ ] 수동 토글 기능
+  - [ ] AsyncStorage 저장/복원
+- [ ] `frontend/src/theme/tokens.ts` - 다크모드 토큰 검증
+  - [ ] 다크모드 색상 팔레트 완성
+  - [ ] 컴포넌트별 다크모드 스타일
+- [ ] 주요 화면 다크모드 적용 확인
+  - [ ] Home 탭
+  - [ ] Circle 탭
+  - [ ] 프로필 탭
+  - [ ] 설정 화면
+- [ ] **테스트**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
+
+### 16.3 설정 - 정보 섹션 구현 (P1)
+
+> **파일**: `frontend/app/(main)/(2-profile)/settings.tsx`
+
+- [ ] 개인정보처리방침 페이지
+  - [ ] 웹뷰 또는 외부 링크 연결
+  - [ ] URL: `https://circly.app/privacy` (또는 임시 페이지)
+- [ ] 서비스 이용약관 페이지
+  - [ ] 웹뷰 또는 외부 링크 연결
+  - [ ] URL: `https://circly.app/terms` (또는 임시 페이지)
+- [ ] 오픈소스 라이선스 페이지
+  - [ ] `react-native-oss-license` 또는 수동 목록
+  - [ ] 주요 라이브러리 라이선스 표시
+- [ ] 앱 버전 표시
+  - [ ] `expo-constants`에서 버전 가져오기
+  - [ ] 빌드 번호 표시 (선택적)
+- [ ] **테스트**: 각 링크 정상 동작 확인
