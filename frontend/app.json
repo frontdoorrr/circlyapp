@@ -31,6 +31,13 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1cd6d904-8b8e-4db1-a49a-bdd91bfb2c12"
+      }
+    },
+    "owner": "frontdoorrrr"
   }
 }
