@@ -37,6 +37,7 @@ class CircleResponse(BaseModel):
     owner_id: uuid.UUID
     max_members: int
     member_count: int
+    active_polls_count: int = 0
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -71,6 +72,7 @@ class CircleDetail(BaseModel):
     owner_id: uuid.UUID
     max_members: int
     member_count: int
+    active_polls_count: int = 0
     is_active: bool
     created_at: datetime
     updated_at: datetime

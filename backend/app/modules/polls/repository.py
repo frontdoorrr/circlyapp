@@ -295,6 +295,23 @@ class PollRepository:
         """
         return await self.find_by_circle_id(circle_id, status=PollStatus.ACTIVE)
 
+    async def count_active_by_circle_id(self, circle_id: uuid.UUID) -> int:
+        """Count active polls in a circle.
+
+        Args:
+            circle_id: Circle UUID
+
+        Returns:
+            Number of active polls
+        """
+        result = await self.session.execute(
+            select(func.count(Poll.id)).where(
+                Poll.circle_id == circle_id,
+                Poll.status == PollStatus.ACTIVE,
+            )
+        )
+        return result.scalar() or 0
+
     async def update_status(self, poll_id: uuid.UUID, status: PollStatus) -> None:
         """Update poll status.
 

@@ -61,10 +61,9 @@ export function CircleCard({ circle, onPress, index = 0 }: CircleCardProps) {
           <Text style={styles.statText}>
             👥 {circle.member_count}명
           </Text>
-          {/* TODO: active_polls_count가 백엔드에 추가되면 활성화 */}
-          {/* <Text style={styles.statText}>
+          <Text style={styles.statText}>
             📊 진행 중 {circle.active_polls_count || 0}개
-          </Text> */}
+          </Text>
         </View>
 
         {/* 초대 코드 만료 시간 표시 */}

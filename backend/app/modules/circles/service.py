@@ -11,6 +11,7 @@ from app.core.exceptions import (
     InvalidInviteCodeError,
 )
 from app.core.security import generate_invite_code
+from app.modules.circles.models import Circle
 from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.circles.schemas import (
     CircleCreate,
@@ -20,6 +21,7 @@ from app.modules.circles.schemas import (
     RegenerateInviteCodeResponse,
     ValidateInviteCodeResponse,
 )
+from app.modules.polls.repository import PollRepository
 
 
 class CircleService:
@@ -33,6 +35,21 @@ class CircleService:
         """Initialize service with repositories."""
         self.circle_repo = circle_repo
         self.membership_repo = membership_repo
+        self._poll_repo: PollRepository | None = None
+
+    @property
+    def poll_repo(self) -> PollRepository:
+        """Get poll repository (lazy initialization)."""
+        if self._poll_repo is None:
+            self._poll_repo = PollRepository(self.circle_repo.session)
+        return self._poll_repo
+
+    async def _to_circle_response(self, circle: Circle) -> CircleResponse:
+        """Convert Circle model to CircleResponse with active polls count."""
+        active_polls_count = await self.poll_repo.count_active_by_circle_id(circle.id)
+        response = CircleResponse.model_validate(circle)
+        response.active_polls_count = active_polls_count
+        return response
 
     async def create_circle(
         self,
@@ -58,7 +75,7 @@ class CircleService:
         # Add owner as first member with OWNER role
         await self.membership_repo.create(circle.id, owner_id, MemberRole.OWNER)
         print("4444", "membership")
-        return CircleResponse.model_validate(circle)
+        return await self._to_circle_response(circle)
 
     async def join_by_code(
         self,
@@ -103,7 +120,7 @@ class CircleService:
 
         # Refresh circle data
         updated_circle = await self.circle_repo.find_by_id(circle.id)
-        return CircleResponse.model_validate(updated_circle)
+        return await self._to_circle_response(updated_circle)
 
     async def get_user_circles(self, user_id: uuid.UUID) -> list[CircleResponse]:
         """Get all circles a user is a member of.
@@ -115,7 +132,7 @@ class CircleService:
             List of CircleResponse
         """
         circles = await self.circle_repo.find_by_user_id(user_id)
-        return [CircleResponse.model_validate(circle) for circle in circles]
+        return [await self._to_circle_response(circle) for circle in circles]
 
     async def get_circle_detail(
         self,
@@ -146,7 +163,8 @@ class CircleService:
             raise CircleNotFoundError(str(circle_id))
 
         # Build response with member info
-        circle_dict = CircleResponse.model_validate(circle).model_dump()
+        circle_response = await self._to_circle_response(circle)
+        circle_dict = circle_response.model_dump()
 
         # Add members with user info
         members_info = []
@@ -294,7 +312,7 @@ class CircleService:
         """
         circles = await self.circle_repo.find_all(search, is_active, limit, offset)
         total = await self.circle_repo.count_all(search, is_active)
-        return [CircleResponse.model_validate(c) for c in circles], total
+        return [await self._to_circle_response(c) for c in circles], total
 
     async def get_circle_detail_admin(
         self,
@@ -317,7 +335,8 @@ class CircleService:
             raise CircleNotFoundError(str(circle_id))
 
         # Build response with member info
-        circle_dict = CircleResponse.model_validate(circle).model_dump()
+        circle_response = await self._to_circle_response(circle)
+        circle_dict = circle_response.model_dump()
 
         # Add members with user info
         members_info = []
@@ -352,7 +371,7 @@ class CircleService:
         circle = await self.circle_repo.update_status(circle_id, is_active)
         if circle is None:
             raise CircleNotFoundError(str(circle_id))
-        return CircleResponse.model_validate(circle)
+        return await self._to_circle_response(circle)
 
     async def remove_member_admin(
         self,

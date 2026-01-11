@@ -22,6 +22,7 @@ export interface CircleResponse {
   owner_id: string; // UUID
   max_members: number;
   member_count: number;
+  active_polls_count: number; // 진행 중인 투표 수
   is_active: boolean;
   created_at: string;
   updated_at: string;
