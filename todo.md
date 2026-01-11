@@ -196,11 +196,11 @@
 - [ ] 가로 모드 지원 (선택적)
 - [ ] **커밋**: `test(frontend): verify responsive design`
 
-### 11.9 Dark Mode Implementation (P2)
-- [ ] Dark theme tokens 적용
-- [ ] Theme provider 구현
-- [ ] Theme toggle 컴포넌트
-- [ ] **커밋**: `feat(frontend): implement dark mode support`
+### 11.9 Dark Mode Implementation (P2) ✅
+- [x] Dark theme tokens 적용
+- [x] Theme provider 구현
+- [x] Theme toggle 컴포넌트
+- [x] **커밋**: `feat(frontend): implement dark mode support`
 
 ### 11.10 Create Tab - 투표 생성 (P0)
 
@@ -564,22 +564,22 @@
 - [x] Toast 알림 시스템 추가 (Alert → Toast)
 - [x] **커밋**: `feat(profile): 프로필 편집 UX 전면 개선`
 
-### 16.2 다크모드 구현 (P1)
+### 16.2 다크모드 구현 (P1) ✅
 
 > **참고**: `prd/design/02-ui-design-system.md#Dark Theme`
 
-- [ ] `frontend/src/theme/ThemeContext.tsx` - 다크모드 Context 검증
-  - [ ] 시스템 설정 따르기 기능
-  - [ ] 수동 토글 기능
-  - [ ] AsyncStorage 저장/복원
-- [ ] `frontend/src/theme/tokens.ts` - 다크모드 토큰 검증
-  - [ ] 다크모드 색상 팔레트 완성
-  - [ ] 컴포넌트별 다크모드 스타일
-- [ ] 주요 화면 다크모드 적용 확인
-  - [ ] Home 탭
-  - [ ] Circle 탭
-  - [ ] 프로필 탭
-  - [ ] 설정 화면
+- [x] `frontend/src/theme/ThemeContext.tsx` - 다크모드 Context 검증
+  - [x] 시스템 설정 따르기 기능
+  - [x] 수동 토글 기능
+  - [x] AsyncStorage 저장/복원
+- [x] `frontend/src/theme/tokens.ts` - 다크모드 토큰 검증
+  - [x] 다크모드 색상 팔레트 완성
+  - [x] 컴포넌트별 다크모드 스타일
+- [x] 주요 화면 다크모드 적용 확인
+  - [x] Home 탭
+  - [x] Circle 탭
+  - [x] 프로필 탭
+  - [x] 설정 화면
 - [ ] **테스트**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
 
 ### 16.3 설정 - 정보 섹션 구현 (P1) ✅
