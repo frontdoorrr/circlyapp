@@ -109,9 +109,21 @@ export default function ProfileScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* 앱 정보 */}
-            <TouchableOpacity style={styles.settingItem}>
-              <Text style={styles.settingItemText}>ℹ️ 앱 정보</Text>
+            {/* 알림 설정 */}
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push('/(main)/(2-profile)/notifications')}
+            >
+              <Text style={styles.settingItemText}>🔔 알림 설정</Text>
+              <Text style={styles.settingItemArrow}>›</Text>
+            </TouchableOpacity>
+
+            {/* 설정 (회원탈퇴 포함) */}
+            <TouchableOpacity
+              style={[styles.settingItem, styles.lastItem]}
+              onPress={() => router.push('/(main)/(2-profile)/settings')}
+            >
+              <Text style={styles.settingItemText}>⚙️ 설정</Text>
               <Text style={styles.settingItemArrow}>›</Text>
             </TouchableOpacity>
           </View>
@@ -197,6 +209,9 @@ const styles = StyleSheet.create({
   settingItemArrow: {
     fontSize: 24,
     color: tokens.colors.neutral[400],
+  },
+  lastItem: {
+    borderBottomWidth: 0,
   },
   logoutSection: {
     marginTop: tokens.spacing.md,
