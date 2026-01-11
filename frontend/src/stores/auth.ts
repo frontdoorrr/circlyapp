@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  // 사용자 프로필 설정 (백엔드에서 가져온 UserResponse)
+  // 사용자 Profile 설정 (백엔드에서 가져온 UserResponse)
   setUser: (user) => {
     set({ user });
   },

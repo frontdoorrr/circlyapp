@@ -213,7 +213,7 @@ flowchart TD
     I --> J[대기 화면 - 카운트다운]
     J --> D
 
-    H --> K[프로필 / Flame 누적 보기]
+    H --> K[Profile / Flame 누적 보기]
     K --> L[프리미엄 기능 God Mode]
     L -->|See Who Voted| M[결제 플로우]
     M --> L2[프리미엄 힌트 표시]

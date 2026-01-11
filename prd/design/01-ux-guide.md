@@ -295,7 +295,7 @@ const offlineStrategy = {
   caching: {
     questions: '최근 질문 3개 캐시',
     results: '내 투표 결과 로컬 저장',
-    profile: '프로필 정보 캐시'
+    profile: 'Profile 정보 캐시'
   },
   queueing: {
     votes: '투표는 온라인 상태에서 전송',
@@ -329,10 +329,10 @@ const offlineStrategy = {
 
 ## 4. 알림 & Flame
 - 화면: Flame 아이콘 + "누군가 당신을 뽑았습니다"
-- 액션: [확인], [프로필 보기]
-- 전환: → 프로필 화면
+- 액션: [확인], [Profile 보기]
+- 전환: → Profile 화면
 
-## 5. 프로필 / 결과
+## 5. Profile / 결과
 - 화면: Flame 누적 수, 주간 랭킹
 - 액션: [Orb Mode 열기]
 - 전환: → 결제 화면

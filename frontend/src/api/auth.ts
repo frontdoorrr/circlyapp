@@ -66,7 +66,7 @@ export async function getCurrentUser(): Promise<UserResponse> {
 }
 
 /**
- * 프로필 수정
+ * Profile 수정
  */
 export async function updateProfile(data: UserUpdate): Promise<UserResponse> {
   console.log('[API] PUT /auth/me 요청:', data);

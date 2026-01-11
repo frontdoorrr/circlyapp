@@ -704,7 +704,7 @@ class IAuthService(ABC):
 
     @abstractmethod
     async def update_profile(self, user_id: UUID, data: 'UserUpdate') -> 'UserResponse':
-        """프로필 업데이트"""
+        """Profile 업데이트"""
         ...
 
     @abstractmethod

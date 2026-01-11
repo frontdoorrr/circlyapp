@@ -61,7 +61,7 @@ frontend/src/theme/* (구현 코드)
 | POST | `/register` | 회원가입 | `UserCreate` | `AuthResponse` |
 | POST | `/login` | 로그인 | `LoginRequest` | `AuthResponse` |
 | GET | `/me` | 현재 사용자 정보 | - | `UserResponse` |
-| PUT | `/me` | 프로필 수정 | `UserUpdate` | `UserResponse` |
+| PUT | `/me` | Profile 수정 | `UserUpdate` | `UserResponse` |
 
 #### 타입 정의 (TypeScript)
 
@@ -244,7 +244,7 @@ frontend/
 │   │   │   ├── index.tsx
 │   │   │   └── _layout.tsx
 │   │   ├── (create)/            # 투표 생성 탭
-│   │   ├── (profile)/           # 프로필 탭
+│   │   ├── (profile)/           # Profile 탭
 │   │   └── _layout.tsx          # 메인 탭바 레이아웃
 │   ├── poll/                    # 투표 관련 화면
 │   │   ├── [id].tsx             # 투표 상세 (동적 라우트)
@@ -403,7 +403,7 @@ export const authApi = {
     return response.data;
   },
 
-  // 프로필 수정
+  // Profile 수정
   async updateProfile(data: UserUpdate): Promise<UserResponse> {
     const response = await apiClient.put<UserResponse>('/auth/me', data);
     return response.data;
@@ -633,7 +633,7 @@ export function useLogin() {
   });
 }
 
-// 프로필 수정
+// Profile 수정
 export function useUpdateProfile() {
   const { setUser } = useAuthStore();
   const queryClient = useQueryClient();

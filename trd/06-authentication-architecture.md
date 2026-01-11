@@ -58,7 +58,7 @@ Circly는 **Supabase Auth**를 사용한 인증 시스템을 구현합니다.
 |---------|------|------|
 | **Supabase Auth** | 인증 서버 | 사용자 관리, JWT 발급, 토큰 갱신 |
 | **Frontend** | 세션 관리 | 로그인/회원가입, 토큰 저장, 자동 갱신 |
-| **Backend** | JWT 검증 | 토큰 서명 검증, 사용자 프로필 관리 |
+| **Backend** | JWT 검증 | 토큰 서명 검증, 사용자 Profile 관리 |
 
 ---
 
@@ -100,7 +100,7 @@ export function useLogin() {
     },
     onSuccess: async (result) => {
       setSession(result.session);
-      // 백엔드에서 프로필 조회 (없으면 자동 생성)
+      // 백엔드에서 Profile 조회 (없으면 자동 생성)
       const userProfile = await authApi.getCurrentUser();
       setUser(userProfile);
     },
@@ -215,7 +215,7 @@ async def get_current_user(
     user = await repo.find_by_supabase_id(supabase_user_id)
 
     if user is None:
-        # 첫 요청 시 자동 프로필 생성
+        # 첫 요청 시 자동 Profile 생성
         email = payload.get("email", "")
         user = await repo.create_from_supabase(supabase_user_id, email)
         await db.commit()
@@ -278,12 +278,12 @@ CREATE INDEX ix_users_email ON users(email);
 | 로그아웃 | Supabase | `supabase.auth.signOut()` |
 | 토큰 갱신 | Supabase | 자동 (autoRefreshToken) |
 
-### 프로필 관련 (프론트엔드 → 백엔드)
+### Profile 관련 (프론트엔드 → 백엔드)
 
 | 엔드포인트 | 메서드 | 설명 |
 |-----------|--------|------|
-| `/auth/me` | GET | 현재 사용자 프로필 조회 |
-| `/auth/me` | PUT | 프로필 수정 |
+| `/auth/me` | GET | 현재 사용자 Profile 조회 |
+| `/auth/me` | PUT | Profile 수정 |
 
 ### 레거시 엔드포인트 (유지, 선택적 사용)
 
@@ -349,9 +349,9 @@ EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
 - Refresh Token: Supabase JS가 자동 갱신
 - 토큰 저장: AsyncStorage (React Native)
 
-### 프로필 자동 생성
+### Profile 자동 생성
 
-- 첫 API 요청 시 로컬 프로필 자동 생성
+- 첫 API 요청 시 로컬 Profile 자동 생성
 - Supabase user_id로 연결
 
 ---

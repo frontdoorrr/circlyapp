@@ -65,7 +65,7 @@ export default function MainLayout() {
       <Tabs.Screen
         name="(2-profile)"
         options={{
-          title: '프로필',
+          title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
           ),

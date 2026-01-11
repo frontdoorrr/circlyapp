@@ -14,7 +14,7 @@ import { SupabaseAuthError } from '../utils/supabaseErrors';
 /**
  * 회원가입 훅 (2단계 방식)
  * 1단계: Supabase Auth 회원가입
- * 2단계: 백엔드 프로필 업데이트 (username, display_name)
+ * 2단계: 백엔드 Profile 업데이트 (username, display_name)
  */
 export function useRegister() {
   return useMutation({
@@ -40,10 +40,10 @@ export function useRegister() {
 
       console.log('[useRegister] Supabase 회원가입 성공');
 
-      // 2단계: 백엔드 프로필 업데이트 (username, display_name)
+      // 2단계: 백엔드 Profile 업데이트 (username, display_name)
       if (data.username || data.display_name) {
         try {
-          console.log('[useRegister] 백엔드 프로필 업데이트:', {
+          console.log('[useRegister] 백엔드 Profile 업데이트:', {
             username: data.username,
             display_name: data.display_name,
           });
@@ -51,11 +51,11 @@ export function useRegister() {
             username: data.username,
             display_name: data.display_name,
           });
-          console.log('[useRegister] 프로필 업데이트 성공');
+          console.log('[useRegister] Profile 업데이트 성공');
         } catch (profileError) {
-          // 프로필 업데이트 실패해도 회원가입은 성공으로 처리
-          // 사용자가 나중에 프로필 설정 가능
-          console.warn('[useRegister] 프로필 업데이트 실패 (무시됨):', profileError);
+          // Profile 업데이트 실패해도 회원가입은 성공으로 처리
+          // 사용자가 나중에 Profile 설정 가능
+          console.warn('[useRegister] Profile 업데이트 실패 (무시됨):', profileError);
         }
       }
 
@@ -145,7 +145,7 @@ export function useCurrentUser() {
 }
 
 /**
- * 프로필 수정 훅
+ * Profile 수정 훅
  */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();

@@ -231,7 +231,7 @@ export default function HomeScreen() {
     router.push('/notifications' as any);
   }, [router]);
 
-  // 프로필 클릭
+  // Profile 클릭
   const handleProfilePress = useCallback(() => {
     router.push('/(main)/(2-profile)' as any);
   }, [router]);

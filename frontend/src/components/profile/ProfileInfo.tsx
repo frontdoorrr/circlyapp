@@ -17,7 +17,7 @@ interface ProfileInfoProps {
 export function ProfileInfo({ user, onEdit }: ProfileInfoProps) {
   return (
     <View style={styles.container}>
-      {/* 프로필 이모지 */}
+      {/* Profile 이모지 */}
       <View style={styles.emojiContainer}>
         <Text style={styles.emoji}>{user.profile_emoji}</Text>
       </View>
@@ -35,7 +35,7 @@ export function ProfileInfo({ user, onEdit }: ProfileInfoProps) {
 
       {/* 편집 버튼 */}
       <TouchableOpacity style={styles.editButton} onPress={onEdit}>
-        <Text style={styles.editButtonText}>프로필 편집</Text>
+        <Text style={styles.editButtonText}>Profile 편집</Text>
       </TouchableOpacity>
     </View>
   );

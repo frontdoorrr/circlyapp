@@ -50,15 +50,15 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
         setSession(session);
 
-        // 세션이 있으면 백엔드에서 사용자 프로필 가져오기
+        // 세션이 있으면 백엔드에서 사용자 Profile 가져오기
         if (session) {
           try {
             const userProfile = await authApi.getCurrentUser();
             setUser(userProfile);
-            console.log('[AppInitializer] 사용자 프로필 로드 완료');
+            console.log('[AppInitializer] 사용자 Profile 로드 완료');
           } catch (profileError) {
-            console.error('[AppInitializer] 프로필 로드 실패:', profileError);
-            // 프로필 로드 실패해도 세션은 유지
+            console.error('[AppInitializer] Profile 로드 실패:', profileError);
+            // Profile 로드 실패해도 세션은 유지
           }
         }
 
@@ -87,14 +87,14 @@ export function AppInitializer({ children }: AppInitializerProps) {
       setSession(session);
 
       if (session) {
-        // 로그인/토큰 갱신 시 사용자 프로필 다시 로드
+        // 로그인/토큰 갱신 시 사용자 Profile 다시 로드
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           try {
             const userProfile = await authApi.getCurrentUser();
             setUser(userProfile);
-            console.log('[AppInitializer] 프로필 업데이트 완료');
+            console.log('[AppInitializer] Profile 업데이트 완료');
           } catch (error) {
-            console.error('[AppInitializer] 프로필 로드 실패:', error);
+            console.error('[AppInitializer] Profile 로드 실패:', error);
           }
         }
       } else {

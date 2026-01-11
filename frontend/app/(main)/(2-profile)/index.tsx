@@ -18,7 +18,7 @@ import type { Theme } from '../../../src/theme/tokens';
 /**
  * Profile Screen
  *
- * 사용자 프로필 및 설정 화면
+ * 사용자 Profile 및 설정 화면
  */
 export default function ProfileScreen() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function ProfileScreen() {
   // 사용자 정보 조회
   const { data: user, isLoading: userLoading } = useCurrentUser();
 
-  // 프로필 수정
+  // Profile 수정
   const updateProfileMutation = useUpdateProfile();
 
   // 로그아웃
@@ -54,12 +54,12 @@ export default function ProfileScreen() {
   const handleUpdateProfile = async (data: UserUpdate) => {
     try {
       await updateProfileMutation.mutateAsync(data);
-      showToast('프로필이 업데이트되었습니다', 'success');
+      showToast('Profile이 업데이트되었습니다', 'success');
     } catch (error) {
       if (error instanceof ApiError) {
         showToast(error.message, 'error');
       } else {
-        showToast('프로필 업데이트 중 문제가 발생했습니다', 'error');
+        showToast('Profile 업데이트 중 문제가 발생했습니다', 'error');
       }
     }
   };
@@ -159,7 +159,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* 프로필 수정 모달 */}
+      {/* Profile 수정 모달 */}
       <ProfileEditModal
         isOpen={isEditModalOpen}
         initialData={{

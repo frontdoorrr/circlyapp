@@ -26,7 +26,7 @@ import {
  *
  * Supabase Auth 직접 연동 (2단계 방식)
  * 1단계: Supabase Auth 회원가입
- * 2단계: 백엔드 프로필 업데이트 (username, display_name)
+ * 2단계: 백엔드 Profile 업데이트 (username, display_name)
  */
 export default function RegisterScreen() {
   const router = useRouter();

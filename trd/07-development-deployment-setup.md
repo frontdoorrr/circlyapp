@@ -445,8 +445,8 @@ frontend/
       "bundleIdentifier": "app.circly.mobile",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "프로필 사진을 업로드하기 위해 카메라 접근이 필요합니다.",
-        "NSPhotoLibraryUsageDescription": "프로필 사진을 선택하기 위해 사진 라이브러리 접근이 필요합니다."
+        "NSCameraUsageDescription": "Profile 사진을 업로드하기 위해 카메라 접근이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "Profile 사진을 선택하기 위해 사진 라이브러리 접근이 필요합니다."
       }
     },
     "android": {

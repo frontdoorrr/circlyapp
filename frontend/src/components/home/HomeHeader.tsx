@@ -31,13 +31,13 @@ interface HomeHeaderProps {
  * Layout:
  * - 좌측: 알림 아이콘 (뱃지 포함)
  * - 중앙: Circle 이름
- * - 우측: 프로필 아이콘
+ * - 우측: Profile 아이콘
  *
  * @param circleName - Circle 이름
  * @param notificationCount - 읽지 않은 알림 개수
- * @param profileImageUrl - 프로필 이미지 URL
+ * @param profileImageUrl - Profile 이미지 URL
  * @param onNotificationPress - 알림 아이콘 클릭 핸들러
- * @param onProfilePress - 프로필 아이콘 클릭 핸들러
+ * @param onProfilePress - Profile 아이콘 클릭 핸들러
  */
 export function HomeHeader({
   circleName,

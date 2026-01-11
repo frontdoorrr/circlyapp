@@ -44,8 +44,8 @@ src/components/home/
 **파일**: `app/(main)/(profile)/index.tsx`
 
 **구현 기능**:
-- ✅ 사용자 정보 표시 (프로필 이모지, 이름, 이메일)
-- ✅ 프로필 편집 모달 (이모지, 사용자명, 표시 이름)
+- ✅ 사용자 정보 표시 (Profile 이모지, 이름, 이메일)
+- ✅ Profile 편집 모달 (이모지, 사용자명, 표시 이름)
 - ✅ 내 Circle 목록 (이름, 멤버 수)
 - ✅ 설정 메뉴 (다크 모드 토글, 앱 정보)
 - ✅ 로그아웃 확인 다이얼로그
@@ -53,17 +53,17 @@ src/components/home/
 **컴포넌트**:
 ```
 src/components/profile/
-├── ProfileInfo.tsx        ✅ 프로필 정보 카드
-└── ProfileEditModal.tsx   ✅ 프로필 편집 모달
+├── ProfileInfo.tsx        ✅ Profile 정보 카드
+└── ProfileEditModal.tsx   ✅ Profile 편집 모달
 ```
 
 **API 연동**:
 - `useCurrentUser()` - 사용자 정보 조회
-- `useUpdateProfile()` - 프로필 수정
+- `useUpdateProfile()` - Profile 수정
 - `useLogout()` - 로그아웃
 
 **주요 기능**:
-- 프로필 이모지 12종 선택 가능
+- Profile 이모지 12종 선택 가능
 - 사용자명, 표시 이름 수정
 - 참여 Circle 목록 표시
 - 다크 모드 토글
@@ -177,8 +177,8 @@ Home 화면
    ↓
 Profile 탭 선택
    ↓
-프로필 화면
-   ├─ [프로필 편집] → 편집 모달
+Profile 화면
+   ├─ [Profile 편집] → 편집 모달
    ├─ Circle 항목 터치 → Circle 상세
    ├─ 다크 모드 토글
    └─ [로그아웃] → 로그인 화면
@@ -224,7 +224,7 @@ cd frontend && npx expo start
 **테스트 시나리오**:
 1. Profile 탭 선택
 2. 사용자 정보 표시 확인
-3. [프로필 편집] → 이모지 변경 → 저장
+3. [Profile 편집] → 이모지 변경 → 저장
 4. 내 Circle 목록 표시 확인
 5. [로그아웃] → 확인 → 로그인 화면 이동
 

@@ -1074,7 +1074,7 @@ application ExpoApp {
         │   │   │   ├── index.tsx         // 투표 생성
         │   │   │   └── templates.tsx     // 템플릿 선택
         │   │   └── (profile)/
-        │   │       ├── index.tsx         // 프로필
+        │   │       ├── index.tsx         // Profile
         │   │       ├── settings.tsx      // 설정
         │   │       └── circles.tsx       // Circle 관리
         │   └── _layout.tsx               // 루트 레이아웃

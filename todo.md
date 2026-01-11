@@ -152,7 +152,7 @@
   - [x] `app/(auth)/` - 비인증 화면 (로그인, 가입)
   - [x] `app/(main)/(home)/` - Home 탭 (진행 중 투표)
   - [x] `app/(main)/(create)/` - 투표 생성 탭
-  - [x] `app/(main)/(profile)/` - 프로필 탭
+  - [x] `app/(main)/(profile)/` - Profile 탭
 - [x] `app/_layout.tsx` - Root layout with theme provider
 - [x] `app/(auth)/_layout.tsx` - Auth layout
 - [x] `app/(main)/_layout.tsx` - Main layout with tabs
@@ -434,7 +434,7 @@
 - [x] **14.4** `circle/create.tsx:48,61` - Circle 생성 API 연동 ✅
 
 ### 🟡 중간 (부가 기능 미완성)
-- [x] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 ✅ (프로필→설정 경로 추가)
+- [x] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 ✅ (Profile→설정 경로 추가)
 - [ ] **14.6** `_layout.tsx:74` - 딥링크 unique_id → invite_code 변환 API
 - [x] **14.7** `notifications.tsx:26` - 알림 설정 API 연동 ✅
 
@@ -545,24 +545,24 @@
 
 ---
 
-## Phase 16: 프로필 및 설정 기능 완성
+## Phase 16: Profile 및 설정 기능 완성
 
 > **점검일**: 2025-01-11
 
-### 16.1 프로필 편집 기능 (P0) ✅
+### 16.1 Profile 편집 기능 (P0) ✅
 
 > **참고**: `prd/design/04-user-flow.md`
 
-- [x] `frontend/src/components/profile/ProfileEditModal.tsx` - 프로필 편집 모달 검증
+- [x] `frontend/src/components/profile/ProfileEditModal.tsx` - Profile 편집 모달 검증
   - [x] 닉네임(display_name) 수정 기능
-  - [x] 프로필 이모지 선택 기능 (32개 옵션)
+  - [x] Profile 이모지 선택 기능 (32개 옵션)
   - [x] username 수정 기능 (선택적)
   - [x] 검증 규칙 통일 (username min 2자, display_name max 100자)
   - [x] 필드별 인라인 에러 메시지
 - [x] `frontend/app/(main)/(2-profile)/index.tsx` - 편집 모달 연동 확인
 - [x] 백엔드 `PUT /auth/me` API 연동 확인
 - [x] Toast 알림 시스템 추가 (Alert → Toast)
-- [x] **커밋**: `feat(profile): 프로필 편집 UX 전면 개선`
+- [x] **커밋**: `feat(profile): Profile 편집 UX 전면 개선`
 
 ### 16.2 다크모드 구현 (P1) ✅
 
@@ -578,7 +578,7 @@
 - [x] 주요 화면 다크모드 적용 확인
   - [x] Home 탭
   - [x] Circle 탭
-  - [x] 프로필 탭
+  - [x] Profile 탭
   - [x] 설정 화면
 - [ ] **테스트**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
 

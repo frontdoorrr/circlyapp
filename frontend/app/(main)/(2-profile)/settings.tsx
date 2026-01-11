@@ -130,7 +130,7 @@ export default function SettingsScreen() {
               style={styles.settingItem}
               onPress={() => router.push('/(main)/(2-profile)' as any)}
             >
-              <Text style={styles.settingItemText}>프로필 수정</Text>
+              <Text style={styles.settingItemText}>Profile 수정</Text>
               <Text style={styles.settingItemArrow}>›</Text>
             </TouchableOpacity>
           </View>

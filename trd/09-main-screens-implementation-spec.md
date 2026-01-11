@@ -492,7 +492,7 @@ const cardPressAnimation = {
 │ Safe Area Top                            │
 ├─────────────────────────────────────────┤
 │                                         │
-│  프로필                        [편집]   │  ← Header
+│  Profile                        [편집]   │  ← Header
 │                                         │
 ├─────────────────────────────────────────┤
 │                                         │
@@ -550,12 +550,12 @@ interface UserProfile {
 ```
 
 **표시 정보**:
-- 프로필 이모지
+- Profile 이모지
 - 표시 이름 (display_name 또는 username)
 - 사용자명 (@username)
 - 참여 중인 Circle 수
 
-#### B. 프로필 편집
+#### B. Profile 편집
 ```typescript
 const [isEditing, setIsEditing] = useState(false);
 const updateProfileMutation = useUpdateProfile();
@@ -571,7 +571,7 @@ const handleUpdateProfile = async (data: UserUpdate) => {
     setIsEditing(false);
     Toast.show({
       type: 'success',
-      text1: '프로필이 업데이트되었습니다',
+      text1: 'Profile이 업데이트되었습니다',
     });
   } catch (error) {
     // 에러 처리
@@ -665,7 +665,7 @@ const handleSupport = async () => {
 ```
 ProfileScreen
 ├── Header
-│   ├── Title ("프로필")
+│   ├── Title ("Profile")
 │   └── EditButton
 │
 ├── ProfileInfo
@@ -707,7 +707,7 @@ src/components/profile/
 // 사용자 정보 조회
 const { data: user } = useCurrentUser();
 
-// 프로필 수정
+// Profile 수정
 const updateMutation = useUpdateProfile();
 
 // Circle 목록
@@ -738,14 +738,14 @@ const { user: authUser, logout } = useAuthStore();
 |-----|----------|
 | 사용자 정보 로딩 실패 | 재시도 버튼 표시 |
 | Circle 없음 | "참여한 Circle이 없습니다" 메시지 |
-| 프로필 수정 실패 | 에러 메시지 + 재시도 |
+| Profile 수정 실패 | 에러 메시지 + 재시도 |
 | 네트워크 끊김 | 캐시된 데이터 표시 + 오프라인 표시 |
 | 로그아웃 실패 | 강제 로컬 로그아웃 + 재로그인 유도 |
 
 ### 3.7 애니메이션
 
 ```typescript
-// 프로필 이모지 애니메이션
+// Profile 이모지 애니메이션
 const emojiScale = useSharedValue(1);
 
 useEffect(() => {
@@ -852,7 +852,7 @@ Response: PollResponse
 GET /api/v1/auth/me
 Response: UserResponse
 
-// 프로필 수정
+// Profile 수정
 PUT /api/v1/auth/me
 Request: { username?, display_name?, profile_emoji? }
 Response: UserResponse
@@ -917,7 +917,7 @@ const joinMutation = useJoinCircle({
 ### Phase 2: 기능 완성 (2-3일)
 1. Home - Circle 참여 기능
 2. Create - 템플릿 선택, 투표 생성
-3. Profile - 프로필 수정
+3. Profile - Profile 수정
 
 ### Phase 3: 세부 기능 (1-2일)
 1. Empty States
@@ -955,7 +955,7 @@ const joinMutation = useJoinCircle({
 
 ### Profile 화면
 - [ ] 사용자 정보 표시
-- [ ] 프로필 수정 모달
+- [ ] Profile 수정 모달
 - [ ] Circle 목록
 - [ ] 설정 메뉴
 - [ ] 다크 모드 토글

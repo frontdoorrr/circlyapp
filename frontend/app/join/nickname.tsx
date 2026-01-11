@@ -185,7 +185,7 @@ export default function NicknameScreen() {
             <Text style={styles.infoTitle}>💡 닉네임 안내</Text>
             <Text style={styles.infoText}>
               • 같은 Circle 내에서 중복될 수 없어요{'\n'}
-              • 나중에 프로필에서 변경할 수 있어요{'\n'}
+              • 나중에 Profile에서 변경할 수 있어요{'\n'}
               • 친구들이 알아볼 수 있는 이름을 추천해요
             </Text>
           </Animated.View>

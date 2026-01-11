@@ -1,7 +1,7 @@
 /**
  * Profile Edit Modal Component
  *
- * 프로필 수정 모달
+ * Profile 수정 모달
  */
 import React, { useState, useCallback } from 'react';
 import {
@@ -150,7 +150,7 @@ export function ProfileEditModal({
           >
             {/* 헤더 */}
             <View style={styles.header}>
-              <Text style={styles.title}>프로필 편집</Text>
+              <Text style={styles.title}>Profile 편집</Text>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                 <Text style={styles.closeText}>✕</Text>
               </TouchableOpacity>
@@ -158,7 +158,7 @@ export function ProfileEditModal({
 
             {/* 이모지 선택 */}
             <View style={styles.section}>
-              <Text style={styles.label}>프로필 이모지</Text>
+              <Text style={styles.label}>Profile 이모지</Text>
               <View style={styles.emojiGrid}>
                 {EMOJI_OPTIONS.map((emoji) => (
                   <TouchableOpacity

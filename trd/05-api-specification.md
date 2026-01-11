@@ -66,7 +66,7 @@ Content-Type: application/json
 
 ## Auth API
 
-인증 관련 API 엔드포인트입니다. 회원가입, 로그인, 프로필 관리 기능을 제공합니다.
+인증 관련 API 엔드포인트입니다. 회원가입, 로그인, Profile 관리 기능을 제공합니다.
 
 ### POST /auth/register
 
@@ -192,7 +192,7 @@ Content-Type: application/json
 
 ### PUT /auth/me
 
-현재 사용자 프로필을 업데이트합니다.
+현재 사용자 Profile을 업데이트합니다.
 
 **엔드포인트:** `PUT /api/v1/auth/me`
 **인증 필요:** ✅ JWT Token
@@ -203,7 +203,7 @@ Content-Type: application/json
 |------|------|------|------|----------|
 | `username` | string | ❌ | 사용자 이름 | 최소 2자, 최대 50자 |
 | `display_name` | string | ❌ | 표시 이름 | 최대 100자 |
-| `profile_emoji` | string | ❌ | 프로필 이모지 | 최대 10자 |
+| `profile_emoji` | string | ❌ | Profile 이모지 | 최대 10자 |
 
 **Request Example:**
 ```json

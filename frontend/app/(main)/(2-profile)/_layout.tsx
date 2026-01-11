@@ -4,8 +4,8 @@ import { tokens } from '../../../src/theme';
 /**
  * Profile Tab Layout
  *
- * 프로필 탭 내부 화면 레이아웃
- * - 내 프로필
+ * Profile 탭 내부 화면 레이아웃
+ * - 내 Profile
  * - Circle 관리
  * - 설정
  * - 알림 설정
@@ -24,7 +24,7 @@ export default function ProfileLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '프로필',
+          title: 'Profile',
         }}
       />
       <Stack.Screen

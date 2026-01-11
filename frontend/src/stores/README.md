@@ -8,7 +8,7 @@ Circly 프론트엔드는 **클라이언트 상태 관리**를 위해 Zustand를
 
 - **서버 상태**: React Query (`@tanstack/react-query`)
   - API 데이터 캐싱, 자동 재시도, 백그라운드 업데이트
-  - 예: 투표 목록, Circle 정보, 사용자 프로필
+  - 예: 투표 목록, Circle 정보, 사용자 Profile
 
 - **클라이언트 상태**: Zustand (`zustand`)
   - 인증 토큰, UI 상태, 폼 데이터

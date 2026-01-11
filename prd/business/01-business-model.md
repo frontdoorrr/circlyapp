@@ -359,7 +359,7 @@ const godModeUX = {
   },
   
   reveal_screen_design: {
-    mystery_card: '블러 처리된 프로필 실루엣',
+    mystery_card: '블러 처리된 Profile 실루엣',
     pricing_ladder: '단계별 힌트 가격 (저렴한 것부터)',
     social_proof: '"124명이 이미 확인했어요!"',
     time_pressure: '⏰ 특가는 6시간 후 종료',

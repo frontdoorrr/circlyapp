@@ -255,7 +255,7 @@ push_timing_test = ABTest(
 
 ## 📈 개인화 및 추천 시스템
 
-### 사용자 프로필링
+### 사용자 Profile링
 ```javascript
 const userProfile = {
   demographics: {

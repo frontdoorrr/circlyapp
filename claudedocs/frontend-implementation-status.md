@@ -108,7 +108,7 @@ npm install axios @tanstack/react-query zustand
 - setAuth(user, token)      // 로그인 성공 시
 - logout()                   // 로그아웃
 - loadAuthFromStorage()      // 앱 시작 시 로드
-- updateUser(user)           // 프로필 업데이트
+- updateUser(user)           // Profile 업데이트
 ```
 
 ---
@@ -121,7 +121,7 @@ npm install axios @tanstack/react-query zustand
 - useLogin()         // 로그인
 - useLogout()        // 로그아웃
 - useCurrentUser()   // 현재 사용자 조회
-- useUpdateProfile() // 프로필 수정
+- useUpdateProfile() // Profile 수정
 ```
 
 #### `src/hooks/useCircles.ts`
@@ -254,7 +254,7 @@ App 재시작
 
 #### `app/(main)/(profile)/index.tsx`
 - [ ] 사용자 정보 표시 (`useCurrentUser`)
-- [ ] 프로필 수정 (`useUpdateProfile`)
+- [ ] Profile 수정 (`useUpdateProfile`)
 - [ ] 로그아웃 버튼 (`useLogout`)
 
 ### 2. Circle 상세 화면
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
 3. 로그인 상태 유지 확인
 
 ### 4. 로그아웃 테스트
-1. 프로필 화면에서 로그아웃 버튼 클릭
+1. Profile 화면에서 로그아웃 버튼 클릭
 2. 로그인 화면으로 이동 확인
 3. 저장된 토큰 삭제 확인
 
