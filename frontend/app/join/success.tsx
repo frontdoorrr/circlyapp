@@ -13,6 +13,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 
 /**
  * Circle 가입 성공 화면
@@ -27,6 +29,8 @@ export default function JoinSuccessScreen() {
     circleName: string;
     nickname: string;
   }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   // Animation values
   const emojiScale = useSharedValue(0.5);
@@ -175,114 +179,115 @@ export default function JoinSuccessScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.white,
-    overflow: 'hidden',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: tokens.spacing.lg,
-  },
-  // Emoji styles
-  emojiContainer: {
-    marginBottom: tokens.spacing.xl,
-  },
-  emoji: {
-    fontSize: 120,
-  },
-  // Message styles
-  messageContainer: {
-    alignItems: 'center',
-    marginBottom: tokens.spacing['2xl'],
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['3xl'],
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  subtitle: {
-    fontSize: tokens.typography.fontSize.lg,
-    color: tokens.colors.neutral[600],
-    textAlign: 'center',
-    marginBottom: tokens.spacing.xl,
-  },
-  nicknameCard: {
-    backgroundColor: tokens.colors.primary[50],
-    paddingVertical: tokens.spacing.md,
-    paddingHorizontal: tokens.spacing.xl,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[100],
-  },
-  nicknameLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[600],
-    marginBottom: tokens.spacing.xs,
-  },
-  nickname: {
-    fontSize: tokens.typography.fontSize.xl,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-  },
-  // Redirect styles
-  redirectContainer: {
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: tokens.spacing.xl,
-  },
-  redirectText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-    marginBottom: tokens.spacing.sm,
-  },
-  progressBarContainer: {
-    width: '80%',
-    height: 4,
-    backgroundColor: tokens.colors.neutral[100],
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: tokens.colors.primary[500],
-    borderRadius: 2,
-  },
-  // Confetti styles
-  confetti: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-  },
-  confetti1: {
-    left: '15%',
-    top: -20,
-    backgroundColor: tokens.colors.primary[400],
-  },
-  confetti2: {
-    left: '35%',
-    top: -20,
-    backgroundColor: tokens.colors.secondary[400],
-  },
-  confetti3: {
-    left: '55%',
-    top: -20,
-    backgroundColor: tokens.colors.success[500],
-  },
-  confetti4: {
-    left: '75%',
-    top: -20,
-    backgroundColor: tokens.colors.warning[500],
-  },
-  confetti5: {
-    left: '90%',
-    top: -20,
-    backgroundColor: tokens.colors.secondary[500],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      overflow: 'hidden',
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: tokens.spacing.lg,
+    },
+    // Emoji styles
+    emojiContainer: {
+      marginBottom: tokens.spacing.xl,
+    },
+    emoji: {
+      fontSize: 120,
+    },
+    // Message styles
+    messageContainer: {
+      alignItems: 'center',
+      marginBottom: tokens.spacing['2xl'],
+    },
+    title: {
+      fontSize: tokens.typography.fontSize['3xl'],
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    subtitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      marginBottom: tokens.spacing.xl,
+    },
+    nicknameCard: {
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      paddingVertical: tokens.spacing.md,
+      paddingHorizontal: tokens.spacing.xl,
+      borderRadius: tokens.borderRadius.lg,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isDark ? tokens.colors.primary[800] : tokens.colors.primary[100],
+    },
+    nicknameLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      marginBottom: tokens.spacing.xs,
+    },
+    nickname: {
+      fontSize: tokens.typography.fontSize.xl,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+    },
+    // Redirect styles
+    redirectContainer: {
+      alignItems: 'center',
+      width: '100%',
+      paddingHorizontal: tokens.spacing.xl,
+    },
+    redirectText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+      marginBottom: tokens.spacing.sm,
+    },
+    progressBarContainer: {
+      width: '80%',
+      height: 4,
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[100],
+      borderRadius: 2,
+      overflow: 'hidden',
+    },
+    progressBar: {
+      height: '100%',
+      backgroundColor: tokens.colors.primary[500],
+      borderRadius: 2,
+    },
+    // Confetti styles
+    confetti: {
+      position: 'absolute',
+      width: 12,
+      height: 12,
+      borderRadius: 2,
+    },
+    confetti1: {
+      left: '15%',
+      top: -20,
+      backgroundColor: tokens.colors.primary[400],
+    },
+    confetti2: {
+      left: '35%',
+      top: -20,
+      backgroundColor: tokens.colors.secondary[400],
+    },
+    confetti3: {
+      left: '55%',
+      top: -20,
+      backgroundColor: tokens.colors.success[500],
+    },
+    confetti4: {
+      left: '75%',
+      top: -20,
+      backgroundColor: tokens.colors.warning[500],
+    },
+    confetti5: {
+      left: '90%',
+      top: -20,
+      backgroundColor: tokens.colors.secondary[500],
+    },
+  });

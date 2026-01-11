@@ -4,6 +4,8 @@ import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import { useJoinCircle } from '../../src/hooks/useCircles';
 
 /**
@@ -22,6 +24,8 @@ export default function NicknameScreen() {
     memberCount: string;
     maxMembers: string;
   }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
@@ -148,7 +152,7 @@ export default function NicknameScreen() {
               value={nickname}
               onChangeText={handleNicknameChange}
               placeholder="예: 민지"
-              placeholderTextColor={tokens.colors.neutral[400]}
+              placeholderTextColor={theme.textTertiary}
               autoCapitalize="none"
               autoCorrect={false}
               maxLength={10}
@@ -217,157 +221,159 @@ export default function NicknameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.white,
-  },
-  content: {
-    flex: 1,
-    padding: tokens.spacing.lg,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: tokens.spacing.xl,
-    marginBottom: tokens.spacing.xl,
-  },
-  emoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  description: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  circleCard: {
-    backgroundColor: tokens.colors.primary[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-    marginBottom: tokens.spacing.xl,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[100],
-  },
-  circleLabel: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[600],
-    marginBottom: tokens.spacing.xs,
-  },
-  circleName: {
-    fontSize: tokens.typography.fontSize.xl,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[700],
-    marginBottom: tokens.spacing.sm,
-  },
-  circleInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
-  },
-  circleInfoText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[500],
-  },
-  circleInfoDot: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.primary[300],
-  },
-  inputSection: {
-    marginBottom: tokens.spacing.xl,
-  },
-  inputLabel: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  input: {
-    backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.borderRadius.lg,
-    paddingVertical: tokens.spacing.md,
-    paddingHorizontal: tokens.spacing.lg,
-    fontSize: tokens.typography.fontSize.lg,
-    color: tokens.colors.neutral[900],
-  },
-  inputError: {
-    borderColor: tokens.colors.red[500],
-    backgroundColor: tokens.colors.red[50],
-  },
-  inputValid: {
-    borderColor: tokens.colors.primary[500],
-    backgroundColor: tokens.colors.primary[50],
-  },
-  inputFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: tokens.spacing.sm,
-  },
-  hint: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.red[600],
-  },
-  charCount: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-  },
-  charCountError: {
-    color: tokens.colors.red[600],
-  },
-  infoCard: {
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  infoTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  infoText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-    lineHeight: 20,
-  },
-  footer: {
-    padding: tokens.spacing.lg,
-    paddingBottom: tokens.spacing.xl,
-    backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-  },
-  joinButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-  },
-  joinButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[200],
-  },
-  joinButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.white,
-  },
-  joinButtonTextDisabled: {
-    color: tokens.colors.neutral[400],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    content: {
+      flex: 1,
+      padding: tokens.spacing.lg,
+    },
+    header: {
+      alignItems: 'center',
+      marginTop: tokens.spacing.xl,
+      marginBottom: tokens.spacing.xl,
+    },
+    emoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.lg,
+      textAlign: 'center',
+    },
+    title: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    description: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    circleCard: {
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      marginBottom: tokens.spacing.xl,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: isDark ? tokens.colors.primary[800] : tokens.colors.primary[100],
+    },
+    circleLabel: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
+      marginBottom: tokens.spacing.xs,
+    },
+    circleName: {
+      fontSize: tokens.typography.fontSize.xl,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+      marginBottom: tokens.spacing.sm,
+    },
+    circleInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: tokens.spacing.sm,
+    },
+    circleInfoText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 500],
+    },
+    circleInfoDot: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 600 : 300],
+    },
+    inputSection: {
+      marginBottom: tokens.spacing.xl,
+    },
+    inputLabel: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    input: {
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.white,
+      borderWidth: 2,
+      borderColor: theme.border,
+      borderRadius: tokens.borderRadius.lg,
+      paddingVertical: tokens.spacing.md,
+      paddingHorizontal: tokens.spacing.lg,
+      fontSize: tokens.typography.fontSize.lg,
+      color: theme.text,
+    },
+    inputError: {
+      borderColor: tokens.colors.error[500],
+      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : tokens.colors.error[50],
+    },
+    inputValid: {
+      borderColor: tokens.colors.primary[500],
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+    },
+    inputFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: tokens.spacing.sm,
+    },
+    hint: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.error[isDark ? 400 : 600],
+    },
+    charCount: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+    },
+    charCountError: {
+      color: tokens.colors.error[isDark ? 400 : 600],
+    },
+    infoCard: {
+      backgroundColor: theme.backgroundSecondary,
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      ...(isDark && { borderWidth: 1, borderColor: theme.border }),
+    },
+    infoTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    infoText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      lineHeight: 20,
+    },
+    footer: {
+      padding: tokens.spacing.lg,
+      paddingBottom: tokens.spacing.xl,
+      backgroundColor: theme.card,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    joinButton: {
+      backgroundColor: tokens.colors.primary[500],
+      paddingVertical: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.lg,
+      alignItems: 'center',
+    },
+    joinButtonDisabled: {
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+    },
+    joinButtonText: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.white,
+    },
+    joinButtonTextDisabled: {
+      color: theme.textTertiary,
+    },
+  });

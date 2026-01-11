@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { tokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import type { Theme } from '../../src/theme/tokens';
 import { useValidateInviteCode } from '../../src/hooks/useCircles';
 
 /**
@@ -18,6 +20,8 @@ import { useValidateInviteCode } from '../../src/hooks/useCircles';
 export default function InviteCodeScreen() {
   // Deep link에서 전달된 코드 파라미터
   const { code: deepLinkCode } = useLocalSearchParams<{ code?: string }>();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -125,7 +129,7 @@ export default function InviteCodeScreen() {
               value={code}
               onChangeText={handleCodeChange}
               placeholder="ABC123"
-              placeholderTextColor={tokens.colors.neutral[400]}
+              placeholderTextColor={theme.textTertiary}
               autoCapitalize="characters"
               autoCorrect={false}
               maxLength={6}
@@ -185,111 +189,113 @@ export default function InviteCodeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.white,
-  },
-  content: {
-    flex: 1,
-    padding: tokens.spacing.lg,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: tokens.spacing['2xl'],
-    marginBottom: tokens.spacing['2xl'],
-  },
-  emoji: {
-    fontSize: 64,
-    lineHeight: 76,
-    marginBottom: tokens.spacing.lg,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  description: {
-    fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[500],
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  inputSection: {
-    marginBottom: tokens.spacing.xl,
-  },
-  input: {
-    backgroundColor: tokens.colors.white,
-    borderWidth: 2,
-    borderColor: tokens.colors.neutral[200],
-    borderRadius: tokens.borderRadius.lg,
-    paddingVertical: tokens.spacing.lg,
-    paddingHorizontal: tokens.spacing.xl,
-    fontSize: tokens.typography.fontSize['2xl'],
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.neutral[900],
-    letterSpacing: 8,
-  },
-  inputError: {
-    borderColor: tokens.colors.red[500],
-    backgroundColor: tokens.colors.red[50],
-  },
-  inputValid: {
-    borderColor: tokens.colors.primary[500],
-    backgroundColor: tokens.colors.primary[50],
-  },
-  hint: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[400],
-    textAlign: 'center',
-    marginTop: tokens.spacing.sm,
-  },
-  errorText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.red[600],
-    textAlign: 'center',
-    marginTop: tokens.spacing.sm,
-  },
-  exampleCard: {
-    backgroundColor: tokens.colors.neutral[50],
-    padding: tokens.spacing.lg,
-    borderRadius: tokens.borderRadius.lg,
-  },
-  exampleTitle: {
-    fontSize: tokens.typography.fontSize.base,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
-    marginBottom: tokens.spacing.sm,
-  },
-  exampleText: {
-    fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
-    lineHeight: 20,
-  },
-  footer: {
-    padding: tokens.spacing.lg,
-    paddingBottom: tokens.spacing.xl,
-    backgroundColor: tokens.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.neutral[200],
-  },
-  joinButton: {
-    backgroundColor: tokens.colors.primary[500],
-    paddingVertical: tokens.spacing.md,
-    borderRadius: tokens.borderRadius.lg,
-    alignItems: 'center',
-  },
-  joinButtonDisabled: {
-    backgroundColor: tokens.colors.neutral[200],
-  },
-  joinButtonText: {
-    fontSize: tokens.typography.fontSize.lg,
-    fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.white,
-  },
-  joinButtonTextDisabled: {
-    color: tokens.colors.neutral[400],
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    content: {
+      flex: 1,
+      padding: tokens.spacing.lg,
+    },
+    header: {
+      alignItems: 'center',
+      marginTop: tokens.spacing['2xl'],
+      marginBottom: tokens.spacing['2xl'],
+    },
+    emoji: {
+      fontSize: 64,
+      lineHeight: 76,
+      marginBottom: tokens.spacing.lg,
+      textAlign: 'center',
+    },
+    title: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    description: {
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textTertiary,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    inputSection: {
+      marginBottom: tokens.spacing.xl,
+    },
+    input: {
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.white,
+      borderWidth: 2,
+      borderColor: theme.border,
+      borderRadius: tokens.borderRadius.lg,
+      paddingVertical: tokens.spacing.lg,
+      paddingHorizontal: tokens.spacing.xl,
+      fontSize: tokens.typography.fontSize['2xl'],
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: theme.text,
+      letterSpacing: 8,
+    },
+    inputError: {
+      borderColor: tokens.colors.error[500],
+      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : tokens.colors.error[50],
+    },
+    inputValid: {
+      borderColor: tokens.colors.primary[500],
+      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+    },
+    hint: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+      textAlign: 'center',
+      marginTop: tokens.spacing.sm,
+    },
+    errorText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.error[isDark ? 400 : 600],
+      textAlign: 'center',
+      marginTop: tokens.spacing.sm,
+    },
+    exampleCard: {
+      backgroundColor: theme.backgroundSecondary,
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      ...(isDark && { borderWidth: 1, borderColor: theme.border }),
+    },
+    exampleTitle: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+      marginBottom: tokens.spacing.sm,
+    },
+    exampleText: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      lineHeight: 20,
+    },
+    footer: {
+      padding: tokens.spacing.lg,
+      paddingBottom: tokens.spacing.xl,
+      backgroundColor: theme.card,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    joinButton: {
+      backgroundColor: tokens.colors.primary[500],
+      paddingVertical: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.lg,
+      alignItems: 'center',
+    },
+    joinButtonDisabled: {
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
+    },
+    joinButtonText: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.white,
+    },
+    joinButtonTextDisabled: {
+      color: theme.textTertiary,
+    },
+  });
