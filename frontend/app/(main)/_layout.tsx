@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { tokens } from '../../src/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 /**
  * Main Layout with Tabs
@@ -10,8 +11,11 @@ import { tokens } from '../../src/theme';
  * - 3탭 구조: Home, Circle, Profile
  * - Gas 앱 스타일 탭바
  * - Safe Area 대응
+ * - 다크모드 지원
  */
 export default function MainLayout() {
+  const { theme, isDark } = useTheme();
+
   return (
     <Tabs
       initialRouteName="(0-home)"
@@ -22,13 +26,13 @@ export default function MainLayout() {
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: tokens.spacing.sm,
           paddingHorizontal: tokens.spacing.md,
-          backgroundColor: tokens.colors.white,
+          backgroundColor: theme.card,
           borderTopWidth: 1,
-          borderTopColor: tokens.colors.neutral[200],
-          ...tokens.shadows.sm,
+          borderTopColor: theme.border,
+          ...(isDark ? {} : tokens.shadows.sm),
         },
-        tabBarActiveTintColor: tokens.colors.primary[500],
-        tabBarInactiveTintColor: tokens.colors.neutral[400],
+        tabBarActiveTintColor: tokens.colors.primary[isDark ? 400 : 500],
+        tabBarInactiveTintColor: theme.textTertiary,
         tabBarLabelStyle: {
           fontSize: tokens.typography.fontSize.xs,
           fontWeight: tokens.typography.fontWeight.medium,

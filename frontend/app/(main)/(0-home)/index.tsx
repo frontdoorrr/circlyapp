@@ -6,6 +6,7 @@ import {
   RefreshControl,
   ListRenderItem,
   AccessibilityInfo,
+  ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -32,6 +33,8 @@ import { Skeleton, SkeletonCard } from '../../../src/components/states/Skeleton'
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { tokens, spacing, fontSizes, animations } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
+import type { Theme } from '../../../src/theme/tokens';
 import {
   useMyActivePolls,
   useMyCompletedPolls,
@@ -75,6 +78,8 @@ interface TransformedCompletedPoll extends CompletedPollData { }
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [focusKey, setFocusKey] = useState(0);
@@ -350,15 +355,19 @@ export default function HomeScreen() {
             count={transformedActivePolls.length}
             isActive={activeTab === 'active'}
             onPress={() => handleTabChange('active')}
+            isDark={isDark}
+            theme={theme}
           />
           <TabButton
             label="완료됨"
             count={transformedCompletedPolls.length}
             isActive={activeTab === 'completed'}
             onPress={() => handleTabChange('completed')}
+            isDark={isDark}
+            theme={theme}
           />
         </View>
-        <JoinCircleButton onPress={handleJoinCircle} />
+        <JoinCircleButton onPress={handleJoinCircle} isDark={isDark} />
       </View>
 
       {/* Content - PagerView로 스와이프 지원 */}
@@ -463,28 +472,44 @@ export default function HomeScreen() {
 
 interface JoinCircleButtonProps {
   onPress: () => void;
+  isDark: boolean;
 }
 
-function JoinCircleButton({ onPress }: JoinCircleButtonProps) {
+function JoinCircleButton({ onPress, isDark }: JoinCircleButtonProps) {
+  const joinButtonStyle: ViewStyle = {
+    backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+    borderRadius: 12,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderWidth: 1,
+    borderColor: isDark ? tokens.colors.primary[700] : tokens.colors.primary[200],
+  };
+
+  const joinButtonContentStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+  };
+
   return (
     <Animated.View entering={FadeIn.duration(300)}>
       <Button
         variant="ghost"
         size="sm"
         onPress={onPress}
-        style={styles.joinButton}
+        style={joinButtonStyle}
         accessibilityRole="button"
         accessibilityLabel="코드로 Circle 참여하기"
         accessibilityHint="초대 코드를 입력하여 새로운 Circle에 참여합니다"
       >
-        <View style={styles.joinButtonContent}>
-          <Text variant="lg" style={styles.joinButtonEmoji}>
+        <View style={joinButtonContentStyle}>
+          <Text variant="lg" style={{ fontSize: 16 }}>
             🎯
           </Text>
           <Text
             variant="sm"
             weight="medium"
-            color={tokens.colors.primary[600]}
+            color={tokens.colors.primary[isDark ? 400 : 600]}
           >
             참여
           </Text>
@@ -503,22 +528,47 @@ interface TabButtonProps {
   count: number;
   isActive: boolean;
   onPress: () => void;
+  isDark: boolean;
+  theme: Theme;
 }
 
-function TabButton({ label, count, isActive, onPress }: TabButtonProps) {
+function TabButton({ label, count, isActive, onPress, isDark, theme }: TabButtonProps) {
   const animatedStyle = useAnimatedStyle(() => ({
     backgroundColor: isActive
       ? tokens.colors.primary[500]
-      : tokens.colors.neutral[100],
+      : isDark ? theme.backgroundSecondary : tokens.colors.neutral[100],
   }));
 
+  const tabButtonStyle: ViewStyle = {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  };
+
+  const tabButtonInnerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    gap: spacing[2],
+  };
+
+  const countBadgeStyle: ViewStyle = {
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 24,
+    alignItems: 'center',
+  };
+
   return (
-    <Animated.View style={[styles.tabButton, animatedStyle]}>
+    <Animated.View style={[tabButtonStyle, animatedStyle]}>
       <Button
         variant="ghost"
         size="sm"
         onPress={onPress}
-        style={styles.tabButtonInner}
+        style={tabButtonInnerStyle}
         accessibilityRole="tab"
         accessibilityState={{ selected: isActive }}
         accessibilityLabel={`${label} 탭, ${count}개의 투표`}
@@ -526,25 +576,25 @@ function TabButton({ label, count, isActive, onPress }: TabButtonProps) {
         <Text
           variant="sm"
           weight={isActive ? 'semibold' : 'medium'}
-          color={isActive ? tokens.colors.white : tokens.colors.neutral[600]}
+          color={isActive ? tokens.colors.white : theme.textSecondary}
         >
           {label}
         </Text>
         {count > 0 && (
           <View
             style={[
-              styles.countBadge,
+              countBadgeStyle,
               {
                 backgroundColor: isActive
                   ? 'rgba(255,255,255,0.2)'
-                  : tokens.colors.neutral[200],
+                  : isDark ? theme.backgroundTertiary : tokens.colors.neutral[200],
               },
             ]}
           >
             <Text
               variant="xs"
               weight="semibold"
-              color={isActive ? tokens.colors.white : tokens.colors.neutral[600]}
+              color={isActive ? tokens.colors.white : theme.textSecondary}
             >
               {count}
             </Text>
@@ -559,98 +609,62 @@ function TabButton({ label, count, isActive, onPress }: TabButtonProps) {
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: tokens.colors.neutral[50],
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing[6],
-  },
-  loadingContainer: {
-    flex: 1,
-    padding: spacing[4],
-  },
-  skeletonCard: {
-    height: 140,
-    marginBottom: spacing[3],
-    borderRadius: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // PagerView styles
-  pagerView: {
-    flex: 1,
-  },
-  pageContainer: {
-    flex: 1,
-  },
-  // Tab row with join button
-  tabRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    gap: spacing[3],
-  },
-  // Tab styles
-  tabContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing[2],
-  },
-  tabButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  tabButtonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[3],
-    gap: spacing[2],
-  },
-  countBadge: {
-    paddingHorizontal: spacing[2],
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  // List styles
-  listContent: {
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[6],
-  },
-  cardWrapper: {
-    // For animation wrapper
-  },
-  separator: {
-    height: spacing[3], // 12px
-  },
-  // Join Circle Button styles
-  joinButton: {
-    backgroundColor: tokens.colors.primary[50],
-    borderRadius: 12,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderWidth: 1,
-    borderColor: tokens.colors.primary[200],
-  },
-  joinButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[1],
-  },
-  joinButtonEmoji: {
-    fontSize: 16,
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing[6],
+    },
+    loadingContainer: {
+      flex: 1,
+      padding: spacing[4],
+    },
+    skeletonCard: {
+      height: 140,
+      marginBottom: spacing[3],
+      borderRadius: 20,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // PagerView styles
+    pagerView: {
+      flex: 1,
+    },
+    pageContainer: {
+      flex: 1,
+    },
+    // Tab row with join button
+    tabRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[3],
+      gap: spacing[3],
+    },
+    // Tab styles
+    tabContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing[2],
+    },
+    // List styles
+    listContent: {
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[6],
+    },
+    cardWrapper: {
+      // For animation wrapper
+    },
+    separator: {
+      height: spacing[3], // 12px
+    },
+  });

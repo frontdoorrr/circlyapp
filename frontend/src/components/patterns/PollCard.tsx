@@ -8,7 +8,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { tokens, animations, spacing, borderRadius } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeContext';
 import { Text } from '../primitives/Text';
+import type { Theme } from '../../theme/tokens';
 
 // ============================================================================
 // Types
@@ -151,6 +153,8 @@ type PollCardProps = ActivePollCardProps | CompletedPollCardProps | LegacyPollCa
 export function PollCard(props: PollCardProps) {
   const { poll, onPress } = props;
   const variant = props.variant ?? 'active';
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
 
   const scale = useSharedValue(1);
 
@@ -207,9 +211,9 @@ export function PollCard(props: PollCardProps) {
     >
       <Animated.View key={poll.id} style={[styles.card, animatedStyle]}>
         {variant === 'completed' ? (
-          <CompletedCardContent poll={poll as CompletedPollData} />
+          <CompletedCardContent poll={poll as CompletedPollData} theme={theme} isDark={isDark} styles={styles} />
         ) : (
-          <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} />
+          <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} theme={theme} isDark={isDark} styles={styles} />
         )}
       </Animated.View>
     </Pressable>
@@ -222,9 +226,12 @@ export function PollCard(props: PollCardProps) {
 
 interface ActiveCardContentProps {
   poll: ActivePollData | PollCardData;
+  theme: Theme;
+  isDark: boolean;
+  styles: ReturnType<typeof createStyles>;
 }
 
-function ActiveCardContent({ poll }: ActiveCardContentProps) {
+function ActiveCardContent({ poll, theme, isDark, styles }: ActiveCardContentProps) {
   const voteStatus = 'voteStatus' in poll ? poll.voteStatus : 'not_voted';
   const circleName = poll.circleName;
 
@@ -241,7 +248,7 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
           <Text
             variant="lg"
             weight="semibold"
-            color={tokens.colors.neutral[900]}
+            color={theme.text}
             numberOfLines={2}
           >
             {poll.question}
@@ -249,7 +256,7 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
           {circleName && (
             <Text
               variant="sm"
-              color={tokens.colors.neutral[500]}
+              color={theme.textTertiary}
               style={styles.circleName}
             >
               {circleName}
@@ -261,12 +268,12 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
       {/* Meta Information */}
       <View style={styles.metaContainer}>
         <View style={styles.metaItem}>
-          <Text variant="sm" color={tokens.colors.neutral[500]}>
+          <Text variant="sm" color={theme.textTertiary}>
             ⏰ {poll.timeRemaining}
           </Text>
         </View>
         <View style={styles.metaItem}>
-          <Text variant="sm" color={tokens.colors.neutral[500]}>
+          <Text variant="sm" color={theme.textTertiary}>
             👥 {poll.participantCount}/{poll.totalMembers}명 참여
           </Text>
         </View>
@@ -281,7 +288,7 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
           <Text
             variant="sm"
             weight="medium"
-            color={tokens.colors.primary[600]}
+            color={tokens.colors.primary[isDark ? 400 : 600]}
             style={styles.progressText}
           >
             {poll.participationRate}%
@@ -289,7 +296,7 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
         </View>
 
         {/* Vote Status Badge */}
-        <VoteStatusBadge status={voteStatus} />
+        <VoteStatusBadge status={voteStatus} isDark={isDark} />
       </View>
     </>
   );
@@ -301,9 +308,12 @@ function ActiveCardContent({ poll }: ActiveCardContentProps) {
 
 interface CompletedCardContentProps {
   poll: CompletedPollData;
+  theme: Theme;
+  isDark: boolean;
+  styles: ReturnType<typeof createStyles>;
 }
 
-function CompletedCardContent({ poll }: CompletedCardContentProps) {
+function CompletedCardContent({ poll, theme, isDark, styles }: CompletedCardContentProps) {
   return (
     <>
       {/* Question Header */}
@@ -317,7 +327,7 @@ function CompletedCardContent({ poll }: CompletedCardContentProps) {
           <Text
             variant="lg"
             weight="semibold"
-            color={tokens.colors.neutral[900]}
+            color={theme.text}
             numberOfLines={2}
           >
             {poll.question}
@@ -325,7 +335,7 @@ function CompletedCardContent({ poll }: CompletedCardContentProps) {
           {poll.circleName && (
             <Text
               variant="sm"
-              color={tokens.colors.neutral[500]}
+              color={theme.textTertiary}
               style={styles.circleName}
             >
               {poll.circleName}
@@ -338,25 +348,25 @@ function CompletedCardContent({ poll }: CompletedCardContentProps) {
       <View style={styles.completedFooter}>
         {/* Completed Badge */}
         <View style={styles.completedBadge}>
-          <Text variant="sm" weight="medium" color={tokens.colors.neutral[500]}>
+          <Text variant="sm" weight="medium" color={theme.textTertiary}>
             투표 종료
           </Text>
         </View>
 
         {/* Winner Preview */}
         <View style={styles.winnerPreview}>
-          <Text variant="sm" color={tokens.colors.neutral[600]}>
+          <Text variant="sm" color={theme.textSecondary}>
             🏆
           </Text>
           <Text
             variant="sm"
             weight="semibold"
-            color={tokens.colors.neutral[800]}
+            color={theme.text}
             style={styles.winnerName}
           >
             {poll.winner.name}
           </Text>
-          <Text variant="sm" color={tokens.colors.neutral[500]}>
+          <Text variant="sm" color={theme.textTertiary}>
             {poll.winner.voteCount}표
           </Text>
         </View>
@@ -371,22 +381,29 @@ function CompletedCardContent({ poll }: CompletedCardContentProps) {
 
 interface VoteStatusBadgeProps {
   status: VoteStatus;
+  isDark: boolean;
 }
 
-function VoteStatusBadge({ status }: VoteStatusBadgeProps) {
+function VoteStatusBadge({ status, isDark }: VoteStatusBadgeProps) {
   const isVoted = status === 'voted';
 
+  const badgeStyle = {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
+    backgroundColor: isVoted
+      ? isDark ? 'rgba(34, 197, 94, 0.15)' : tokens.colors.success[50]
+      : isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+  };
+
   return (
-    <View
-      style={[
-        styles.voteBadge,
-        isVoted ? styles.voteBadgeVoted : styles.voteBadgeNotVoted,
-      ]}
-    >
+    <View style={badgeStyle}>
       <Text
         variant="sm"
         weight="medium"
-        color={isVoted ? tokens.colors.success[600] : tokens.colors.primary[600]}
+        color={isVoted
+          ? tokens.colors.success[isDark ? 400 : 600]
+          : tokens.colors.primary[isDark ? 400 : 600]}
       >
         {isVoted ? '투표 완료 ✅' : '투표하기 →'}
       </Text>
@@ -413,111 +430,103 @@ function ProgressBarFill({ percentage }: ProgressBarFillProps) {
     width: `${width.value}%`,
   }));
 
-  return <Animated.View style={[styles.progressBarFill, animatedStyle]} />;
+  const fillStyle = {
+    height: '100%' as const,
+    backgroundColor: tokens.colors.primary[500],
+    borderRadius: borderRadius.full,
+  };
+
+  return <Animated.View style={[fillStyle, animatedStyle]} />;
 }
 
 // ============================================================================
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: tokens.colors.white,
-    borderRadius: borderRadius['2xl'], // 20px
-    padding: spacing[5], // 20px
-    marginBottom: spacing[3], // 12px
-    ...tokens.shadows.sm,
-  },
-  questionHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing[3], // 12px
-  },
-  emojiContainer: {
-    width: 40,      // 32 → 40 (iOS 이모지 렌더링 여유 공간)
-    height: 40,     // 32 → 40
-    marginRight: spacing[2], // 8px
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Note: overflow: 'visible'은 iOS에서 무시되므로 제거
-  },
-  emoji: {
-    fontSize: 28,   // 24 → 28
-    lineHeight: 32, // 28 → 32 (1.15 배수)
-    textAlign: 'center',
-    // Note: includeFontPadding은 Android 전용이므로 제거
-  },
-  questionContent: {
-    flex: 1,
-  },
-  circleName: {
-    marginTop: spacing[1], // 4px
-  },
-  metaContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing[3], // 12px
-  },
-  metaItem: {
-    marginRight: spacing[4], // 16px
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  progressContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: spacing[3], // 12px
-  },
-  progressBarBackground: {
-    flex: 1,
-    height: 6,
-    backgroundColor: tokens.colors.neutral[100],
-    borderRadius: borderRadius.full,
-    overflow: 'hidden',
-    marginRight: spacing[2], // 8px
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: tokens.colors.primary[500],
-    borderRadius: borderRadius.full,
-  },
-  progressText: {
-    minWidth: 36,
-    textAlign: 'right',
-  },
-  // Vote Status Badge
-  voteBadge: {
-    paddingHorizontal: spacing[3], // 12px
-    paddingVertical: spacing[1], // 4px
-    borderRadius: borderRadius.full,
-  },
-  voteBadgeVoted: {
-    backgroundColor: tokens.colors.success[50],
-  },
-  voteBadgeNotVoted: {
-    backgroundColor: tokens.colors.primary[50],
-  },
-  // Completed Card
-  completedFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  completedBadge: {
-    backgroundColor: tokens.colors.neutral[100],
-    paddingHorizontal: spacing[3], // 12px
-    paddingVertical: spacing[1], // 4px
-    borderRadius: borderRadius.full,
-  },
-  winnerPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  winnerName: {
-    marginHorizontal: spacing[1], // 4px
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: theme.card,
+      borderRadius: borderRadius['2xl'], // 20px
+      padding: spacing[5], // 20px
+      marginBottom: spacing[3], // 12px
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    questionHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: spacing[3], // 12px
+    },
+    emojiContainer: {
+      width: 40,      // 32 → 40 (iOS 이모지 렌더링 여유 공간)
+      height: 40,     // 32 → 40
+      marginRight: spacing[2], // 8px
+      alignItems: 'center',
+      justifyContent: 'center',
+      // Note: overflow: 'visible'은 iOS에서 무시되므로 제거
+    },
+    emoji: {
+      fontSize: 28,   // 24 → 28
+      lineHeight: 32, // 28 → 32 (1.15 배수)
+      textAlign: 'center',
+      // Note: includeFontPadding은 Android 전용이므로 제거
+    },
+    questionContent: {
+      flex: 1,
+    },
+    circleName: {
+      marginTop: spacing[1], // 4px
+    },
+    metaContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing[3], // 12px
+    },
+    metaItem: {
+      marginRight: spacing[4], // 16px
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    progressContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: spacing[3], // 12px
+    },
+    progressBarBackground: {
+      flex: 1,
+      height: 6,
+      backgroundColor: theme.backgroundSecondary,
+      borderRadius: borderRadius.full,
+      overflow: 'hidden',
+      marginRight: spacing[2], // 8px
+    },
+    progressText: {
+      minWidth: 36,
+      textAlign: 'right',
+    },
+    // Completed Card
+    completedFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    completedBadge: {
+      backgroundColor: theme.backgroundSecondary,
+      paddingHorizontal: spacing[3], // 12px
+      paddingVertical: spacing[1], // 4px
+      borderRadius: borderRadius.full,
+    },
+    winnerPreview: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    winnerName: {
+      marginHorizontal: spacing[1], // 4px
+    },
+  });

@@ -2,7 +2,9 @@ import React from 'react';
 import { View, StyleSheet, Pressable, Image } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { tokens, spacing, borderRadius } from '../../theme';
+import { useTheme, useThemedStyles } from '../../theme/ThemeContext';
 import { Text } from '../primitives/Text';
+import type { Theme } from '../../theme/tokens';
 
 // ============================================================================
 // Types
@@ -44,6 +46,9 @@ export function HomeHeader({
   onNotificationPress,
   onProfilePress,
 }: HomeHeaderProps) {
+  const { theme, isDark } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
   const handleNotificationPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onNotificationPress();
@@ -84,7 +89,7 @@ export function HomeHeader({
         <Text
           variant="lg"
           weight="semibold"
-          color={tokens.colors.neutral[900]}
+          color={theme.text}
           numberOfLines={1}
         >
           {circleName}
@@ -101,7 +106,7 @@ export function HomeHeader({
           <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
         ) : (
           <View style={styles.profilePlaceholder}>
-            <Text variant="base" weight="semibold" color={tokens.colors.neutral[600]}>
+            <Text variant="base" weight="semibold" color={theme.textSecondary}>
               👤
             </Text>
           </View>
@@ -115,60 +120,61 @@ export function HomeHeader({
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
-  container: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[4], // 16px
-    backgroundColor: tokens.colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.neutral[100],
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationContainer: {
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: tokens.colors.semantic.error[500],
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    lineHeight: 12,
-  },
-  centerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[2],
-  },
-  profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.full,
-    backgroundColor: tokens.colors.neutral[100],
-  },
-  profilePlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.full,
-    backgroundColor: tokens.colors.neutral[100],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const createStyles = (theme: Theme, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing[4], // 16px
+      backgroundColor: theme.card,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    iconButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    notificationContainer: {
+      position: 'relative',
+    },
+    badge: {
+      position: 'absolute',
+      top: -2,
+      right: -2,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: tokens.colors.semantic.error[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    badgeText: {
+      fontSize: 10,
+      lineHeight: 12,
+    },
+    centerContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing[2],
+    },
+    profileImage: {
+      width: 32,
+      height: 32,
+      borderRadius: borderRadius.full,
+      backgroundColor: theme.backgroundSecondary,
+    },
+    profilePlaceholder: {
+      width: 32,
+      height: 32,
+      borderRadius: borderRadius.full,
+      backgroundColor: theme.backgroundSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
