@@ -1,7 +1,11 @@
 """Business logic for polls module."""
 
+from __future__ import annotations
+
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.core.exceptions import (
@@ -16,9 +20,9 @@ from app.modules.polls.repository import (
     VoteRepository,
 )
 from app.modules.polls.schemas import (
+    CATEGORY_METADATA,
     AdminPollCreate,
     BroadcastPollResponse,
-    CATEGORY_METADATA,
     CategoryInfo,
     PollCreate,
     PollDuration,
@@ -28,6 +32,12 @@ from app.modules.polls.schemas import (
     VoteResponse,
     VoterRevealResponse,
 )
+
+if TYPE_CHECKING:
+    from app.modules.notifications.service import NotificationService
+    from app.modules.polls.models import Poll
+
+logger = logging.getLogger(__name__)
 
 
 class PollService:
@@ -40,6 +50,7 @@ class PollService:
         vote_repo: VoteRepository,
         membership_repo: MembershipRepository,
         circle_repo: CircleRepository | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         """Initialize service with repositories."""
         self.template_repo = template_repo
@@ -47,10 +58,11 @@ class PollService:
         self.vote_repo = vote_repo
         self.membership_repo = membership_repo
         self.circle_repo = circle_repo
+        self.notification_service = notification_service
 
     @staticmethod
     def _poll_to_response(
-        poll: "Poll",  # type: ignore
+        poll: Poll,  # type: ignore
         has_voted: bool | None = None,
         results: list[PollResultItem] | None = None,
     ) -> PollResponse:
@@ -167,6 +179,21 @@ class PollService:
         # Increment template usage count
         await self.template_repo.increment_usage_count(poll_data.template_id)
 
+        # 🔔 Send poll started notification (excluding creator)
+        if self.notification_service:
+            try:
+                members = await self.membership_repo.find_by_circle_id(circle_id)
+                member_ids = [m.user_id for m in members if m.user_id != creator_id]
+                if member_ids:
+                    await self.notification_service.send_poll_started(poll, member_ids)
+                    logger.info(
+                        "Poll started notification sent: poll_id=%s, recipients=%d",
+                        poll.id,
+                        len(member_ids),
+                    )
+            except Exception as e:
+                logger.error("Failed to send poll started notification: %s", e)
+
         return self._poll_to_response(poll, has_voted=False)
 
     def _calculate_end_time(self, duration: PollDuration) -> datetime:
@@ -237,6 +264,21 @@ class PollService:
         # Increment poll vote count
         await self.poll_repo.increment_vote_count(poll_id)
 
+        # 🔔 Send "someone chose you" notification
+        if self.notification_service:
+            try:
+                await self.notification_service.send_vote_received(
+                    poll=poll,
+                    voted_for_id=voted_for_id,
+                )
+                logger.info(
+                    "Vote received notification sent: poll_id=%s, voted_for=%s",
+                    poll_id,
+                    voted_for_id,
+                )
+            except Exception as e:
+                logger.error("Failed to send vote received notification: %s", e)
+
         # Get results
         results = await self.get_results(poll_id)
 
@@ -305,6 +347,21 @@ class PollService:
 
         # Update poll status to COMPLETED
         await self.poll_repo.update_status(poll_id, PollStatus.COMPLETED)
+
+        # 🔔 Send poll ended notification to all circle members
+        if self.notification_service:
+            try:
+                members = await self.membership_repo.find_by_circle_id(poll.circle_id)
+                member_ids = [m.user_id for m in members]
+                if member_ids:
+                    await self.notification_service.send_poll_ended(poll, member_ids)
+                    logger.info(
+                        "Poll ended notification sent: poll_id=%s, recipients=%d",
+                        poll_id,
+                        len(member_ids),
+                    )
+            except Exception as e:
+                logger.error("Failed to send poll ended notification: %s", e)
 
     async def get_categories(self) -> list[CategoryInfo]:
         """Get all template categories with question counts.
