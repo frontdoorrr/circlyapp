@@ -635,23 +635,23 @@
   - [ ] Entitlement 생성: `orb_mode`
   - [ ] Webhook URL 설정 (17.4 완료 후)
 
-### 17.3 Frontend: RevenueCat SDK 연동 (P1)
+### 17.3 Frontend: RevenueCat SDK 연동 (P1) ✅
 
 > **중요**: Expo Go 미지원 - Development Build 필수!
 
-- [ ] 패키지 설치: `npx expo install react-native-purchases expo-dev-client`
-- [ ] EAS Build 설정: `eas build:configure`
-- [ ] `frontend/eas.json` 생성
-- [ ] `frontend/app.json` - RevenueCat 플러그인 추가
-- [ ] `frontend/src/services/subscription/revenuecat.ts` - SDK 래퍼 생성
-  - [ ] `initializePurchases(userId)`
-  - [ ] `getSubscriptionStatus(): boolean`
-  - [ ] `getOfferings(): Package[]`
-  - [ ] `purchasePackage(pkg): CustomerInfo`
-  - [ ] `restorePurchases(): CustomerInfo`
-- [ ] Development Build 생성: `eas build --profile development --platform ios`
-- [ ] **검증**: SDK 초기화 및 상품 목록 조회 확인
-- [ ] **커밋**: `feat(frontend): add RevenueCat SDK integration`
+- [x] 패키지 설치: `npx expo install react-native-purchases expo-dev-client`
+- [x] EAS Build 설정: `eas build:configure`
+- [x] `frontend/eas.json` 생성
+- [x] `frontend/app.json` - RevenueCat 플러그인 추가
+- [x] `frontend/src/services/subscription/revenuecat.ts` - SDK 래퍼 생성
+  - [x] `initializePurchases(userId)`
+  - [x] `getSubscriptionStatus(): boolean`
+  - [x] `getOfferings(): Package[]`
+  - [x] `purchasePackage(pkg): CustomerInfo`
+  - [x] `restorePurchases(): CustomerInfo`
+- [ ] Development Build 생성: `eas build --profile development --platform ios` (외부 작업)
+- [ ] **검증**: SDK 초기화 및 상품 목록 조회 확인 (17.2 완료 후)
+- [x] **커밋**: `feat(frontend): add RevenueCat SDK integration`
 
 ### 17.4 Backend: Webhook 연동 (P1)
 

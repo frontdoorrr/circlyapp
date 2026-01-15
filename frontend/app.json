@@ -31,7 +31,18 @@
     },
     "plugins": [
       "expo-router",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-purchases",
+        {
+          "ios": {
+            "apiKey": "YOUR_REVENUECAT_IOS_API_KEY"
+          },
+          "android": {
+            "apiKey": "YOUR_REVENUECAT_ANDROID_API_KEY"
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {},
