@@ -602,3 +602,90 @@
 - [x] **커밋**: `feat(settings): 정보 섹션 인앱 웹뷰 전환 및 버전 동적화`
   - [ ] 빌드 번호 표시 (선택적)
 - [ ] **테스트**: 각 링크 정상 동작 확인
+
+---
+
+## Phase 17: Orb Mode 결제 시스템 완성
+
+> **목표**: RevenueCat 연동으로 Orb Mode 유료화 MVP 완성
+> **참고 문서**: `prd/features/05-orb-mode-implementation.md`, `prd/business/01-business-model.md`
+> **예상 기간**: 5-7일
+
+### 17.1 Backend: Orb Mode 테스트 (P0) ✅
+
+- [x] `backend/tests/modules/polls/test_orb_mode.py` - 테스트 파일 생성
+  - [x] `test_get_voters_orb_mode_enabled` - 구독자 접근 허용
+  - [x] `test_get_voters_orb_mode_disabled` - 비구독자 403 에러
+  - [x] `test_get_voters_poll_not_found` - 존재하지 않는 Poll
+  - [x] `test_get_voters_not_circle_member` - 비멤버 접근 거부
+- [x] `backend/tests/conftest.py` - `enable_orb_mode_for_user` fixture 추가
+- [x] **검증**: `uv run pytest tests/modules/polls/test_orb_mode.py -v` (8 tests passed)
+- [x] **커밋**: `test(polls): add Orb Mode authorization tests`
+
+### 17.2 RevenueCat 설정 (P1) - 외부 작업
+
+- [ ] RevenueCat 계정 생성 (https://app.revenuecat.com)
+- [ ] App Store Connect - In-App Purchase 상품 생성
+  - [ ] `orb_mode_monthly`: $4.99/월
+  - [ ] `orb_mode_annual`: $49.99/년
+- [ ] Google Play Console - 구독 상품 생성
+- [ ] RevenueCat 대시보드 설정
+  - [ ] iOS/Android 앱 연결
+  - [ ] Products 등록
+  - [ ] Entitlement 생성: `orb_mode`
+  - [ ] Webhook URL 설정 (17.4 완료 후)
+
+### 17.3 Frontend: RevenueCat SDK 연동 (P1)
+
+> **중요**: Expo Go 미지원 - Development Build 필수!
+
+- [ ] 패키지 설치: `npx expo install react-native-purchases expo-dev-client`
+- [ ] EAS Build 설정: `eas build:configure`
+- [ ] `frontend/eas.json` 생성
+- [ ] `frontend/app.json` - RevenueCat 플러그인 추가
+- [ ] `frontend/src/services/subscription/revenuecat.ts` - SDK 래퍼 생성
+  - [ ] `initializePurchases(userId)`
+  - [ ] `getSubscriptionStatus(): boolean`
+  - [ ] `getOfferings(): Package[]`
+  - [ ] `purchasePackage(pkg): CustomerInfo`
+  - [ ] `restorePurchases(): CustomerInfo`
+- [ ] Development Build 생성: `eas build --profile development --platform ios`
+- [ ] **검증**: SDK 초기화 및 상품 목록 조회 확인
+- [ ] **커밋**: `feat(frontend): add RevenueCat SDK integration`
+
+### 17.4 Backend: Webhook 연동 (P1)
+
+- [ ] `backend/app/modules/subscription/` 모듈 생성
+  - [ ] `__init__.py`
+  - [ ] `models.py` - WebhookEvent 모델 (idempotency)
+  - [ ] `schemas.py` - RevenueCatWebhookPayload
+  - [ ] `service.py` - process_webhook()
+  - [ ] `router.py` - POST /webhooks/revenuecat
+- [ ] `backend/app/main.py` - subscription 라우터 등록
+- [ ] 마이그레이션: `uv run alembic revision --autogenerate -m "add webhook_events table"`
+- [ ] `.env` - `REVENUECAT_WEBHOOK_SECRET` 추가
+- [ ] **검증**: ngrok으로 로컬 Webhook 테스트
+- [ ] **커밋**: `feat(subscription): add RevenueCat webhook handler`
+
+### 17.5 Frontend: Subscription 화면 (P1)
+
+- [ ] `frontend/app/subscription/index.tsx` - Paywall UI
+  - [ ] 헤더 (이모지 + 타이틀 + 설명)
+  - [ ] 기능 목록 (투표자 공개, 프리미엄 배지)
+  - [ ] 가격 카드 (월간/연간)
+  - [ ] CTA 버튼 ("구독하기")
+  - [ ] 복원 링크 ("구매 내역 복원")
+  - [ ] 법적 안내 (가격, 취소 정책)
+- [ ] `frontend/app/results/[id].tsx` - Alert → Subscription 화면 이동
+- [ ] `frontend/src/providers/AppInitializer.tsx` - RevenueCat 초기화 추가
+- [ ] **검증**: Sandbox 구매 테스트
+- [ ] **커밋**: `feat(frontend): add Subscription paywall screen`
+
+### 17.6 E2E 검증 (P1)
+
+- [ ] Sandbox 테스터로 전체 플로우 테스트
+  - [ ] 로그인 → 투표 참여 → 결과 화면
+  - [ ] "누가 선택했는지 보기" → Subscription 화면
+  - [ ] 구독 구매 → Webhook → is_orb_mode=True
+  - [ ] 투표자 공개 화면 접근 성공
+- [ ] **커밋**: `docs: update Orb Mode implementation status`
