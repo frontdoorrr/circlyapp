@@ -668,19 +668,20 @@
 - [ ] **검증**: ngrok으로 로컬 Webhook 테스트 (외부 작업)
 - [x] **커밋**: `feat(subscription): add RevenueCat webhook handler`
 
-### 17.5 Frontend: Subscription 화면 (P1)
+### 17.5 Frontend: Subscription 화면 (P1) ✅
 
-- [ ] `frontend/app/subscription/index.tsx` - Paywall UI
-  - [ ] 헤더 (이모지 + 타이틀 + 설명)
-  - [ ] 기능 목록 (투표자 공개, 프리미엄 배지)
-  - [ ] 가격 카드 (월간/연간)
-  - [ ] CTA 버튼 ("구독하기")
-  - [ ] 복원 링크 ("구매 내역 복원")
-  - [ ] 법적 안내 (가격, 취소 정책)
-- [ ] `frontend/app/results/[id].tsx` - Alert → Subscription 화면 이동
-- [ ] `frontend/src/providers/AppInitializer.tsx` - RevenueCat 초기화 추가
-- [ ] **검증**: Sandbox 구매 테스트
-- [ ] **커밋**: `feat(frontend): add Subscription paywall screen`
+- [x] `frontend/app/subscription/index.tsx` - Paywall UI
+  - [x] 헤더 (이모지 + 타이틀 + 설명)
+  - [x] 기능 목록 (투표자 공개, 프리미엄 배지)
+  - [x] 가격 카드 (월간/연간)
+  - [x] CTA 버튼 ("구독하기")
+  - [x] 복원 링크 ("구매 내역 복원")
+  - [x] 법적 안내 (가격, 취소 정책)
+- [x] `frontend/app/results/[id].tsx` - Alert → Subscription 화면 이동
+- [x] `frontend/app/poll/[id].tsx` - Alert → Subscription 화면 이동
+- [x] `frontend/src/providers/AppInitializer.tsx` - RevenueCat 초기화 추가
+- [ ] **검증**: Sandbox 구매 테스트 (외부 작업 - Development Build 필요)
+- [x] **커밋**: `feat(frontend): add Subscription paywall screen`
 
 ### 17.6 E2E 검증 (P1)
 
