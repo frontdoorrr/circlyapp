@@ -653,19 +653,20 @@
 - [ ] **검증**: SDK 초기화 및 상품 목록 조회 확인 (17.2 완료 후)
 - [x] **커밋**: `feat(frontend): add RevenueCat SDK integration`
 
-### 17.4 Backend: Webhook 연동 (P1)
+### 17.4 Backend: Webhook 연동 (P1) ✅
 
-- [ ] `backend/app/modules/subscription/` 모듈 생성
-  - [ ] `__init__.py`
-  - [ ] `models.py` - WebhookEvent 모델 (idempotency)
-  - [ ] `schemas.py` - RevenueCatWebhookPayload
-  - [ ] `service.py` - process_webhook()
-  - [ ] `router.py` - POST /webhooks/revenuecat
-- [ ] `backend/app/main.py` - subscription 라우터 등록
-- [ ] 마이그레이션: `uv run alembic revision --autogenerate -m "add webhook_events table"`
-- [ ] `.env` - `REVENUECAT_WEBHOOK_SECRET` 추가
-- [ ] **검증**: ngrok으로 로컬 Webhook 테스트
-- [ ] **커밋**: `feat(subscription): add RevenueCat webhook handler`
+- [x] `backend/app/modules/subscription/` 모듈 생성
+  - [x] `__init__.py`
+  - [x] `models.py` - WebhookEvent 모델 (idempotency)
+  - [x] `schemas.py` - RevenueCatWebhookPayload
+  - [x] `service.py` - process_webhook()
+  - [x] `router.py` - POST /webhooks/revenuecat
+- [x] `backend/app/main.py` - subscription 라우터 등록
+- [x] 마이그레이션: `uv run alembic revision --autogenerate -m "add webhook_events table"`
+- [x] `.env` - `REVENUECAT_WEBHOOK_SECRET` 추가
+- [x] **테스트**: 11개 테스트 통과 (`tests/modules/subscription/test_webhook.py`)
+- [ ] **검증**: ngrok으로 로컬 Webhook 테스트 (외부 작업)
+- [x] **커밋**: `feat(subscription): add RevenueCat webhook handler`
 
 ### 17.5 Frontend: Subscription 화면 (P1)
 
