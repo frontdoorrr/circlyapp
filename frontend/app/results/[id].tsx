@@ -68,24 +68,8 @@ export default function ResultsScreen() {
       // Orb Mode 활성화됨 - 투표자 공개 화면으로 이동
       router.push(`/results/${id}/voters`);
     } else {
-      // Orb Mode 구독 유도 모달
-      Alert.alert(
-        '🔮 Orb Mode',
-        '누가 나를 선택했는지 궁금하지 않아?\n\nOrb Mode를 구독하면 투표자를 확인할 수 있어!',
-        [
-          {
-            text: '나중에',
-            style: 'cancel',
-          },
-          {
-            text: '구독하기',
-            onPress: () => {
-              // TODO: RevenueCat 구독 화면으로 이동
-              console.log('Navigate to subscription screen');
-            },
-          },
-        ]
-      );
+      // Orb Mode 구독 화면으로 이동
+      router.push('/subscription');
     }
   };
 

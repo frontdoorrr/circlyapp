@@ -22,6 +22,10 @@ import {
 import * as notificationApi from '../api/notification';
 import { OnboardingScreen } from '../components/onboarding/OnboardingScreen';
 import { tokens } from '../theme';
+import {
+  initializePurchases,
+  addCustomerInfoUpdateListener,
+} from '../services/subscription/revenuecat';
 
 interface AppInitializerProps {
   children: ReactNode;
@@ -144,7 +148,50 @@ export function AppInitializer({ children }: AppInitializerProps) {
     registerPushToken();
   }, [isAuthenticated]);
 
-  // 4. 푸시 알림 리스너 설정
+  // 4. RevenueCat 초기화 (인증 성공 시)
+  useEffect(() => {
+    const { user } = useAuthStore.getState();
+
+    if (!isAuthenticated || !user?.id) return;
+
+    let removeListener: (() => void) | null = null;
+
+    async function initRevenueCat() {
+      try {
+        console.log('[AppInitializer] RevenueCat 초기화 시작');
+        await initializePurchases(user!.id);
+
+        // 구독 상태 변경 리스너 등록
+        removeListener = addCustomerInfoUpdateListener((customerInfo) => {
+          const isOrbMode = customerInfo.entitlements.active['orb_mode'] !== undefined;
+          console.log('[AppInitializer] 구독 상태 변경:', isOrbMode ? 'Orb Mode 활성' : 'Orb Mode 비활성');
+
+          // 사용자 정보 새로고침 (is_orb_mode 반영을 위해)
+          authApi.getCurrentUser().then((updatedUser) => {
+            setUser(updatedUser);
+          }).catch((error) => {
+            console.error('[AppInitializer] 사용자 정보 갱신 실패:', error);
+          });
+        });
+
+        console.log('[AppInitializer] RevenueCat 초기화 완료');
+      } catch (error) {
+        console.error('[AppInitializer] RevenueCat 초기화 실패:', error);
+        // RevenueCat 초기화 실패해도 앱 실행에는 지장 없음
+      }
+    }
+
+    initRevenueCat();
+
+    return () => {
+      if (removeListener) {
+        removeListener();
+        console.log('[AppInitializer] RevenueCat 리스너 해제');
+      }
+    };
+  }, [isAuthenticated, setUser]);
+
+  // 5. 푸시 알림 리스너 설정
   useEffect(() => {
     console.log('[AppInitializer] 푸시 알림 리스너 설정');
     const cleanup = setupNotificationListeners();

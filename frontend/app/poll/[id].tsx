@@ -178,7 +178,8 @@ export default function PollDetailScreen() {
     if (isOrbMode) {
       router.push(`/results/${id}/voters`);
     } else {
-      Alert.alert('Orb Mode 필요', 'Orb Mode 구독이 필요합니다.');
+      // Orb Mode 구독 화면으로 이동
+      router.push('/subscription');
     }
   };
 
