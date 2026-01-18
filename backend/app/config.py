@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     # Rate Limiting
     rate_limit_per_minute: int = 100
 
+    # RevenueCat Webhook
+    revenuecat_webhook_secret: str = ""
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""

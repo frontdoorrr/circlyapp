@@ -127,6 +127,7 @@ def create_app() -> FastAPI:
     from app.modules.polls.router import router as polls_router
     from app.modules.reports.router import router as reports_router
     from app.modules.stats.router import router as stats_router
+    from app.modules.subscription.router import router as subscription_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(circles_router, prefix="/api/v1")
@@ -134,6 +135,7 @@ def create_app() -> FastAPI:
     app.include_router(polls_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
     app.include_router(stats_router, prefix="/api/v1")
+    app.include_router(subscription_router, prefix="/api/v1")
 
     return app
 

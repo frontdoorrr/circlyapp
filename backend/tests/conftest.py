@@ -20,6 +20,7 @@ from app.modules.circles.models import Circle, CircleMember  # noqa: F401
 from app.modules.notifications.models import Notification  # noqa: F401
 from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
 from app.modules.reports.models import Report  # noqa: F401
+from app.modules.subscription.models import WebhookEvent  # noqa: F401
 
 # Test database URL (use a separate test database)
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/circly_test"
