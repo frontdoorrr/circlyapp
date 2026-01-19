@@ -43,7 +43,12 @@ export type PollErrorCode =
   | 'MAX_POLLS_EXCEEDED'
   | 'NOT_CIRCLE_MEMBER';
 
-export type ErrorCode = AuthErrorCode | CircleErrorCode | PollErrorCode;
+export type GeneralErrorCode =
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'INTERNAL_ERROR';
+
+export type ErrorCode = AuthErrorCode | CircleErrorCode | PollErrorCode | GeneralErrorCode;
 
 export class ApiError extends Error {
   constructor(

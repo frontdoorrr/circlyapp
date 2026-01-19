@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { tokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
 import { useMyVoters } from '../../../src/hooks/usePolls';
+import { ApiError } from '../../../src/types/api';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 /**
@@ -16,6 +18,19 @@ export default function VotersScreen() {
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { data, isLoading, error } = useMyVoters(id, true);
+
+  // 403 FORBIDDEN 에러 시 Subscription 화면으로 리다이렉트
+  useEffect(() => {
+    if (error) {
+      const isForbidden =
+        (error instanceof ApiError && error.code === 'FORBIDDEN') ||
+        (error as any)?.response?.status === 403;
+
+      if (isForbidden) {
+        router.replace('/subscription');
+      }
+    }
+  }, [error]);
 
   if (isLoading) {
     return (
