@@ -9,13 +9,12 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
-  withTiming,
   FadeIn,
+  FadeInUp,
 } from 'react-native-reanimated';
 import PagerView from 'react-native-pager-view';
 
@@ -82,16 +81,7 @@ export default function HomeScreen() {
   const styles = useThemedStyles(createStyles);
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
-  const [focusKey, setFocusKey] = useState(0);
   const pagerRef = useRef<PagerView>(null);
-
-  // 화면 복귀 시 FlatList 강제 리렌더링
-  // Expo Router Stack Navigation에서 화면이 리마운트되지 않고 focus만 됨
-  useFocusEffect(
-    useCallback(() => {
-      setFocusKey(prev => prev + 1);
-    }, [])
-  );
 
   // API 연동
   const {
@@ -255,33 +245,33 @@ export default function HomeScreen() {
   const isError = isErrorActive || isErrorCompleted;
 
   // Active Poll Render Item
-  // Note: 이중 Animated.View 충돌 방지 - PollCard 내부에서 애니메이션 처리
+  // Animated.View + FadeInUp 패턴 적용 (Circle과 동일)
   const renderActiveItem: ListRenderItem<TransformedActivePoll> = useCallback(
-    ({ item }) => (
-      <View style={styles.cardWrapper}>
+    ({ item, index }) => (
+      <Animated.View entering={FadeInUp.delay(index * 50)} style={styles.cardWrapper}>
         <PollCard
           variant="active"
           poll={item}
           onPress={() => handleActivePollPress(item.id)}
         />
-      </View>
+      </Animated.View>
     ),
-    [handleActivePollPress]
+    [handleActivePollPress, styles.cardWrapper]
   );
 
   // Completed Poll Render Item
-  // Note: 이중 Animated.View 충돌 방지 - PollCard 내부에서 애니메이션 처리
+  // Animated.View + FadeInUp 패턴 적용 (Circle과 동일)
   const renderCompletedItem: ListRenderItem<TransformedCompletedPoll> = useCallback(
-    ({ item }) => (
-      <View style={styles.cardWrapper}>
+    ({ item, index }) => (
+      <Animated.View entering={FadeInUp.delay(index * 50)} style={styles.cardWrapper}>
         <PollCard
           variant="completed"
           poll={item}
           onPress={() => handleCompletedPollPress(item.id)}
         />
-      </View>
+      </Animated.View>
     ),
-    [handleCompletedPollPress]
+    [handleCompletedPollPress, styles.cardWrapper]
   );
 
   const keyExtractor = useCallback((item: { id: string }) => item.id, []);

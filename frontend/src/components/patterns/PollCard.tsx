@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, Pressable, AccessibilityRole } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { tokens, animations, spacing, borderRadius } from '../../theme';
@@ -156,28 +155,8 @@ export function PollCard(props: PollCardProps) {
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
 
-  const scale = useSharedValue(1);
-
-  // FlatList 아이템 재활용 시 Reanimated shared value 리셋
-  // poll.id가 변경되면 scale을 1로 초기화하여 투명화 버그 방지
-  useEffect(() => {
-    scale.value = 1;
-    return () => {
-      scale.value = 1;
-    };
-  }, [poll.id, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   const handlePressIn = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withTiming(0.98, { duration: animations.duration.faster });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, animations.spring.responsive);
   };
 
   const handlePress = () => {
@@ -199,23 +178,21 @@ export function PollCard(props: PollCardProps) {
     }
   };
 
-  // Pressable + Animated.View 분리 + key prop으로 강제 재생성
   return (
     <Pressable
       onPress={handlePress}
       onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       accessibilityRole={'button' as AccessibilityRole}
       accessibilityLabel={getAccessibilityLabel()}
       accessibilityHint={variant === 'completed' ? '결과를 확인하려면 두 번 탭하세요' : '투표에 참여하려면 두 번 탭하세요'}
     >
-      <Animated.View key={poll.id} style={[styles.card, animatedStyle]}>
+      <View style={styles.card}>
         {variant === 'completed' ? (
           <CompletedCardContent poll={poll as CompletedPollData} theme={theme} isDark={isDark} styles={styles} />
         ) : (
           <ActiveCardContent poll={poll as (ActivePollData | PollCardData)} theme={theme} isDark={isDark} styles={styles} />
         )}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
