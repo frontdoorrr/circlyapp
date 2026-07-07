@@ -367,12 +367,19 @@ class PollRepository:
             status: Optional status filter
 
         Returns:
-            List of polls from user's circles
+            List of polls from user's circles (with circle and template eager loaded)
         """
         if not circle_ids:
             return []
 
-        query = select(Poll).where(Poll.circle_id.in_(circle_ids))
+        query = (
+            select(Poll)
+            .options(
+                selectinload(Poll.circle),
+                selectinload(Poll.template),
+            )
+            .where(Poll.circle_id.in_(circle_ids))
+        )
 
         if status:
             query = query.where(Poll.status == status)

@@ -55,6 +55,14 @@ class PollResponse(BaseModel):
     # Optional fields populated by service layer
     has_voted: bool | None = None
     results: list["PollResultItem"] | None = None
+    # Extended fields for Home Tab (populated by service layer)
+    question: str | None = None  # Alias for question_text (for frontend compatibility)
+    emoji: str | None = None  # From template
+    circle_name: str | None = None  # Circle name
+    total_members: int | None = None  # Circle member count
+    # Winner info for completed polls
+    winner_name: str | None = None
+    winner_vote_count: int | None = None
 
 
 class VoteOption(BaseModel):

@@ -65,6 +65,12 @@ class PollService:
         poll: Poll,  # type: ignore
         has_voted: bool | None = None,
         results: list[PollResultItem] | None = None,
+        *,
+        circle_name: str | None = None,
+        emoji: str | None = None,
+        total_members: int | None = None,
+        winner_name: str | None = None,
+        winner_vote_count: int | None = None,
     ) -> PollResponse:
         """Convert Poll ORM object to PollResponse safely (without triggering lazy loads)."""
         return PollResponse(
@@ -80,6 +86,13 @@ class PollService:
             updated_at=poll.updated_at,
             has_voted=has_voted,
             results=results,
+            # Extended fields for Home Tab
+            question=poll.question_text,  # Alias for frontend compatibility
+            emoji=emoji,
+            circle_name=circle_name,
+            total_members=total_members,
+            winner_name=winner_name,
+            winner_vote_count=winner_vote_count,
         )
 
     async def get_templates(
@@ -410,15 +423,48 @@ class PollService:
         if not circle_ids:
             return []
 
-        # Get polls from user's circles
+        # Get polls from user's circles (with circle and template eager loaded)
         polls = await self.poll_repo.find_by_user_circles(circle_ids, status)
 
-        # Build responses with has_voted for each poll
+        # Build responses with extended fields for each poll
         responses = []
         for poll in polls:
             voter_hash = generate_voter_hash(user_id, poll.id, salt=str(poll.id))
             has_voted = await self.vote_repo.exists_by_voter_hash(poll.id, voter_hash)
-            responses.append(self._poll_to_response(poll, has_voted=has_voted))
+
+            # Extract circle info (eager loaded)
+            circle_name = poll.circle.name if poll.circle else None
+            total_members = poll.circle.member_count if poll.circle else None
+
+            # Extract emoji from template (eager loaded)
+            emoji = poll.template.emoji if poll.template else None
+
+            # Get winner info for completed polls
+            winner_name = None
+            winner_vote_count = None
+            if poll.status == PollStatus.COMPLETED:
+                results = await self.get_results(poll.id)
+                if results:
+                    # Find the winner (rank 1 or highest vote count)
+                    winner = next(
+                        (r for r in results if r.rank == 1),
+                        max(results, key=lambda r: r.vote_count) if results else None,
+                    )
+                    if winner:
+                        winner_name = winner.nickname or "알 수 없음"
+                        winner_vote_count = winner.vote_count
+
+            responses.append(
+                self._poll_to_response(
+                    poll,
+                    has_voted=has_voted,
+                    circle_name=circle_name,
+                    emoji=emoji,
+                    total_members=total_members,
+                    winner_name=winner_name,
+                    winner_vote_count=winner_vote_count,
+                )
+            )
 
         return responses
 
