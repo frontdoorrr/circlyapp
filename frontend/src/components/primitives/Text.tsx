@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Text as RNText,
   TextStyle,
+  StyleProp,
   StyleSheet,
   Platform,
 } from 'react-native';
@@ -17,7 +18,7 @@ interface TextProps {
   weight?: TextWeight;
   align?: TextAlign;
   color?: string;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
   numberOfLines?: number;
   ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
 }

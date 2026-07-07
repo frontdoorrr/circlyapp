@@ -647,7 +647,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       position: 'absolute',
       top: -10,
       right: 16,
-      backgroundColor: tokens.colors.semantic.success,
+      backgroundColor: tokens.colors.semantic.success[500],
       paddingHorizontal: tokens.spacing.sm,
       paddingVertical: 4,
       borderRadius: tokens.borderRadius.md,

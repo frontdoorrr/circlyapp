@@ -154,12 +154,14 @@ export function SkeletonAvatar({ size = 60 }: { size?: number }) {
 export function SkeletonCard({
   avatarSize = 60,
   lines = 2,
+  style,
 }: {
   avatarSize?: number;
   lines?: number;
+  style?: ViewStyle;
 }) {
   return (
-    <View style={styles.cardContainer}>
+    <View style={[styles.cardContainer, style]}>
       <SkeletonAvatar size={avatarSize} />
       <View style={styles.cardContent}>
         <SkeletonText lines={lines} lastLineWidth={70} />

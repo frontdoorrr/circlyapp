@@ -124,7 +124,7 @@ export default function CircleListScreen() {
       ) : (
         <View style={styles.emptyContainer}>
           <EmptyState
-            emoji="👥"
+            icon="👥"
             title="참여한 Circle이 없어요"
             description="친구의 초대 코드로 Circle에 참여하거나\n새로운 Circle을 만들어보세요"
             actionLabel="코드로 참여하기"
@@ -165,7 +165,7 @@ interface CircleCardProps {
   circle: {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     member_count: number;
     invite_code: string;
   };

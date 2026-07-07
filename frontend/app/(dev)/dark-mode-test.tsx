@@ -137,14 +137,14 @@ export default function DarkModeTestScreen() {
               Cards with Different Elevations
             </Text>
             <View style={styles.cardStack}>
-              <Card variant="default">
-                <Text variant="sm">Default Card</Text>
+              <Card elevation="none">
+                <Text variant="sm">Flat Card (elevation none)</Text>
               </Card>
-              <Card variant="elevated">
-                <Text variant="sm">Elevated Card</Text>
+              <Card elevation="md">
+                <Text variant="sm">Default Card (elevation md)</Text>
               </Card>
-              <Card variant="outlined">
-                <Text variant="sm">Outlined Card</Text>
+              <Card elevation="lg">
+                <Text variant="sm">Elevated Card (elevation lg)</Text>
               </Card>
             </View>
           </Card>
@@ -165,7 +165,7 @@ export default function DarkModeTestScreen() {
             3. 앱을 완전히 종료한 후 다시 실행하여 설정이 유지되는지 확인하세요
           </Text>
           <Text variant="sm" style={styles.instructionText}>
-            4. 시스템 다크모드 설정을 변경하여 "시스템 설정 따르기"가 작동하는지 확인하세요
+            4. 시스템 다크모드 설정을 변경하여 &ldquo;시스템 설정 따르기&rdquo;가 작동하는지 확인하세요
           </Text>
         </Card>
 

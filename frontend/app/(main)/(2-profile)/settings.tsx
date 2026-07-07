@@ -307,7 +307,7 @@ export default function SettingsScreen() {
             <Text style={styles.deleteWarningItem}>• 투표 참여 기록 삭제</Text>
 
             <Text style={styles.deleteConfirmLabel}>
-              확인을 위해 "탈퇴합니다"를 입력해주세요.
+              확인을 위해 &ldquo;탈퇴합니다&rdquo;를 입력해주세요.
             </Text>
             <TextInput
               style={styles.deleteConfirmInput}

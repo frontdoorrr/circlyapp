@@ -193,31 +193,35 @@ export default function ResponsiveTestScreen() {
             <ResultBar
               rank={1}
               name="김철수"
-              voteCount={12}
+              votes={12}
               percentage={48}
+              totalVotes={25}
               isWinner
-              animationDelay={0}
+              delay={0}
             />
             <ResultBar
               rank={2}
               name="이영희"
-              voteCount={8}
+              votes={8}
               percentage={32}
-              animationDelay={100}
+              totalVotes={25}
+              delay={100}
             />
             <ResultBar
               rank={3}
               name="박민수"
-              voteCount={3}
+              votes={3}
               percentage={12}
-              animationDelay={200}
+              totalVotes={25}
+              delay={200}
             />
             <ResultBar
               rank={4}
               name="최지은"
-              voteCount={2}
+              votes={2}
               percentage={8}
-              animationDelay={300}
+              totalVotes={25}
+              delay={300}
             />
           </Card>
         </View>
@@ -242,7 +246,7 @@ export default function ResponsiveTestScreen() {
             <Text variant="sm" weight="semibold" style={styles.subsectionTitle}>
               Dot Progress
             </Text>
-            <DotProgress current={4} total={10} maxDots={8} />
+            <DotProgress current={4} total={10} />
           </Card>
         </View>
 

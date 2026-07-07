@@ -273,12 +273,7 @@ export const tokens = {
       mono: fontFamilies.mono,
     },
     fontSize: fontSizes,
-    fontWeight: {
-      normal: '400' as const,
-      medium: '500' as const,
-      semibold: '600' as const,
-      bold: '700' as const,
-    },
+    fontWeight: fontWeights,
     lineHeight: {
       xs: fontSizes.xs * 1.5,
       sm: fontSizes.sm * 1.5,

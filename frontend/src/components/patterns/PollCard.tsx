@@ -209,7 +209,7 @@ interface ActiveCardContentProps {
 }
 
 function ActiveCardContent({ poll, theme, isDark, styles }: ActiveCardContentProps) {
-  const voteStatus = 'voteStatus' in poll ? poll.voteStatus : 'not_voted';
+  const voteStatus = ('voteStatus' in poll ? poll.voteStatus : undefined) ?? 'not_voted';
   const circleName = poll.circleName;
 
   return (
