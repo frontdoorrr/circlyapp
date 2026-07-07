@@ -7,6 +7,7 @@ import {
   Alert,
   Switch,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +16,8 @@ import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import { useLogout, useDeleteAccount } from '../../../src/hooks/useAuth';
+import { useSubscription } from '../../../src/hooks/useSubscription';
+import { presentCustomerCenter } from '../../../src/services/subscription/revenuecat';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { tokens } from '../../../src/theme';
@@ -35,9 +38,24 @@ export default function SettingsScreen() {
   const styles = useThemedStyles(createStyles);
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
+  const { isSubscribed, status, isLoading: isLoadingSubscription } = useSubscription();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isOpeningCustomerCenter, setIsOpeningCustomerCenter] = useState(false);
+
+  // Open Customer Center for subscription management
+  const handleManageSubscription = async () => {
+    try {
+      await Haptics.selectionAsync();
+      setIsOpeningCustomerCenter(true);
+      await presentCustomerCenter();
+    } catch (error) {
+      console.error('Failed to open Customer Center:', error);
+    } finally {
+      setIsOpeningCustomerCenter(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -165,6 +183,65 @@ export default function SettingsScreen() {
                 thumbColor={tokens.colors.white}
               />
             </View>
+          </View>
+        </View>
+
+        {/* 구독 관리 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⭐ 구독</Text>
+          <View style={styles.card}>
+            {isLoadingSubscription ? (
+              <View style={[styles.settingItem, styles.noBorder, styles.loadingItem]}>
+                <ActivityIndicator size="small" color={tokens.colors.primary[500]} />
+              </View>
+            ) : isSubscribed ? (
+              <>
+                <View style={styles.settingItem}>
+                  <Text style={styles.settingItemText}>구독 상태</Text>
+                  <View style={styles.subscriptionBadge}>
+                    <Text style={styles.subscriptionBadgeText}>Pro ✨</Text>
+                  </View>
+                </View>
+                {status?.expirationDate && (
+                  <View style={styles.settingItem}>
+                    <Text style={styles.settingItemText}>
+                      {status.isLifetime ? '평생 구독' : '다음 결제일'}
+                    </Text>
+                    <Text style={styles.settingItemValue}>
+                      {status.isLifetime
+                        ? '평생'
+                        : status.expirationDate.toLocaleDateString('ko-KR')}
+                    </Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={[styles.settingItem, styles.noBorder]}
+                  onPress={handleManageSubscription}
+                  disabled={isOpeningCustomerCenter}
+                >
+                  <Text style={styles.settingItemText}>구독 관리</Text>
+                  {isOpeningCustomerCenter ? (
+                    <ActivityIndicator size="small" color={tokens.colors.primary[500]} />
+                  ) : (
+                    <Text style={styles.settingItemArrow}>›</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.settingItem}>
+                  <Text style={styles.settingItemText}>구독 상태</Text>
+                  <Text style={styles.settingItemValue}>무료</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.settingItem, styles.noBorder]}
+                  onPress={() => router.push('/subscription' as any)}
+                >
+                  <Text style={styles.upgradeText}>Pro로 업그레이드</Text>
+                  <Text style={styles.settingItemArrow}>›</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -407,5 +484,25 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     deleteConfirmButton: {
       flex: 1,
       backgroundColor: tokens.colors.error[600],
+    },
+    subscriptionBadge: {
+      backgroundColor: tokens.colors.primary[100],
+      paddingHorizontal: tokens.spacing.sm,
+      paddingVertical: tokens.spacing.xs,
+      borderRadius: tokens.borderRadius.full,
+    },
+    subscriptionBadgeText: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[700],
+    },
+    loadingItem: {
+      justifyContent: 'center',
+      minHeight: 48,
+    },
+    upgradeText: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.medium,
+      color: tokens.colors.primary[600],
     },
   });

@@ -1,8 +1,7 @@
 /**
- * RevenueCat SDK Wrapper for Circly Orb Mode Subscription
+ * RevenueCat SDK Wrapper
  *
- * This module provides a clean interface to interact with RevenueCat
- * for managing Orb Mode subscriptions.
+ * Modern implementation with Paywall UI and Customer Center support
  *
  * @module services/subscription/revenuecat
  */
@@ -12,105 +11,213 @@ import Purchases, {
   type PurchasesOffering,
   type PurchasesPackage,
   LOG_LEVEL,
+  PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
-import { Platform } from 'react-native';
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+import { Alert } from 'react-native';
 
-// RevenueCat API Keys (replace with actual keys from RevenueCat dashboard)
-const REVENUECAT_IOS_API_KEY = 'YOUR_REVENUECAT_IOS_API_KEY';
-const REVENUECAT_ANDROID_API_KEY = 'YOUR_REVENUECAT_ANDROID_API_KEY';
+// ============================================================================
+// Configuration
+// ============================================================================
 
-// Entitlement identifier for Orb Mode
-const ORB_MODE_ENTITLEMENT = 'orb_mode';
+// RevenueCat API Keys
+// For production, use environment variables:
+// const API_KEY = Constants.expoConfig?.extra?.revenueCatApiKey ?? 'YOUR_KEY';
+const REVENUECAT_API_KEY = 'test_buCwmBrvrkYvGBmDlmmgplDcQai';
 
-// Package identifiers
-export const PACKAGE_IDS = {
-  MONTHLY: 'orb_mode_monthly',
-  ANNUAL: 'orb_mode_annual',
+// Entitlement identifier
+const PRO_ENTITLEMENT = 'frontdoorrr Pro';
+
+// Product identifiers
+// RevenueCat standard package identifiers
+export const PRODUCT_IDS = {
+  MONTHLY: '$rc_monthly',
+  YEARLY: '$rc_annual',
+  LIFETIME: '$rc_lifetime',
 } as const;
 
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface SubscriptionStatus {
+  isSubscribed: boolean;
+  entitlementInfo: CustomerInfo['entitlements']['active'][string] | null;
+  expirationDate: Date | null;
+  willRenew: boolean;
+  productIdentifier: string | null;
+  isLifetime: boolean;
+}
+
+export interface PaywallResult {
+  purchased: boolean;
+  restored: boolean;
+  cancelled: boolean;
+  error: Error | null;
+}
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+let isConfigured = false;
+
 /**
- * Initialize RevenueCat SDK with user identification
+ * Initialize RevenueCat SDK
  *
- * @param userId - User's unique identifier (UUID from backend)
- * @returns Promise<CustomerInfo> - Customer information after initialization
- *
- * @example
- * ```typescript
- * const customerInfo = await initializePurchases(user.id);
- * ```
+ * @param userId - Optional user ID for logged-in users
  */
-export async function initializePurchases(userId: string): Promise<CustomerInfo> {
-  // Set log level for debugging (disable in production)
-  if (__DEV__) {
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+export async function initializePurchases(userId?: string): Promise<CustomerInfo | null> {
+  try {
+    // Set log level
+    if (__DEV__) {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    } else {
+      Purchases.setLogLevel(LOG_LEVEL.ERROR);
+    }
+
+    // Configure SDK
+    if (!isConfigured) {
+      Purchases.configure({
+        apiKey: REVENUECAT_API_KEY,
+        appUserID: userId ?? null,
+      });
+      isConfigured = true;
+      console.log('[RevenueCat] SDK configured');
+    } else if (userId) {
+      // If already configured, log in the user
+      await Purchases.logIn(userId);
+      console.log('[RevenueCat] User logged in:', userId);
+    }
+
+    const customerInfo = await Purchases.getCustomerInfo();
+    logCustomerInfo(customerInfo);
+
+    return customerInfo;
+  } catch (error) {
+    console.error('[RevenueCat] Initialization failed:', error);
+    return null;
   }
-
-  // Configure with platform-specific API key
-  const apiKey = Platform.OS === 'ios' ? REVENUECAT_IOS_API_KEY : REVENUECAT_ANDROID_API_KEY;
-
-  await Purchases.configure({
-    apiKey,
-    appUserID: userId,
-  });
-
-  // Get initial customer info
-  const customerInfo = await Purchases.getCustomerInfo();
-
-  console.log('[RevenueCat] Initialized for user:', userId);
-  console.log('[RevenueCat] Active entitlements:', Object.keys(customerInfo.entitlements.active));
-
-  return customerInfo;
 }
 
 /**
- * Check if user has active Orb Mode subscription
- *
- * @returns Promise<boolean> - True if user has active Orb Mode entitlement
- *
- * @example
- * ```typescript
- * const isSubscribed = await getSubscriptionStatus();
- * if (isSubscribed) {
- *   // Show voter reveal feature
- * }
- * ```
+ * Check if SDK is configured
  */
-export async function getSubscriptionStatus(): Promise<boolean> {
+export function isInitialized(): boolean {
+  return isConfigured;
+}
+
+// ============================================================================
+// Subscription Status
+// ============================================================================
+
+/**
+ * Check if user has active Pro subscription
+ */
+export async function hasActiveSubscription(): Promise<boolean> {
+  if (!isConfigured) {
+    console.warn('[RevenueCat] SDK not initialized, returning false');
+    return false;
+  }
+
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    const isActive = customerInfo.entitlements.active[ORB_MODE_ENTITLEMENT] !== undefined;
-
-    console.log('[RevenueCat] Orb Mode subscription status:', isActive);
-
-    return isActive;
+    return customerInfo.entitlements.active[PRO_ENTITLEMENT] !== undefined;
   } catch (error) {
-    console.error('[RevenueCat] Failed to get subscription status:', error);
+    console.error('[RevenueCat] Failed to check subscription:', error);
     return false;
   }
 }
 
 /**
- * Get available subscription offerings
- *
- * @returns Promise<PurchasesOffering | null> - Current offering with available packages
- *
- * @example
- * ```typescript
- * const offering = await getOfferings();
- * if (offering) {
- *   const monthlyPackage = offering.availablePackages.find(p => p.identifier === 'orb_mode_monthly');
- * }
- * ```
+ * Get detailed subscription status
+ */
+export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
+  if (!isConfigured) {
+    console.warn('[RevenueCat] SDK not initialized, returning default status');
+    return {
+      isSubscribed: false,
+      entitlementInfo: null,
+      expirationDate: null,
+      willRenew: false,
+      productIdentifier: null,
+      isLifetime: false,
+    };
+  }
+
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    const entitlement = customerInfo.entitlements.active[PRO_ENTITLEMENT];
+
+    if (!entitlement) {
+      return {
+        isSubscribed: false,
+        entitlementInfo: null,
+        expirationDate: null,
+        willRenew: false,
+        productIdentifier: null,
+        isLifetime: false,
+      };
+    }
+
+    const isLifetime = entitlement.productIdentifier === PRODUCT_IDS.LIFETIME;
+
+    return {
+      isSubscribed: true,
+      entitlementInfo: entitlement,
+      expirationDate: entitlement.expirationDate ? new Date(entitlement.expirationDate) : null,
+      willRenew: entitlement.willRenew,
+      productIdentifier: entitlement.productIdentifier,
+      isLifetime,
+    };
+  } catch (error) {
+    console.error('[RevenueCat] Failed to get subscription status:', error);
+    return {
+      isSubscribed: false,
+      entitlementInfo: null,
+      expirationDate: null,
+      willRenew: false,
+      productIdentifier: null,
+      isLifetime: false,
+    };
+  }
+}
+
+/**
+ * Get customer info
+ */
+export async function getCustomerInfo(): Promise<CustomerInfo | null> {
+  if (!isConfigured) {
+    console.warn('[RevenueCat] SDK not initialized');
+    return null;
+  }
+  return Purchases.getCustomerInfo();
+}
+
+// ============================================================================
+// Offerings & Products
+// ============================================================================
+
+/**
+ * Get current offering with available packages
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
+  if (!isConfigured) {
+    console.warn('[RevenueCat] SDK not initialized, returning null offerings');
+    return null;
+  }
+
   try {
     const offerings = await Purchases.getOfferings();
 
-    if (offerings.current !== null) {
+    if (offerings.current) {
       console.log('[RevenueCat] Current offering:', offerings.current.identifier);
       console.log(
         '[RevenueCat] Available packages:',
-        offerings.current.availablePackages.map((p) => p.identifier)
+        offerings.current.availablePackages.map((p) => ({
+          id: p.identifier,
+          price: p.product.priceString,
+        }))
       );
       return offerings.current;
     }
@@ -124,99 +231,258 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
 }
 
 /**
- * Purchase a subscription package
- *
- * @param pkg - The package to purchase
- * @returns Promise<CustomerInfo> - Updated customer info after purchase
- * @throws Error if purchase fails or is cancelled
- *
- * @example
- * ```typescript
- * try {
- *   const customerInfo = await purchasePackage(monthlyPackage);
- *   if (customerInfo.entitlements.active['orb_mode']) {
- *     // Purchase successful, enable Orb Mode
- *   }
- * } catch (error) {
- *   // Handle purchase error or cancellation
- * }
- * ```
+ * Get specific package from current offering
+ */
+export async function getPackage(
+  packageId: typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]
+): Promise<PurchasesPackage | null> {
+  const offering = await getOfferings();
+  if (!offering) return null;
+
+  return offering.availablePackages.find((p) => p.identifier === packageId) ?? null;
+}
+
+// ============================================================================
+// Purchases
+// ============================================================================
+
+/**
+ * Purchase a package
  */
 export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
-  console.log('[RevenueCat] Purchasing package:', pkg.identifier);
+  console.log('[RevenueCat] Purchasing:', pkg.identifier);
 
   const { customerInfo } = await Purchases.purchasePackage(pkg);
-
-  console.log('[RevenueCat] Purchase complete');
-  console.log('[RevenueCat] Active entitlements:', Object.keys(customerInfo.entitlements.active));
+  logCustomerInfo(customerInfo);
 
   return customerInfo;
 }
 
 /**
+ * Purchase a product by ID
+ */
+export async function purchaseProduct(
+  productId: typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]
+): Promise<CustomerInfo | null> {
+  const pkg = await getPackage(productId);
+
+  if (!pkg) {
+    console.error('[RevenueCat] Package not found:', productId);
+    return null;
+  }
+
+  return purchasePackage(pkg);
+}
+
+/**
  * Restore previous purchases
- *
- * Use this when user reinstalls app or switches devices
- *
- * @returns Promise<CustomerInfo> - Customer info with restored purchases
- *
- * @example
- * ```typescript
- * const customerInfo = await restorePurchases();
- * if (customerInfo.entitlements.active['orb_mode']) {
- *   // Purchases restored, enable Orb Mode
- * }
- * ```
  */
 export async function restorePurchases(): Promise<CustomerInfo> {
   console.log('[RevenueCat] Restoring purchases...');
 
   const customerInfo = await Purchases.restorePurchases();
+  logCustomerInfo(customerInfo);
 
-  console.log('[RevenueCat] Purchases restored');
-  console.log('[RevenueCat] Active entitlements:', Object.keys(customerInfo.entitlements.active));
+  return customerInfo;
+}
+
+// ============================================================================
+// RevenueCat UI - Paywall
+// ============================================================================
+
+/**
+ * Present the default paywall
+ *
+ * Uses RevenueCatUI for a pre-built, customizable paywall
+ */
+export async function presentPaywall(): Promise<PaywallResult> {
+  try {
+    // Ensure SDK is configured before presenting paywall
+    if (!isConfigured) {
+      console.log('[RevenueCat] SDK not configured, initializing...');
+      await initializePurchases();
+    }
+
+    console.log('[RevenueCat] Presenting paywall...');
+
+    const result = await RevenueCatUI.presentPaywall();
+
+    console.log('[RevenueCat] Paywall result:', result);
+
+    switch (result) {
+      case PAYWALL_RESULT.PURCHASED:
+        return { purchased: true, restored: false, cancelled: false, error: null };
+      case PAYWALL_RESULT.RESTORED:
+        return { purchased: false, restored: true, cancelled: false, error: null };
+      case PAYWALL_RESULT.CANCELLED:
+      case PAYWALL_RESULT.NOT_PRESENTED:
+      default:
+        return { purchased: false, restored: false, cancelled: true, error: null };
+    }
+  } catch (error) {
+    console.error('[RevenueCat] Paywall error:', error);
+    return {
+      purchased: false,
+      restored: false,
+      cancelled: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+}
+
+/**
+ * Present paywall with specific offering
+ */
+export async function presentPaywallWithOffering(
+  offeringIdentifier: string
+): Promise<PaywallResult> {
+  try {
+    // Ensure SDK is configured before presenting paywall
+    if (!isConfigured) {
+      console.log('[RevenueCat] SDK not configured, initializing...');
+      await initializePurchases();
+    }
+
+    const offerings = await Purchases.getOfferings();
+    const offering = offerings.all[offeringIdentifier];
+
+    if (!offering) {
+      throw new Error(`Offering not found: ${offeringIdentifier}`);
+    }
+
+    const result = await RevenueCatUI.presentPaywallIfNeeded({
+      requiredEntitlementIdentifier: PRO_ENTITLEMENT,
+    });
+
+    switch (result) {
+      case PAYWALL_RESULT.PURCHASED:
+        return { purchased: true, restored: false, cancelled: false, error: null };
+      case PAYWALL_RESULT.RESTORED:
+        return { purchased: false, restored: true, cancelled: false, error: null };
+      default:
+        return { purchased: false, restored: false, cancelled: true, error: null };
+    }
+  } catch (error) {
+    console.error('[RevenueCat] Paywall error:', error);
+    return {
+      purchased: false,
+      restored: false,
+      cancelled: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+}
+
+/**
+ * Present paywall only if user doesn't have Pro entitlement
+ */
+export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
+  try {
+    // Ensure SDK is configured before presenting paywall
+    if (!isConfigured) {
+      console.log('[RevenueCat] SDK not configured, initializing...');
+      await initializePurchases();
+    }
+
+    const result = await RevenueCatUI.presentPaywallIfNeeded({
+      requiredEntitlementIdentifier: PRO_ENTITLEMENT,
+    });
+
+    switch (result) {
+      case PAYWALL_RESULT.PURCHASED:
+        return { purchased: true, restored: false, cancelled: false, error: null };
+      case PAYWALL_RESULT.RESTORED:
+        return { purchased: false, restored: true, cancelled: false, error: null };
+      case PAYWALL_RESULT.NOT_PRESENTED:
+        // User already has entitlement
+        return { purchased: false, restored: false, cancelled: false, error: null };
+      default:
+        return { purchased: false, restored: false, cancelled: true, error: null };
+    }
+  } catch (error) {
+    console.error('[RevenueCat] Paywall error:', error);
+    return {
+      purchased: false,
+      restored: false,
+      cancelled: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+    };
+  }
+}
+
+// ============================================================================
+// RevenueCat UI - Customer Center
+// ============================================================================
+
+/**
+ * Present the Customer Center
+ *
+ * Allows users to manage their subscription:
+ * - View subscription details
+ * - Cancel subscription
+ * - Change plan
+ * - Contact support
+ */
+export async function presentCustomerCenter(): Promise<void> {
+  try {
+    console.log('[RevenueCat] Presenting Customer Center...');
+    await RevenueCatUI.presentCustomerCenter();
+    console.log('[RevenueCat] Customer Center closed');
+  } catch (error) {
+    console.error('[RevenueCat] Customer Center error:', error);
+
+    // Fallback: Show basic subscription management options
+    Alert.alert(
+      '구독 관리',
+      '구독 관리 화면을 열 수 없습니다.\n\n설정 앱에서 구독을 관리할 수 있습니다:\n설정 → Apple ID → 구독',
+      [{ text: '확인' }]
+    );
+  }
+}
+
+// ============================================================================
+// User Management
+// ============================================================================
+
+/**
+ * Log in a user (identify)
+ */
+export async function logIn(userId: string): Promise<CustomerInfo> {
+  console.log('[RevenueCat] Logging in user:', userId);
+
+  const { customerInfo } = await Purchases.logIn(userId);
+  logCustomerInfo(customerInfo);
 
   return customerInfo;
 }
 
 /**
- * Get customer information
- *
- * @returns Promise<CustomerInfo> - Current customer information
+ * Log out current user
  */
-export async function getCustomerInfo(): Promise<CustomerInfo> {
-  return Purchases.getCustomerInfo();
+export async function logOut(): Promise<CustomerInfo> {
+  console.log('[RevenueCat] Logging out...');
+
+  const customerInfo = await Purchases.logOut();
+  console.log('[RevenueCat] User logged out, now anonymous');
+
+  return customerInfo;
 }
 
-/**
- * Log out current user
- *
- * Call this when user logs out of the app
- */
-export async function logOut(): Promise<void> {
-  console.log('[RevenueCat] Logging out...');
-  await Purchases.logOut();
-}
+// ============================================================================
+// Listeners
+// ============================================================================
 
 /**
  * Add listener for customer info updates
- *
- * @param listener - Callback function for customer info changes
- * @returns Function to remove the listener
- *
- * @example
- * ```typescript
- * const removeListener = addCustomerInfoUpdateListener((info) => {
- *   const isOrbMode = info.entitlements.active['orb_mode'] !== undefined;
- *   updateOrbModeStatus(isOrbMode);
- * });
- *
- * // Later: removeListener();
- * ```
  */
 export function addCustomerInfoUpdateListener(
   listener: (customerInfo: CustomerInfo) => void
 ): () => void {
+  if (!isConfigured) {
+    console.warn('[RevenueCat] SDK not initialized, listener not added');
+    return () => {}; // no-op cleanup
+  }
+
   Purchases.addCustomerInfoUpdateListener(listener);
 
   return () => {
@@ -224,40 +490,89 @@ export function addCustomerInfoUpdateListener(
   };
 }
 
+// ============================================================================
+// Error Handling
+// ============================================================================
+
 /**
- * Helper: Get subscription expiration date
- *
- * @returns Promise<Date | null> - Expiration date or null if not subscribed
+ * Check if error is a user cancellation
  */
-export async function getExpirationDate(): Promise<Date | null> {
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    const entitlement = customerInfo.entitlements.active[ORB_MODE_ENTITLEMENT];
-
-    if (entitlement?.expirationDate) {
-      return new Date(entitlement.expirationDate);
-    }
-
-    return null;
-  } catch (error) {
-    console.error('[RevenueCat] Failed to get expiration date:', error);
-    return null;
+export function isPurchaseCancelled(error: unknown): boolean {
+  if (error && typeof error === 'object' && 'code' in error) {
+    return (error as { code: string }).code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR;
   }
+  return false;
 }
 
 /**
- * Helper: Check if subscription will renew
- *
- * @returns Promise<boolean> - True if subscription will auto-renew
+ * Get user-friendly error message
  */
-export async function willRenew(): Promise<boolean> {
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    const entitlement = customerInfo.entitlements.active[ORB_MODE_ENTITLEMENT];
+export function getErrorMessage(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return '알 수 없는 오류가 발생했습니다.';
+  }
 
-    return entitlement?.willRenew ?? false;
-  } catch (error) {
-    console.error('[RevenueCat] Failed to check renewal status:', error);
-    return false;
+  const err = error as { code?: string; message?: string };
+
+  switch (err.code) {
+    case PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR:
+      return '구매가 취소되었습니다.';
+    case PURCHASES_ERROR_CODE.STORE_PROBLEM_ERROR:
+      return '스토어에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    case PURCHASES_ERROR_CODE.PURCHASE_NOT_ALLOWED_ERROR:
+      return '구매가 허용되지 않습니다. 설정을 확인해주세요.';
+    case PURCHASES_ERROR_CODE.PURCHASE_INVALID_ERROR:
+      return '유효하지 않은 구매입니다.';
+    case PURCHASES_ERROR_CODE.PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR:
+      return '현재 이 상품을 구매할 수 없습니다.';
+    case PURCHASES_ERROR_CODE.NETWORK_ERROR:
+      return '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+    default:
+      return err.message ?? '구매 중 오류가 발생했습니다.';
+  }
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function logCustomerInfo(customerInfo: CustomerInfo): void {
+  console.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
+  console.log(
+    '[RevenueCat] Active entitlements:',
+    Object.keys(customerInfo.entitlements.active)
+  );
+  console.log(
+    '[RevenueCat] All purchased products:',
+    customerInfo.allPurchasedProductIdentifiers
+  );
+}
+
+/**
+ * Format expiration date for display
+ */
+export function formatExpirationDate(date: Date | null): string {
+  if (!date) return '평생';
+
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Get subscription period name
+ */
+export function getSubscriptionPeriodName(productId: string | null): string {
+  switch (productId) {
+    case PRODUCT_IDS.MONTHLY:
+      return '월간';
+    case PRODUCT_IDS.YEARLY:
+      return '연간';
+    case PRODUCT_IDS.LIFETIME:
+      return '평생';
+    default:
+      return '구독';
   }
 }

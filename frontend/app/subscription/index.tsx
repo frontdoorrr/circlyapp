@@ -8,42 +8,112 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PurchasesPackage } from 'react-native-purchases';
 import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import {
+  presentPaywall,
   getOfferings,
   purchasePackage,
   restorePurchases,
-  PACKAGE_IDS,
+  getErrorMessage,
+  isPurchaseCancelled,
+  PRODUCT_IDS,
 } from '../../src/services/subscription/revenuecat';
+import { useSubscription } from '../../src/hooks/useSubscription';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 
 /**
- * Orb Mode 구독 Paywall 화면
+ * Subscription Paywall Screen
  *
- * 기능:
- * - 구독 혜택 안내
- * - 월간/연간 가격 옵션
- * - 구매 및 복원 기능
+ * Currently using Custom Paywall (RevenueCatUI Paywall not configured in Dashboard)
+ *
+ * Two modes available:
+ * 1. Custom Paywall (current) - custom UI with RevenueCat SDK
+ * 2. RevenueCatUI Paywall - requires Dashboard Paywall configuration
+ *
+ * To enable RevenueCatUI Paywall:
+ * 1. Configure Paywall in RevenueCat Dashboard
+ * 2. Set useCustomPaywall initial state to false
+ *
+ * Features:
+ * - Show subscription benefits
+ * - Monthly/Yearly/Lifetime pricing options
+ * - Purchase and restore functionality
  */
 export default function SubscriptionScreen() {
-  const { theme, isDark } = useTheme();
+  useTheme(); // For themed styles
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const { refetch: refetchUser } = useCurrentUser();
+  const { refresh } = useSubscription();
 
+  // Skip RevenueCatUI Paywall - use Custom Paywall directly
+  // RevenueCatUI requires Dashboard Paywall configuration which is not set up
+  const [useCustomPaywall, setUseCustomPaywall] = useState(true);
+  const [isLoadingPaywall, setIsLoadingPaywall] = useState(false);
+
+  // Custom paywall state
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<string>(PACKAGE_IDS.MONTHLY);
+  const [selectedPackage, setSelectedPackage] = useState<string>(PRODUCT_IDS.MONTHLY);
 
-  // 구독 상품 정보 로드
+  // RevenueCatUI Paywall - currently disabled
+  // Enable this when Dashboard Paywall is configured and published
   useEffect(() => {
+    // Skip RevenueCatUI paywall - Dashboard paywall not configured
+    // Error: "Offering default has no configured paywall"
+    if (useCustomPaywall) {
+      console.log('[Subscription] Using custom paywall (RevenueCatUI paywall not configured)');
+      return;
+    }
+
+    async function tryRevenueCatPaywall() {
+      try {
+        setIsLoadingPaywall(true);
+
+        // Present the RevenueCat Paywall
+        const result = await presentPaywall();
+
+        if (result.purchased || result.restored) {
+          // Success! Refresh user and go back
+          await refetchUser();
+          await refresh();
+          router.back();
+          return;
+        }
+
+        if (result.cancelled) {
+          // User cancelled, go back
+          router.back();
+          return;
+        }
+
+        if (result.error) {
+          // Error - fall back to custom paywall
+          console.log('[Subscription] RevenueCatUI failed, using custom paywall');
+          setUseCustomPaywall(true);
+        }
+      } catch (error) {
+        console.error('[Subscription] RevenueCatUI error:', error);
+        setUseCustomPaywall(true);
+      } finally {
+        setIsLoadingPaywall(false);
+      }
+    }
+
+    tryRevenueCatPaywall();
+  }, [useCustomPaywall, refetchUser, refresh]);
+
+  // Load offerings for custom paywall
+  useEffect(() => {
+    if (!useCustomPaywall) return;
+
     async function loadOfferings() {
       try {
         setIsLoading(true);
@@ -61,14 +131,14 @@ export default function SubscriptionScreen() {
     }
 
     loadOfferings();
-  }, []);
+  }, [useCustomPaywall]);
 
-  // 선택된 패키지 가져오기
-  const getSelectedPackage = () => {
+  // Get selected package
+  const getSelectedPackage = useCallback(() => {
     return packages.find((pkg) => pkg.identifier === selectedPackage);
-  };
+  }, [packages, selectedPackage]);
 
-  // 구매 처리
+  // Handle purchase
   const handlePurchase = async () => {
     const pkg = getSelectedPackage();
     if (!pkg) {
@@ -80,14 +150,15 @@ export default function SubscriptionScreen() {
       setIsPurchasing(true);
       const customerInfo = await purchasePackage(pkg);
 
-      // 구독 성공 여부 확인
-      if (customerInfo.entitlements.active['orb_mode']) {
-        // 사용자 정보 새로고침 (is_orb_mode 업데이트)
+      // Check subscription success
+      const hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
+      if (hasEntitlement) {
         await refetchUser();
+        await refresh();
 
         Alert.alert(
           '구독 완료!',
-          'Orb Mode가 활성화되었어요. 이제 누가 나를 선택했는지 볼 수 있어요!',
+          'Pro 기능이 활성화되었습니다!',
           [
             {
               text: '확인',
@@ -97,35 +168,32 @@ export default function SubscriptionScreen() {
         );
       }
     } catch (error: any) {
-      // 사용자가 취소한 경우
-      if (error.userCancelled) {
+      if (isPurchaseCancelled(error)) {
         console.log('[Subscription] User cancelled purchase');
         return;
       }
 
       console.error('[Subscription] Purchase failed:', error);
-      Alert.alert(
-        '구매 실패',
-        error.message || '구매 중 문제가 발생했어요. 다시 시도해주세요.'
-      );
+      Alert.alert('구매 실패', getErrorMessage(error));
     } finally {
       setIsPurchasing(false);
     }
   };
 
-  // 구매 복원
+  // Handle restore
   const handleRestore = async () => {
     try {
       setIsRestoring(true);
       const customerInfo = await restorePurchases();
 
-      if (customerInfo.entitlements.active['orb_mode']) {
-        // 사용자 정보 새로고침
+      const hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
+      if (hasEntitlement) {
         await refetchUser();
+        await refresh();
 
         Alert.alert(
           '복원 완료!',
-          'Orb Mode가 복원되었어요.',
+          '구독이 복원되었습니다.',
           [
             {
               text: '확인',
@@ -136,35 +204,39 @@ export default function SubscriptionScreen() {
       } else {
         Alert.alert(
           '복원 실패',
-          '복원할 구독이 없어요. 같은 Apple/Google 계정인지 확인해주세요.'
+          '복원할 구독이 없습니다. 같은 Apple/Google 계정인지 확인해주세요.'
         );
       }
     } catch (error: any) {
       console.error('[Subscription] Restore failed:', error);
-      Alert.alert(
-        '복원 실패',
-        error.message || '복원 중 문제가 발생했어요. 다시 시도해주세요.'
-      );
+      Alert.alert('복원 실패', getErrorMessage(error));
     } finally {
       setIsRestoring(false);
     }
   };
 
-  // 패키지에서 가격 정보 추출
+  // Get package info for display
   const getPackageInfo = (packageId: string) => {
     const pkg = packages.find((p) => p.identifier === packageId);
     if (!pkg) {
-      // 기본 가격 (RevenueCat 연결 전)
-      if (packageId === PACKAGE_IDS.MONTHLY) {
-        return { price: '₩5,900', period: '월', savings: null };
+      // Default prices (before RevenueCat connection)
+      switch (packageId) {
+        case PRODUCT_IDS.MONTHLY:
+          return { price: '$4.99', period: '월', savings: null };
+        case PRODUCT_IDS.YEARLY:
+          return { price: '$49.99', period: '년', savings: '17% 할인' };
+        case PRODUCT_IDS.LIFETIME:
+          return { price: '$99.99', period: '평생', savings: '베스트 가치' };
+        default:
+          return { price: '...', period: '', savings: null };
       }
-      return { price: '₩59,000', period: '년', savings: '17% 할인' };
     }
 
     const product = pkg.product;
-    if (packageId === PACKAGE_IDS.ANNUAL) {
-      // 연간 구독 할인율 계산
-      const monthlyPkg = packages.find((p) => p.identifier === PACKAGE_IDS.MONTHLY);
+
+    // Calculate savings for yearly
+    if (packageId === PRODUCT_IDS.YEARLY) {
+      const monthlyPkg = packages.find((p) => p.identifier === PRODUCT_IDS.MONTHLY);
       if (monthlyPkg) {
         const annualPrice = product.price;
         const monthlyPrice = monthlyPkg.product.price * 12;
@@ -179,37 +251,62 @@ export default function SubscriptionScreen() {
 
     return {
       price: product.priceString,
-      period: packageId === PACKAGE_IDS.MONTHLY ? '월' : '년',
-      savings: null,
+      period: packageId === PRODUCT_IDS.MONTHLY ? '월' : packageId === PRODUCT_IDS.YEARLY ? '년' : '평생',
+      savings: packageId === PRODUCT_IDS.LIFETIME ? '베스트 가치' : null,
     };
   };
 
-  const monthlyInfo = getPackageInfo(PACKAGE_IDS.MONTHLY);
-  const annualInfo = getPackageInfo(PACKAGE_IDS.ANNUAL);
-
-  // 로딩 중
-  if (isLoading) {
+  // Show loading while RevenueCatUI paywall is being presented
+  if (isLoadingPaywall && !useCustomPaywall) {
     return (
       <>
         <Stack.Screen
           options={{
-            title: 'Orb Mode',
+            title: 'Pro',
             headerShown: true,
             headerBackTitle: '뒤로',
           }}
         />
-        <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={tokens.colors.primary[500]} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </>
+    );
+  }
+
+  // Custom paywall loading
+  if (useCustomPaywall && isLoading) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: 'Pro',
+            headerShown: true,
+            headerBackTitle: '뒤로',
+          }}
+        />
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={tokens.colors.primary[500]} />
         </View>
       </>
     );
   }
 
+  // Custom paywall UI
+  if (!useCustomPaywall) {
+    return null; // RevenueCatUI paywall handles everything
+  }
+
+  const monthlyInfo = getPackageInfo(PRODUCT_IDS.MONTHLY);
+  const yearlyInfo = getPackageInfo(PRODUCT_IDS.YEARLY);
+  const lifetimeInfo = getPackageInfo(PRODUCT_IDS.LIFETIME);
+
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Orb Mode',
+          title: 'Pro',
           headerShown: true,
           headerBackTitle: '뒤로',
         }}
@@ -223,18 +320,18 @@ export default function SubscriptionScreen() {
             { paddingBottom: insets.bottom + 120 },
           ]}
         >
-          {/* 헤더 섹션 */}
+          {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerEmoji}>🔮</Text>
-            <Text style={styles.headerTitle}>Orb Mode</Text>
+            <Text style={styles.headerEmoji}>⭐</Text>
+            <Text style={styles.headerTitle}>Pro</Text>
             <Text style={styles.headerSubtitle}>
-              누가 나를 선택했는지 궁금하지 않아?
+              모든 프리미엄 기능을 이용해보세요
             </Text>
           </View>
 
-          {/* 기능 리스트 */}
+          {/* Features */}
           <View style={styles.featuresSection}>
-            <Text style={styles.sectionTitle}>Orb Mode 혜택</Text>
+            <Text style={styles.sectionTitle}>Pro 혜택</Text>
 
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>👀</Text>
@@ -259,69 +356,53 @@ export default function SubscriptionScreen() {
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>🎯</Text>
               <View style={styles.featureContent}>
-                <Text style={styles.featureTitle}>나를 좋아하는 친구 발견</Text>
+                <Text style={styles.featureTitle}>무제한 접근</Text>
                 <Text style={styles.featureDescription}>
-                  친구들의 마음을 확인해보세요
+                  모든 프리미엄 기능을 무제한으로 이용하세요
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* 가격 카드 */}
+          {/* Pricing */}
           <View style={styles.pricingSection}>
             <Text style={styles.sectionTitle}>구독 플랜 선택</Text>
 
-            {/* 월간 구독 */}
-            <Pressable
-              style={[
-                styles.priceCard,
-                selectedPackage === PACKAGE_IDS.MONTHLY && styles.priceCardSelected,
-              ]}
-              onPress={() => setSelectedPackage(PACKAGE_IDS.MONTHLY)}
-            >
-              <View style={styles.priceCardHeader}>
-                <Text style={styles.priceCardTitle}>월간 구독</Text>
-                {selectedPackage === PACKAGE_IDS.MONTHLY && (
-                  <View style={styles.checkmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.priceCardBody}>
-                <Text style={styles.priceAmount}>{monthlyInfo.price}</Text>
-                <Text style={styles.pricePeriod}>/ {monthlyInfo.period}</Text>
-              </View>
-            </Pressable>
+            {/* Monthly */}
+            <PriceCard
+              title="월간 구독"
+              price={monthlyInfo.price}
+              period={monthlyInfo.period}
+              savings={monthlyInfo.savings}
+              isSelected={selectedPackage === PRODUCT_IDS.MONTHLY}
+              onPress={() => setSelectedPackage(PRODUCT_IDS.MONTHLY)}
+              styles={styles}
+            />
 
-            {/* 연간 구독 */}
-            <Pressable
-              style={[
-                styles.priceCard,
-                selectedPackage === PACKAGE_IDS.ANNUAL && styles.priceCardSelected,
-              ]}
-              onPress={() => setSelectedPackage(PACKAGE_IDS.ANNUAL)}
-            >
-              {annualInfo.savings && (
-                <View style={styles.savingsBadge}>
-                  <Text style={styles.savingsText}>{annualInfo.savings}</Text>
-                </View>
-              )}
-              <View style={styles.priceCardHeader}>
-                <Text style={styles.priceCardTitle}>연간 구독</Text>
-                {selectedPackage === PACKAGE_IDS.ANNUAL && (
-                  <View style={styles.checkmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.priceCardBody}>
-                <Text style={styles.priceAmount}>{annualInfo.price}</Text>
-                <Text style={styles.pricePeriod}>/ {annualInfo.period}</Text>
-              </View>
-            </Pressable>
+            {/* Yearly */}
+            <PriceCard
+              title="연간 구독"
+              price={yearlyInfo.price}
+              period={yearlyInfo.period}
+              savings={yearlyInfo.savings}
+              isSelected={selectedPackage === PRODUCT_IDS.YEARLY}
+              onPress={() => setSelectedPackage(PRODUCT_IDS.YEARLY)}
+              styles={styles}
+            />
+
+            {/* Lifetime */}
+            <PriceCard
+              title="평생 구독"
+              price={lifetimeInfo.price}
+              period={lifetimeInfo.period}
+              savings={lifetimeInfo.savings}
+              isSelected={selectedPackage === PRODUCT_IDS.LIFETIME}
+              onPress={() => setSelectedPackage(PRODUCT_IDS.LIFETIME)}
+              styles={styles}
+            />
           </View>
 
-          {/* 법적 안내 */}
+          {/* Legal */}
           <View style={styles.legalSection}>
             <Text style={styles.legalText}>
               • 결제는 Apple/Google 계정으로 청구됩니다
@@ -334,7 +415,7 @@ export default function SubscriptionScreen() {
             </Text>
           </View>
 
-          {/* 복원 링크 */}
+          {/* Restore */}
           <Pressable
             style={styles.restoreButton}
             onPress={handleRestore}
@@ -346,7 +427,7 @@ export default function SubscriptionScreen() {
           </Pressable>
         </ScrollView>
 
-        {/* 하단 CTA 버튼 */}
+        {/* CTA Button */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable
             style={[
@@ -370,11 +451,75 @@ export default function SubscriptionScreen() {
   );
 }
 
+// ============================================================================
+// Price Card Component
+// ============================================================================
+
+interface PriceCardProps {
+  title: string;
+  price: string;
+  period: string;
+  savings: string | null;
+  isSelected: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}
+
+function PriceCard({
+  title,
+  price,
+  period,
+  savings,
+  isSelected,
+  onPress,
+  styles,
+}: PriceCardProps) {
+  return (
+    <Pressable
+      style={[styles.priceCard, isSelected && styles.priceCardSelected]}
+      onPress={onPress}
+    >
+      {savings && (
+        <View style={styles.savingsBadge}>
+          <Text style={styles.savingsText}>{savings}</Text>
+        </View>
+      )}
+      <View style={styles.priceCardHeader}>
+        <Text style={styles.priceCardTitle}>{title}</Text>
+        {isSelected && (
+          <View style={styles.checkmark}>
+            <Text style={styles.checkmarkText}>✓</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.priceCardBody}>
+        <Text style={styles.priceAmount}>{price}</Text>
+        <Text style={styles.pricePeriod}>/ {period}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// ============================================================================
+// Styles
+// ============================================================================
+
 const createStyles = (theme: Theme, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      backgroundColor: theme.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      marginTop: tokens.spacing.md,
+      fontSize: tokens.typography.fontSize.base,
+      color: theme.textSecondary,
     },
     scrollView: {
       flex: 1,
@@ -382,7 +527,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     scrollContent: {
       padding: tokens.spacing.lg,
     },
-    // 헤더
+    // Header
     header: {
       alignItems: 'center',
       marginBottom: tokens.spacing['2xl'],
@@ -403,14 +548,14 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       color: theme.textSecondary,
       textAlign: 'center',
     },
-    // 섹션
+    // Section
     sectionTitle: {
       fontSize: tokens.typography.fontSize.lg,
       fontWeight: tokens.typography.fontWeight.semibold,
       color: theme.text,
       marginBottom: tokens.spacing.md,
     },
-    // 기능 리스트
+    // Features
     featuresSection: {
       marginBottom: tokens.spacing['2xl'],
     },
@@ -441,7 +586,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: tokens.typography.fontSize.sm,
       color: theme.textSecondary,
     },
-    // 가격 카드
+    // Pricing
     pricingSection: {
       marginBottom: tokens.spacing['2xl'],
     },
@@ -512,7 +657,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontWeight: tokens.typography.fontWeight.bold,
       color: tokens.colors.white,
     },
-    // 법적 안내
+    // Legal
     legalSection: {
       marginBottom: tokens.spacing.lg,
     },
@@ -522,7 +667,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       lineHeight: 18,
       marginBottom: 4,
     },
-    // 복원 버튼
+    // Restore
     restoreButton: {
       alignItems: 'center',
       paddingVertical: tokens.spacing.md,
@@ -532,7 +677,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       color: tokens.colors.primary[isDark ? 400 : 600],
       fontWeight: tokens.typography.fontWeight.medium,
     },
-    // 하단 CTA
+    // Footer
     footer: {
       position: 'absolute',
       bottom: 0,
