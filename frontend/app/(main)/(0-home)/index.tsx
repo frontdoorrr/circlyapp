@@ -107,8 +107,8 @@ export default function HomeScreen() {
   // 읽지 않은 알림 개수 (벨 배지)
   const { data: unreadCount } = useUnreadCount();
 
-  // 현재 활성 Circle 이름 (첫 번째 Circle 사용, Circle이 없으면 기본값)
-  const circleName = myCircles?.[0]?.name ?? '내 Circle';
+  // 홈은 여러 Circle의 투표를 통합해서 보여준다.
+  const circleName = '전체 Circle';
 
   // ============================================================================
   // 실시간 카운트다운
@@ -138,7 +138,7 @@ export default function HomeScreen() {
         id: poll.id,
         question: poll.question,
         emoji: poll.emoji || '📊',
-        circleName: poll.circle_name || circleName,
+        circleName: poll.circle_name || 'Circle',
         timeRemaining: formatTimeRemaining(poll.ends_at),
         participantCount: poll.vote_count || 0,
         totalMembers: poll.total_members || 15,
@@ -149,7 +149,7 @@ export default function HomeScreen() {
         rawEndsAt: poll.ends_at,
       }))
       .sort((a, b) => new Date(a.rawEndsAt).getTime() - new Date(b.rawEndsAt).getTime());
-  }, [activePolls, circleName]);
+  }, [activePolls]);
 
   const transformedCompletedPolls: TransformedCompletedPoll[] = useMemo(() => {
     if (!completedPolls) return [];
@@ -158,13 +158,18 @@ export default function HomeScreen() {
       id: poll.id,
       question: poll.question,
       emoji: poll.emoji || '📊',
-      circleName: poll.circle_name || circleName,
+      circleName: poll.circle_name || 'Circle',
       winner: {
         name: poll.winner_name || '알 수 없음',
         voteCount: poll.winner_vote_count || 0,
       },
     }));
-  }, [completedPolls, circleName]);
+  }, [completedPolls]);
+
+  const sessionReadyCount = useMemo(() => {
+    if (!activePolls) return 0;
+    return activePolls.filter((poll) => !poll.has_voted && !isExpired(poll.ends_at)).length;
+  }, [activePolls]);
 
   // ============================================================================
   // Event Handlers
@@ -244,6 +249,11 @@ export default function HomeScreen() {
   const handleCreatePoll = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/create' as any);
+  }, [router]);
+
+  const handleStartSession = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/vote-session' as any);
   }, [router]);
 
   // ============================================================================
@@ -344,6 +354,14 @@ export default function HomeScreen() {
         notificationCount={unreadCount ?? 0}
         onNotificationPress={handleNotificationPress}
         onProfilePress={handleProfilePress}
+      />
+
+      <SessionStartCard
+        count={sessionReadyCount}
+        circleCount={myCircles?.length ?? 0}
+        onStart={handleStartSession}
+        onCreatePoll={handleCreatePoll}
+        isDark={isDark}
       />
 
       {/* Tab Selector with Join Button */}
@@ -471,6 +489,59 @@ export default function HomeScreen() {
         </Button>
       ) : null}
     </View>
+  );
+}
+
+// ============================================================================
+// Session Start Card Component
+// ============================================================================
+
+interface SessionStartCardProps {
+  count: number;
+  circleCount: number;
+  onStart: () => void;
+  onCreatePoll: () => void;
+  isDark: boolean;
+}
+
+function SessionStartCard({
+  count,
+  circleCount,
+  onStart,
+  onCreatePoll,
+  isDark,
+}: SessionStartCardProps) {
+  const styles = useThemedStyles(createStyles);
+  const hasVotes = count > 0;
+
+  return (
+    <Animated.View entering={FadeInUp.delay(80)} style={styles.sessionCard}>
+      <View style={styles.sessionHeader}>
+        <View style={styles.sessionBadge}>
+          <Text style={styles.sessionBadgeText}>{circleCount} Circle</Text>
+        </View>
+        <Text style={styles.sessionCountText}>
+          {hasVotes ? `${count}개 대기 중` : '대기 중인 투표 없음'}
+        </Text>
+      </View>
+      <Text style={styles.sessionTitle}>
+        {hasVotes ? '친구들이 기다리는 질문부터 답하기' : '새 질문으로 Circle을 움직이기'}
+      </Text>
+      <Text style={styles.sessionDescription}>
+        {hasVotes
+          ? '여러 Circle의 질문을 한 번에 넘기며 답해요.'
+          : '지금은 답할 질문이 없어요. 새 투표를 만들 수 있어요.'}
+      </Text>
+      <View style={styles.sessionActions}>
+        <Button
+          onPress={hasVotes ? onStart : onCreatePoll}
+          fullWidth
+          accessibilityLabel={hasVotes ? '통합 투표 세션 시작' : '새 투표 만들기'}
+        >
+          {hasVotes ? '투표 시작' : '새 투표 만들기'}
+        </Button>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -649,6 +720,59 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     pageContainer: {
       flex: 1,
+    },
+    sessionCard: {
+      position: 'relative',
+      overflow: 'hidden',
+      marginHorizontal: spacing[4],
+      marginTop: spacing[2],
+      marginBottom: spacing[2],
+      padding: spacing[4],
+      borderRadius: tokens.borderRadius.lg,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: isDark ? theme.border : tokens.colors.primary[100],
+      ...(isDark ? {} : tokens.shadows.sm),
+    },
+    sessionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+      gap: spacing[3],
+    },
+    sessionBadge: {
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[1],
+      borderRadius: tokens.borderRadius.full,
+      backgroundColor: isDark ? theme.backgroundSecondary : tokens.colors.primary[50],
+    },
+    sessionBadgeText: {
+      fontSize: tokens.typography.fontSize.xs,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+    },
+    sessionCountText: {
+      flexShrink: 1,
+      textAlign: 'right',
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textSecondary,
+    },
+    sessionTitle: {
+      marginBottom: spacing[1],
+      fontSize: tokens.typography.fontSize.xl,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+    },
+    sessionDescription: {
+      marginBottom: spacing[4],
+      fontSize: tokens.typography.fontSize.sm,
+      lineHeight: tokens.typography.fontSize.sm * 1.45,
+      color: theme.textSecondary,
+    },
+    sessionActions: {
+      width: '100%',
     },
     // Tab row with join button
     tabRow: {

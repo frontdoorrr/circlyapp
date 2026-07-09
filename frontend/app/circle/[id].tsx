@@ -188,16 +188,24 @@ export default function CircleDetailScreen() {
           </View>
         </View>
 
-        {canCreatePoll && (
-          <View style={styles.createPollSection}>
+        <View style={styles.circleActionSection}>
+          <Button
+            fullWidth
+            onPress={() => router.push(`/vote-session?circleId=${id}` as any)}
+            disabled={(circle.active_polls_count ?? 0) === 0}
+          >
+            이 Circle 투표하기
+          </Button>
+          {canCreatePoll && (
             <Button
               fullWidth
+              variant="secondary"
               onPress={() => router.push(`/create?circleId=${id}` as any)}
             >
               이 Circle에서 투표 만들기
             </Button>
-          </View>
-        )}
+          )}
+        </View>
 
         {/* 초대 코드 섹션 */}
         <View style={styles.section}>
@@ -346,7 +354,8 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     section: {
       marginBottom: tokens.spacing.lg,
     },
-    createPollSection: {
+    circleActionSection: {
+      gap: tokens.spacing.sm,
       marginBottom: tokens.spacing.lg,
     },
     sectionTitle: {

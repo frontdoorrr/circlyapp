@@ -81,7 +81,7 @@ export function VoteCard({
   return (
     <View style={styles.container}>
       {/* Question */}
-      <Text variant="xl" weight="bold" style={styles.question}>
+      <Text variant="xl" weight="bold" numberOfLines={2} style={styles.question}>
         {question}
       </Text>
 
@@ -220,57 +220,59 @@ function VoteOptionView({
 const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
   container: {
     width: '100%',
-    padding: tokens.spacing.lg,
+    paddingHorizontal: tokens.spacing.lg,
+    paddingVertical: tokens.spacing.md,
   },
   question: {
-    marginBottom: tokens.spacing.xl,
+    marginBottom: tokens.spacing.lg,
     textAlign: 'center',
+    lineHeight: tokens.typography.fontSize.xl * 1.3,
   },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: tokens.spacing.md,
+    rowGap: tokens.spacing.md,
   },
   option: {
-    width: '48%',
-    aspectRatio: 0.85,
+    width: '47.5%',
+    aspectRatio: 1.02,
     backgroundColor: theme.card,
     borderColor: theme.border,
-    borderRadius: tokens.borderRadius.xl,
-    padding: tokens.spacing.md,
+    borderRadius: tokens.borderRadius.lg,
+    padding: tokens.spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     ...(isDark ? {} : tokens.shadows.md),
   },
   optionPlaceholder: {
-    width: '48%',
-    aspectRatio: 0.85,
+    width: '47.5%',
+    aspectRatio: 1.02,
   },
   avatarContainer: {
-    marginBottom: tokens.spacing.sm,
+    marginBottom: tokens.spacing.xs,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: theme.backgroundSecondary,
   },
   avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: theme.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   name: {
-    marginTop: tokens.spacing.xs,
+    marginTop: 2,
     color: theme.text,
   },
   emoji: {
-    fontSize: 38,
-    lineHeight: 46,
+    fontSize: 32,
+    lineHeight: 38,
   },
   initial: {
     color: theme.textTertiary,

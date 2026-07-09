@@ -95,6 +95,12 @@
 
 > **참고 문서**: `prd/design/02-ui-design-system.md`, `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md`
 
+### Gas 레퍼런스 화면/플로우 분석
+> **참고 문서**: YouTube `How to use Gas App | Gas School App`, `prd/research/gas-app-analysis.md`, `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`
+- [x] Gas 앱 온보딩/투표/인박스/수익화 화면 단위 분석
+- [x] 각 화면별 와이어프레임 작성
+- [x] Circly 재구현을 위한 터치 단위 사용자 플로우 정리
+
 ### Supabase Paused 대응: 로컬 개발 Auth (임시)
 > **참고 문서**: `trd/06-authentication-architecture.md`, `trd/08-frontend-implementation-spec.md`
 - [x] 백엔드 development 전용 dev-login 엔드포인트 추가
@@ -746,6 +752,23 @@
 
 #### 18.7 홈 서클 스위처 + 고아 컴포넌트 정리 (P2)
 - [ ] 서클 선택 바텀시트, 고아 컴포넌트 채택/삭제
+
+#### 18.7A 통합 투표 세션 UX 1차 (P0)
+> 참고 문서: `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`, `trd/08-frontend-implementation-spec.md`
+> 범위: Stage 1 프론트 전용. 서버 세션/쿨다운/후보 역가중은 18.9에서 처리.
+- [x] `src/utils/voteSession.ts` — active poll 기반 세션 큐(최대 12, Circle 라운드로빈, optional circleId)
+- [x] `app/vote-session/index.tsx` — 통합 투표 세션 화면(진행률, Circle명, 자동 제출, 스킵/섞기, 완료 화면)
+- [x] `app/(main)/(0-home)/index.tsx` — 홈 상단 primary CTA를 통합 세션 시작/이어하기로 변경
+- [x] `app/circle/[id].tsx` — 해당 Circle만 도는 투표 세션 CTA 추가
+- [x] 각 투표 세션 상단에 Circle명을 명확히 표시하고 후보는 해당 Circle 멤버로 제한
+- [x] 세션 큐 유틸 단위 테스트 추가
+
+#### 18.7B 로컬 UX 테스트 더미 데이터 (P0)
+> 참고 문서: `trd/07-development-deployment-setup.md`, `trd/08-frontend-implementation-spec.md`, `prd/design/04-user-flow.md`
+- [x] `backend/scripts/seed_data.py` — mock user 포함 Circle 5개 생성
+- [x] 각 Circle별 mock user + 더미 멤버 10명 구성
+- [x] 각 Circle별 active 질문 5개 생성
+- [x] 시드 스크립트 멱등성 유지
 
 ### Stage 2 — Gas/Skrr 핵심 메커니즘 (프론트+백엔드)
 

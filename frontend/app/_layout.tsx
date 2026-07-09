@@ -129,6 +129,7 @@ function ThemedApp() {
 
         {/* Poll & Results */}
         <Stack.Screen name="poll/[id]" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="vote-session/index" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="results/[id]" options={{ animation: 'slide_from_right' }} />
 
         {/* Notifications */}
