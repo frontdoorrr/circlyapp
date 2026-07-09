@@ -45,6 +45,27 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 /**
+ * 개발용 mock 로그인
+ */
+export async function devLogin(data: LoginRequest | UserCreate): Promise<AuthResponse> {
+  console.log('[API] POST /auth/dev-login 요청:', { email: data.email });
+  const response = await apiClient.post<AuthResponse | ApiSuccessResponse<AuthResponse>>(
+    '/auth/dev-login',
+    data
+  );
+  console.log('[API] POST /auth/dev-login 응답:', { status: response.status });
+
+  const responseData = response.data as any;
+  if (responseData.success && responseData.data) {
+    return responseData.data;
+  } else if (responseData.user && responseData.access_token) {
+    return responseData;
+  }
+
+  throw new Error('Unexpected response format');
+}
+
+/**
  * 현재 사용자 정보 조회
  */
 export async function getCurrentUser(): Promise<UserResponse> {

@@ -7,6 +7,7 @@ import * as Linking from 'expo-linking';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { QueryProvider } from '../src/providers/QueryProvider';
 import { AppInitializer } from '../src/providers/AppInitializer';
+import { ToastProvider } from '../src/providers/ToastProvider';
 
 /**
  * Root Layout
@@ -26,9 +27,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryProvider>
           <ThemeProvider initialMode="light" initialFollowSystem={true}>
-            <AppInitializer>
-              <ThemedApp />
-            </AppInitializer>
+            <ToastProvider>
+              <AppInitializer>
+                <ThemedApp />
+              </AppInitializer>
+            </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
       </SafeAreaProvider>
@@ -127,6 +130,10 @@ function ThemedApp() {
         {/* Poll & Results */}
         <Stack.Screen name="poll/[id]" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="results/[id]" options={{ animation: 'slide_from_right' }} />
+
+        {/* Notifications */}
+        <Stack.Screen name="notifications/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="create" options={{ presentation: 'modal', headerShown: false }} />
 
         {/* Circle */}
         <Stack.Screen name="circle/[id]" options={{ animation: 'slide_from_right' }} />

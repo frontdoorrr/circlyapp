@@ -4,10 +4,14 @@ import uuid
 
 from fastapi import APIRouter, Query, status
 
+from app.config import get_settings
 from app.core.enums import UserRole
+from app.core.exceptions import NotFoundException
 from app.deps import AdminUserDep, CurrentUserDep, DBSessionDep
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
+    AuthResponse,
+    DevLoginRequest,
     UpdateUserRoleRequest,
     UpdateUserStatusRequest,
     UserListResponse,
@@ -75,6 +79,25 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 #     service = AuthService(repo)
 #     return await service.login(login_data)
 # ==================== 주석 처리 끝 ====================
+
+
+@router.post(
+    "/dev-login",
+    response_model=AuthResponse,
+    summary="[Development] Login with a local mock user",
+)
+async def dev_login(
+    login_data: DevLoginRequest,
+    db: DBSessionDep,
+) -> AuthResponse:
+    """Create or reuse a local mock user for development builds only."""
+    settings = get_settings()
+    if not settings.dev_auth_enabled or settings.is_production:
+        raise NotFoundException("Endpoint not found")
+
+    repo = UserRepository(db)
+    service = AuthService(repo)
+    return await service.dev_login(login_data)
 
 
 @router.get(

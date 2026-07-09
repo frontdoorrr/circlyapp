@@ -95,6 +95,15 @@
 
 > **참고 문서**: `prd/design/02-ui-design-system.md`, `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md`
 
+### Supabase Paused 대응: 로컬 개발 Auth (임시)
+> **참고 문서**: `trd/06-authentication-architecture.md`, `trd/08-frontend-implementation-spec.md`
+- [x] 백엔드 development 전용 dev-login 엔드포인트 추가
+- [x] 백엔드 development 전용 dev token 인증 처리 추가
+- [x] 프론트 mock auth 모드에서 Supabase 대신 백엔드 dev-login 사용
+- [x] Docker Compose API 포트를 Expo 개발 기본값과 맞춤
+- [x] `AGENTS.md`에 로컬 mock user 테스트 계정 기록
+- [x] 타입 체크/테스트로 검증
+
 ### 11.1 Design Tokens Setup (P0)
 - [x] `frontend/src/theme/` 디렉토리 생성
 - [x] `frontend/src/theme/tokens.ts` - 디자인 토큰 정의 → `prd/design/02-ui-design-system.md`
@@ -691,3 +700,60 @@
   - [ ] 구독 구매 → Webhook → is_orb_mode=True
   - [ ] 투표자 공개 화면 접근 성공
 - [ ] **커밋**: `docs: update Orb Mode implementation status`
+
+---
+
+## Phase 18: UX 개선 로드맵 (Gas/Skrr 벤치마킹)
+
+> **참고 문서**: `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`, 계획: `~/.claude/plans/ux-reflective-yao.md`
+> **벤치마킹**: Gas(4지선다 투표 세션·쿨다운·Flame 인박스·God Mode), Skrr(칭찬 질문 필터·후보 공정성·구독 힌트)
+> **원칙**: 학교/연락처 온보딩 미도입(Circle 기반 유지), Stage 1은 프론트 전용(백엔드 무변경)
+
+### Stage 1 — 폴리싱 (프론트 전용)
+
+#### 18.1 알림 인박스 + 라이브 배지 (P0)
+- [x] `src/api/notification.ts` — getNotifications/getUnreadCount/markAsRead/markAllAsRead 추가
+- [x] `src/hooks/useNotifications.ts` — 목록/unread-count query + read mutation(낙관적 업데이트)
+- [x] `app/notifications/index.tsx` — 인박스 화면 (타입별 아이콘, 읽음 구분, 딥링크, EmptyState)
+- [x] `app/(main)/(0-home)/index.tsx` — notificationCount={0} 하드코딩 3곳 → unread-count 훅
+- [x] 백엔드 `/notifications/read-all` 정적 경로 우선순위 수정
+
+#### 18.2 투표 화면 4지선다 업그레이드 (P0)
+- [x] `src/components/patterns/VoteCard.tsx` — emoji 지원 + useThemedStyles 다크모드 전환
+- [x] `app/poll/[id].tsx` — 투표 분기 재작성: 무작위 4명 + [섞기] + [건너뛰기] (멤버 <5명이면 전원)
+- [x] `src/components/patterns/VoteCelebration.tsx` — 투표 완료 하트 버스트 (Alert 제거)
+- [x] handleVote console.log/callCountRef 제거
+
+#### 18.3 투표 생성 플로우 연결 (P0)
+- [x] `app/create/` 모달 스택 — index(서클/카테고리) → question(질문 선택) → settings(마감시간) → preview(발행)
+- [x] 기존 `src/stores/pollCreate.ts` + `src/hooks/useCreatePoll.ts` 재사용
+- [x] 진입점: 홈 FAB "+ 새 투표", `app/circle/[id].tsx` "투표 만들기" 버튼
+
+#### 18.4 Alert → Toast 마이그레이션 (P1)
+- [ ] `src/providers/ToastProvider.tsx` + useToast 훅, 단순 피드백만 교체 (파괴적 확인은 Alert 유지)
+  - [x] 전역 ToastProvider/useToast 기반 추가
+  - [x] 투표 생성 성공/실패 피드백 전환
+  - [ ] 나머지 단순 Alert 피드백 전환
+
+#### 18.5 결과 화면 단일화 (P1)
+- [ ] `src/components/results/ResultsView.tsx` 공용 추출, `results/[id]` 정본화, poll/[id]는 결과 시 redirect
+
+#### 18.6 다크모드/버그 수정 (P1)
+- [ ] EmptyState/PollEmptyState/HomeEmptyState/CircleCard/VoteCard — 테마 전환
+  - [x] EmptyState/PollEmptyState/CircleCard/VoteCard 테마 전환
+  - [x] HomeEmptyState 줄바꿈 문자열 수정
+- [ ] `(1-circle)/index.tsx` 리터럴 `\n` 버그, `src/utils/logger.ts` + console.* 치환
+
+#### 18.7 홈 서클 스위처 + 고아 컴포넌트 정리 (P2)
+- [ ] 서클 선택 바텀시트, 고아 컴포넌트 채택/삭제
+
+### Stage 2 — Gas/Skrr 핵심 메커니즘 (프론트+백엔드)
+
+> 상세 설계는 계획 파일 참조. DSL.md 갱신 필수, 모듈 간 호출은 service 인터페이스 경유.
+
+- [ ] **18.8 칭찬 인박스** (P0) — `GET /polls/me/received` + 무료 힌트(서클명/시간), 인박스 탭 신설(4탭 재편)
+- [ ] **18.9 연속 투표 세션 + 후보 공정성** (P0) — vote_sessions 테이블, 세션 큐(최대 12), 득표 역가중 후보 샘플링, 서버 섞기/스킵
+- [ ] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
+- [ ] **18.11 힌트 티어 시스템** (P1) — vote_hints 테이블, 무료(CIRCLE/TIME)→INITIAL→FULL(Orb Mode)
+- [ ] **18.12 코인/스트릭** (P2, 선택)
+- [ ] **18.13 성별/학년 힌트** (P2, 법무 검토 필요 — 만 14세 미만 개인정보)

@@ -11,15 +11,28 @@ import { useAuthStore } from '../stores/auth';
 import { supabase } from '../lib/supabase';
 import { SupabaseAuthError } from '../utils/supabaseErrors';
 
+const AUTH_MODE = process.env.EXPO_PUBLIC_AUTH_MODE || 'supabase';
+const isMockAuth = AUTH_MODE === 'mock';
+
 /**
  * 회원가입 훅 (2단계 방식)
  * 1단계: Supabase Auth 회원가입
  * 2단계: 백엔드 Profile 업데이트 (username, display_name)
  */
 export function useRegister() {
+  const { setDevSession, setUser } = useAuthStore();
+
   return useMutation({
     mutationFn: async (data: UserCreate) => {
-      console.log('[useRegister] Supabase 회원가입 호출:', { email: data.email });
+      console.log('[useRegister] 회원가입 호출:', { email: data.email, authMode: AUTH_MODE });
+
+      if (isMockAuth) {
+        console.log('[useRegister] Mock Auth 회원가입 호출:', { email: data.email });
+        const authData = await authApi.devLogin(data);
+        setDevSession(authData.access_token);
+        setUser(authData.user);
+        return authData;
+      }
 
       // 1단계: Supabase Auth 회원가입
       const { data: authData, error } = await supabase.auth.signUp({
@@ -73,9 +86,19 @@ export function useRegister() {
  * onAuthStateChange 리스너가 세션 동기화 처리
  */
 export function useLogin() {
+  const { setDevSession, setUser } = useAuthStore();
+
   return useMutation({
     mutationFn: async (data: LoginRequest) => {
-      console.log('[useLogin] Supabase 로그인 호출:', { email: data.email });
+      console.log('[useLogin] 로그인 호출:', { email: data.email, authMode: AUTH_MODE });
+
+      if (isMockAuth) {
+        console.log('[useLogin] Mock Auth 로그인 호출:', { email: data.email });
+        const authData = await authApi.devLogin(data);
+        setDevSession(authData.access_token);
+        setUser(authData.user);
+        return authData;
+      }
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -106,6 +129,11 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
+      if (isMockAuth) {
+        console.log('[useLogout] Mock Auth 로그아웃');
+        return;
+      }
+
       console.log('[useLogout] Supabase 로그아웃 호출');
       const { error } = await supabase.auth.signOut();
 
@@ -177,6 +205,10 @@ export function useDeleteAccount() {
 
       // 백엔드에서 사용자 데이터 삭제 (Supabase Auth도 함께 삭제됨)
       await authApi.deleteAccount();
+
+      if (isMockAuth) {
+        return;
+      }
 
       // Supabase Auth 로그아웃 (로컬 세션 정리)
       const { error } = await supabase.auth.signOut();

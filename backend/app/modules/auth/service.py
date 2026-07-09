@@ -11,6 +11,7 @@ from app.core.supabase import get_supabase_admin_client, get_supabase_client
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import (
     AuthResponse,
+    DevLoginRequest,
     LoginRequest,
     UserCreate,
     UserResponse,
@@ -26,6 +27,31 @@ class AuthService:
     def __init__(self, repository: UserRepository) -> None:
         """Initialize service with repository."""
         self.repository = repository
+
+    async def dev_login(self, login_data: DevLoginRequest) -> AuthResponse:
+        """Create or reuse a local user and issue a development token.
+
+        This is only exposed when DEV_AUTH_ENABLED=true and is intended for
+        local app testing while Supabase Auth is unavailable.
+        """
+        user = await self.repository.find_by_email(login_data.email)
+
+        if user is None:
+            user = await self.repository.create_from_supabase(
+                supabase_user_id=f"dev:{login_data.email}",
+                email=login_data.email,
+                username=login_data.username,
+                display_name=login_data.display_name,
+            )
+
+        if not user.is_active:
+            raise UnauthorizedException("User account is inactive")
+
+        return AuthResponse(
+            user=UserResponse.model_validate(user),
+            access_token=f"dev:{user.id}",
+            token_type="bearer",
+        )
 
     async def register(self, user_data: UserCreate) -> AuthResponse:
         """Register a new user via Supabase.

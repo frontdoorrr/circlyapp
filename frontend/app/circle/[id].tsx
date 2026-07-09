@@ -46,6 +46,11 @@ export default function CircleDetailScreen() {
 
   // 초대 코드 재생성
   const regenerateCodeMutation = useRegenerateInviteCode();
+  const currentMembership = members?.find((member) => member.user_id === currentUser?.id);
+  const canCreatePoll =
+    circle?.owner_id === currentUser?.id ||
+    currentMembership?.role === 'OWNER' ||
+    currentMembership?.role === 'ADMIN';
 
   // 초대 코드 복사
   const handleCopyInviteCode = async () => {
@@ -182,6 +187,17 @@ export default function CircleDetailScreen() {
             </View>
           </View>
         </View>
+
+        {canCreatePoll && (
+          <View style={styles.createPollSection}>
+            <Button
+              fullWidth
+              onPress={() => router.push(`/create?circleId=${id}` as any)}
+            >
+              이 Circle에서 투표 만들기
+            </Button>
+          </View>
+        )}
 
         {/* 초대 코드 섹션 */}
         <View style={styles.section}>
@@ -328,6 +344,9 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       marginTop: tokens.spacing.xs,
     },
     section: {
+      marginBottom: tokens.spacing.lg,
+    },
+    createPollSection: {
       marginBottom: tokens.spacing.lg,
     },
     sectionTitle: {

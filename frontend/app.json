@@ -18,7 +18,8 @@
       "bundleIdentifier": "com.frontdoorrrr.circly",
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "C7BD46D5TK"
     },
     "android": {
       "adaptiveIcon": {

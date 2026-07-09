@@ -18,7 +18,7 @@ export function HomeEmptyState({ onJoinCircle }: HomeEmptyStateProps) {
       <EmptyState
         icon="😊"
         title="아직 참여한 Circle이 없어요"
-        description="친구에게 초대 코드를 받아 참여하거나,&#10;새로운 Circle을 만들어보세요!"
+        description={'친구에게 초대 코드를 받아 참여하거나,\n새로운 Circle을 만들어보세요!'}
         actionLabel="초대 코드 입력"
         onAction={onJoinCircle}
       />

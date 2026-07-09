@@ -5,6 +5,8 @@ import { Text } from '../primitives/Text';
 import { Button } from '../primitives/Button';
 import { useFadeIn } from '../../hooks';
 import Animated from 'react-native-reanimated';
+import { useThemedStyles } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme/tokens';
 
 // ============================================================================
 // Types
@@ -73,6 +75,7 @@ export function EmptyState({
   onAction,
   style,
 }: EmptyStateProps) {
+  const styles = useThemedStyles(createStyles);
   const animatedStyle = useFadeIn(100);
 
   const config = getEmptyStateConfig(variant);
@@ -97,7 +100,6 @@ export function EmptyState({
           variant="xl"
           weight="bold"
           align="center"
-          color={tokens.colors.neutral[900]}
           style={styles.title}
         >
           {finalTitle}
@@ -109,7 +111,6 @@ export function EmptyState({
         <Text
           variant="base"
           align="center"
-          color={tokens.colors.neutral[600]}
           style={styles.description}
         >
           {finalDescription}
@@ -224,6 +225,7 @@ export interface CompactEmptyStateProps {
  * <CompactEmptyState message="투표가 없습니다" icon="📊" />
  */
 export function CompactEmptyState({ message, icon }: CompactEmptyStateProps) {
+  const styles = useThemedStyles(createStyles);
   const animatedStyle = useFadeIn(100);
 
   return (
@@ -232,7 +234,6 @@ export function CompactEmptyState({ message, icon }: CompactEmptyStateProps) {
       <Text
         variant="sm"
         align="center"
-        color={tokens.colors.neutral[500]}
         style={styles.compactMessage}
       >
         {message}
@@ -245,7 +246,7 @@ export function CompactEmptyState({ message, icon }: CompactEmptyStateProps) {
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -257,10 +258,12 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: tokens.spacing.sm,
+    color: theme.text,
   },
   description: {
     marginBottom: tokens.spacing.xl,
     maxWidth: 280,
+    color: theme.textSecondary,
   },
   button: {
     marginTop: tokens.spacing.md,
@@ -274,5 +277,6 @@ const styles = StyleSheet.create({
   },
   compactMessage: {
     marginTop: tokens.spacing.xs,
+    color: theme.textTertiary,
   },
 });

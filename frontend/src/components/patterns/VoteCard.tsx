@@ -9,6 +9,8 @@ import Animated, {
 import { tokens, animations } from '../../theme';
 import { Text } from '../primitives/Text';
 import { useHaptics } from '../../hooks';
+import { useThemedStyles } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme/tokens';
 
 // ============================================================================
 // Types
@@ -18,6 +20,7 @@ export interface VoteOption {
   id: string;
   name: string;
   avatarUrl?: string;
+  emoji?: string;
 }
 
 interface VoteCardProps {
@@ -66,6 +69,7 @@ export function VoteCard({
   disabled = false,
 }: VoteCardProps) {
   const haptics = useHaptics();
+  const styles = useThemedStyles(createStyles);
 
   const handleSelect = (optionId: string) => {
     if (disabled) return;
@@ -84,7 +88,7 @@ export function VoteCard({
       {/* Options Grid (2x2) */}
       <View style={styles.optionsGrid}>
         {options.slice(0, 4).map((option, index) => (
-          <VoteOption
+          <VoteOptionView
             key={option.id}
             option={option}
             isSelected={option.id === selectedId}
@@ -110,18 +114,17 @@ interface VoteOptionProps {
   index: number;
 }
 
-function VoteOption({
+function VoteOptionView({
   option,
   isSelected,
   onPress,
   disabled,
   index,
 }: VoteOptionProps) {
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const borderWidth = useSharedValue(isSelected ? 3 : 1);
-  const borderColor = useSharedValue(
-    isSelected ? tokens.colors.primary[500] : tokens.colors.neutral[200]
-  );
+  const borderColor = useSharedValue(isSelected ? tokens.colors.primary[500] : styles.option.borderColor);
 
   // 선택 상태가 변경되면 애니메이션
   React.useEffect(() => {
@@ -130,7 +133,7 @@ function VoteOption({
       animations.spring.responsive
     );
     borderColor.value = withTiming(
-      isSelected ? tokens.colors.primary[500] : tokens.colors.neutral[200],
+      isSelected ? tokens.colors.primary[500] : styles.option.borderColor,
       { duration: animations.duration.fast }
     );
   }, [isSelected]);
@@ -175,9 +178,13 @@ function VoteOption({
       <View style={styles.avatarContainer}>
         {option.avatarUrl ? (
           <Image source={{ uri: option.avatarUrl }} style={styles.avatar} />
+        ) : option.emoji ? (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.emoji}>{option.emoji}</Text>
+          </View>
         ) : (
           <View style={styles.avatarPlaceholder}>
-            <Text variant="2xl" weight="bold" color={tokens.colors.neutral[400]}>
+            <Text variant="2xl" weight="bold" style={styles.initial}>
               {option.name.charAt(0)}
             </Text>
           </View>
@@ -191,7 +198,7 @@ function VoteOption({
         align="center"
         numberOfLines={2}
         style={styles.name}
-        color={isSelected ? tokens.colors.primary[600] : tokens.colors.neutral[900]}
+        color={isSelected ? tokens.colors.primary[500] : undefined}
       >
         {option.name}
       </Text>
@@ -210,7 +217,7 @@ function VoteOption({
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
   container: {
     width: '100%',
     padding: tokens.spacing.lg,
@@ -228,12 +235,13 @@ const styles = StyleSheet.create({
   option: {
     width: '48%',
     aspectRatio: 0.85,
-    backgroundColor: tokens.colors.white,
+    backgroundColor: theme.card,
+    borderColor: theme.border,
     borderRadius: tokens.borderRadius.xl,
     padding: tokens.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    ...tokens.shadows.md,
+    ...(isDark ? {} : tokens.shadows.md),
   },
   optionPlaceholder: {
     width: '48%',
@@ -246,18 +254,26 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: tokens.colors.neutral[100],
+    backgroundColor: theme.backgroundSecondary,
   },
   avatarPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: tokens.colors.neutral[100],
+    backgroundColor: theme.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   name: {
     marginTop: tokens.spacing.xs,
+    color: theme.text,
+  },
+  emoji: {
+    fontSize: 38,
+    lineHeight: 46,
+  },
+  initial: {
+    color: theme.textTertiary,
   },
   selectedBadge: {
     position: 'absolute',

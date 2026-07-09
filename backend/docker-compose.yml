@@ -5,12 +5,13 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8002:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/circly
       - REDIS_URL=redis://redis:6379/0
       - DEBUG=true
       - SECRET_KEY=dev-secret-key-change-in-production
+      - DEV_AUTH_ENABLED=true
     volumes:
       - ./app:/app/app
     depends_on:
@@ -21,6 +22,8 @@ services:
     command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
   worker:
+    profiles:
+      - worker
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,6 +31,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/circly
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=dev-secret-key-change-in-production
+      - DEV_AUTH_ENABLED=true
     depends_on:
       db:
         condition: service_healthy

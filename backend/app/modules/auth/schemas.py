@@ -49,6 +49,15 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class DevLoginRequest(BaseModel):
+    """Schema for development-only local login."""
+
+    email: EmailStr
+    password: str | None = None
+    username: str | None = Field(None, min_length=2, max_length=50)
+    display_name: str | None = Field(None, max_length=100)
+
+
 class TokenResponse(BaseModel):
     """Schema for token response."""
 

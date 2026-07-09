@@ -57,8 +57,8 @@ apiClient.interceptors.response.use(
     if (error.response) {
       const { data, status } = error.response;
 
-      // 401 Unauthorized: 토큰 만료 → 로그아웃
-      if (status === 401) {
+      // 401 Unauthorized: 토큰이 있었는데 거부된 경우에만 로그아웃 (토큰 미로드 상태의 401은 무시)
+      if (status === 401 && error.config?.headers?.Authorization) {
         console.warn('[API Client] 401 Unauthorized - 로그아웃 처리');
         const { logout } = useAuthStore.getState();
         await logout();

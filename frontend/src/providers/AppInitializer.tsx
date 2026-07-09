@@ -32,6 +32,8 @@ interface AppInitializerProps {
 }
 
 const ONBOARDING_KEY = '@circly:onboarding_completed';
+const AUTH_MODE = process.env.EXPO_PUBLIC_AUTH_MODE || 'supabase';
+const isMockAuth = AUTH_MODE === 'mock';
 
 export function AppInitializer({ children }: AppInitializerProps) {
   const { setSession, setUser, isLoading, isAuthenticated } = useAuthStore();
@@ -42,6 +44,27 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
   // 1. Supabase Auth 초기화 및 세션 구독
   useEffect(() => {
+    if (isMockAuth) {
+      async function initializeMockApp() {
+        try {
+          console.log('[AppInitializer] Mock Auth 앱 초기화 시작');
+          setSession(null);
+
+          const onboardingCompleted = await AsyncStorage.getItem(ONBOARDING_KEY);
+          if (!onboardingCompleted) {
+            setShowOnboarding(true);
+          }
+        } catch (error) {
+          console.error('[AppInitializer] Mock Auth 초기화 실패:', error);
+        } finally {
+          setIsReady(true);
+        }
+      }
+
+      initializeMockApp();
+      return;
+    }
+
     async function initializeApp() {
       try {
         console.log('[AppInitializer] 앱 초기화 시작');

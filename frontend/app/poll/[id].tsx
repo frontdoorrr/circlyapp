@@ -3,25 +3,23 @@
  *
  * 투표하기 및 결과 보기
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Pressable,
   Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import * as Haptics from 'expo-haptics';
 import { usePollDetail, useVote } from '../../src/hooks/usePolls';
 import { useCircleMembers } from '../../src/hooks/useCircles';
 import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
@@ -33,6 +31,18 @@ import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { ApiError } from '../../src/types/api';
 import { useCurrentUser } from '../../src/hooks/useAuth';
+import { VoteCard, VoteOption } from '../../src/components/patterns/VoteCard';
+import { VoteCelebration } from '../../src/components/patterns/VoteCelebration';
+import type { MemberInfo } from '../../src/types/circle';
+
+function sampleMembers(members: MemberInfo[], count = 4): MemberInfo[] {
+  const shuffled = [...members];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled.slice(0, count);
+}
 
 // 애니메이션 결과 바 컴포넌트
 function AnimatedResultBar({ percentage, isDark, theme }: { percentage: number; isDark: boolean; theme: Theme }) {
@@ -71,7 +81,6 @@ function AnimatedResultBar({ percentage, isDark, theme }: { percentage: number; 
 
 export default function PollDetailScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -86,6 +95,8 @@ export default function PollDetailScreen() {
 
   // 투표 선택 상태
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<MemberInfo[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // 실시간 카운트다운 상태
   const [timeRemaining, setTimeRemaining] = useState<string>('');
@@ -99,18 +110,9 @@ export default function PollDetailScreen() {
 
   // 중복 요청 방지를 위한 ref (React 상태보다 빠르게 업데이트)
   const isVotingRef = React.useRef(false);
-  // 디버깅용 호출 카운터
-  const callCountRef = React.useRef(0);
-
   const handleVote = async () => {
-    // 호출 추적
-    callCountRef.current += 1;
-    const callId = callCountRef.current;
-    console.log(`[Vote] handleVote 호출됨 #${callId}, isVoting: ${isVotingRef.current}, isPending: ${voteMutation.isPending}`);
-
     // 이미 투표 진행 중이면 무시 (중복 요청 방지)
     if (isVotingRef.current || voteMutation.isPending) {
-      console.log(`[Vote] 중복 요청 방지됨 #${callId}`);
       return;
     }
 
@@ -121,7 +123,6 @@ export default function PollDetailScreen() {
 
     // 동기적으로 플래그 설정 (React 상태 업데이트보다 빠름)
     isVotingRef.current = true;
-    console.log(`[Vote] 투표 시작 #${callId}`);
 
     try {
       await voteMutation.mutateAsync({
@@ -129,10 +130,8 @@ export default function PollDetailScreen() {
         data: { voted_for_id: selectedUserId }
       });
 
-      console.log(`[Vote] 투표 성공 #${callId}`);
-      Alert.alert('완료', '투표가 완료되었습니다!');
+      setShowCelebration(true);
     } catch (error) {
-      console.log(`[Vote] 투표 실패 #${callId}`, error);
       if (error instanceof ApiError) {
         Alert.alert('투표 실패', error.message);
       } else {
@@ -141,9 +140,32 @@ export default function PollDetailScreen() {
     } finally {
       // 투표 완료 후 플래그 해제
       isVotingRef.current = false;
-      console.log(`[Vote] 투표 완료, 플래그 해제 #${callId}`);
     }
   };
+
+  const eligibleMembers = useMemo(
+    () => (members ?? []).filter((member) => member.user_id !== currentUser?.id),
+    [members, currentUser?.id]
+  );
+  const canShuffle = eligibleMembers.length > 4;
+
+  useEffect(() => {
+    setCandidates(sampleMembers(eligibleMembers));
+    setSelectedUserId(null);
+  }, [eligibleMembers]);
+
+  const handleShuffle = () => {
+    if (!canShuffle) return;
+    Haptics.selectionAsync();
+    setCandidates(sampleMembers(eligibleMembers));
+    setSelectedUserId(null);
+  };
+
+  const voteOptions: VoteOption[] = candidates.map((member) => ({
+    id: member.user_id,
+    name: member.nickname || member.display_name || member.username || '익명',
+    emoji: member.profile_emoji,
+  }));
 
   // 남은 시간 계산 (초 단위 포함)
   const calculateTimeRemaining = (endsAt: string): string => {
@@ -282,50 +304,49 @@ export default function PollDetailScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
           >
-          {/* 질문 */}
-          <View style={styles.questionCard}>
-            <Text style={styles.question}>{poll.question_text}</Text>
+          <View style={styles.voteProgress}>
+            <Text style={styles.voteProgressText}>1 / 1</Text>
             <Text style={styles.timeRemaining}>
               ⏰ {timeRemaining}
             </Text>
           </View>
 
-          {/* 멤버 선택 */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>친구를 선택해주세요</Text>
-            <View style={styles.memberGrid}>
-              {members?.map((member) => (
-                <TouchableOpacity
-                  key={member.user_id}
-                  style={[
-                    styles.memberCard,
-                    selectedUserId === member.user_id && styles.memberCardSelected
-                  ]}
-                  onPress={() => setSelectedUserId(member.user_id)}
-                >
-                  <View style={styles.memberCardAvatar}>
-                    <Text style={styles.memberCardEmoji}>{member.profile_emoji}</Text>
-                  </View>
-                  <Text style={styles.memberCardName} numberOfLines={1}>
-                    {member.nickname || member.display_name || '익명'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          <VoteCard
+            question={poll.question_text}
+            options={voteOptions}
+            selectedId={selectedUserId ?? undefined}
+            onSelect={setSelectedUserId}
+            disabled={voteMutation.isPending}
+          />
 
-          {/* 투표 버튼 */}
           <View style={styles.voteButtonContainer}>
+            <View style={styles.voteActions}>
+              <Button variant="ghost" onPress={() => router.back()}>
+                건너뛰기
+              </Button>
+              <Button
+                variant="secondary"
+                onPress={handleShuffle}
+                disabled={!canShuffle || voteMutation.isPending}
+              >
+                섞기
+              </Button>
+            </View>
             <Button
               onPress={handleVote}
               loading={voteMutation.isPending}
               disabled={!selectedUserId || voteMutation.isPending}
               fullWidth
             >
-              투표하기
+              선택 완료
             </Button>
           </View>
           </ScrollView>
+          {showCelebration && (
+            <VoteCelebration
+              onComplete={() => router.replace(`/results/${id}` as any)}
+            />
+          )}
         </View>
       </>
     );
@@ -538,6 +559,24 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     voteButtonContainer: {
       marginTop: tokens.spacing.lg,
+      gap: tokens.spacing.md,
+    },
+    voteActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    voteProgress: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: tokens.spacing.lg,
+      paddingTop: tokens.spacing.md,
+    },
+    voteProgressText: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textSecondary,
     },
     resultList: {
       gap: tokens.spacing.sm,

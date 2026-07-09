@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { apiClient } from '../api/client';
 import type { PollDuration } from '../stores/pollCreate';
+import { useToast } from '../providers/ToastProvider';
 
 /**
  * 투표 생성 API 연동 훅
@@ -28,6 +28,7 @@ interface CreatePollResponse {
 
 export const useCreatePoll = () => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: async ({
@@ -55,6 +56,7 @@ export const useCreatePoll = () => {
     onSuccess: async (data) => {
       // Haptic feedback
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast('투표를 발행했어요', 'success');
 
       // Invalidate polls query to refresh home screen
       queryClient.invalidateQueries({ queryKey: ['polls'] });
@@ -77,7 +79,7 @@ export const useCreatePoll = () => {
         error?.message ||
         '투표 생성에 실패했습니다';
 
-      Alert.alert('오류', message, [{ text: '확인' }]);
+      showToast(message, 'error');
     },
   });
 };

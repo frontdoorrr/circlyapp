@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { tokens, spacing } from '../../theme';
+import { spacing } from '../../theme';
 import { Text } from '../primitives/Text';
 import { Button } from '../primitives/Button';
+import { useThemedStyles } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme/tokens';
 
 // ============================================================================
 // Types
@@ -28,6 +30,7 @@ interface PollEmptyStateProps {
  * <PollEmptyState onCreatePoll={() => router.push('/create')} />
  */
 export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
       {/* Icon */}
@@ -39,7 +42,6 @@ export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
       <Text
         variant="lg"
         weight="semibold"
-        color={tokens.colors.neutral[700]}
         style={styles.title}
       >
         진행 중인 투표가 없어요
@@ -49,7 +51,6 @@ export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
       <View style={styles.descriptionContainer}>
         <Text
           variant="sm"
-          color={tokens.colors.neutral[500]}
           align="center"
           style={styles.description}
         >
@@ -57,7 +58,6 @@ export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
         </Text>
         <Text
           variant="sm"
-          color={tokens.colors.neutral[500]}
           align="center"
           style={styles.description}
         >
@@ -65,7 +65,6 @@ export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
         </Text>
         <Text
           variant="sm"
-          color={tokens.colors.neutral[500]}
           align="center"
           style={styles.description}
         >
@@ -87,7 +86,7 @@ export function PollEmptyState({ onCreatePoll }: PollEmptyStateProps) {
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -100,12 +99,14 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: spacing[3], // 12px
+    color: theme.text,
   },
   descriptionContainer: {
     marginBottom: spacing[8], // 32px
   },
   description: {
     lineHeight: 20,
+    color: theme.textSecondary,
   },
   buttonContainer: {
     width: '100%',

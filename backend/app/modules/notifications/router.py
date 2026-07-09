@@ -52,6 +52,20 @@ async def get_unread_count(
 
 
 @router.put(
+    "/read-all",
+    status_code=status.HTTP_200_OK,
+    summary="Mark all notifications as read",
+)
+async def mark_all_as_read(
+    current_user: CurrentUserDep,
+    service: NotificationServiceDep,
+) -> dict[str, Any]:
+    """Mark all notifications as read for the current user."""
+    await service.mark_all_as_read(current_user.id)
+    return success_response(data={}, message="All notifications marked as read")
+
+
+@router.put(
     "/{notification_id}/read",
     status_code=status.HTTP_200_OK,
     summary="Mark notification as read",
@@ -64,20 +78,6 @@ async def mark_as_read(
     """Mark a notification as read."""
     await service.mark_as_read(notification_id, current_user.id)
     return success_response(data={}, message="Notification marked as read")
-
-
-@router.put(
-    "/read-all",
-    status_code=status.HTTP_200_OK,
-    summary="Mark all notifications as read",
-)
-async def mark_all_as_read(
-    current_user: CurrentUserDep,
-    service: NotificationServiceDep,
-) -> dict[str, Any]:
-    """Mark all notifications as read for the current user."""
-    await service.mark_all_as_read(current_user.id)
-    return success_response(data={}, message="All notifications marked as read")
 
 
 @router.post(

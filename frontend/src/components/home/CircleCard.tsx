@@ -10,6 +10,8 @@ import * as Haptics from 'expo-haptics';
 import { CircleResponse } from '../../types/circle';
 import { Text } from '../primitives/Text';
 import { tokens } from '../../theme';
+import { useThemedStyles } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme/tokens';
 
 interface CircleCardProps {
   circle: CircleResponse;
@@ -20,6 +22,7 @@ interface CircleCardProps {
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export function CircleCard({ circle, onPress, index = 0 }: CircleCardProps) {
+  const styles = useThemedStyles(createStyles);
   // 진입 애니메이션
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: withSpring(1, { damping: 20 }),
@@ -105,21 +108,21 @@ function formatExpiryTime(expiryDate: string): string {
   return `${minutes}분 남음`;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: tokens.colors.white,
+    backgroundColor: theme.card,
     borderRadius: tokens.borderRadius.lg,
     padding: tokens.spacing.md,
     marginBottom: tokens.spacing.md,
-    ...tokens.shadows.sm,
+    ...(isDark ? { borderWidth: 1, borderColor: theme.border } : tokens.shadows.sm),
   },
   iconContainer: {
     width: 64,      // 56 → 64 (iOS 이모지 렌더링 여유 공간)
     height: 64,     // 56 → 64
     borderRadius: 32,
-    backgroundColor: tokens.colors.primary[50],
+    backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: tokens.spacing.md,
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: tokens.typography.fontSize.lg,
     fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.neutral[900],
+    color: theme.text,
     marginBottom: tokens.spacing.xs,
   },
   stats: {
@@ -144,11 +147,11 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[600],
+    color: theme.textSecondary,
   },
   expiryText: {
     fontSize: tokens.typography.fontSize.xs,
-    color: tokens.colors.neutral[500],
+    color: theme.textTertiary,
     marginTop: tokens.spacing.xs,
   },
   arrowContainer: {
@@ -156,6 +159,6 @@ const styles = StyleSheet.create({
   },
   arrow: {
     fontSize: 24,
-    color: tokens.colors.neutral[400],
+    color: theme.textTertiary,
   },
 });

@@ -17,6 +17,7 @@ interface AuthState {
 
   // Actions
   setSession: (session: Session | null) => void;
+  setDevSession: (accessToken: string) => void;
   setUser: (user: UserResponse | null) => void;
   logout: () => void;
   setLoading: (isLoading: boolean) => void;
@@ -34,6 +35,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       supabaseSession: session,
       isAuthenticated: !!session,
+      isLoading: false,
+    });
+  },
+
+  setDevSession: (accessToken) => {
+    set({
+      supabaseSession: { access_token: accessToken } as Session,
+      isAuthenticated: true,
       isLoading: false,
     });
   },

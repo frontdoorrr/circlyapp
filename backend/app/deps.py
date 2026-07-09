@@ -1,6 +1,7 @@
 """Common dependencies for FastAPI endpoints."""
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -54,6 +55,21 @@ async def get_current_user(
     from app.core.supabase import verify_supabase_token
 
     token = credentials.credentials
+    settings = get_settings()
+
+    if settings.dev_auth_enabled and settings.is_development and token.startswith("dev:"):
+        try:
+            user_id = UUID(token.removeprefix("dev:"))
+        except ValueError as exc:
+            raise UnauthorizedException("Invalid token") from exc
+
+        repo = UserRepository(db)
+        user = await repo.find_by_id(user_id)
+        if user is None:
+            raise UnauthorizedException("Invalid token")
+        if not user.is_active:
+            raise UnauthorizedException("User account is inactive")
+        return user
 
     # Verify Supabase token
     payload = verify_supabase_token(token)

@@ -40,6 +40,7 @@ import {
   useRefreshPolls,
 } from '../../../src/hooks/usePolls';
 import { useMyCircles } from '../../../src/hooks/useCircles';
+import { useUnreadCount } from '../../../src/hooks/useNotifications';
 import {
   formatTimeRemaining,
   getTimeRemainingColor,
@@ -102,6 +103,9 @@ export default function HomeScreen() {
 
   // 내 Circle 목록 조회
   const { data: myCircles } = useMyCircles();
+
+  // 읽지 않은 알림 개수 (벨 배지)
+  const { data: unreadCount } = useUnreadCount();
 
   // 현재 활성 Circle 이름 (첫 번째 Circle 사용, Circle이 없으면 기본값)
   const circleName = myCircles?.[0]?.name ?? '내 Circle';
@@ -237,6 +241,11 @@ export default function HomeScreen() {
     router.push('/join/invite-code' as any);
   }, [router]);
 
+  const handleCreatePoll = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/create' as any);
+  }, [router]);
+
   // ============================================================================
   // Render Helpers
   // ============================================================================
@@ -287,7 +296,7 @@ export default function HomeScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <HomeHeader
           circleName={circleName}
-          notificationCount={0}
+          notificationCount={unreadCount ?? 0}
           onNotificationPress={handleNotificationPress}
           onProfilePress={handleProfilePress}
         />
@@ -309,7 +318,7 @@ export default function HomeScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <HomeHeader
           circleName={circleName}
-          notificationCount={0}
+          notificationCount={unreadCount ?? 0}
           onNotificationPress={handleNotificationPress}
           onProfilePress={handleProfilePress}
         />
@@ -332,7 +341,7 @@ export default function HomeScreen() {
       {/* Header */}
       <HomeHeader
         circleName={circleName}
-        notificationCount={0}
+        notificationCount={unreadCount ?? 0}
         onNotificationPress={handleNotificationPress}
         onProfilePress={handleProfilePress}
       />
@@ -452,6 +461,15 @@ export default function HomeScreen() {
           )}
         </View>
       </PagerView>
+      {myCircles?.length ? (
+        <Button
+          onPress={handleCreatePoll}
+          style={styles.createButton}
+          accessibilityLabel="새 투표 만들기"
+        >
+          + 새 투표
+        </Button>
+      ) : null}
     </View>
   );
 }
@@ -656,5 +674,12 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     separator: {
       height: spacing[3], // 12px
+    },
+    createButton: {
+      position: 'absolute',
+      right: spacing[4],
+      bottom: spacing[5],
+      minWidth: 120,
+      ...tokens.shadows.lg,
     },
   });

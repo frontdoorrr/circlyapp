@@ -3,15 +3,19 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as circleApi from '../api/circle';
+import { useAuthStore } from '../stores/auth';
 import { CircleCreate, JoinByCodeRequest, ValidateInviteCodeResponse } from '../types/circle';
 
 /**
  * 내 Circle 목록 조회
  */
 export function useMyCircles() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: ['circles', 'my'],
     queryFn: circleApi.getMyCircles,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000, // 2분
   });
 }

@@ -3,6 +3,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as pollApi from '../api/poll';
+import { useAuthStore } from '../stores/auth';
 import { TemplateCategory, VoteRequest } from '../types/poll';
 
 /**
@@ -64,9 +65,12 @@ export function useVote() {
  * 현재 사용자의 진행 중인 투표 목록 (모든 Circle 통합)
  */
 export function useMyActivePolls() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: ['polls', 'my', 'active'],
     queryFn: () => pollApi.getMyPolls('ACTIVE'),
+    enabled: isAuthenticated,
     staleTime: 60 * 1000, // 1분
     refetchInterval: 60 * 1000, // 1분마다 자동 새로고침
   });
@@ -76,9 +80,12 @@ export function useMyActivePolls() {
  * 현재 사용자의 완료된 투표 목록 (모든 Circle 통합)
  */
 export function useMyCompletedPolls() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: ['polls', 'my', 'completed'],
     queryFn: () => pollApi.getMyPolls('COMPLETED'),
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5분 (완료된 투표는 자주 변경되지 않음)
   });
 }
