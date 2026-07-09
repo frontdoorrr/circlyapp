@@ -770,6 +770,15 @@
 - [x] 각 Circle별 active 질문 5개 생성
 - [x] 시드 스크립트 멱등성 유지
 
+#### 18.7C 투표 세션 전환 애니메이션 (P1)
+> 참고 문서: `prd/design/03-animations.md`, `prd/design/04-user-flow.md`
+- [x] 투표 완료 후 다음 질문 카드로 넘어갈 때 slide/fade 전환 추가
+- [x] 스킵으로 다음 질문 이동 시에도 같은 전환 적용
+
+#### 18.7D 투표 세션 완료 오버레이 제거 (P1)
+> 참고 문서: `prd/design/04-user-flow.md`, Gas 투표 세션 레퍼런스
+- [x] `app/vote-session/index.tsx` — 투표 성공 후 완료 멘트 없이 즉시 다음 질문으로 전환
+
 ### Stage 2 — Gas/Skrr 핵심 메커니즘 (프론트+백엔드)
 
 > 상세 설계는 계획 파일 참조. DSL.md 갱신 필수, 모듈 간 호출은 service 인터페이스 경유.

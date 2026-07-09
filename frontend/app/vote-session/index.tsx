@@ -3,11 +3,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
 import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { VoteCard, VoteOption } from '../../src/components/patterns/VoteCard';
-import { VoteCelebration } from '../../src/components/patterns/VoteCelebration';
 import { useCircleMembers } from '../../src/hooks/useCircles';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 import { useMyActivePolls, usePollDetail, useVote } from '../../src/hooks/usePolls';
@@ -63,7 +63,6 @@ export default function VoteSessionScreen() {
   const [isComplete, setIsComplete] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
   const [candidates, setCandidates] = useState<MemberInfo[]>([]);
-  const [showCelebration, setShowCelebration] = useState(false);
   const isVotingRef = useRef(false);
 
   useEffect(() => {
@@ -102,7 +101,6 @@ export default function VoteSessionScreen() {
   }));
 
   const advance = useCallback(() => {
-    setShowCelebration(false);
     setSelectedUserId(undefined);
 
     if (currentIndex + 1 >= queue.length) {
@@ -137,7 +135,7 @@ export default function VoteSessionScreen() {
           pollId: currentPoll.id,
           data: { voted_for_id: userId },
         });
-        setShowCelebration(true);
+        advance();
       } catch (error) {
         setSelectedUserId(undefined);
         showToast(error instanceof Error ? error.message : '투표 중 문제가 발생했습니다', 'error');
@@ -145,7 +143,7 @@ export default function VoteSessionScreen() {
         isVotingRef.current = false;
       }
     },
-    [currentPoll, showToast, voteMutation]
+    [advance, currentPoll, showToast, voteMutation]
   );
 
   const handleRetry = useCallback(() => {
@@ -256,13 +254,20 @@ export default function VoteSessionScreen() {
       </View>
 
       <View style={styles.voteArea}>
-        <VoteCard
-          question={currentPoll.question || currentPoll.question_text}
-          options={voteOptions}
-          selectedId={selectedUserId}
-          onSelect={handleSelect}
-          disabled={voteMutation.isPending || showCelebration || voteOptions.length === 0}
-        />
+        <Animated.View
+          key={currentPoll.id}
+          entering={FadeInRight.duration(260)}
+          exiting={FadeOutLeft.duration(180)}
+          style={styles.voteCardTransition}
+        >
+          <VoteCard
+            question={currentPoll.question || currentPoll.question_text}
+            options={voteOptions}
+            selectedId={selectedUserId}
+            onSelect={handleSelect}
+            disabled={voteMutation.isPending || voteOptions.length === 0}
+          />
+        </Animated.View>
       </View>
 
       <View style={[styles.bottomActions, { paddingBottom: Math.max(insets.bottom, tokens.spacing.lg) }]}>
@@ -290,12 +295,6 @@ export default function VoteSessionScreen() {
         </View>
       )}
 
-      {showCelebration && (
-        <VoteCelebration
-          message="전송 완료"
-          onComplete={advance}
-        />
-      )}
     </View>
   );
 }
@@ -378,6 +377,10 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       justifyContent: 'flex-start',
       paddingTop: tokens.spacing.sm,
       paddingBottom: tokens.spacing.sm,
+      overflow: 'hidden',
+    },
+    voteCardTransition: {
+      width: '100%',
     },
     bottomActions: {
       flexDirection: 'row',
