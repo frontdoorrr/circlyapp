@@ -47,6 +47,8 @@ database Schema {
         username: VARCHAR(50)
         display_name: VARCHAR(100)
         profile_emoji: VARCHAR(10) DEFAULT '😊'
+        gender: user_gender DEFAULT 'UNSPECIFIED'  // 선택 입력, 기본 비공개
+        profile_visibility: JSONB DEFAULT '{"gender":"private"}'
         role: user_role DEFAULT 'USER'  // USER, ADMIN
         is_active: BOOLEAN DEFAULT TRUE
         push_token: TEXT
@@ -85,9 +87,12 @@ database Schema {
     // 투표 템플릿 테이블
     table poll_templates {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
-        category: template_category NOT NULL  // APPEARANCE, PERSONALITY, TALENT, SPECIAL
+        category: template_category NOT NULL  // APPEARANCE, CRUSH, PERSONALITY, TALENT, SPECIAL
         question_text: TEXT NOT NULL
         emoji: VARCHAR(10)
+        safety_category: template_safety_category DEFAULT 'COMPLIMENT'
+        review_status: template_review_status DEFAULT 'APPROVED'
+        allowed_candidate_filters: JSONB DEFAULT '{}'
         is_active: BOOLEAN DEFAULT TRUE
         usage_count: INTEGER DEFAULT 0
         created_at: TIMESTAMPTZ DEFAULT NOW()
@@ -101,6 +106,7 @@ database Schema {
         creator_id: UUID FOREIGN KEY -> users(id)
         question_text: TEXT NOT NULL
         status: poll_status DEFAULT 'ACTIVE'  // ACTIVE, COMPLETED, CANCELLED
+        candidate_filter: JSONB DEFAULT '{}'
         ends_at: TIMESTAMPTZ NOT NULL
         vote_count: INTEGER DEFAULT 0
         created_at: TIMESTAMPTZ DEFAULT NOW()
@@ -202,8 +208,11 @@ database Schema {
 
     // Enum 타입 정의
     enum user_role = 'USER' | 'ADMIN'
+    enum user_gender = 'MALE' | 'FEMALE' | 'NON_BINARY' | 'UNSPECIFIED'
     enum member_role = 'OWNER' | 'ADMIN' | 'MEMBER'
-    enum template_category = 'APPEARANCE' | 'PERSONALITY' | 'TALENT' | 'SPECIAL'
+    enum template_category = 'APPEARANCE' | 'CRUSH' | 'PERSONALITY' | 'TALENT' | 'SPECIAL'
+    enum template_safety_category = 'COMPLIMENT' | 'SENSITIVE_COMPLIMENT' | 'REJECTED'
+    enum template_review_status = 'DRAFT' | 'APPROVED' | 'DISABLED'
     enum poll_status = 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
     enum notification_type = 'POLL_STARTED' | 'POLL_REMINDER' | 'POLL_ENDED' | 'VOTE_RECEIVED' | 'CIRCLE_INVITE'
     enum report_target_type = 'USER' | 'CIRCLE' | 'POLL'
@@ -271,9 +280,17 @@ module Auth {
         username: String?
         displayName: String?
         profileEmoji: String
+        gender: UserGender
+        profileVisibility: ProfileVisibility
         role: UserRole
         isActive: Boolean
         createdAt: DateTime
+    }
+
+    type UserGender = "MALE" | "FEMALE" | "NON_BINARY" | "UNSPECIFIED"
+
+    type ProfileVisibility {
+        gender: "private"  // MVP: 후보 필터에만 사용, 다른 사용자에게 공개하지 않음
     }
 
     type UserCreate {
@@ -287,6 +304,7 @@ module Auth {
         username?: String
         displayName?: String
         profileEmoji?: String
+        gender?: UserGender
     }
 
     type AuthResponse {
@@ -533,10 +551,22 @@ module Poll {
         category: TemplateCategory
         questionText: String
         emoji: String
+        safetyCategory: TemplateSafetyCategory
+        reviewStatus: TemplateReviewStatus
+        allowedCandidateFilters: CandidateFilterPolicy
         usageCount: Integer
     }
 
-    type TemplateCategory = "APPEARANCE" | "PERSONALITY" | "TALENT" | "SPECIAL"
+    type TemplateCategory = "APPEARANCE" | "CRUSH" | "PERSONALITY" | "TALENT" | "SPECIAL"
+
+    type TemplateSafetyCategory = "COMPLIMENT" | "SENSITIVE_COMPLIMENT" | "REJECTED"
+
+    type TemplateReviewStatus = "DRAFT" | "APPROVED" | "DISABLED"
+
+    type CandidateFilterPolicy {
+        allowGenderFilter: Boolean
+        defaultIncludeUnspecifiedGender: Boolean
+    }
 
     type Poll {
         id: UUID
@@ -545,6 +575,7 @@ module Poll {
         creatorId: UUID
         questionText: String
         status: PollStatus
+        candidateFilter: CandidateFilter
         endsAt: DateTime
         voteCount: Integer
         createdAt: DateTime
@@ -559,7 +590,14 @@ module Poll {
         templateId: UUID
         creatorId: UUID
         questionText: String
+        candidateFilter?: CandidateFilter
         endsAt: DateTime
+    }
+
+    type CandidateFilter {
+        gender?: UserGender  // 선택형 Profile 정보 기반. 개별 성별 값은 생성자에게 노출하지 않음
+        includeUnspecifiedGender: Boolean
+        excludedUserIds?: List<UUID>
     }
 
     type PollDetail {
@@ -907,17 +945,24 @@ workflow JoinCircleFlow {
 
 workflow CreatePollFlow {
     1. 사용자가 템플릿 선택 (GET /api/v1/polls/templates)
+       - reviewStatus=APPROVED, safetyCategory!=REJECTED 템플릿만 노출
+       - APPEARANCE/CRUSH 카테고리는 긍정형 칭찬 질문만 허용
     2. 마감 시간 설정 (1H/3H/6H/24H)
-    3. POST /api/v1/circles/{circleId}/polls
-    4. PollService.createPoll()
-       - 템플릿 검증
+    3. 후보 제한 필터 설정(Optional)
+       - 성별 필터는 선택 입력한 Profile 정보만 사용
+       - 개별 성별 값은 투표 생성자에게 공개하지 않음
+       - 필터 적용 후 후보가 4명 미만이면 제한 완화 또는 초대 CTA 표시
+    4. POST /api/v1/circles/{circleId}/polls
+    5. PollService.createPoll()
+       - 템플릿 검증(reviewStatus, safetyCategory)
+       - allowedCandidateFilters 검증
        - Circle 멤버 권한 확인
        - 동시 진행 투표 수 확인 (최대 3개)
        - Poll 생성
        - PollCreated 이벤트 발행
-    5. NotificationService.sendPollStarted()
+    6. NotificationService.sendPollStarted()
        - Circle 멤버 전체에게 푸시 알림 (생성자 제외)
-    6. 생성된 Poll 정보 반환
+    7. 생성된 Poll 정보 반환
 }
 
 workflow VoteFlow {

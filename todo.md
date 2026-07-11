@@ -712,7 +712,7 @@
 ## Phase 18: UX 개선 로드맵 (Gas/Skrr 벤치마킹)
 
 > **참고 문서**: `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`, 계획: `~/.claude/plans/ux-reflective-yao.md`
-> **벤치마킹**: Gas(4지선다 투표 세션·쿨다운·Flame 인박스·God Mode), Skrr(칭찬 질문 필터·후보 공정성·구독 힌트)
+> **벤치마킹**: Gas(4지선다 투표 세션·쿨다운·Flame 인박스·Orb Mode 대응 유료 힌트), Skrr(칭찬 질문 필터·후보 공정성·구독 힌트)
 > **원칙**: 학교/연락처 온보딩 미도입(Circle 기반 유지), Stage 1은 프론트 전용(백엔드 무변경)
 
 ### Stage 1 — 폴리싱 (프론트 전용)
@@ -783,9 +783,28 @@
 
 > 상세 설계는 계획 파일 참조. DSL.md 갱신 필수, 모듈 간 호출은 service 인터페이스 경유.
 
-- [ ] **18.8 칭찬 인박스** (P0) — `GET /polls/me/received` + 무료 힌트(서클명/시간), 인박스 탭 신설(4탭 재편)
+- [ ] **18.8 칭찬 인박스/받은 하트 1급 화면화** (P0) — `GET /polls/me/received` + 무료 힌트(서클명/시간), 인박스 탭 신설(4탭 재편)
+  - [ ] `prd/design/04-user-flow.md` — 받은 하트/칭찬함을 Profile 하위가 아닌 핵심 진입점으로 명시
+  - [ ] `prd/design/05-complete-ui-specification.md` — unread badge, 받은 하트 리스트, 상세 화면 UI 추가
+  - [ ] `docs/DSL.md` — 받은 선택/칭찬 조회 API와 읽음 상태 계약 추가
 - [ ] **18.9 연속 투표 세션 + 후보 공정성** (P0) — vote_sessions 테이블, 세션 큐(최대 12), 득표 역가중 후보 샘플링, 서버 섞기/스킵
+  - [ ] `prd/design/04-user-flow.md` — 후보 부족 시 투표 UI 대신 초대 우선 화면을 핵심 플로우에 명시
+  - [ ] `prd/design/05-complete-ui-specification.md` — 멤버 부족/후보 부족 Empty State와 초대 CTA UI 추가
+  - [ ] `docs/DSL.md` — 후보 생성 불가 상태, skip/shuffle 서버 계약, 후보 공정성 기준 추가
 - [ ] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
-- [ ] **18.11 힌트 티어 시스템** (P1) — vote_hints 테이블, 무료(CIRCLE/TIME)→INITIAL→FULL(Orb Mode)
-- [ ] **18.12 코인/스트릭** (P2, 선택)
-- [ ] **18.13 성별/학년 힌트** (P2, 법무 검토 필요 — 만 14세 미만 개인정보)
+  - [ ] `prd/design/04-user-flow.md` — 라운드 완료 후 cooldown, 초대 CTA, 알림 권한 CTA 흐름 추가
+  - [ ] `prd/design/05-complete-ui-specification.md` — 세션 완료/cooldown 화면과 초대/알림 버튼 상태 추가
+  - [ ] `docs/DSL.md` — next_session_at, cooldown 해제 조건, 초대 성공 검증 이벤트 추가
+- [ ] **18.11 Orb Mode 안전 힌트 티어 시스템** (P1) — vote_hints 테이블, 무료(CIRCLE/TIME)→INITIAL→FULL(Orb Mode)
+  - [ ] `docs/DSL.md` — `god_mode` 표기를 Circly 공식 용어 `Orb Mode`로 정리
+  - [ ] `prd/features/05-orb-mode-implementation.md` — “실명 공개” 대신 안전한 힌트/단계적 공개 정책으로 재정의
+  - [ ] `prd/business/01-business-model.md` — God Mode 변수명/문구를 Orb Mode 기준으로 정리하고 미성년자 안전 문구 추가
+- [ ] **18.12 질문 카테고리 안전 필터** (P0) — 외모/호감/크러시 질문은 핵심 카테고리로 유지하되, 비하/상처/부정 비교형 질문 금지
+  - [x] `prd/design/04-user-flow.md` — Create 카테고리에 긍정형 외모/호감/크러시 질문 노출 정책 명시
+  - [x] `prd/features/01-voting-spec.md` — 허용 예시(`잘생긴 사람은?`, `우리 Circle 대표 고양이상은?`)와 금지 예시(`못생긴 사람은?`) 기준 추가
+  - [x] `prd/features/01-voting-spec.md` — 투표 생성 시 후보 제한 필터(성별 등 선택 입력한 프로필 속성 기반) 정책 추가
+  - [x] `docs/DSL.md` — User/Profile에 선택형 개인정보 필드, 공개 범위, 후보 필터 사용 가능 여부 메타데이터 검토
+  - [x] `prd/design/04-user-flow.md` — 온보딩/프로필 편집에서 성별 등 민감할 수 있는 정보는 선택 입력, 비공개, 나중에 변경 가능하도록 명시
+  - [x] `docs/DSL.md` — PollTemplate safety_category/review_status 등 템플릿 안전 메타데이터 검토
+- [ ] **18.13 코인/스트릭** (P2, 선택)
+- [ ] **18.14 성별/학년 힌트** (P2, 법무 검토 필요 — 만 14세 미만 개인정보)
