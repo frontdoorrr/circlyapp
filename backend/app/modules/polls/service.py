@@ -29,6 +29,8 @@ from app.modules.polls.schemas import (
     PollResponse,
     PollResultItem,
     PollTemplateResponse,
+    ReceivedHeartHint,
+    ReceivedHeartItem,
     VoteResponse,
     VoterRevealResponse,
 )
@@ -147,6 +149,41 @@ class PollService:
 
         # Build response with additional fields
         return self._poll_to_response(poll, has_voted=has_voted, results=results)
+
+    async def get_received_hearts(
+        self,
+        user_id: uuid.UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[ReceivedHeartItem]:
+        """Get polls where the current user received votes.
+
+        This powers the first-class Inbox/받은 하트 surface. Read state is
+        intentionally returned as false until a persistent read model is added.
+        """
+        rows = await self.vote_repo.find_received_hearts_for_user(
+            user_id,
+            limit=limit,
+            offset=offset,
+        )
+
+        return [
+            ReceivedHeartItem(
+                poll_id=row["poll_id"],
+                circle_id=row["circle_id"],
+                circle_name=row["circle_name"],
+                question_text=row["question_text"],
+                emoji=row["emoji"],
+                received_count=row["received_count"],
+                latest_received_at=row["latest_received_at"],
+                is_read=False,
+                free_hint=ReceivedHeartHint(
+                    circle_name=row["circle_name"],
+                    time_label="최근",
+                ),
+            )
+            for row in rows
+        ]
 
     async def create_poll(
         self,

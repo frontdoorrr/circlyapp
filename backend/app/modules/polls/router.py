@@ -15,6 +15,7 @@ from app.modules.polls.schemas import (
     PollListResponse,
     PollResponse,
     PollTemplateResponse,
+    ReceivedHeartItem,
     TemplateCreate,
     TemplateListResponse,
     TemplateUpdate,
@@ -39,6 +40,21 @@ async def get_my_polls(
 ) -> list[PollResponse]:
     """Get all polls from circles the current user belongs to."""
     return await service.get_my_polls(current_user.id, status)
+
+
+@router.get(
+    "/me/received",
+    response_model=list[ReceivedHeartItem],
+    summary="Get hearts received by me",
+)
+async def get_received_hearts(
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    offset: int = Query(0, ge=0, description="Skip results"),
+) -> list[ReceivedHeartItem]:
+    """Get polls where the current user received votes."""
+    return await service.get_received_hearts(current_user.id, limit=limit, offset=offset)
 
 
 @router.get(

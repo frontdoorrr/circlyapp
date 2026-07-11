@@ -102,6 +102,27 @@ class VoterRevealResponse(BaseModel):
     voters: list[VoterInfo]
 
 
+class ReceivedHeartHint(BaseModel):
+    """무료 상태에서 보여주는 받은 하트 힌트."""
+
+    circle_name: str
+    time_label: str
+
+
+class ReceivedHeartItem(BaseModel):
+    """받은 하트 인박스 항목."""
+
+    poll_id: uuid.UUID
+    circle_id: uuid.UUID
+    circle_name: str
+    question_text: str
+    emoji: str | None
+    received_count: int
+    latest_received_at: datetime
+    is_read: bool = False
+    free_hint: ReceivedHeartHint
+
+
 class PollResultItem(BaseModel):
     """Schema for poll result item."""
 

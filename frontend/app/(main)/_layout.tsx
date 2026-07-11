@@ -8,7 +8,7 @@ import { useTheme } from '../../src/theme/ThemeContext';
  * Main Layout with Tabs
  *
  * 메인 화면 탭 레이아웃
- * - 3탭 구조: Home, Circle, Profile
+ * - 4탭 구조: Home, 받은하트, Circle, Profile
  * - Gas 앱 스타일 탭바
  * - Safe Area 대응
  * - 다크모드 지원
@@ -50,6 +50,15 @@ export default function MainLayout() {
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(1-inbox)"
+        options={{
+          title: '받은하트',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size} color={color} />
           ),
         }}
       />

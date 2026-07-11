@@ -91,6 +91,21 @@ export function useMyCompletedPolls() {
 }
 
 /**
+ * 현재 사용자가 받은 하트/칭찬 목록
+ */
+export function useReceivedHearts() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return useQuery({
+    queryKey: ['polls', 'me', 'received'],
+    queryFn: () => pollApi.getReceivedHearts(),
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+}
+
+/**
  * 투표 목록 리프레시
  */
 export function useRefreshPolls() {

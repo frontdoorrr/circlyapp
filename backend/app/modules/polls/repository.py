@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.enums import PollStatus, TemplateCategory
+from app.modules.circles.models import Circle
 from app.modules.polls.models import Poll, PollTemplate, Vote
 
 
@@ -17,6 +18,18 @@ class VoteResultDict(TypedDict):
 
     user_id: uuid.UUID
     vote_count: int
+
+
+class ReceivedHeartDict(TypedDict):
+    """Type for received heart inbox row."""
+
+    poll_id: uuid.UUID
+    circle_id: uuid.UUID
+    circle_name: str
+    question_text: str
+    emoji: str | None
+    received_count: int
+    latest_received_at: datetime
 
 
 class TemplateRepository:
@@ -554,3 +567,61 @@ class VoteRepository:
             .order_by(Vote.created_at.desc())
         )
         return list(result.scalars().all())
+
+    async def find_received_hearts_for_user(
+        self,
+        user_id: uuid.UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[ReceivedHeartDict]:
+        """Find polls where the user received votes, grouped for inbox display.
+
+        Args:
+            user_id: User UUID that received votes
+            limit: Maximum number of rows
+            offset: Number of rows to skip
+
+        Returns:
+            Received heart rows ordered by latest received vote
+        """
+        received_count = func.count(Vote.id).label("received_count")
+        latest_received_at = func.max(Vote.created_at).label("latest_received_at")
+
+        result = await self.session.execute(
+            select(
+                Poll.id.label("poll_id"),
+                Poll.circle_id.label("circle_id"),
+                Circle.name.label("circle_name"),
+                Poll.question_text.label("question_text"),
+                PollTemplate.emoji.label("emoji"),
+                received_count,
+                latest_received_at,
+            )
+            .join(Poll, Vote.poll_id == Poll.id)
+            .join(Circle, Poll.circle_id == Circle.id)
+            .outerjoin(PollTemplate, Poll.template_id == PollTemplate.id)
+            .where(Vote.voted_for_id == user_id)
+            .group_by(
+                Poll.id,
+                Poll.circle_id,
+                Circle.name,
+                Poll.question_text,
+                PollTemplate.emoji,
+            )
+            .order_by(latest_received_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+        return [
+            {
+                "poll_id": row.poll_id,
+                "circle_id": row.circle_id,
+                "circle_name": row.circle_name,
+                "question_text": row.question_text,
+                "emoji": row.emoji,
+                "received_count": row.received_count,
+                "latest_received_at": row.latest_received_at,
+            }
+            for row in result.all()
+        ]

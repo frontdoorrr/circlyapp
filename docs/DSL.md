@@ -541,6 +541,7 @@ module Poll {
         DELETE /api/v1/polls/{id}                     -> cancelPoll
 
         POST   /api/v1/polls/{id}/vote                -> vote
+        GET    /api/v1/polls/me/received              -> getReceivedHearts
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
     }
@@ -617,6 +618,23 @@ module Poll {
         voteCount: Integer
         endsAt: DateTime
         hasVoted: Boolean
+    }
+
+    type ReceivedHeartItem {
+        pollId: UUID
+        circleId: UUID
+        circleName: String
+        questionText: String
+        emoji: String?
+        receivedCount: Integer
+        latestReceivedAt: DateTime
+        isRead: Boolean
+        freeHint: ReceivedHeartHint
+    }
+
+    type ReceivedHeartHint {
+        circleName: String
+        timeLabel: String  // 예: "3시간 전", "어제"
     }
 
     type VoteOption {

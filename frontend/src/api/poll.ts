@@ -8,6 +8,7 @@ import {
   PollDetailResponse,
   PollResponse,
   PollTemplateResponse,
+  ReceivedHeartItem,
   TemplateCategory,
   VoteRequest,
   VoteResponse,
@@ -97,6 +98,18 @@ export async function getMyPolls(
   );
   console.log('[API] GET /polls/me 응답:', { status: response.status });
   return extractData<PollResponse[]>(response.data, (d) => Array.isArray(d));
+}
+
+/**
+ * 현재 사용자가 받은 하트/칭찬 목록 조회
+ */
+export async function getReceivedHearts(): Promise<ReceivedHeartItem[]> {
+  console.log('[API] GET /polls/me/received 요청');
+  const response = await apiClient.get<ApiResponse<ReceivedHeartItem[]>>(
+    '/polls/me/received'
+  );
+  console.log('[API] GET /polls/me/received 응답:', { status: response.status });
+  return extractData<ReceivedHeartItem[]>(response.data, (d) => Array.isArray(d));
 }
 
 // ==================== Orb Mode API ====================

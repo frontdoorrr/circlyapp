@@ -75,6 +75,23 @@ export interface CategoryInfo {
   question_count: number;
 }
 
+export interface ReceivedHeartHint {
+  circle_name: string;
+  time_label: string;
+}
+
+export interface ReceivedHeartItem {
+  poll_id: string;
+  circle_id: string;
+  circle_name: string;
+  question_text: string;
+  emoji: string | null;
+  received_count: number;
+  latest_received_at: string;
+  is_read: boolean;
+  free_hint: ReceivedHeartHint;
+}
+
 // ==================== Orb Mode Types ====================
 
 /**

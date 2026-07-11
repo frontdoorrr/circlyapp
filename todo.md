@@ -784,9 +784,12 @@
 > 상세 설계는 계획 파일 참조. DSL.md 갱신 필수, 모듈 간 호출은 service 인터페이스 경유.
 
 - [ ] **18.8 칭찬 인박스/받은 하트 1급 화면화** (P0) — `GET /polls/me/received` + 무료 힌트(서클명/시간), 인박스 탭 신설(4탭 재편)
-  - [ ] `prd/design/04-user-flow.md` — 받은 하트/칭찬함을 Profile 하위가 아닌 핵심 진입점으로 명시
-  - [ ] `prd/design/05-complete-ui-specification.md` — unread badge, 받은 하트 리스트, 상세 화면 UI 추가
-  - [ ] `docs/DSL.md` — 받은 선택/칭찬 조회 API와 읽음 상태 계약 추가
+  - [x] `prd/design/04-user-flow.md` — 받은 하트/칭찬함을 Profile 하위가 아닌 핵심 진입점으로 명시
+  - [x] `prd/design/05-complete-ui-specification.md` — unread badge, 받은 하트 리스트, 상세 화면 UI 추가
+  - [x] `docs/DSL.md` — 받은 선택/칭찬 조회 API와 읽음 상태 계약 추가
+  - [x] `backend/app/modules/polls/` — `GET /api/v1/polls/me/received` 집계 API 추가
+  - [x] `frontend/app/(main)/(1-inbox)/` — 받은하트 탭 화면 추가 및 결과 상세 연결
+  - [ ] 받은 하트 읽음 상태 저장/mark-as-read 계약 구현
 - [ ] **18.9 연속 투표 세션 + 후보 공정성** (P0) — vote_sessions 테이블, 세션 큐(최대 12), 득표 역가중 후보 샘플링, 서버 섞기/스킵
   - [ ] `prd/design/04-user-flow.md` — 후보 부족 시 투표 UI 대신 초대 우선 화면을 핵심 플로우에 명시
   - [ ] `prd/design/05-complete-ui-specification.md` — 멤버 부족/후보 부족 Empty State와 초대 CTA UI 추가
