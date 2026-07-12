@@ -558,6 +558,7 @@ module Poll {
         GET    /api/v1/polls/{id}/candidates?shuffle  -> getPollCandidates
         POST   /api/v1/polls/sessions                 -> startVoteSession
         POST   /api/v1/polls/sessions/{id}/skip       -> skipVoteSessionPoll
+        POST   /api/v1/polls/sessions/{id}/advance    -> advanceVoteSessionPoll
         GET    /api/v1/polls/me/received              -> getReceivedHearts
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
@@ -1063,8 +1064,11 @@ workflow VoteFlow {
        - Poll voteCount 증가
        - 실시간 결과 계산
        - VoteCast 이벤트 발행
-    9. 투표 결과 반환 (실시간 차트용)
-    10. NotificationService.sendVoteReceived()
+    9. 투표 성공 후 POST /api/v1/polls/sessions/{sessionId}/advance
+       - 서버는 currentIndex를 전진
+       - 마지막 질문이면 status=COMPLETED, completedAt 저장
+    10. 투표 결과 반환 (실시간 차트용)
+    11. NotificationService.sendVoteReceived()
        - 선택받은 사람에게 푸시 알림 (익명)
 }
 

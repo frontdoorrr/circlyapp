@@ -4,7 +4,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as pollApi from '../api/poll';
 import { useAuthStore } from '../stores/auth';
-import { TemplateCategory, VoteRequest } from '../types/poll';
+import { TemplateCategory, VoteRequest, VoteSessionCreate } from '../types/poll';
 
 /**
  * 투표 템플릿 조회
@@ -50,6 +50,36 @@ export function usePollCandidates(pollId: string, shuffleVersion = 0) {
     queryFn: () => pollApi.getPollCandidates(pollId, shuffleVersion > 0),
     enabled: !!pollId,
     staleTime: 0,
+  });
+}
+
+/**
+ * 서버 투표 세션 시작
+ */
+export function useStartVoteSession() {
+  return useMutation({
+    mutationFn: (data: VoteSessionCreate) => pollApi.startVoteSession(data),
+    retry: false,
+  });
+}
+
+/**
+ * 서버 투표 세션 현재 질문 건너뛰기
+ */
+export function useSkipVoteSessionPoll() {
+  return useMutation({
+    mutationFn: (sessionId: string) => pollApi.skipVoteSessionPoll(sessionId),
+    retry: false,
+  });
+}
+
+/**
+ * 서버 투표 세션 현재 질문 완료 처리
+ */
+export function useAdvanceVoteSessionPoll() {
+  return useMutation({
+    mutationFn: (sessionId: string) => pollApi.advanceVoteSessionPoll(sessionId),
+    retry: false,
   });
 }
 

@@ -229,6 +229,29 @@ class PollService:
         vote_session = await vote_session_repo.save(vote_session)
         return self._vote_session_to_response(vote_session)
 
+    async def advance_vote_session_poll(
+        self,
+        session_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> VoteSessionResponse:
+        """Advance the current poll after a successful vote."""
+        vote_session_repo = self._require_vote_session_repo()
+        vote_session = await vote_session_repo.find_by_id_for_user(session_id, user_id)
+        if vote_session is None:
+            raise BadRequestException("Vote session not found")
+
+        if vote_session.status == "COMPLETED":
+            return self._vote_session_to_response(vote_session)
+
+        next_index = vote_session.current_index + 1
+        vote_session.current_index = next_index
+        if next_index >= len(vote_session.poll_ids):
+            vote_session.status = "COMPLETED"
+            vote_session.completed_at = datetime.now(UTC)
+
+        vote_session = await vote_session_repo.save(vote_session)
+        return self._vote_session_to_response(vote_session)
+
     async def get_templates(
         self, category: TemplateCategory | None = None
     ) -> list[PollTemplateResponse]:

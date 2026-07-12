@@ -9,17 +9,18 @@ import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { VoteCard, VoteOption } from '../../src/components/patterns/VoteCard';
 import {
-  useMyActivePolls,
+  useAdvanceVoteSessionPoll,
   usePollCandidates,
   usePollDetail,
+  useSkipVoteSessionPoll,
+  useStartVoteSession,
   useVote,
 } from '../../src/hooks/usePolls';
 import { useToast } from '../../src/providers/ToastProvider';
 import { tokens } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
-import type { PollResponse } from '../../src/types/poll';
-import { buildVoteSessionQueue } from '../../src/utils/voteSession';
+import type { VoteSessionResponse } from '../../src/types/poll';
 
 function formatSessionTime(endsAt?: string): string {
   if (!endsAt) return '';
@@ -43,36 +44,52 @@ export default function VoteSessionScreen() {
   const scopedCircleId = Array.isArray(circleId) ? circleId[0] : circleId;
   const { showToast } = useToast();
 
-  const { data: activePolls, isLoading, isError, refetch } = useMyActivePolls();
   const voteMutation = useVote();
+  const { mutateAsync: startSessionAsync, isPending: isStartingSession } = useStartVoteSession();
+  const { mutateAsync: skipSessionAsync, isPending: isSkippingSession } = useSkipVoteSessionPoll();
+  const { mutateAsync: advanceSessionAsync, isPending: isAdvancingSession } =
+    useAdvanceVoteSessionPoll();
 
-  const initialQueue = useMemo(
-    () => buildVoteSessionQueue(activePolls, { circleId: scopedCircleId }),
-    [activePolls, scopedCircleId]
-  );
-  const [queue, setQueue] = useState<PollResponse[]>([]);
+  const [voteSession, setVoteSession] = useState<VoteSessionResponse | undefined>();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [sessionError, setSessionError] = useState<string | undefined>();
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
   const [shuffleVersion, setShuffleVersion] = useState(0);
   const isVotingRef = useRef(false);
 
-  useEffect(() => {
-    setQueue([]);
+  const applySession = useCallback((session: VoteSessionResponse) => {
+    setVoteSession(session);
+    setCurrentIndex(session.current_index);
+    setIsComplete(session.status === 'COMPLETED' || session.poll_ids.length === 0);
+    setSelectedUserId(undefined);
+    setShuffleVersion(0);
+  }, []);
+
+  const startSession = useCallback(async () => {
+    setVoteSession(undefined);
     setCurrentIndex(0);
     setIsComplete(false);
-  }, [scopedCircleId]);
+    setSessionError(undefined);
+    setSelectedUserId(undefined);
+    setShuffleVersion(0);
+
+    try {
+      const session = await startSessionAsync(
+        scopedCircleId ? { circle_id: scopedCircleId } : {}
+      );
+      applySession(session);
+    } catch (error) {
+      setSessionError(error instanceof Error ? error.message : '투표를 불러오지 못했어요');
+    }
+  }, [applySession, scopedCircleId, startSessionAsync]);
 
   useEffect(() => {
-    if (queue.length === 0 && initialQueue.length > 0 && !isComplete) {
-      setQueue(initialQueue);
-      setCurrentIndex(0);
-    }
-  }, [initialQueue, isComplete, queue.length]);
+    startSession();
+  }, [startSession]);
 
-  const currentPollFromQueue = queue[currentIndex];
-  const { data: pollDetail, isLoading: pollLoading } = usePollDetail(currentPollFromQueue?.id ?? '');
-  const currentPoll = pollDetail ?? currentPollFromQueue;
+  const currentPollId = voteSession?.poll_ids[currentIndex];
+  const { data: currentPoll, isLoading: pollLoading } = usePollDetail(currentPollId ?? '');
   const {
     data: candidateResponse,
     isLoading: candidatesLoading,
@@ -96,21 +113,28 @@ export default function VoteSessionScreen() {
   const isNotEnoughCandidates = candidateResponse?.status === 'NOT_ENOUGH_CANDIDATES';
   const canShuffle = candidateResponse?.status === 'READY';
 
-  const advance = useCallback(() => {
+  const advanceLocally = useCallback(() => {
     setSelectedUserId(undefined);
 
-    if (currentIndex + 1 >= queue.length) {
+    if (!voteSession || currentIndex + 1 >= voteSession.poll_ids.length) {
       setIsComplete(true);
       return;
     }
 
     setCurrentIndex((index) => index + 1);
-  }, [currentIndex, queue.length]);
+  }, [currentIndex, voteSession]);
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = useCallback(async () => {
+    if (!voteSession || isSkippingSession) return;
     Haptics.selectionAsync();
-    advance();
-  }, [advance]);
+
+    try {
+      const session = await skipSessionAsync(voteSession.id);
+      applySession(session);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '건너뛰기 중 문제가 발생했습니다', 'error');
+    }
+  }, [applySession, isSkippingSession, showToast, skipSessionAsync, voteSession]);
 
   const handleShuffle = useCallback(() => {
     if (!canShuffle) return;
@@ -121,7 +145,7 @@ export default function VoteSessionScreen() {
 
   const handleSelect = useCallback(
     async (userId: string) => {
-      if (!currentPoll || isVotingRef.current || voteMutation.isPending) return;
+      if (!currentPoll || !voteSession || isVotingRef.current || voteMutation.isPending) return;
 
       isVotingRef.current = true;
       setSelectedUserId(userId);
@@ -131,7 +155,13 @@ export default function VoteSessionScreen() {
           pollId: currentPoll.id,
           data: { voted_for_id: userId },
         });
-        advance();
+        try {
+          const session = await advanceSessionAsync(voteSession.id);
+          applySession(session);
+        } catch {
+          advanceLocally();
+          showToast('투표는 완료됐지만 세션 상태 갱신에 실패했어요', 'error');
+        }
       } catch (error) {
         setSelectedUserId(undefined);
         showToast(error instanceof Error ? error.message : '투표 중 문제가 발생했습니다', 'error');
@@ -139,19 +169,20 @@ export default function VoteSessionScreen() {
         isVotingRef.current = false;
       }
     },
-    [advance, currentPoll, showToast, voteMutation]
+    [advanceLocally, advanceSessionAsync, applySession, currentPoll, showToast, voteMutation, voteSession]
   );
 
   const handleRetry = useCallback(() => {
-    refetch();
-  }, [refetch]);
+    startSession();
+  }, [startSession]);
 
-  const progressText = queue.length > 0 ? `${currentIndex + 1}/${queue.length}` : '0/0';
-  const progressPercent = queue.length > 0 ? ((currentIndex + 1) / queue.length) * 100 : 0;
+  const totalCount = voteSession?.total_count ?? 0;
+  const progressText = totalCount > 0 ? `${Math.min(currentIndex + 1, totalCount)}/${totalCount}` : '0/0';
+  const progressPercent = totalCount > 0 ? ((currentIndex + 1) / totalCount) * 100 : 0;
   const circleName = currentPoll?.circle_name ?? 'Circle';
   const isScreenLoading =
-    isLoading ||
-    (queue.length > 0 && (pollLoading || candidatesLoading) && !currentPoll);
+    isStartingSession ||
+    (!!currentPollId && (pollLoading || candidatesLoading) && !currentPoll);
 
   if (isScreenLoading) {
     return (
@@ -162,7 +193,7 @@ export default function VoteSessionScreen() {
     );
   }
 
-  if (isError) {
+  if (sessionError) {
     return (
       <View style={[styles.container, styles.centerContainer, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -200,7 +231,7 @@ export default function VoteSessionScreen() {
     );
   }
 
-  if (!currentPoll || queue.length === 0) {
+  if (!currentPoll || totalCount === 0) {
     return (
       <View style={[styles.container, styles.centerContainer, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -281,7 +312,12 @@ export default function VoteSessionScreen() {
             options={voteOptions}
             selectedId={selectedUserId}
             onSelect={handleSelect}
-            disabled={voteMutation.isPending || candidatesFetching || voteOptions.length === 0}
+            disabled={
+              voteMutation.isPending ||
+              isAdvancingSession ||
+              candidatesFetching ||
+              voteOptions.length === 0
+            }
           />
         </Animated.View>
       </View>
@@ -290,7 +326,7 @@ export default function VoteSessionScreen() {
         <Button
           variant="ghost"
           onPress={handleSkip}
-          disabled={voteMutation.isPending}
+          disabled={voteMutation.isPending || isSkippingSession}
           style={styles.bottomButton}
         >
           건너뛰기

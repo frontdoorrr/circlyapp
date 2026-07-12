@@ -13,6 +13,8 @@ import {
   TemplateCategory,
   VoteRequest,
   VoteResponse,
+  VoteSessionCreate,
+  VoteSessionResponse,
   VoterRevealResponse,
 } from '../types/poll';
 import { ApiResponse } from '../types/api';
@@ -100,6 +102,54 @@ export async function getPollCandidates(
   return extractData<PollCandidatesResponse>(
     response.data,
     (d) => d.poll_id && d.status && Array.isArray(d.candidates)
+  );
+}
+
+/**
+ * 서버 투표 세션 시작
+ */
+export async function startVoteSession(
+  data: VoteSessionCreate
+): Promise<VoteSessionResponse> {
+  console.log('[API] POST /polls/sessions 요청:', data);
+  const response = await apiClient.post<ApiResponse<VoteSessionResponse>>(
+    '/polls/sessions',
+    data
+  );
+  console.log('[API] POST /polls/sessions 응답:', { status: response.status });
+  return extractData<VoteSessionResponse>(
+    response.data,
+    (d) => d.id && d.status && Array.isArray(d.poll_ids)
+  );
+}
+
+/**
+ * 서버 투표 세션 현재 질문 건너뛰기
+ */
+export async function skipVoteSessionPoll(sessionId: string): Promise<VoteSessionResponse> {
+  console.log('[API] POST /polls/sessions/:sessionId/skip 요청:', sessionId);
+  const response = await apiClient.post<ApiResponse<VoteSessionResponse>>(
+    `/polls/sessions/${sessionId}/skip`
+  );
+  console.log('[API] POST /polls/sessions/:sessionId/skip 응답:', { status: response.status });
+  return extractData<VoteSessionResponse>(
+    response.data,
+    (d) => d.id && d.status && Array.isArray(d.poll_ids)
+  );
+}
+
+/**
+ * 서버 투표 세션 현재 질문 완료 처리
+ */
+export async function advanceVoteSessionPoll(sessionId: string): Promise<VoteSessionResponse> {
+  console.log('[API] POST /polls/sessions/:sessionId/advance 요청:', sessionId);
+  const response = await apiClient.post<ApiResponse<VoteSessionResponse>>(
+    `/polls/sessions/${sessionId}/advance`
+  );
+  console.log('[API] POST /polls/sessions/:sessionId/advance 응답:', { status: response.status });
+  return extractData<VoteSessionResponse>(
+    response.data,
+    (d) => d.id && d.status && Array.isArray(d.poll_ids)
   );
 }
 

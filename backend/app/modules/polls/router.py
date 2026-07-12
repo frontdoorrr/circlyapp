@@ -133,6 +133,20 @@ async def skip_vote_session_poll(
     return await service.skip_vote_session_poll(session_id, current_user.id)
 
 
+@router.post(
+    "/sessions/{session_id}/advance",
+    response_model=VoteSessionResponse,
+    summary="Advance the current poll in a vote session",
+)
+async def advance_vote_session_poll(
+    session_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoteSessionResponse:
+    """Advance the current poll after a successful vote."""
+    return await service.advance_vote_session_poll(session_id, current_user.id)
+
+
 @router.get(
     "/{poll_id}",
     response_model=PollResponse,

@@ -620,3 +620,55 @@ class TestPollService:
         assert completed.status == "COMPLETED"
         assert completed.current_poll_id is None
         assert completed.skipped_poll_ids == session.poll_ids
+
+    @pytest.mark.asyncio
+    async def test_advance_vote_session_poll_keeps_skip_list_empty(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Advancing after a successful vote moves the cursor without a skip."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="advance-creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="advance-user@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Advance Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+
+        first_poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="First?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        second_poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Second?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        db_session.add_all([first_poll, second_poll])
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=VoteRepository(db_session),
+            membership_repo=membership_repo,
+            vote_session_repo=VoteSessionRepository(db_session),
+        )
+
+        session = await service.start_vote_session(voter.id, circle_id=circle.id)
+        advanced = await service.advance_vote_session_poll(session.id, voter.id)
+
+        assert advanced.status == "ACTIVE"
+        assert advanced.current_index == 1
+        assert advanced.current_poll_id != session.current_poll_id
+        assert advanced.skipped_poll_ids == []

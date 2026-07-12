@@ -790,7 +790,7 @@
   - [x] `backend/app/modules/polls/` — `GET /api/v1/polls/me/received` 집계 API 추가
   - [x] `frontend/app/(main)/(1-inbox)/` — 받은하트 탭 화면 추가 및 결과 상세 연결
   - [ ] 받은 하트 읽음 상태 저장/mark-as-read 계약 구현
-- [ ] **18.9 연속 투표 세션 + 후보 공정성** (P0) — vote_sessions 테이블, 세션 큐(최대 12), 득표 역가중 후보 샘플링, 서버 섞기/스킵
+- [x] **18.9 연속 투표 세션 + 후보 공정성** (P0) — vote_sessions 테이블, 세션 큐(최대 12), 득표 역가중 후보 샘플링, 서버 섞기/스킵
   - [x] `prd/design/04-user-flow.md` — 후보 부족 시 투표 UI 대신 초대 우선 화면을 핵심 플로우에 명시
   - [x] `prd/design/05-complete-ui-specification.md` — 멤버 부족/후보 부족 Empty State와 초대 CTA UI 추가
   - [x] `docs/DSL.md` — 후보 생성 불가 상태, shuffle 서버 계약, 후보 공정성 기준 추가
@@ -799,7 +799,7 @@
   - [x] `frontend/app/vote-session/index.tsx` — 클라이언트 멤버 샘플링 제거, 서버 후보 API와 후보 부족 초대 CTA 연결
   - [x] `vote_sessions` 테이블/서버 세션 큐(최대 12) 계약 구현
   - [x] 서버 스킵 이벤트/세션 진행 상태 저장 구현
-  - [ ] `frontend/app/vote-session/index.tsx` — 서버 세션 시작/스킵 API를 실제 화면 진행 상태에 연결
+  - [x] `frontend/app/vote-session/index.tsx` — 서버 세션 시작/스킵/투표 완료 advance API를 실제 화면 진행 상태에 연결
 - [ ] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
   - [ ] `prd/design/04-user-flow.md` — 라운드 완료 후 cooldown, 초대 CTA, 알림 권한 CTA 흐름 추가
   - [ ] `prd/design/05-complete-ui-specification.md` — 세션 완료/cooldown 화면과 초대/알림 버튼 상태 추가

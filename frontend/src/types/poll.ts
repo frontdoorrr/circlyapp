@@ -64,6 +64,27 @@ export interface PollCandidatesResponse {
   candidates: CandidateOption[];
 }
 
+export type VoteSessionStatus = 'ACTIVE' | 'COMPLETED';
+
+export interface VoteSessionCreate {
+  circle_id?: string;
+}
+
+export interface VoteSessionResponse {
+  id: string;
+  user_id: string;
+  circle_id: string | null;
+  status: VoteSessionStatus;
+  poll_ids: string[];
+  skipped_poll_ids: string[];
+  current_index: number;
+  total_count: number;
+  current_poll_id: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
 export interface VoteResponse {
   success: boolean;
   results: PollResultItem[]; // 투표 후 실시간 결과
