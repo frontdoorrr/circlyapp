@@ -137,6 +137,20 @@ database Schema {
         UNIQUE(poll_id, user_id)
     }
 
+    // 서버 투표 세션 테이블
+    table vote_sessions {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        user_id: UUID FOREIGN KEY -> users(id)
+        circle_id: UUID FOREIGN KEY -> circles(id) NULL  // 전체 세션이면 NULL
+        status: VARCHAR(20) DEFAULT 'ACTIVE'  // ACTIVE, COMPLETED
+        poll_ids: JSONB NOT NULL              // 최대 12개 poll UUID 문자열
+        current_index: INTEGER DEFAULT 0
+        skipped_poll_ids: JSONB DEFAULT '[]'
+        completed_at: TIMESTAMPTZ
+        created_at: TIMESTAMPTZ DEFAULT NOW()
+        updated_at: TIMESTAMPTZ DEFAULT NOW()
+    }
+
     // 알림 테이블
     table notifications {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
@@ -542,6 +556,8 @@ module Poll {
 
         POST   /api/v1/polls/{id}/vote                -> vote
         GET    /api/v1/polls/{id}/candidates?shuffle  -> getPollCandidates
+        POST   /api/v1/polls/sessions                 -> startVoteSession
+        POST   /api/v1/polls/sessions/{id}/skip       -> skipVoteSessionPoll
         GET    /api/v1/polls/me/received              -> getReceivedHearts
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
@@ -656,6 +672,27 @@ module Poll {
     }
 
     type PollCandidatesStatus = "READY" | "NOT_ENOUGH_CANDIDATES"
+
+    type VoteSessionCreate {
+        circleId?: UUID  // 없으면 사용자가 속한 모든 Circle에서 큐 생성
+    }
+
+    type VoteSession {
+        id: UUID
+        userId: UUID
+        circleId?: UUID
+        status: VoteSessionStatus
+        pollIds: List<UUID>
+        skippedPollIds: List<UUID>
+        currentIndex: Integer
+        totalCount: Integer
+        currentPollId?: UUID
+        createdAt: DateTime
+        updatedAt: DateTime
+        completedAt?: DateTime
+    }
+
+    type VoteSessionStatus = "ACTIVE" | "COMPLETED"
 
     type Vote {
         id: UUID
@@ -999,18 +1036,25 @@ workflow CreatePollFlow {
 
 workflow VoteFlow {
     1. 사용자가 투표 세션 진입
-    2. GET /api/v1/polls/{id}/candidates?shuffle=false
+    2. POST /api/v1/polls/sessions
+       - circleId가 있으면 해당 Circle만 큐 생성
+       - 없으면 사용자가 속한 모든 Circle에서 라운드로빈 큐 생성
+       - ACTIVE, 미투표, 마감 전 Poll만 포함
+       - 최대 12개 pollId를 고정 큐로 저장
+    3. GET /api/v1/polls/{id}/candidates?shuffle=false
        - 같은 Circle 멤버만 후보로 사용
        - 현재 투표자와 투표 생성자는 후보에서 제외
        - 후보는 같은 Circle 내 받은 득표 수가 적은 순서로 우선 노출
        - 후보가 4명 미만이면 status=NOT_ENOUGH_CANDIDATES 반환
-    3. 후보 부족 시 투표 UI 대신 Circle 초대 CTA와 질문 건너뛰기 CTA 표시
-    4. 사용자가 섞기 선택 시 GET /api/v1/polls/{id}/candidates?shuffle=true
+    4. 후보 부족 시 투표 UI 대신 Circle 초대 CTA와 질문 건너뛰기 CTA 표시
+       - 건너뛰기 시 POST /api/v1/polls/sessions/{sessionId}/skip
+       - 서버는 currentPollId를 skippedPollIds에 저장하고 currentIndex를 전진
+    5. 사용자가 섞기 선택 시 GET /api/v1/polls/{id}/candidates?shuffle=true
        - 서버가 후보 풀을 섞어 다시 반환
        - 현재 MVP는 클라이언트 로컬 샘플링을 사용하지 않음
-    5. 사용자가 투표 옵션 선택
-    6. POST /api/v1/polls/{id}/vote
-    7. PollService.vote()
+    6. 사용자가 투표 옵션 선택
+    7. POST /api/v1/polls/{id}/vote
+    8. PollService.vote()
        - 투표 기한 확인
        - 중복 투표 확인 (voterHash)
        - 자기 자신 투표 방지
@@ -1019,8 +1063,8 @@ workflow VoteFlow {
        - Poll voteCount 증가
        - 실시간 결과 계산
        - VoteCast 이벤트 발행
-    8. 투표 결과 반환 (실시간 차트용)
-    9. NotificationService.sendVoteReceived()
+    9. 투표 결과 반환 (실시간 차트용)
+    10. NotificationService.sendVoteReceived()
        - 선택받은 사람에게 푸시 알림 (익명)
 }
 

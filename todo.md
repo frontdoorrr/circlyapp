@@ -797,8 +797,9 @@
   - [x] `backend/app/modules/polls/` — `GET /api/v1/polls/{id}/candidates?shuffle` 후보 API 추가
   - [x] 후보 API에서 같은 Circle, 투표자/생성자 제외, 받은 득표 수 적은 순 정렬 적용
   - [x] `frontend/app/vote-session/index.tsx` — 클라이언트 멤버 샘플링 제거, 서버 후보 API와 후보 부족 초대 CTA 연결
-  - [ ] `vote_sessions` 테이블/서버 세션 큐(최대 12) 계약 구현
-  - [ ] 서버 스킵 이벤트/세션 진행 상태 저장 구현
+  - [x] `vote_sessions` 테이블/서버 세션 큐(최대 12) 계약 구현
+  - [x] 서버 스킵 이벤트/세션 진행 상태 저장 구현
+  - [ ] `frontend/app/vote-session/index.tsx` — 서버 세션 시작/스킵 API를 실제 화면 진행 상태에 연결
 - [ ] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
   - [ ] `prd/design/04-user-flow.md` — 라운드 완료 후 cooldown, 초대 CTA, 알림 권한 CTA 흐름 추가
   - [ ] `prd/design/05-complete-ui-specification.md` — 세션 완료/cooldown 화면과 초대/알림 버튼 상태 추가

@@ -18,7 +18,12 @@ from app.modules.circles.repository import CircleRepository, MembershipRepositor
 from app.modules.circles.service import CircleService
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.service import NotificationService
-from app.modules.polls.repository import PollRepository, TemplateRepository, VoteRepository
+from app.modules.polls.repository import (
+    PollRepository,
+    TemplateRepository,
+    VoteRepository,
+    VoteSessionRepository,
+)
 from app.modules.polls.service import PollService
 from app.modules.reports.repository import ReportRepository
 from app.modules.reports.service import ReportService
@@ -147,6 +152,7 @@ def get_poll_service(db: AsyncSession = Depends(get_db)) -> PollService:
         MembershipRepository(db),
         CircleRepository(db),
         get_notification_service(db),
+        VoteSessionRepository(db),
     )
 
 

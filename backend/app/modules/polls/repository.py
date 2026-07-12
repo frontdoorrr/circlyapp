@@ -1,7 +1,7 @@
 """Repositories for polls module."""
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TypedDict
 
 from sqlalchemy import func, select, update
@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.auth.models import User
 from app.modules.circles.models import Circle, CircleMember
-from app.modules.polls.models import Poll, PollTemplate, Vote
+from app.modules.polls.models import Poll, PollTemplate, Vote, VoteSession
 
 
 class VoteResultDict(TypedDict):
@@ -693,3 +693,50 @@ class VoteRepository:
             }
             for row in result.all()
         ]
+
+
+class VoteSessionRepository:
+    """Repository for server-side vote sessions."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize repository with database session."""
+        self.session = session
+
+    async def create(
+        self,
+        user_id: uuid.UUID,
+        poll_ids: list[uuid.UUID],
+        circle_id: uuid.UUID | None = None,
+    ) -> VoteSession:
+        """Create a vote session with a fixed poll queue."""
+        vote_session = VoteSession(
+            user_id=user_id,
+            circle_id=circle_id,
+            status="ACTIVE" if poll_ids else "COMPLETED",
+            poll_ids=[str(poll_id) for poll_id in poll_ids],
+            current_index=0,
+            skipped_poll_ids=[],
+            completed_at=None if poll_ids else datetime.now(UTC),
+        )
+        self.session.add(vote_session)
+        await self.session.flush()
+        await self.session.refresh(vote_session)
+        return vote_session
+
+    async def find_by_id_for_user(
+        self, session_id: uuid.UUID, user_id: uuid.UUID
+    ) -> VoteSession | None:
+        """Find a vote session owned by a user."""
+        result = await self.session.execute(
+            select(VoteSession).where(
+                VoteSession.id == session_id,
+                VoteSession.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def save(self, vote_session: VoteSession) -> VoteSession:
+        """Persist vote session cursor changes."""
+        await self.session.flush()
+        await self.session.refresh(vote_session)
+        return vote_session

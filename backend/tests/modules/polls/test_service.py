@@ -7,14 +7,19 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import MemberRole, PollStatus, TemplateCategory
-from app.core.exceptions import BadRequestException, PollNotFoundError
-from app.core.security import generate_invite_code
+from app.core.exceptions import BadRequestException
+from app.core.security import generate_invite_code, generate_voter_hash
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import UserCreate
 from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.circles.schemas import CircleCreate
-from app.modules.polls.models import PollTemplate
-from app.modules.polls.repository import PollRepository, TemplateRepository, VoteRepository
+from app.modules.polls.models import Poll, PollTemplate
+from app.modules.polls.repository import (
+    PollRepository,
+    TemplateRepository,
+    VoteRepository,
+    VoteSessionRepository,
+)
 from app.modules.polls.schemas import PollCreate, PollDuration
 from app.modules.polls.service import PollService
 
@@ -490,3 +495,128 @@ class TestPollService:
         updated_poll = await poll_repo.find_by_id(poll.id)
         assert updated_poll is not None
         assert updated_poll.status == PollStatus.COMPLETED
+
+    @pytest.mark.asyncio
+    async def test_start_vote_session_builds_server_queue(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Vote session queue excludes voted/expired polls and caps at 12."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="session-creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="session-user@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Session Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+
+        polls = [
+            Poll(
+                circle_id=circle.id,
+                creator_id=creator.id,
+                question_text=f"Question {index}?",
+                ends_at=datetime.now(UTC) + timedelta(hours=1),
+            )
+            for index in range(14)
+        ]
+        expired_poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Expired?",
+            ends_at=datetime.now(UTC) - timedelta(minutes=1),
+        )
+        db_session.add_all([*polls, expired_poll])
+        await db_session.flush()
+
+        vote_repo = VoteRepository(db_session)
+        await vote_repo.create(
+            poll_id=polls[0].id,
+            voter_id=voter.id,
+            voter_hash=generate_voter_hash(voter.id, polls[0].id, salt=str(polls[0].id)),
+            voted_for_id=creator.id,
+        )
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=vote_repo,
+            membership_repo=membership_repo,
+            vote_session_repo=VoteSessionRepository(db_session),
+        )
+
+        session = await service.start_vote_session(voter.id, circle_id=circle.id)
+
+        assert session.status == "ACTIVE"
+        assert session.total_count == 12
+        assert session.current_index == 0
+        assert polls[0].id not in session.poll_ids
+        assert expired_poll.id not in session.poll_ids
+        assert session.current_poll_id == session.poll_ids[0]
+
+    @pytest.mark.asyncio
+    async def test_skip_vote_session_current_poll_advances(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Skipping records the current poll and advances the session cursor."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="skip-creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="skip-user@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Skip Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+
+        first_poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="First?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        second_poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Second?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        db_session.add_all([first_poll, second_poll])
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=VoteRepository(db_session),
+            membership_repo=membership_repo,
+            vote_session_repo=VoteSessionRepository(db_session),
+        )
+
+        session = await service.start_vote_session(voter.id, circle_id=circle.id)
+        first_in_queue = session.current_poll_id
+        skipped = await service.skip_vote_session_poll(session.id, voter.id)
+
+        assert skipped.status == "ACTIVE"
+        assert skipped.current_index == 1
+        assert skipped.current_poll_id is not None
+        assert skipped.current_poll_id != first_in_queue
+        assert skipped.skipped_poll_ids == [first_in_queue]
+
+        completed = await service.skip_vote_session_poll(session.id, voter.id)
+
+        assert completed.status == "COMPLETED"
+        assert completed.current_poll_id is None
+        assert completed.skipped_poll_ids == session.poll_ids

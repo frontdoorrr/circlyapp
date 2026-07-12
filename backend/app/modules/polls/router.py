@@ -24,6 +24,8 @@ from app.modules.polls.schemas import (
     VoteRequest,
     VoteResponse,
     VoterRevealResponse,
+    VoteSessionCreate,
+    VoteSessionResponse,
 )
 
 router = APIRouter(prefix="/polls", tags=["Polls"])
@@ -97,6 +99,38 @@ async def create_poll(
 ) -> PollResponse:
     """Create a new poll in a circle."""
     return await service.create_poll(circle_id, current_user.id, poll_data)
+
+
+@router.post(
+    "/sessions",
+    response_model=VoteSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Start a server-side vote session",
+)
+async def start_vote_session(
+    session_data: VoteSessionCreate,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoteSessionResponse:
+    """Create a server-side vote session queue."""
+    return await service.start_vote_session(
+        current_user.id,
+        circle_id=session_data.circle_id,
+    )
+
+
+@router.post(
+    "/sessions/{session_id}/skip",
+    response_model=VoteSessionResponse,
+    summary="Skip the current poll in a vote session",
+)
+async def skip_vote_session_poll(
+    session_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoteSessionResponse:
+    """Skip the current poll and advance the server-side session cursor."""
+    return await service.skip_vote_session_poll(session_id, current_user.id)
 
 
 @router.get(

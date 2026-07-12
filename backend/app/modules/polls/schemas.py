@@ -93,6 +93,29 @@ class PollCandidatesResponse(BaseModel):
     candidates: list[CandidateOption]
 
 
+class VoteSessionCreate(BaseModel):
+    """투표 세션 시작 요청."""
+
+    circle_id: uuid.UUID | None = None
+
+
+class VoteSessionResponse(BaseModel):
+    """서버 투표 세션 상태 응답."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    circle_id: uuid.UUID | None
+    status: Literal["ACTIVE", "COMPLETED"]
+    poll_ids: list[uuid.UUID]
+    skipped_poll_ids: list[uuid.UUID]
+    current_index: int
+    total_count: int
+    current_poll_id: uuid.UUID | None
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+
+
 class VoterInfo(BaseModel):
     """Orb Mode 투표자 정보 - 나를 선택한 사람.
 

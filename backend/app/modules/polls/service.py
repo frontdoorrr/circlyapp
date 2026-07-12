@@ -19,6 +19,7 @@ from app.modules.polls.repository import (
     PollRepository,
     TemplateRepository,
     VoteRepository,
+    VoteSessionRepository,
 )
 from app.modules.polls.schemas import (
     CATEGORY_METADATA,
@@ -36,11 +37,12 @@ from app.modules.polls.schemas import (
     ReceivedHeartItem,
     VoteResponse,
     VoterRevealResponse,
+    VoteSessionResponse,
 )
 
 if TYPE_CHECKING:
     from app.modules.notifications.service import NotificationService
-    from app.modules.polls.models import Poll
+    from app.modules.polls.models import Poll, VoteSession
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +51,7 @@ class PollService:
     """Service for poll operations."""
 
     CANDIDATE_COUNT = 4
+    SESSION_LIMIT = 12
 
     def __init__(
         self,
@@ -58,6 +61,7 @@ class PollService:
         membership_repo: MembershipRepository,
         circle_repo: CircleRepository | None = None,
         notification_service: NotificationService | None = None,
+        vote_session_repo: VoteSessionRepository | None = None,
     ) -> None:
         """Initialize service with repositories."""
         self.template_repo = template_repo
@@ -66,6 +70,7 @@ class PollService:
         self.membership_repo = membership_repo
         self.circle_repo = circle_repo
         self.notification_service = notification_service
+        self.vote_session_repo = vote_session_repo
 
     @staticmethod
     def _poll_to_response(
@@ -101,6 +106,128 @@ class PollService:
             winner_name=winner_name,
             winner_vote_count=winner_vote_count,
         )
+
+    @staticmethod
+    def _vote_session_to_response(vote_session: VoteSession) -> VoteSessionResponse:
+        """Convert VoteSession ORM object to API response."""
+        poll_ids = [uuid.UUID(poll_id) for poll_id in vote_session.poll_ids]
+        skipped_poll_ids = [
+            uuid.UUID(poll_id) for poll_id in vote_session.skipped_poll_ids
+        ]
+        current_poll_id = (
+            poll_ids[vote_session.current_index]
+            if vote_session.status == "ACTIVE"
+            and vote_session.current_index < len(poll_ids)
+            else None
+        )
+        return VoteSessionResponse(
+            id=vote_session.id,
+            user_id=vote_session.user_id,
+            circle_id=vote_session.circle_id,
+            status=vote_session.status,
+            poll_ids=poll_ids,
+            skipped_poll_ids=skipped_poll_ids,
+            current_index=vote_session.current_index,
+            total_count=len(poll_ids),
+            current_poll_id=current_poll_id,
+            created_at=vote_session.created_at,
+            updated_at=vote_session.updated_at,
+            completed_at=vote_session.completed_at,
+        )
+
+    def _require_vote_session_repo(self) -> VoteSessionRepository:
+        """Return vote session repository or fail fast when not wired."""
+        if self.vote_session_repo is None:
+            raise RuntimeError("VoteSessionRepository is not configured")
+        return self.vote_session_repo
+
+    @staticmethod
+    def _build_round_robin_queue(polls: list[Poll], limit: int) -> list[Poll]:
+        """Build a cross-circle round-robin queue preserving repository order."""
+        grouped: dict[uuid.UUID, list[Poll]] = {}
+        for poll in polls:
+            grouped.setdefault(poll.circle_id, []).append(poll)
+
+        queue: list[Poll] = []
+        groups = list(grouped.values())
+        while len(queue) < limit and any(groups):
+            for group in groups:
+                if len(queue) >= limit:
+                    break
+                if group:
+                    queue.append(group.pop(0))
+        return queue
+
+    async def start_vote_session(
+        self,
+        user_id: uuid.UUID,
+        *,
+        circle_id: uuid.UUID | None = None,
+    ) -> VoteSessionResponse:
+        """Create a server-side vote session queue."""
+        vote_session_repo = self._require_vote_session_repo()
+
+        if circle_id is not None:
+            is_member = await self.membership_repo.exists(circle_id, user_id)
+            if not is_member:
+                raise BadRequestException("You are not a member of this circle")
+            circle_ids = [circle_id]
+        else:
+            memberships = await self.membership_repo.find_by_user_id(user_id)
+            circle_ids = [membership.circle_id for membership in memberships]
+
+        polls = await self.poll_repo.find_by_user_circles(circle_ids, PollStatus.ACTIVE)
+        now = datetime.now(UTC)
+        eligible_polls: list[Poll] = []
+        for poll in polls:
+            if poll.ends_at <= now:
+                continue
+            voter_hash = generate_voter_hash(user_id, poll.id, salt=str(poll.id))
+            has_voted = await self.vote_repo.exists_by_voter_hash(poll.id, voter_hash)
+            if not has_voted:
+                eligible_polls.append(poll)
+
+        queued_polls = self._build_round_robin_queue(
+            eligible_polls,
+            limit=self.SESSION_LIMIT,
+        )
+        vote_session = await vote_session_repo.create(
+            user_id=user_id,
+            circle_id=circle_id,
+            poll_ids=[poll.id for poll in queued_polls],
+        )
+        return self._vote_session_to_response(vote_session)
+
+    async def skip_vote_session_poll(
+        self,
+        session_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> VoteSessionResponse:
+        """Skip the current poll in a server-side vote session."""
+        vote_session_repo = self._require_vote_session_repo()
+        vote_session = await vote_session_repo.find_by_id_for_user(session_id, user_id)
+        if vote_session is None:
+            raise BadRequestException("Vote session not found")
+
+        if vote_session.status == "COMPLETED":
+            return self._vote_session_to_response(vote_session)
+
+        poll_ids = list(vote_session.poll_ids)
+        skipped_poll_ids = list(vote_session.skipped_poll_ids)
+        if vote_session.current_index < len(poll_ids):
+            current_poll_id = poll_ids[vote_session.current_index]
+            if current_poll_id not in skipped_poll_ids:
+                skipped_poll_ids.append(current_poll_id)
+
+        next_index = vote_session.current_index + 1
+        vote_session.skipped_poll_ids = skipped_poll_ids
+        vote_session.current_index = next_index
+        if next_index >= len(poll_ids):
+            vote_session.status = "COMPLETED"
+            vote_session.completed_at = datetime.now(UTC)
+
+        vote_session = await vote_session_repo.save(vote_session)
+        return self._vote_session_to_response(vote_session)
 
     async def get_templates(
         self, category: TemplateCategory | None = None
