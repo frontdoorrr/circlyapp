@@ -550,6 +550,7 @@ class TestPollService:
             vote_repo=vote_repo,
             membership_repo=membership_repo,
             vote_session_repo=VoteSessionRepository(db_session),
+            user_repo=user_repo,
         )
 
         session = await service.start_vote_session(voter.id, circle_id=circle.id)
@@ -603,6 +604,7 @@ class TestPollService:
             vote_repo=VoteRepository(db_session),
             membership_repo=membership_repo,
             vote_session_repo=VoteSessionRepository(db_session),
+            user_repo=user_repo,
         )
 
         session = await service.start_vote_session(voter.id, circle_id=circle.id)
@@ -620,6 +622,9 @@ class TestPollService:
         assert completed.status == "COMPLETED"
         assert completed.current_poll_id is None
         assert completed.skipped_poll_ids == session.poll_ids
+        await db_session.refresh(voter)
+        assert voter.next_session_at is not None
+        assert voter.next_session_at > datetime.now(UTC)
 
     @pytest.mark.asyncio
     async def test_advance_vote_session_poll_keeps_skip_list_empty(
@@ -663,6 +668,7 @@ class TestPollService:
             vote_repo=VoteRepository(db_session),
             membership_repo=membership_repo,
             vote_session_repo=VoteSessionRepository(db_session),
+            user_repo=user_repo,
         )
 
         session = await service.start_vote_session(voter.id, circle_id=circle.id)
@@ -672,6 +678,105 @@ class TestPollService:
         assert advanced.current_index == 1
         assert advanced.current_poll_id != session.current_poll_id
         assert advanced.skipped_poll_ids == []
+
+    @pytest.mark.asyncio
+    async def test_completed_vote_session_sets_cooldown(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Completing the final poll starts the user's session cooldown."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="cooldown-creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="cooldown-user@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Cooldown Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Final?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        db_session.add(poll)
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=VoteRepository(db_session),
+            membership_repo=membership_repo,
+            vote_session_repo=VoteSessionRepository(db_session),
+            user_repo=user_repo,
+        )
+
+        session = await service.start_vote_session(voter.id, circle_id=circle.id)
+        completed = await service.advance_vote_session_poll(session.id, voter.id)
+
+        assert completed.status == "COMPLETED"
+        await db_session.refresh(voter)
+        assert voter.next_session_at is not None
+        remaining = voter.next_session_at - datetime.now(UTC)
+        assert timedelta(minutes=59) < remaining <= timedelta(hours=1)
+
+        availability = await service.get_vote_session_availability(voter.id)
+        assert availability.can_start is False
+        assert availability.next_session_at == voter.next_session_at
+        assert availability.remaining_seconds > 0
+
+        with pytest.raises(BadRequestException, match="Session cooldown active"):
+            await service.start_vote_session(voter.id, circle_id=circle.id)
+
+    @pytest.mark.asyncio
+    async def test_vote_session_availability_unlocks_after_invite_join(
+        self, db_session: AsyncSession
+    ) -> None:
+        """A new member joining one of the user's circles unlocks cooldown."""
+        user_repo = UserRepository(db_session)
+        owner = await user_repo.create(
+            UserCreate(email="unlock-owner@example.com", password="password123")
+        )
+        new_member = await user_repo.create(
+            UserCreate(email="unlock-new@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Unlock Circle"), owner.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, owner.id, MemberRole.OWNER)
+
+        cooldown_until = datetime.now(UTC) + timedelta(hours=1)
+        await user_repo.update_next_session_at(owner.id, cooldown_until)
+        await db_session.commit()
+
+        await membership_repo.create(circle.id, new_member.id)
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=VoteRepository(db_session),
+            membership_repo=membership_repo,
+            vote_session_repo=VoteSessionRepository(db_session),
+            user_repo=user_repo,
+        )
+
+        availability = await service.get_vote_session_availability(owner.id)
+
+        assert availability.can_start is True
+        assert availability.unlocked_by_invite is True
+        await db_session.refresh(owner)
+        assert owner.next_session_at is None
 
     @pytest.mark.asyncio
     async def test_mark_received_heart_as_read_requires_received_vote(

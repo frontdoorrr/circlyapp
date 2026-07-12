@@ -153,6 +153,7 @@ def get_poll_service(db: AsyncSession = Depends(get_db)) -> PollService:
         CircleRepository(db),
         get_notification_service(db),
         VoteSessionRepository(db),
+        UserRepository(db),
     )
 
 

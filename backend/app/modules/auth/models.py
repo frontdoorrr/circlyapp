@@ -1,8 +1,9 @@
 """User model for authentication module."""
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, String, Text
+from sqlalchemy import Boolean, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -78,6 +79,10 @@ class User(BaseModel):
     )
     push_token: Mapped[str | None] = mapped_column(
         Text,
+        nullable=True,
+    )
+    next_session_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
     is_orb_mode: Mapped[bool] = mapped_column(

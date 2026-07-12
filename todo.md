@@ -800,10 +800,10 @@
   - [x] `vote_sessions` 테이블/서버 세션 큐(최대 12) 계약 구현
   - [x] 서버 스킵 이벤트/세션 진행 상태 저장 구현
   - [x] `frontend/app/vote-session/index.tsx` — 서버 세션 시작/스킵/투표 완료 advance API를 실제 화면 진행 상태에 연결
-- [ ] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
-  - [ ] `prd/design/04-user-flow.md` — 라운드 완료 후 cooldown, 초대 CTA, 알림 권한 CTA 흐름 추가
-  - [ ] `prd/design/05-complete-ui-specification.md` — 세션 완료/cooldown 화면과 초대/알림 버튼 상태 추가
-  - [ ] `docs/DSL.md` — next_session_at, cooldown 해제 조건, 초대 성공 검증 이벤트 추가
+- [x] **18.10 쿨다운 + 초대 스킵 바이럴 루프** (P1) — users.next_session_at, 신규 가입 서버 검증 후 쿨다운 해제
+  - [x] `prd/design/04-user-flow.md` — 라운드 완료 후 cooldown, 초대 CTA, 알림 권한 CTA 흐름 추가
+  - [x] `prd/design/05-complete-ui-specification.md` — 세션 완료/cooldown 화면과 초대/알림 버튼 상태 추가
+  - [x] `docs/DSL.md` — next_session_at, cooldown 해제 조건, 초대 성공 검증 이벤트 추가
 - [ ] **18.11 Orb Mode 안전 힌트 티어 시스템** (P1) — vote_hints 테이블, 무료(CIRCLE/TIME)→INITIAL→FULL(Orb Mode)
   - [ ] `docs/DSL.md` — `god_mode` 표기를 Circly 공식 용어 `Orb Mode`로 정리
   - [ ] `prd/features/05-orb-mode-implementation.md` — “실명 공개” 대신 안전한 힌트/단계적 공개 정책으로 재정의

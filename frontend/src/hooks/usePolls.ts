@@ -54,6 +54,20 @@ export function usePollCandidates(pollId: string, shuffleVersion = 0) {
 }
 
 /**
+ * 서버 투표 세션 시작 가능 상태 조회
+ */
+export function useVoteSessionAvailability(enabled = true) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return useQuery({
+    queryKey: ['polls', 'sessions', 'availability'],
+    queryFn: () => pollApi.getVoteSessionAvailability(),
+    enabled: enabled && isAuthenticated,
+    staleTime: 15 * 1000,
+  });
+}
+
+/**
  * 서버 투표 세션 시작
  */
 export function useStartVoteSession() {

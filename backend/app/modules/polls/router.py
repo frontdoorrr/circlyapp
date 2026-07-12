@@ -25,6 +25,7 @@ from app.modules.polls.schemas import (
     VoteRequest,
     VoteResponse,
     VoterRevealResponse,
+    VoteSessionAvailabilityResponse,
     VoteSessionCreate,
     VoteSessionResponse,
 )
@@ -132,6 +133,19 @@ async def start_vote_session(
         current_user.id,
         circle_id=session_data.circle_id,
     )
+
+
+@router.get(
+    "/sessions/availability",
+    response_model=VoteSessionAvailabilityResponse,
+    summary="Get vote session availability",
+)
+async def get_vote_session_availability(
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoteSessionAvailabilityResponse:
+    """Return whether the current user can start a vote session now."""
+    return await service.get_vote_session_availability(current_user.id)
 
 
 @router.post(

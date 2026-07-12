@@ -15,6 +15,7 @@ import {
   VoteRequest,
   VoteResponse,
   VoteSessionCreate,
+  VoteSessionAvailabilityResponse,
   VoteSessionResponse,
   VoterRevealResponse,
 } from '../types/poll';
@@ -103,6 +104,21 @@ export async function getPollCandidates(
   return extractData<PollCandidatesResponse>(
     response.data,
     (d) => d.poll_id && d.status && Array.isArray(d.candidates)
+  );
+}
+
+/**
+ * 서버 투표 세션 시작 가능 상태 조회
+ */
+export async function getVoteSessionAvailability(): Promise<VoteSessionAvailabilityResponse> {
+  console.log('[API] GET /polls/sessions/availability 요청');
+  const response = await apiClient.get<ApiResponse<VoteSessionAvailabilityResponse>>(
+    '/polls/sessions/availability'
+  );
+  console.log('[API] GET /polls/sessions/availability 응답:', { status: response.status });
+  return extractData<VoteSessionAvailabilityResponse>(
+    response.data,
+    (d) => typeof d?.can_start === 'boolean'
   );
 }
 

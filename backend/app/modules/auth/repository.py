@@ -1,6 +1,7 @@
 """Repository for user data access."""
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -167,6 +168,20 @@ class UserRepository:
             return False
 
         user.push_token = token
+        await self.session.flush()
+        return True
+
+    async def update_next_session_at(
+        self,
+        user_id: uuid.UUID,
+        next_session_at: datetime | None,
+    ) -> bool:
+        """Update when a user can start the next vote session."""
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return False
+
+        user.next_session_at = next_session_at
         await self.session.flush()
         return True
 

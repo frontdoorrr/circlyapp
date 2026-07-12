@@ -1,6 +1,7 @@
 """Repository for circles and circle members data access."""
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -372,6 +373,26 @@ class MembershipRepository:
         """
         membership = await self.find_membership(circle_id, user_id)
         return membership is not None
+
+    async def has_new_circle_member_since(
+        self,
+        user_id: uuid.UUID,
+        since: datetime,
+    ) -> bool:
+        """Return whether a user's circles gained a different member since a time."""
+        user_circles = (
+            select(CircleMember.circle_id)
+            .where(CircleMember.user_id == user_id)
+            .subquery()
+        )
+        stmt = (
+            select(func.count(CircleMember.id))
+            .where(CircleMember.circle_id.in_(select(user_circles.c.circle_id)))
+            .where(CircleMember.user_id != user_id)
+            .where(CircleMember.joined_at >= since)
+        )
+        result = await self.session.execute(stmt)
+        return (result.scalar() or 0) > 0
 
     async def delete(self, circle_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """Delete a circle membership.

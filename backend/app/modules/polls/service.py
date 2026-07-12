@@ -14,6 +14,7 @@ from app.core.exceptions import (
     PollNotFoundError,
 )
 from app.core.security import generate_voter_hash
+from app.modules.auth.repository import UserRepository
 from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.polls.repository import (
     PollRepository,
@@ -38,6 +39,7 @@ from app.modules.polls.schemas import (
     ReceivedHeartReadResponse,
     VoteResponse,
     VoterRevealResponse,
+    VoteSessionAvailabilityResponse,
     VoteSessionResponse,
 )
 
@@ -53,6 +55,7 @@ class PollService:
 
     CANDIDATE_COUNT = 4
     SESSION_LIMIT = 12
+    SESSION_COOLDOWN = timedelta(hours=1)
 
     def __init__(
         self,
@@ -63,6 +66,7 @@ class PollService:
         circle_repo: CircleRepository | None = None,
         notification_service: NotificationService | None = None,
         vote_session_repo: VoteSessionRepository | None = None,
+        user_repo: UserRepository | None = None,
     ) -> None:
         """Initialize service with repositories."""
         self.template_repo = template_repo
@@ -72,6 +76,7 @@ class PollService:
         self.circle_repo = circle_repo
         self.notification_service = notification_service
         self.vote_session_repo = vote_session_repo
+        self.user_repo = user_repo
 
     @staticmethod
     def _poll_to_response(
@@ -142,6 +147,12 @@ class PollService:
             raise RuntimeError("VoteSessionRepository is not configured")
         return self.vote_session_repo
 
+    def _require_user_repo(self) -> UserRepository:
+        """Return user repository or fail fast when not wired."""
+        if self.user_repo is None:
+            raise RuntimeError("UserRepository is not configured")
+        return self.user_repo
+
     @staticmethod
     def _build_round_robin_queue(polls: list[Poll], limit: int) -> list[Poll]:
         """Build a cross-circle round-robin queue preserving repository order."""
@@ -159,6 +170,58 @@ class PollService:
                     queue.append(group.pop(0))
         return queue
 
+    async def get_vote_session_availability(
+        self,
+        user_id: uuid.UUID,
+    ) -> VoteSessionAvailabilityResponse:
+        """Return whether the user can start a vote session now."""
+        user_repo = self._require_user_repo()
+        user = await user_repo.find_by_id(user_id)
+        if user is None:
+            raise BadRequestException("User not found")
+
+        next_session_at = user.next_session_at
+        if next_session_at is None:
+            return VoteSessionAvailabilityResponse(can_start=True)
+
+        now = datetime.now(UTC)
+        if next_session_at <= now:
+            await user_repo.update_next_session_at(user_id, None)
+            return VoteSessionAvailabilityResponse(can_start=True)
+
+        cooldown_started_at = next_session_at - self.SESSION_COOLDOWN
+        has_invite_unlock = await self.membership_repo.has_new_circle_member_since(
+            user_id,
+            cooldown_started_at,
+        )
+        if has_invite_unlock:
+            await user_repo.update_next_session_at(user_id, None)
+            return VoteSessionAvailabilityResponse(
+                can_start=True,
+                unlocked_by_invite=True,
+            )
+
+        return VoteSessionAvailabilityResponse(
+            can_start=False,
+            next_session_at=next_session_at,
+            remaining_seconds=max(0, int((next_session_at - now).total_seconds())),
+        )
+
+    async def _complete_vote_session(
+        self,
+        vote_session: VoteSession,
+        user_id: uuid.UUID,
+    ) -> None:
+        """Mark a session complete and start the user's cooldown."""
+        now = datetime.now(UTC)
+        vote_session.status = "COMPLETED"
+        vote_session.completed_at = now
+        user_repo = self._require_user_repo()
+        await user_repo.update_next_session_at(
+            user_id,
+            now + self.SESSION_COOLDOWN,
+        )
+
     async def start_vote_session(
         self,
         user_id: uuid.UUID,
@@ -167,6 +230,9 @@ class PollService:
     ) -> VoteSessionResponse:
         """Create a server-side vote session queue."""
         vote_session_repo = self._require_vote_session_repo()
+        availability = await self.get_vote_session_availability(user_id)
+        if not availability.can_start:
+            raise BadRequestException("Session cooldown active")
 
         if circle_id is not None:
             is_member = await self.membership_repo.exists(circle_id, user_id)
@@ -224,8 +290,7 @@ class PollService:
         vote_session.skipped_poll_ids = skipped_poll_ids
         vote_session.current_index = next_index
         if next_index >= len(poll_ids):
-            vote_session.status = "COMPLETED"
-            vote_session.completed_at = datetime.now(UTC)
+            await self._complete_vote_session(vote_session, user_id)
 
         vote_session = await vote_session_repo.save(vote_session)
         return self._vote_session_to_response(vote_session)
@@ -247,8 +312,7 @@ class PollService:
         next_index = vote_session.current_index + 1
         vote_session.current_index = next_index
         if next_index >= len(vote_session.poll_ids):
-            vote_session.status = "COMPLETED"
-            vote_session.completed_at = datetime.now(UTC)
+            await self._complete_vote_session(vote_session, user_id)
 
         vote_session = await vote_session_repo.save(vote_session)
         return self._vote_session_to_response(vote_session)

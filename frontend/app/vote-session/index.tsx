@@ -14,13 +14,16 @@ import {
   usePollDetail,
   useSkipVoteSessionPoll,
   useStartVoteSession,
+  useVoteSessionAvailability,
   useVote,
 } from '../../src/hooks/usePolls';
+import { registerPushToken } from '../../src/api/notification';
 import { useToast } from '../../src/providers/ToastProvider';
+import { registerForPushNotificationsAsync } from '../../src/services/notification/pushNotification';
 import { tokens } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
-import type { VoteSessionResponse } from '../../src/types/poll';
+import type { VoteSessionAvailabilityResponse, VoteSessionResponse } from '../../src/types/poll';
 
 function formatSessionTime(endsAt?: string): string {
   if (!endsAt) return '';
@@ -36,6 +39,18 @@ function formatSessionTime(endsAt?: string): string {
   return `${Math.max(1, remainingMinutes)}분`;
 }
 
+function formatCooldownTime(seconds: number): string {
+  if (seconds <= 0) return '곧 열려요';
+
+  const minutes = Math.ceil(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) return `${hours}시간 ${remainingMinutes}분`;
+  if (hours > 0) return `${hours}시간`;
+  return `${minutes}분`;
+}
+
 export default function VoteSessionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -49,13 +64,17 @@ export default function VoteSessionScreen() {
   const { mutateAsync: skipSessionAsync, isPending: isSkippingSession } = useSkipVoteSessionPoll();
   const { mutateAsync: advanceSessionAsync, isPending: isAdvancingSession } =
     useAdvanceVoteSessionPoll();
+  const { refetch: refetchAvailability } = useVoteSessionAvailability(false);
 
   const [voteSession, setVoteSession] = useState<VoteSessionResponse | undefined>();
+  const [sessionAvailability, setSessionAvailability] =
+    useState<VoteSessionAvailabilityResponse | undefined>();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [sessionError, setSessionError] = useState<string | undefined>();
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
   const [shuffleVersion, setShuffleVersion] = useState(0);
+  const [isRegisteringPush, setIsRegisteringPush] = useState(false);
   const isVotingRef = useRef(false);
 
   const applySession = useCallback((session: VoteSessionResponse) => {
@@ -75,6 +94,14 @@ export default function VoteSessionScreen() {
     setShuffleVersion(0);
 
     try {
+      const availabilityResult = await refetchAvailability();
+      if (availabilityResult.data && !availabilityResult.data.can_start) {
+        setSessionAvailability(availabilityResult.data);
+        setIsComplete(true);
+        return;
+      }
+      setSessionAvailability(availabilityResult.data);
+
       const session = await startSessionAsync(
         scopedCircleId ? { circle_id: scopedCircleId } : {}
       );
@@ -82,7 +109,7 @@ export default function VoteSessionScreen() {
     } catch (error) {
       setSessionError(error instanceof Error ? error.message : '투표를 불러오지 못했어요');
     }
-  }, [applySession, scopedCircleId, startSessionAsync]);
+  }, [applySession, refetchAvailability, scopedCircleId, startSessionAsync]);
 
   useEffect(() => {
     startSession();
@@ -124,6 +151,16 @@ export default function VoteSessionScreen() {
     setCurrentIndex((index) => index + 1);
   }, [currentIndex, voteSession]);
 
+  useEffect(() => {
+    if (!isComplete) return;
+
+    refetchAvailability().then((result) => {
+      if (result.data) {
+        setSessionAvailability(result.data);
+      }
+    });
+  }, [isComplete, refetchAvailability]);
+
   const handleSkip = useCallback(async () => {
     if (!voteSession || isSkippingSession) return;
     Haptics.selectionAsync();
@@ -131,10 +168,14 @@ export default function VoteSessionScreen() {
     try {
       const session = await skipSessionAsync(voteSession.id);
       applySession(session);
+      if (session.status === 'COMPLETED') {
+        const availabilityResult = await refetchAvailability();
+        if (availabilityResult.data) setSessionAvailability(availabilityResult.data);
+      }
     } catch (error) {
       showToast(error instanceof Error ? error.message : '건너뛰기 중 문제가 발생했습니다', 'error');
     }
-  }, [applySession, isSkippingSession, showToast, skipSessionAsync, voteSession]);
+  }, [applySession, isSkippingSession, refetchAvailability, showToast, skipSessionAsync, voteSession]);
 
   const handleShuffle = useCallback(() => {
     if (!canShuffle) return;
@@ -158,6 +199,10 @@ export default function VoteSessionScreen() {
         try {
           const session = await advanceSessionAsync(voteSession.id);
           applySession(session);
+          if (session.status === 'COMPLETED') {
+            const availabilityResult = await refetchAvailability();
+            if (availabilityResult.data) setSessionAvailability(availabilityResult.data);
+          }
         } catch {
           advanceLocally();
           showToast('투표는 완료됐지만 세션 상태 갱신에 실패했어요', 'error');
@@ -169,7 +214,7 @@ export default function VoteSessionScreen() {
         isVotingRef.current = false;
       }
     },
-    [advanceLocally, advanceSessionAsync, applySession, currentPoll, showToast, voteMutation, voteSession]
+    [advanceLocally, advanceSessionAsync, applySession, currentPoll, refetchAvailability, showToast, voteMutation, voteSession]
   );
 
   const handleRetry = useCallback(() => {
@@ -183,6 +228,34 @@ export default function VoteSessionScreen() {
   const isScreenLoading =
     isStartingSession ||
     (!!currentPollId && (pollLoading || candidatesLoading) && !currentPoll);
+  const cooldownSeconds = sessionAvailability?.remaining_seconds ?? 0;
+  const isCoolingDown = !!sessionAvailability && !sessionAvailability.can_start && cooldownSeconds > 0;
+
+  const handleInvite = useCallback(() => {
+    if (scopedCircleId) {
+      router.push(`/circle/${scopedCircleId}` as any);
+      return;
+    }
+    router.push('/(main)/(1-circle)' as any);
+  }, [router, scopedCircleId]);
+
+  const handleEnableNotifications = useCallback(async () => {
+    setIsRegisteringPush(true);
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (!token) {
+        showToast('알림 권한을 켜지 못했어요', 'error');
+        return;
+      }
+
+      await registerPushToken(token);
+      showToast('알림을 켰어요');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '알림 설정 중 문제가 발생했어요', 'error');
+    } finally {
+      setIsRegisteringPush(false);
+    }
+  }, [showToast]);
 
   if (isScreenLoading) {
     return (
@@ -213,18 +286,24 @@ export default function VoteSessionScreen() {
         </View>
         <Text style={styles.completeTitle}>세션 완료</Text>
         <Text style={styles.completeDescription}>
-          답할 수 있는 투표를 모두 확인했어요.
+          {isCoolingDown
+            ? `다음 세션까지 ${formatCooldownTime(cooldownSeconds)} 남았어요.\n친구가 새로 참여하면 바로 열려요.`
+            : '답할 수 있는 투표를 모두 확인했어요.'}
         </Text>
         <View style={styles.completeActions}>
-          <Button fullWidth onPress={() => router.replace('/(main)/(0-home)' as any)}>
-            홈으로 가기
+          <Button fullWidth onPress={handleInvite}>
+            친구 초대하기
           </Button>
           <Button
             fullWidth
             variant="secondary"
-            onPress={() => router.push('/create' as any)}
+            onPress={handleEnableNotifications}
+            disabled={isRegisteringPush}
           >
-            새 투표 만들기
+            알림 켜기
+          </Button>
+          <Button fullWidth variant="ghost" onPress={() => router.replace('/(main)/(0-home)' as any)}>
+            홈으로 가기
           </Button>
         </View>
       </View>

@@ -70,6 +70,13 @@ export interface VoteSessionCreate {
   circle_id?: string;
 }
 
+export interface VoteSessionAvailabilityResponse {
+  can_start: boolean;
+  next_session_at: string | null;
+  remaining_seconds: number;
+  unlocked_by_invite: boolean;
+}
+
 export interface VoteSessionResponse {
   id: string;
   user_id: string;

@@ -99,6 +99,15 @@ class VoteSessionCreate(BaseModel):
     circle_id: uuid.UUID | None = None
 
 
+class VoteSessionAvailabilityResponse(BaseModel):
+    """현재 사용자의 투표 세션 시작 가능 상태."""
+
+    can_start: bool
+    next_session_at: datetime | None = None
+    remaining_seconds: int = 0
+    unlocked_by_invite: bool = False
+
+
 class VoteSessionResponse(BaseModel):
     """서버 투표 세션 상태 응답."""
 

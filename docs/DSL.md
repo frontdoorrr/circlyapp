@@ -52,6 +52,7 @@ database Schema {
         role: user_role DEFAULT 'USER'  // USER, ADMIN
         is_active: BOOLEAN DEFAULT TRUE
         push_token: TEXT
+        next_session_at: TIMESTAMPTZ  // 투표 세션 완료 후 다음 세션 가능 시각
         created_at: TIMESTAMPTZ DEFAULT NOW()
         updated_at: TIMESTAMPTZ DEFAULT NOW()
     }
@@ -566,6 +567,7 @@ module Poll {
 
         POST   /api/v1/polls/{id}/vote                -> vote
         GET    /api/v1/polls/{id}/candidates?shuffle  -> getPollCandidates
+        GET    /api/v1/polls/sessions/availability    -> getVoteSessionAvailability
         POST   /api/v1/polls/sessions                 -> startVoteSession
         POST   /api/v1/polls/sessions/{id}/skip       -> skipVoteSessionPoll
         POST   /api/v1/polls/sessions/{id}/advance    -> advanceVoteSessionPoll
@@ -692,6 +694,13 @@ module Poll {
 
     type VoteSessionCreate {
         circleId?: UUID  // 없으면 사용자가 속한 모든 Circle에서 큐 생성
+    }
+
+    type VoteSessionAvailability {
+        canStart: Boolean
+        nextSessionAt?: DateTime
+        remainingSeconds: Integer
+        unlockedByInvite: Boolean
     }
 
     type VoteSession {
@@ -1053,25 +1062,30 @@ workflow CreatePollFlow {
 
 workflow VoteFlow {
     1. 사용자가 투표 세션 진입
-    2. POST /api/v1/polls/sessions
+    2. GET /api/v1/polls/sessions/availability
+       - users.next_session_at이 없거나 현재 시각 이전이면 canStart=true
+       - next_session_at이 미래면 canStart=false와 remainingSeconds 반환
+       - 쿨다운 시작 이후 사용자가 속한 Circle에 신규 멤버가 가입했으면 쿨다운 해제, unlockedByInvite=true
+    3. POST /api/v1/polls/sessions
        - circleId가 있으면 해당 Circle만 큐 생성
        - 없으면 사용자가 속한 모든 Circle에서 라운드로빈 큐 생성
        - ACTIVE, 미투표, 마감 전 Poll만 포함
        - 최대 12개 pollId를 고정 큐로 저장
-    3. GET /api/v1/polls/{id}/candidates?shuffle=false
+       - 서버는 availability를 재검증해 쿨다운 중 세션 시작을 차단
+    4. GET /api/v1/polls/{id}/candidates?shuffle=false
        - 같은 Circle 멤버만 후보로 사용
        - 현재 투표자와 투표 생성자는 후보에서 제외
        - 후보는 같은 Circle 내 받은 득표 수가 적은 순서로 우선 노출
        - 후보가 4명 미만이면 status=NOT_ENOUGH_CANDIDATES 반환
-    4. 후보 부족 시 투표 UI 대신 Circle 초대 CTA와 질문 건너뛰기 CTA 표시
+    5. 후보 부족 시 투표 UI 대신 Circle 초대 CTA와 질문 건너뛰기 CTA 표시
        - 건너뛰기 시 POST /api/v1/polls/sessions/{sessionId}/skip
        - 서버는 currentPollId를 skippedPollIds에 저장하고 currentIndex를 전진
-    5. 사용자가 섞기 선택 시 GET /api/v1/polls/{id}/candidates?shuffle=true
+    6. 사용자가 섞기 선택 시 GET /api/v1/polls/{id}/candidates?shuffle=true
        - 서버가 후보 풀을 섞어 다시 반환
        - 현재 MVP는 클라이언트 로컬 샘플링을 사용하지 않음
-    6. 사용자가 투표 옵션 선택
-    7. POST /api/v1/polls/{id}/vote
-    8. PollService.vote()
+    7. 사용자가 투표 옵션 선택
+    8. POST /api/v1/polls/{id}/vote
+    9. PollService.vote()
        - 투표 기한 확인
        - 중복 투표 확인 (voterHash)
        - 자기 자신 투표 방지
@@ -1080,11 +1094,13 @@ workflow VoteFlow {
        - Poll voteCount 증가
        - 실시간 결과 계산
        - VoteCast 이벤트 발행
-    9. 투표 성공 후 POST /api/v1/polls/sessions/{sessionId}/advance
+    10. 투표 성공 후 POST /api/v1/polls/sessions/{sessionId}/advance
        - 서버는 currentIndex를 전진
        - 마지막 질문이면 status=COMPLETED, completedAt 저장
-    10. 투표 결과 반환 (실시간 차트용)
-    11. NotificationService.sendVoteReceived()
+       - 완료 시 users.next_session_at = 현재 시각 + 1시간 저장
+       - 마지막 질문을 skip으로 넘긴 경우도 동일하게 저장
+    11. 투표 결과 반환 (실시간 차트용)
+    12. NotificationService.sendVoteReceived()
        - 선택받은 사람에게 푸시 알림 (익명)
 }
 
