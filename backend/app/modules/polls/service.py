@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import random
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -23,7 +24,9 @@ from app.modules.polls.schemas import (
     CATEGORY_METADATA,
     AdminPollCreate,
     BroadcastPollResponse,
+    CandidateOption,
     CategoryInfo,
+    PollCandidatesResponse,
     PollCreate,
     PollDuration,
     PollResponse,
@@ -44,6 +47,8 @@ logger = logging.getLogger(__name__)
 
 class PollService:
     """Service for poll operations."""
+
+    CANDIDATE_COUNT = 4
 
     def __init__(
         self,
@@ -184,6 +189,53 @@ class PollService:
             )
             for row in rows
         ]
+
+    async def get_poll_candidates(
+        self,
+        poll_id: uuid.UUID,
+        user_id: uuid.UUID,
+        *,
+        shuffle: bool = False,
+    ) -> PollCandidatesResponse:
+        """Get server-selected vote candidates for a poll."""
+        poll = await self.poll_repo.find_by_id(poll_id)
+        if poll is None:
+            raise PollNotFoundError(str(poll_id))
+
+        is_member = await self.membership_repo.exists(poll.circle_id, user_id)
+        if not is_member:
+            raise BadRequestException("You are not a member of this circle")
+
+        rows = await self.vote_repo.find_candidate_options(
+            circle_id=poll.circle_id,
+            requester_id=user_id,
+            creator_id=poll.creator_id,
+        )
+
+        if shuffle:
+            random.SystemRandom().shuffle(rows)
+
+        selected_rows = rows[: self.CANDIDATE_COUNT]
+        status = (
+            "READY"
+            if len(selected_rows) >= self.CANDIDATE_COUNT
+            else "NOT_ENOUGH_CANDIDATES"
+        )
+
+        return PollCandidatesResponse(
+            poll_id=poll.id,
+            status=status,
+            required_count=self.CANDIDATE_COUNT,
+            candidates=[
+                CandidateOption(
+                    user_id=row["user_id"],
+                    nickname=row["nickname"],
+                    profile_emoji=row["profile_emoji"],
+                    received_count=row["received_count"],
+                )
+                for row in selected_rows
+            ],
+        )
 
     async def create_poll(
         self,

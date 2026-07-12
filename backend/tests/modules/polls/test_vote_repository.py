@@ -1,18 +1,17 @@
 """Tests for Vote Repository."""
 
-import uuid
 from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import TemplateCategory
+from app.core.enums import MemberRole
 from app.core.security import generate_invite_code
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import UserCreate
-from app.modules.circles.repository import CircleRepository
+from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.circles.schemas import CircleCreate
-from app.modules.polls.models import Poll, PollTemplate, Vote
+from app.modules.polls.models import Poll, Vote
 from app.modules.polls.repository import VoteRepository
 
 
@@ -221,3 +220,100 @@ class TestVoteRepository:
         assert results[0]["vote_count"] == 2
         assert results[1]["user_id"] == member2.id
         assert results[1]["vote_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_find_candidate_options_excludes_voter_and_creator(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Candidate options exclude the current voter and poll creator."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="session-voter@example.com", password="password123")
+        )
+        member = await user_repo.create(
+            UserCreate(email="candidate@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+        await membership_repo.create(circle.id, member.id, nickname="Candidate")
+
+        repo = VoteRepository(db_session)
+        candidates = await repo.find_candidate_options(
+            circle_id=circle.id,
+            requester_id=voter.id,
+            creator_id=creator.id,
+        )
+
+        assert [candidate["user_id"] for candidate in candidates] == [member.id]
+        assert candidates[0]["nickname"] == "Candidate"
+
+    @pytest.mark.asyncio
+    async def test_find_candidate_options_orders_by_received_count(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Candidates with fewer received votes in the circle are shown first."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="creator2@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="session-voter2@example.com", password="password123")
+        )
+        popular = await user_repo.create(
+            UserCreate(email="popular@example.com", password="password123")
+        )
+        underexposed = await user_repo.create(
+            UserCreate(email="underexposed@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id)
+        await membership_repo.create(circle.id, popular.id, nickname="Popular")
+        await membership_repo.create(circle.id, underexposed.id, nickname="Under")
+
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Test?",
+            ends_at=datetime.now() + timedelta(hours=1),
+        )
+        db_session.add(poll)
+        await db_session.flush()
+
+        db_session.add(
+            Vote(
+                poll_id=poll.id,
+                voter_id=voter.id,
+                voter_hash="popular-hash",
+                voted_for_id=popular.id,
+            )
+        )
+        await db_session.commit()
+
+        repo = VoteRepository(db_session)
+        candidates = await repo.find_candidate_options(
+            circle_id=circle.id,
+            requester_id=voter.id,
+            creator_id=creator.id,
+        )
+
+        assert [candidate["user_id"] for candidate in candidates] == [
+            underexposed.id,
+            popular.id,
+        ]
+        assert candidates[0]["received_count"] == 0
+        assert candidates[1]["received_count"] == 1

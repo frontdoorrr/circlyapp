@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -75,6 +76,21 @@ class VoteOption(BaseModel):
     user_id: uuid.UUID
     nickname: str | None
     profile_emoji: str
+
+
+class CandidateOption(VoteOption):
+    """서버가 선정한 투표 후보."""
+
+    received_count: int
+
+
+class PollCandidatesResponse(BaseModel):
+    """투표 후보 API 응답."""
+
+    poll_id: uuid.UUID
+    status: Literal["READY", "NOT_ENOUGH_CANDIDATES"]
+    required_count: int
+    candidates: list[CandidateOption]
 
 
 class VoterInfo(BaseModel):

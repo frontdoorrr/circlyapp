@@ -11,6 +11,7 @@ from app.modules.polls.schemas import (
     AdminPollCreate,
     BroadcastPollResponse,
     CategoryInfo,
+    PollCandidatesResponse,
     PollCreate,
     PollListResponse,
     PollResponse,
@@ -125,6 +126,21 @@ async def vote(
 ) -> VoteResponse:
     """Cast a vote in a poll."""
     return await service.vote(poll_id, current_user.id, vote_data.voted_for_id)
+
+
+@router.get(
+    "/{poll_id}/candidates",
+    response_model=PollCandidatesResponse,
+    summary="Get server-selected vote candidates",
+)
+async def get_poll_candidates(
+    poll_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+    shuffle: bool = Query(False, description="Shuffle candidates server-side"),
+) -> PollCandidatesResponse:
+    """Get fair candidate options for a poll."""
+    return await service.get_poll_candidates(poll_id, current_user.id, shuffle=shuffle)
 
 
 @router.get(

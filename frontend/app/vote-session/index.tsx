@@ -8,25 +8,18 @@ import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
 import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { VoteCard, VoteOption } from '../../src/components/patterns/VoteCard';
-import { useCircleMembers } from '../../src/hooks/useCircles';
-import { useCurrentUser } from '../../src/hooks/useAuth';
-import { useMyActivePolls, usePollDetail, useVote } from '../../src/hooks/usePolls';
+import {
+  useMyActivePolls,
+  usePollCandidates,
+  usePollDetail,
+  useVote,
+} from '../../src/hooks/usePolls';
 import { useToast } from '../../src/providers/ToastProvider';
 import { tokens } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
-import type { MemberInfo } from '../../src/types/circle';
 import type { PollResponse } from '../../src/types/poll';
 import { buildVoteSessionQueue } from '../../src/utils/voteSession';
-
-function sampleMembers(members: MemberInfo[], count = 4): MemberInfo[] {
-  const shuffled = [...members];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-  }
-  return shuffled.slice(0, count);
-}
 
 function formatSessionTime(endsAt?: string): string {
   if (!endsAt) return '';
@@ -51,7 +44,6 @@ export default function VoteSessionScreen() {
   const { showToast } = useToast();
 
   const { data: activePolls, isLoading, isError, refetch } = useMyActivePolls();
-  const { data: currentUser } = useCurrentUser();
   const voteMutation = useVote();
 
   const initialQueue = useMemo(
@@ -62,7 +54,7 @@ export default function VoteSessionScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
-  const [candidates, setCandidates] = useState<MemberInfo[]>([]);
+  const [shuffleVersion, setShuffleVersion] = useState(0);
   const isVotingRef = useRef(false);
 
   useEffect(() => {
@@ -81,24 +73,28 @@ export default function VoteSessionScreen() {
   const currentPollFromQueue = queue[currentIndex];
   const { data: pollDetail, isLoading: pollLoading } = usePollDetail(currentPollFromQueue?.id ?? '');
   const currentPoll = pollDetail ?? currentPollFromQueue;
-  const { data: members, isLoading: membersLoading } = useCircleMembers(currentPoll?.circle_id ?? '');
-
-  const eligibleMembers = useMemo(
-    () => (members ?? []).filter((member) => member.user_id !== currentUser?.id),
-    [currentUser?.id, members]
-  );
+  const {
+    data: candidateResponse,
+    isLoading: candidatesLoading,
+    isFetching: candidatesFetching,
+  } = usePollCandidates(currentPoll?.id ?? '', shuffleVersion);
 
   useEffect(() => {
-    setCandidates(sampleMembers(eligibleMembers));
+    setShuffleVersion(0);
     setSelectedUserId(undefined);
-  }, [eligibleMembers, currentPoll?.id]);
+  }, [currentPoll?.id]);
 
-  const canShuffle = eligibleMembers.length > 4;
-  const voteOptions: VoteOption[] = candidates.map((member) => ({
-    id: member.user_id,
-    name: member.nickname || member.display_name || member.username || '익명',
-    emoji: member.profile_emoji,
-  }));
+  const voteOptions: VoteOption[] = useMemo(
+    () =>
+      (candidateResponse?.candidates ?? []).map((candidate) => ({
+        id: candidate.user_id,
+        name: candidate.nickname || '익명',
+        emoji: candidate.profile_emoji,
+      })),
+    [candidateResponse?.candidates]
+  );
+  const isNotEnoughCandidates = candidateResponse?.status === 'NOT_ENOUGH_CANDIDATES';
+  const canShuffle = candidateResponse?.status === 'READY';
 
   const advance = useCallback(() => {
     setSelectedUserId(undefined);
@@ -119,9 +115,9 @@ export default function VoteSessionScreen() {
   const handleShuffle = useCallback(() => {
     if (!canShuffle) return;
     Haptics.selectionAsync();
-    setCandidates(sampleMembers(eligibleMembers));
     setSelectedUserId(undefined);
-  }, [canShuffle, eligibleMembers]);
+    setShuffleVersion((version) => version + 1);
+  }, [canShuffle]);
 
   const handleSelect = useCallback(
     async (userId: string) => {
@@ -155,7 +151,7 @@ export default function VoteSessionScreen() {
   const circleName = currentPoll?.circle_name ?? 'Circle';
   const isScreenLoading =
     isLoading ||
-    (queue.length > 0 && (pollLoading || membersLoading) && !currentPoll);
+    (queue.length > 0 && (pollLoading || candidatesLoading) && !currentPoll);
 
   if (isScreenLoading) {
     return (
@@ -224,6 +220,26 @@ export default function VoteSessionScreen() {
     );
   }
 
+  if (isNotEnoughCandidates) {
+    return (
+      <View style={[styles.container, styles.centerContainer, { paddingTop: insets.top }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text style={styles.emptyTitle}>선택할 친구가 부족해요</Text>
+        <Text style={styles.emptyDescription}>
+          4지선다 투표를 만들려면 이 Circle에 후보가 더 필요해요.
+        </Text>
+        <View style={styles.emptyActions}>
+          <Button fullWidth onPress={() => router.push(`/circle/${currentPoll.circle_id}` as any)}>
+            Circle 초대하기
+          </Button>
+          <Button fullWidth variant="secondary" onPress={handleSkip}>
+            이 질문 건너뛰기
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -265,7 +281,7 @@ export default function VoteSessionScreen() {
             options={voteOptions}
             selectedId={selectedUserId}
             onSelect={handleSelect}
-            disabled={voteMutation.isPending || voteOptions.length === 0}
+            disabled={voteMutation.isPending || candidatesFetching || voteOptions.length === 0}
           />
         </Animated.View>
       </View>
@@ -282,14 +298,14 @@ export default function VoteSessionScreen() {
         <Button
           variant="secondary"
           onPress={handleShuffle}
-          disabled={!canShuffle || voteMutation.isPending}
+          disabled={!canShuffle || voteMutation.isPending || candidatesFetching}
           style={styles.bottomButton}
         >
           섞기
         </Button>
       </View>
 
-      {voteOptions.length === 0 && (
+      {voteOptions.length === 0 && !candidatesFetching && (
         <View style={styles.noCandidates}>
           <Text style={styles.noCandidatesText}>선택할 멤버가 부족해요</Text>
         </View>

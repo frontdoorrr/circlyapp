@@ -5,6 +5,7 @@
  */
 import {
   CategoryInfo,
+  PollCandidatesResponse,
   PollDetailResponse,
   PollResponse,
   PollTemplateResponse,
@@ -81,6 +82,25 @@ export async function vote(pollId: string, data: VoteRequest): Promise<VoteRespo
   console.log('[API] POST /polls/:pollId/vote 응답:', { status: response.status });
   // 백엔드는 { success, results, message } 형식으로 응답
   return extractData<VoteResponse>(response.data, (d) => d.success !== undefined && d.results);
+}
+
+/**
+ * 투표 후보 목록 조회
+ */
+export async function getPollCandidates(
+  pollId: string,
+  shuffle = false
+): Promise<PollCandidatesResponse> {
+  console.log('[API] GET /polls/:pollId/candidates 요청:', { pollId, shuffle });
+  const response = await apiClient.get<ApiResponse<PollCandidatesResponse>>(
+    `/polls/${pollId}/candidates`,
+    { params: { shuffle } }
+  );
+  console.log('[API] GET /polls/:pollId/candidates 응답:', { status: response.status });
+  return extractData<PollCandidatesResponse>(
+    response.data,
+    (d) => d.poll_id && d.status && Array.isArray(d.candidates)
+  );
 }
 
 /**

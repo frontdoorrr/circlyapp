@@ -42,6 +42,18 @@ export function usePollDetail(pollId: string) {
 }
 
 /**
+ * 서버가 선정한 투표 후보 조회
+ */
+export function usePollCandidates(pollId: string, shuffleVersion = 0) {
+  return useQuery({
+    queryKey: ['polls', pollId, 'candidates', shuffleVersion],
+    queryFn: () => pollApi.getPollCandidates(pollId, shuffleVersion > 0),
+    enabled: !!pollId,
+    staleTime: 0,
+  });
+}
+
+/**
  * 투표하기
  */
 export function useVote() {

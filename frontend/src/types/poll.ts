@@ -48,6 +48,22 @@ export interface VoteRequest {
   voted_for_id: string; // UUID (투표 대상 사용자)
 }
 
+export type PollCandidatesStatus = 'READY' | 'NOT_ENOUGH_CANDIDATES';
+
+export interface CandidateOption {
+  user_id: string;
+  nickname: string | null;
+  profile_emoji: string;
+  received_count: number;
+}
+
+export interface PollCandidatesResponse {
+  poll_id: string;
+  status: PollCandidatesStatus;
+  required_count: number;
+  candidates: CandidateOption[];
+}
+
 export interface VoteResponse {
   success: boolean;
   results: PollResultItem[]; // 투표 후 실시간 결과

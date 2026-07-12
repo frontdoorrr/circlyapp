@@ -541,6 +541,7 @@ module Poll {
         DELETE /api/v1/polls/{id}                     -> cancelPoll
 
         POST   /api/v1/polls/{id}/vote                -> vote
+        GET    /api/v1/polls/{id}/candidates?shuffle  -> getPollCandidates
         GET    /api/v1/polls/me/received              -> getReceivedHearts
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
@@ -642,6 +643,19 @@ module Poll {
         nickname: String
         profileEmoji: String
     }
+
+    type CandidateOption extends VoteOption {
+        receivedCount: Integer  // 같은 Circle에서 받은 누적 득표 수
+    }
+
+    type PollCandidatesResponse {
+        pollId: UUID
+        status: PollCandidatesStatus
+        requiredCount: Integer  // MVP: 4
+        candidates: List<CandidateOption>
+    }
+
+    type PollCandidatesStatus = "READY" | "NOT_ENOUGH_CANDIDATES"
 
     type Vote {
         id: UUID
@@ -984,9 +998,19 @@ workflow CreatePollFlow {
 }
 
 workflow VoteFlow {
-    1. 사용자가 투표 옵션 선택
-    2. POST /api/v1/polls/{id}/vote
-    3. PollService.vote()
+    1. 사용자가 투표 세션 진입
+    2. GET /api/v1/polls/{id}/candidates?shuffle=false
+       - 같은 Circle 멤버만 후보로 사용
+       - 현재 투표자와 투표 생성자는 후보에서 제외
+       - 후보는 같은 Circle 내 받은 득표 수가 적은 순서로 우선 노출
+       - 후보가 4명 미만이면 status=NOT_ENOUGH_CANDIDATES 반환
+    3. 후보 부족 시 투표 UI 대신 Circle 초대 CTA와 질문 건너뛰기 CTA 표시
+    4. 사용자가 섞기 선택 시 GET /api/v1/polls/{id}/candidates?shuffle=true
+       - 서버가 후보 풀을 섞어 다시 반환
+       - 현재 MVP는 클라이언트 로컬 샘플링을 사용하지 않음
+    5. 사용자가 투표 옵션 선택
+    6. POST /api/v1/polls/{id}/vote
+    7. PollService.vote()
        - 투표 기한 확인
        - 중복 투표 확인 (voterHash)
        - 자기 자신 투표 방지
@@ -995,8 +1019,8 @@ workflow VoteFlow {
        - Poll voteCount 증가
        - 실시간 결과 계산
        - VoteCast 이벤트 발행
-    4. 투표 결과 반환 (실시간 차트용)
-    5. NotificationService.sendVoteReceived()
+    8. 투표 결과 반환 (실시간 차트용)
+    9. NotificationService.sendVoteReceived()
        - 선택받은 사람에게 푸시 알림 (익명)
 }
 

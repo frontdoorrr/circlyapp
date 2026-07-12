@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.enums import PollStatus, TemplateCategory
-from app.modules.circles.models import Circle
+from app.modules.auth.models import User
+from app.modules.circles.models import Circle, CircleMember
 from app.modules.polls.models import Poll, PollTemplate, Vote
 
 
@@ -30,6 +31,15 @@ class ReceivedHeartDict(TypedDict):
     emoji: str | None
     received_count: int
     latest_received_at: datetime
+
+
+class CandidateOptionDict(TypedDict):
+    """Type for server-selected vote candidate."""
+
+    user_id: uuid.UUID
+    nickname: str | None
+    profile_emoji: str
+    received_count: int
 
 
 class TemplateRepository:
@@ -543,6 +553,64 @@ class VoteRepository:
 
         return [
             {"user_id": row.voted_for_id, "vote_count": row.vote_count}
+            for row in result.all()
+        ]
+
+    async def find_candidate_options(
+        self,
+        circle_id: uuid.UUID,
+        requester_id: uuid.UUID,
+        creator_id: uuid.UUID,
+    ) -> list[CandidateOptionDict]:
+        """Find eligible vote candidates ordered by least received votes first.
+
+        Args:
+            circle_id: Circle UUID
+            requester_id: Current voter UUID
+            creator_id: Poll creator UUID
+
+        Returns:
+            Candidate rows with exposure/fairness count
+        """
+        received_counts = (
+            select(
+                Vote.voted_for_id.label("user_id"),
+                func.count(Vote.id).label("received_count"),
+            )
+            .join(Poll, Vote.poll_id == Poll.id)
+            .where(Poll.circle_id == circle_id)
+            .group_by(Vote.voted_for_id)
+            .subquery()
+        )
+        excluded_ids = {requester_id, creator_id}
+
+        result = await self.session.execute(
+            select(
+                CircleMember.user_id,
+                CircleMember.nickname,
+                User.profile_emoji,
+                func.coalesce(received_counts.c.received_count, 0).label("received_count"),
+            )
+            .join(User, CircleMember.user_id == User.id)
+            .outerjoin(received_counts, CircleMember.user_id == received_counts.c.user_id)
+            .where(
+                CircleMember.circle_id == circle_id,
+                CircleMember.user_id.notin_(excluded_ids),
+                User.is_active == True,  # noqa: E712
+            )
+            .order_by(
+                func.coalesce(received_counts.c.received_count, 0).asc(),
+                CircleMember.joined_at.asc(),
+            )
+        )
+
+        return [
+            {
+                "user_id": row.user_id,
+                "nickname": row.nickname,
+                "profile_emoji": row.profile_emoji,
+                "received_count": int(row.received_count),
+            }
             for row in result.all()
         ]
 
