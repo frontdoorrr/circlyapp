@@ -4,14 +4,14 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import TypedDict
 
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.auth.models import User
 from app.modules.circles.models import Circle, CircleMember
-from app.modules.polls.models import Poll, PollTemplate, Vote, VoteSession
+from app.modules.polls.models import Poll, PollTemplate, ReceivedHeartRead, Vote, VoteSession
 
 
 class VoteResultDict(TypedDict):
@@ -31,6 +31,7 @@ class ReceivedHeartDict(TypedDict):
     emoji: str | None
     received_count: int
     latest_received_at: datetime
+    is_read: bool
 
 
 class CandidateOptionDict(TypedDict):
@@ -664,10 +665,18 @@ class VoteRepository:
                 PollTemplate.emoji.label("emoji"),
                 received_count,
                 latest_received_at,
+                ReceivedHeartRead.id.label("read_id"),
             )
             .join(Poll, Vote.poll_id == Poll.id)
             .join(Circle, Poll.circle_id == Circle.id)
             .outerjoin(PollTemplate, Poll.template_id == PollTemplate.id)
+            .outerjoin(
+                ReceivedHeartRead,
+                and_(
+                    ReceivedHeartRead.poll_id == Poll.id,
+                    ReceivedHeartRead.user_id == user_id,
+                ),
+            )
             .where(Vote.voted_for_id == user_id)
             .group_by(
                 Poll.id,
@@ -675,6 +684,7 @@ class VoteRepository:
                 Circle.name,
                 Poll.question_text,
                 PollTemplate.emoji,
+                ReceivedHeartRead.id,
             )
             .order_by(latest_received_at.desc())
             .limit(limit)
@@ -690,9 +700,39 @@ class VoteRepository:
                 "emoji": row.emoji,
                 "received_count": row.received_count,
                 "latest_received_at": row.latest_received_at,
+                "is_read": row.read_id is not None,
             }
             for row in result.all()
         ]
+
+    async def has_received_heart(self, user_id: uuid.UUID, poll_id: uuid.UUID) -> bool:
+        """Return whether user received at least one vote in a poll."""
+        result = await self.session.execute(
+            select(func.count(Vote.id)).where(
+                Vote.poll_id == poll_id,
+                Vote.voted_for_id == user_id,
+            )
+        )
+        return (result.scalar() or 0) > 0
+
+    async def mark_received_heart_as_read(
+        self, user_id: uuid.UUID, poll_id: uuid.UUID
+    ) -> bool:
+        """Persist received heart read state if the user received a vote."""
+        if not await self.has_received_heart(user_id, poll_id):
+            return False
+
+        result = await self.session.execute(
+            select(ReceivedHeartRead).where(
+                ReceivedHeartRead.user_id == user_id,
+                ReceivedHeartRead.poll_id == poll_id,
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing is None:
+            self.session.add(ReceivedHeartRead(user_id=user_id, poll_id=poll_id))
+            await self.session.flush()
+        return True
 
 
 class VoteSessionRepository:

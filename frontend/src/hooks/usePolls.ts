@@ -148,6 +148,27 @@ export function useReceivedHearts() {
 }
 
 /**
+ * 받은 하트 읽음 처리
+ */
+export function useMarkReceivedHeartAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (pollId: string) => pollApi.markReceivedHeartAsRead(pollId),
+    retry: false,
+    onSuccess: ({ poll_id }) => {
+      queryClient.setQueryData<Awaited<ReturnType<typeof pollApi.getReceivedHearts>>>(
+        ['polls', 'me', 'received'],
+        (old) =>
+          old?.map((item) =>
+            item.poll_id === poll_id ? { ...item, is_read: true } : item
+          )
+      );
+    },
+  });
+}
+
+/**
  * 투표 목록 리프레시
  */
 export function useRefreshPolls() {

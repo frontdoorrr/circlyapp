@@ -129,6 +129,11 @@ export interface ReceivedHeartItem {
   free_hint: ReceivedHeartHint;
 }
 
+export interface ReceivedHeartReadResponse {
+  poll_id: string;
+  is_read: boolean;
+}
+
 // ==================== Orb Mode Types ====================
 
 /**

@@ -672,3 +672,61 @@ class TestPollService:
         assert advanced.current_index == 1
         assert advanced.current_poll_id != session.current_poll_id
         assert advanced.skipped_poll_ids == []
+
+    @pytest.mark.asyncio
+    async def test_mark_received_heart_as_read_requires_received_vote(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Users can only mark hearts read when they received a vote in that poll."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="read-creator@example.com", password="password123")
+        )
+        receiver = await user_repo.create(
+            UserCreate(email="read-receiver@example.com", password="password123")
+        )
+        outsider = await user_repo.create(
+            UserCreate(email="read-outsider@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Read Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, receiver.id)
+
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Who is kind?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        db_session.add(poll)
+        await db_session.flush()
+
+        vote_repo = VoteRepository(db_session)
+        await vote_repo.create(
+            poll_id=poll.id,
+            voter_id=creator.id,
+            voter_hash="service-heart-read-hash",
+            voted_for_id=receiver.id,
+        )
+        await db_session.commit()
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=PollRepository(db_session),
+            vote_repo=vote_repo,
+            membership_repo=membership_repo,
+        )
+
+        response = await service.mark_received_heart_as_read(receiver.id, poll.id)
+        hearts = await service.get_received_hearts(receiver.id)
+
+        assert response.is_read is True
+        assert hearts[0].is_read is True
+
+        with pytest.raises(BadRequestException, match="Received heart not found"):
+            await service.mark_received_heart_as_read(outsider.id, poll.id)

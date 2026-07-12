@@ -317,3 +317,51 @@ class TestVoteRepository:
         ]
         assert candidates[0]["received_count"] == 0
         assert candidates[1]["received_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_received_hearts_read_state(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Received heart rows reflect persisted read state."""
+        user_repo = UserRepository(db_session)
+        voter = await user_repo.create(
+            UserCreate(email="heart-voter@example.com", password="password123")
+        )
+        receiver = await user_repo.create(
+            UserCreate(email="heart-receiver@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Heart Circle"), voter.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, voter.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, receiver.id)
+
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=voter.id,
+            question_text="Who made your day?",
+            ends_at=datetime.now() + timedelta(hours=1),
+        )
+        db_session.add(poll)
+        await db_session.flush()
+
+        repo = VoteRepository(db_session)
+        await repo.create(
+            poll_id=poll.id,
+            voter_id=voter.id,
+            voter_hash="heart-read-hash",
+            voted_for_id=receiver.id,
+        )
+        await db_session.commit()
+
+        rows = await repo.find_received_hearts_for_user(receiver.id)
+        assert rows[0]["is_read"] is False
+
+        marked = await repo.mark_received_heart_as_read(receiver.id, poll.id)
+        rows = await repo.find_received_hearts_for_user(receiver.id)
+
+        assert marked is True
+        assert rows[0]["is_read"] is True

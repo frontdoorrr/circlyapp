@@ -162,6 +162,13 @@ class ReceivedHeartItem(BaseModel):
     free_hint: ReceivedHeartHint
 
 
+class ReceivedHeartReadResponse(BaseModel):
+    """받은 하트 읽음 처리 응답."""
+
+    poll_id: uuid.UUID
+    is_read: bool
+
+
 class PollResultItem(BaseModel):
     """Schema for poll result item."""
 

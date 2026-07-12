@@ -15,7 +15,14 @@ from app.core.database import Base
 from app.modules.auth.models import User  # noqa: F401
 from app.modules.circles.models import Circle, CircleMember  # noqa: F401
 from app.modules.notifications.models import Notification  # noqa: F401
-from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote, VoteSession  # noqa: F401
+from app.modules.polls.models import (  # noqa: F401
+    Poll,
+    PollResult,
+    PollTemplate,
+    ReceivedHeartRead,
+    Vote,
+    VoteSession,
+)
 from app.modules.reports.models import Report  # noqa: F401
 
 # this is the Alembic Config object, which provides

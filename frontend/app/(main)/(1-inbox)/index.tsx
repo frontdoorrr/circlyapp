@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Button } from '../../../src/components/primitives/Button';
 import { Text } from '../../../src/components/primitives/Text';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
-import { useReceivedHearts } from '../../../src/hooks/usePolls';
+import { useMarkReceivedHeartAsRead, useReceivedHearts } from '../../../src/hooks/usePolls';
 import { tokens } from '../../../src/theme';
 import { useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
@@ -35,6 +35,7 @@ export default function InboxScreen() {
   const router = useRouter();
   const styles = useThemedStyles(createStyles);
   const { data, isLoading, isRefetching, refetch } = useReceivedHearts();
+  const { mutateAsync: markAsReadAsync } = useMarkReceivedHeartAsRead();
   const hearts = data ?? [];
 
   const todayCount = useMemo(() => {
@@ -54,9 +55,16 @@ export default function InboxScreen() {
   const handlePress = useCallback(
     async (item: ReceivedHeartItem) => {
       await Haptics.selectionAsync();
+      if (!item.is_read) {
+        try {
+          await markAsReadAsync(item.poll_id);
+        } catch {
+          // Result navigation should not be blocked by read-state sync failure.
+        }
+      }
       router.push(`/results/${item.poll_id}` as any);
     },
-    [router]
+    [markAsReadAsync, router]
   );
 
   const handleGoVote = useCallback(() => {

@@ -35,6 +35,7 @@ from app.modules.polls.schemas import (
     PollTemplateResponse,
     ReceivedHeartHint,
     ReceivedHeartItem,
+    ReceivedHeartReadResponse,
     VoteResponse,
     VoterRevealResponse,
     VoteSessionResponse,
@@ -314,7 +315,7 @@ class PollService:
         """Get polls where the current user received votes.
 
         This powers the first-class Inbox/받은 하트 surface. Read state is
-        intentionally returned as false until a persistent read model is added.
+        persisted per user and poll in received_heart_reads.
         """
         rows = await self.vote_repo.find_received_hearts_for_user(
             user_id,
@@ -331,7 +332,7 @@ class PollService:
                 emoji=row["emoji"],
                 received_count=row["received_count"],
                 latest_received_at=row["latest_received_at"],
-                is_read=False,
+                is_read=row["is_read"],
                 free_hint=ReceivedHeartHint(
                     circle_name=row["circle_name"],
                     time_label="최근",
@@ -339,6 +340,17 @@ class PollService:
             )
             for row in rows
         ]
+
+    async def mark_received_heart_as_read(
+        self,
+        user_id: uuid.UUID,
+        poll_id: uuid.UUID,
+    ) -> ReceivedHeartReadResponse:
+        """Mark a received heart row as read."""
+        marked = await self.vote_repo.mark_received_heart_as_read(user_id, poll_id)
+        if not marked:
+            raise BadRequestException("Received heart not found")
+        return ReceivedHeartReadResponse(poll_id=poll_id, is_read=True)
 
     async def get_poll_candidates(
         self,

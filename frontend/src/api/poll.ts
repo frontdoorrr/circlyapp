@@ -10,6 +10,7 @@ import {
   PollResponse,
   PollTemplateResponse,
   ReceivedHeartItem,
+  ReceivedHeartReadResponse,
   TemplateCategory,
   VoteRequest,
   VoteResponse,
@@ -180,6 +181,23 @@ export async function getReceivedHearts(): Promise<ReceivedHeartItem[]> {
   );
   console.log('[API] GET /polls/me/received 응답:', { status: response.status });
   return extractData<ReceivedHeartItem[]>(response.data, (d) => Array.isArray(d));
+}
+
+/**
+ * 받은 하트 읽음 처리
+ */
+export async function markReceivedHeartAsRead(
+  pollId: string
+): Promise<ReceivedHeartReadResponse> {
+  console.log('[API] POST /polls/me/received/:pollId/read 요청:', pollId);
+  const response = await apiClient.post<ApiResponse<ReceivedHeartReadResponse>>(
+    `/polls/me/received/${pollId}/read`
+  );
+  console.log('[API] POST /polls/me/received/:pollId/read 응답:', { status: response.status });
+  return extractData<ReceivedHeartReadResponse>(
+    response.data,
+    (d) => d.poll_id && d.is_read === true
+  );
 }
 
 // ==================== Orb Mode API ====================

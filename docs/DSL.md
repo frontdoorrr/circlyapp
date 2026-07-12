@@ -125,6 +125,16 @@ database Schema {
         UNIQUE(poll_id, voter_hash)
     }
 
+    // 받은 하트 읽음 상태 테이블
+    table received_heart_reads {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        user_id: UUID FOREIGN KEY -> users(id)
+        poll_id: UUID FOREIGN KEY -> polls(id)
+        read_at: TIMESTAMPTZ DEFAULT NOW()
+
+        UNIQUE(user_id, poll_id)
+    }
+
     // 투표 결과 테이블 (집계용)
     table poll_results {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
@@ -560,6 +570,7 @@ module Poll {
         POST   /api/v1/polls/sessions/{id}/skip       -> skipVoteSessionPoll
         POST   /api/v1/polls/sessions/{id}/advance    -> advanceVoteSessionPoll
         GET    /api/v1/polls/me/received              -> getReceivedHearts
+        POST   /api/v1/polls/me/received/{id}/read    -> markReceivedHeartAsRead
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
     }
@@ -653,6 +664,11 @@ module Poll {
     type ReceivedHeartHint {
         circleName: String
         timeLabel: String  // 예: "3시간 전", "어제"
+    }
+
+    type ReceivedHeartReadResponse {
+        pollId: UUID
+        isRead: Boolean
     }
 
     type VoteOption {

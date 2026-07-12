@@ -17,6 +17,7 @@ from app.modules.polls.schemas import (
     PollResponse,
     PollTemplateResponse,
     ReceivedHeartItem,
+    ReceivedHeartReadResponse,
     TemplateCreate,
     TemplateListResponse,
     TemplateUpdate,
@@ -58,6 +59,20 @@ async def get_received_hearts(
 ) -> list[ReceivedHeartItem]:
     """Get polls where the current user received votes."""
     return await service.get_received_hearts(current_user.id, limit=limit, offset=offset)
+
+
+@router.post(
+    "/me/received/{poll_id}/read",
+    response_model=ReceivedHeartReadResponse,
+    summary="Mark a received heart as read",
+)
+async def mark_received_heart_as_read(
+    poll_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> ReceivedHeartReadResponse:
+    """Mark a received heart inbox row as read."""
+    return await service.mark_received_heart_as_read(current_user.id, poll_id)
 
 
 @router.get(

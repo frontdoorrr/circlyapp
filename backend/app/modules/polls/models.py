@@ -335,3 +335,33 @@ class VoteSession(BaseModel):
 
     def __repr__(self) -> str:
         return f"<VoteSession(id={self.id}, user_id={self.user_id}, status={self.status})>"
+
+
+class ReceivedHeartRead(UUIDMixin, Base):
+    """Read marker for a received heart inbox row."""
+
+    __tablename__ = "received_heart_reads"
+    __table_args__ = (
+        UniqueConstraint("user_id", "poll_id", name="uq_received_heart_read"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    poll_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("polls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    read_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ReceivedHeartRead(user_id={self.user_id}, poll_id={self.poll_id})>"
