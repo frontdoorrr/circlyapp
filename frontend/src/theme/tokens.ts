@@ -12,37 +12,37 @@
 // ============================================================================
 
 /**
- * Primary Colors (Gas 앱 영감)
+ * Primary Colors (Vivid Violet)
  * 브랜드 메인 컬러 - 신뢰와 친근함
  */
 export const primaryColors = {
-  50: '#f3f4ff',
-  100: '#e8eaff',
-  200: '#d4d8ff',
-  300: '#b1b8ff',
-  400: '#8a92ff',
-  500: '#667eea', // Main Brand
-  600: '#5a6fd8',
-  700: '#4c5bc5',
-  800: '#3f4ba0',
-  900: '#36427d',
+  50: '#f5f3ff',
+  100: '#ede9fe',
+  200: '#ddd6fe',
+  300: '#c4b5fd',
+  400: '#a78bfa',
+  500: '#8b5cf6', // Main Brand
+  600: '#7c3aed',
+  700: '#6d28d9',
+  800: '#5b21b6',
+  900: '#4c1d95',
 } as const;
 
 /**
- * Secondary Colors
- * 서브 브랜드 컬러 - 따뜻함과 감성
+ * Secondary Colors (Vivid Magenta/Fuchsia)
+ * 서브 브랜드 컬러 - Primary와 그라디언트 페어
  */
 export const secondaryColors = {
-  50: '#fdf2ff',
+  50: '#fdf4ff',
   100: '#fae8ff',
   200: '#f5d0fe',
   300: '#f0abfc',
   400: '#e879f9',
-  500: '#764ba2', // Secondary Brand
-  600: '#8b5cf6',
-  700: '#7c3aed',
-  800: '#6d28d9',
-  900: '#5b21b6',
+  500: '#d946ef', // Secondary Brand
+  600: '#c026d3',
+  700: '#a21caf',
+  800: '#86198f',
+  900: '#701a75',
 } as const;
 
 /**
@@ -111,14 +111,14 @@ export const neutralColors = {
  */
 export const gradients = {
   // Primary Gradients
-  primary: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  primarySoft: 'linear-gradient(135deg, #e8eaff 0%, #fae8ff 100%)',
+  primary: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
+  primarySoft: 'linear-gradient(135deg, #ede9fe 0%, #fae8ff 100%)',
 
   // Emotion Gradients
   joy: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
   calm: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
   energy: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-  trust: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  trust: 'linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)',
 
   // Background Gradients
   bgLight: 'linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%)',
@@ -302,24 +302,24 @@ export const shadows = {
   },
   // Brand Colored Shadows
   primary: {
-    shadowColor: '#667eea',
+    shadowColor: '#8b5cf6',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
     elevation: 4,
   },
   primaryLg: {
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 28,
     elevation: 8,
   },
   secondary: {
-    shadowColor: '#764ba2',
+    shadowColor: '#d946ef',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 14,
+    shadowRadius: 16,
     elevation: 4,
   },
   success: {

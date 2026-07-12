@@ -124,14 +124,14 @@ const optionSelectAnimation = {
   initial: { scale: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
   pressed: { 
     scale: 0.96,
-    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+    boxShadow: '0 8px 25px rgba(139, 92, 246, 0.4)',
     transition: { duration: 0.1, ease: 'easeOut' }
   },
   selected: {
     scale: 1.02,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
     color: '#ffffff',
-    boxShadow: '0 12px 35px rgba(102, 126, 234, 0.5)',
+    boxShadow: '0 12px 35px rgba(139, 92, 246, 0.5)',
     transition: { 
       duration: 0.3, 
       ease: 'backOut',
@@ -222,7 +222,7 @@ const heartDeliverySequence = {
 .result-bar-fill {
   height: 100%;
   border-radius: 25px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #8b5cf6 0%, #d946ef 100%);
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
@@ -234,15 +234,15 @@ const heartDeliverySequence = {
 
 @keyframes pulse-glow {
   0% {
-    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 0 10px rgba(139, 92, 246, 0.3);
     transform: scale(1.02);
   }
   100% {
-    box-shadow: 0 0 0 20px rgba(102, 126, 234, 0);
+    box-shadow: 0 0 0 20px rgba(139, 92, 246, 0);
     transform: scale(1);
   }
 }
@@ -337,7 +337,7 @@ const screenTransitions = {
 #### Primary 버튼
 ```css
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
   border: none;
   border-radius: 25px;
   padding: 16px 32px;
@@ -371,12 +371,12 @@ const screenTransitions = {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
 }
 ```
 
@@ -400,7 +400,7 @@ const screenTransitions = {
   height: 100%;
   top: 0;
   left: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
   border-radius: inherit;
   transition: all 0.3s ease;
   z-index: -1;
@@ -408,7 +408,7 @@ const screenTransitions = {
 
 .btn-ghost:hover {
   color: white;
-  border-color: #667eea;
+  border-color: #8b5cf6;
 }
 
 .btn-ghost:hover::after {
@@ -433,8 +433,8 @@ const screenTransitions = {
 
 .input-nickname:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
   transform: scale(1.02);
 }
 
@@ -471,7 +471,7 @@ const screenTransitions = {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #667eea;
+  background: #8b5cf6;
   animation: loading-bounce 1.2s infinite ease-in-out;
 }
 

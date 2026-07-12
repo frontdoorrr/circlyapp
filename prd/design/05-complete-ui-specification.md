@@ -111,7 +111,7 @@
 - 문자 간격: 8px (letter-spacing: 0.5em for 각 글자 분리 효과)
 - 포커스 상태:
   - 테두리: 2px solid primary-500
-  - 그림자: 0 0 0 4px rgba(102, 126, 234, 0.1)
+  - 그림자: 0 0 0 4px rgba(139, 92, 246, 0.1)
   - 애니메이션: duration-fast, ease-out
 
 **힌트 텍스트**

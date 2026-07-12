@@ -534,7 +534,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       borderColor: theme.border,
     },
     memberCardSelected: {
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.15)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : tokens.colors.primary[50],
       borderColor: tokens.colors.primary[500],
     },
     memberCardAvatar: {

@@ -22,7 +22,7 @@ export function ResultCard({ poll, cardRef }: ResultCardProps) {
   return (
     <View ref={cardRef} style={styles.card}>
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={['#8b5cf6', '#d946ef']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

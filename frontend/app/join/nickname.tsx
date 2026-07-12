@@ -255,7 +255,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       lineHeight: 24,
     },
     circleCard: {
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : tokens.colors.primary[50],
       padding: tokens.spacing.lg,
       borderRadius: tokens.borderRadius.lg,
       marginBottom: tokens.spacing.xl,
@@ -312,7 +312,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     inputValid: {
       borderColor: tokens.colors.primary[500],
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : tokens.colors.primary[50],
     },
     inputFooter: {
       flexDirection: 'row',

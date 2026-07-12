@@ -231,7 +231,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       ...(isDark ? { borderWidth: 1, borderColor: theme.border } : tokens.shadows.sm),
     },
     itemUnread: {
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.12)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.12)' : tokens.colors.primary[50],
       ...(isDark && { borderColor: tokens.colors.primary[800] }),
     },
     iconContainer: {

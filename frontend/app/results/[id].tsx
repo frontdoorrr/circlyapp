@@ -414,7 +414,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       color: theme.textTertiary,
     },
     infoCard: {
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : tokens.colors.primary[50],
       padding: tokens.spacing.lg,
       borderRadius: tokens.borderRadius.lg,
       marginTop: tokens.spacing.xl,

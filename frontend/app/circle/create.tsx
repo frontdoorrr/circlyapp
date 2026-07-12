@@ -259,7 +259,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     inputValid: {
       borderColor: tokens.colors.primary[500],
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : tokens.colors.primary[50],
     },
     textArea: {
       minHeight: 100,
@@ -287,7 +287,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       color: tokens.colors.error[isDark ? 400 : 600],
     },
     infoCard: {
-      backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : tokens.colors.primary[50],
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : tokens.colors.primary[50],
       padding: tokens.spacing.lg,
       borderRadius: tokens.borderRadius.lg,
       ...(isDark && { borderWidth: 1, borderColor: tokens.colors.primary[800] }),
