@@ -808,7 +808,7 @@
   - [x] `docs/DSL.md` — 레거시 모드 표기를 Circly 공식 용어 `Orb Mode`로 정리
   - [x] `prd/features/05-orb-mode-implementation.md` — “실명 공개” 대신 안전한 힌트/단계적 공개 정책으로 재정의
   - [x] `prd/business/01-business-model.md` — 레거시 변수명/문구를 Orb Mode 기준으로 정리하고 미성년자 안전 문구 추가
-- [ ] **18.12 질문 카테고리 안전 필터** (P0) — 외모/호감/크러시 질문은 핵심 카테고리로 유지하되, 비하/상처/부정 비교형 질문 금지
+- [x] **18.12 질문 카테고리 안전 필터** (P0) — 외모/호감/크러시 질문은 핵심 카테고리로 유지하되, 비하/상처/부정 비교형 질문 금지
   - [x] `prd/design/04-user-flow.md` — Create 카테고리에 긍정형 외모/호감/크러시 질문 노출 정책 명시
   - [x] `prd/features/01-voting-spec.md` — 허용 예시(`잘생긴 사람은?`, `우리 Circle 대표 고양이상은?`)와 금지 예시(`못생긴 사람은?`) 기준 추가
   - [x] `prd/features/01-voting-spec.md` — 투표 생성 시 후보 제한 필터(성별 등 선택 입력한 프로필 속성 기반) 정책 추가
