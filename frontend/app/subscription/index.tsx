@@ -336,7 +336,7 @@ export default function SubscriptionScreen() {
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>👀</Text>
               <View style={styles.featureContent}>
-                <Text style={styles.featureTitle}>투표자 공개</Text>
+                <Text style={styles.featureTitle}>고급 힌트</Text>
                 <Text style={styles.featureDescription}>
                   누가 나를 선택했는지 확인할 수 있어요
                 </Text>

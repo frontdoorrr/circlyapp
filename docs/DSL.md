@@ -136,6 +136,18 @@ database Schema {
         UNIQUE(user_id, poll_id)
     }
 
+    // 받은 하트/Orb Mode 힌트 테이블
+    table vote_hints {
+        id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+        vote_id: UUID FOREIGN KEY -> votes(id)
+        user_id: UUID FOREIGN KEY -> users(id)  // 힌트를 받는 사용자
+        tier: VARCHAR(20) NOT NULL              // CIRCLE, TIME, INITIAL, FULL
+        hint_text: TEXT NOT NULL
+        created_at: TIMESTAMPTZ DEFAULT NOW()
+
+        UNIQUE(vote_id, tier)
+    }
+
     // 투표 결과 테이블 (집계용)
     table poll_results {
         id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
@@ -573,6 +585,7 @@ module Poll {
         POST   /api/v1/polls/sessions/{id}/advance    -> advanceVoteSessionPoll
         GET    /api/v1/polls/me/received              -> getReceivedHearts
         POST   /api/v1/polls/me/received/{id}/read    -> markReceivedHeartAsRead
+        GET    /api/v1/polls/{id}/hints               -> getVoteHints
         GET    /api/v1/polls/{id}/has-voted           -> hasVoted
         GET    /api/v1/polls/{id}/results             -> getResults
     }
@@ -673,6 +686,21 @@ module Poll {
         isRead: Boolean
     }
 
+    type VoteHintTier = "CIRCLE" | "TIME" | "INITIAL" | "FULL"
+
+    type VoteHint {
+        voteId: UUID
+        tier: VoteHintTier
+        text: String
+        unlocked: Boolean
+    }
+
+    type VoteHintResponse {
+        pollId: UUID
+        questionText: String
+        hints: List<VoteHint>
+    }
+
     type VoteOption {
         userId: UUID
         nickname: String
@@ -723,7 +751,7 @@ module Poll {
     type Vote {
         id: UUID
         pollId: UUID
-        voterId: UUID       // Orb Mode 구독자에게만 공개
+        voterId: UUID       // 내부 저장용. 직접 실명 공개가 아니라 안전 힌트 생성에 사용
         voterHash: String   // 중복 투표 방지용
         votedForId: UUID
         createdAt: DateTime
@@ -1439,18 +1467,21 @@ security SecurityPolicy {
 
     // 투표 익명성 및 Orb Mode
     vote_anonymity {
-        principle: "기본 익명, Orb Mode 구독자에게만 투표자 공개"
+        principle: "기본 익명, Orb Mode에서도 실명 공개가 아니라 단계형 안전 힌트 제공"
         implementation: {
-            - voter_id 저장 (Orb Mode용)
+            - voter_id 저장 (힌트 생성용 내부 데이터)
             - voter_hash = SHA-256(voter_id + poll_id + salt) 저장 (중복 투표 방지)
             - 일반 사용자: 투표자 정보 비공개 (익명)
-            - Orb Mode 구독자: 자신에게 투표한 사람 조회 가능
+            - 무료 사용자: Circle/시간대 힌트
+            - Orb Mode 구독자: 이니셜/앱 내 표시명 힌트까지 단계적으로 제공
+            - 법적 실명, 연락처, 계정 식별자, 민감 개인정보는 공개 금지
             - RevenueCat 연동으로 구독 상태 확인
         }
-        god_mode: {
-            - 구독자가 "누가 나를 선택했는지" 볼 수 있음
+        orb_mode: {
+            - 구독자가 "누가 나를 선택했는지"를 안전한 단계형 힌트로 확인
             - 핵심 수익화 모델
-            - API: GET /api/v1/polls/{id}/voters (Orb Mode only)
+            - API: GET /api/v1/polls/{id}/hints
+            - Circle 멤버십 검증 필수
         }
     }
 

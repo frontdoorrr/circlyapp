@@ -231,6 +231,38 @@ class Vote(UUIDMixin, Base):
         return f"<Vote(poll_id={self.poll_id}, voter_hash={self.voter_hash[:8]}...)>"
 
 
+class VoteHint(UUIDMixin, Base):
+    """Persisted safe hint generated from a received vote."""
+
+    __tablename__ = "vote_hints"
+    __table_args__ = (UniqueConstraint("vote_id", "tier", name="uq_vote_hint_tier"),)
+
+    vote_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("votes.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tier: Mapped[str] = mapped_column(String(20), nullable=False)
+    hint_text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    vote: Mapped["Vote"] = relationship("Vote")
+
+    def __repr__(self) -> str:
+        return f"<VoteHint(vote_id={self.vote_id}, tier={self.tier})>"
+
+
 class PollResult(UUIDMixin, Base):
     """Poll result model (aggregated).
 

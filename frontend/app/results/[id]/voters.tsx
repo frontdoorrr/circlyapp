@@ -1,50 +1,35 @@
-import { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { tokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
-import { useMyVoters } from '../../../src/hooks/usePolls';
-import { ApiError } from '../../../src/types/api';
+import { useMyVoteHints } from '../../../src/hooks/usePolls';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 /**
- * Orb Mode - 투표자 공개 화면
+ * Orb Mode - 안전 힌트 화면
  *
- * 나를 선택한 사람들의 목록을 순차적으로 공개합니다.
+ * 나를 선택한 투표의 단계형 힌트를 순차적으로 표시합니다.
  */
 export default function VotersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const { data, isLoading, error } = useMyVoters(id, true);
-
-  // 403 FORBIDDEN 에러 시 Subscription 화면으로 리다이렉트
-  useEffect(() => {
-    if (error) {
-      const isForbidden =
-        (error instanceof ApiError && error.code === 'FORBIDDEN') ||
-        (error as any)?.response?.status === 403;
-
-      if (isForbidden) {
-        router.replace('/subscription');
-      }
-    }
-  }, [error]);
+  const { data, isLoading, error } = useMyVoteHints(id, true);
 
   if (isLoading) {
     return (
       <>
         <Stack.Screen
           options={{
-            title: '투표자 보기',
+            title: '힌트 보기',
             headerShown: true,
             headerBackTitle: '뒤로',
           }}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={tokens.colors.primary[500]} />
-          <Text style={styles.loadingText}>투표자를 불러오는 중...</Text>
+          <Text style={styles.loadingText}>힌트를 불러오는 중...</Text>
         </View>
       </>
     );
@@ -55,34 +40,26 @@ export default function VotersScreen() {
       <>
         <Stack.Screen
           options={{
-            title: '투표자 보기',
+            title: '힌트 보기',
             headerShown: true,
             headerBackTitle: '뒤로',
           }}
         />
         <View style={styles.errorContainer}>
           <Text style={styles.errorEmoji}>😢</Text>
-          <Text style={styles.errorText}>투표자를 불러올 수 없습니다</Text>
+          <Text style={styles.errorText}>힌트를 불러올 수 없습니다</Text>
         </View>
       </>
     );
   }
 
-  const formatTime = (isoString: string) => {
-    const date = new Date(isoString);
-    return date.toLocaleString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const receivedCount = new Set(data.hints.map((hint) => hint.vote_id)).size;
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: '투표자 보기',
+          title: '힌트 보기',
           headerShown: true,
           headerBackTitle: '뒤로',
         }}
@@ -96,29 +73,29 @@ export default function VotersScreen() {
           {/* 헤더 */}
           <View style={styles.header}>
             <Text style={styles.headerEmoji}>🔮</Text>
-            <Text style={styles.headerTitle}>나를 선택한 사람들</Text>
+            <Text style={styles.headerTitle}>나를 선택한 힌트</Text>
             <Text style={styles.headerQuestion}>{data.question_text}</Text>
             <Text style={styles.headerCount}>
-              총 {data.voters.length}명이 선택했어요
+              총 {receivedCount}명이 선택했어요
             </Text>
           </View>
 
-          {/* 투표자 리스트 */}
-          {data.voters.length > 0 ? (
+          {/* 힌트 리스트 */}
+          {data.hints.length > 0 ? (
             <View style={styles.votersList}>
-              {data.voters.map((voter, index) => (
+              {data.hints.map((hint, index) => (
                 <Animated.View
-                  key={voter.user_id}
+                  key={`${hint.vote_id}-${hint.tier}`}
                   entering={FadeInDown.delay(index * 150).duration(400)}
                   style={styles.voterCard}
                 >
-                  <Text style={styles.voterEmoji}>{voter.profile_emoji}</Text>
+                  <Text style={styles.voterEmoji}>{hint.unlocked ? '✨' : '🔒'}</Text>
                   <View style={styles.voterInfo}>
                     <Text style={styles.voterName}>
-                      {voter.nickname || '익명'}
+                      {hint.text}
                     </Text>
                     <Text style={styles.voterTime}>
-                      {formatTime(voter.voted_at)}
+                      {hint.unlocked ? hint.tier : 'Orb Mode 힌트'}
                     </Text>
                   </View>
                 </Animated.View>

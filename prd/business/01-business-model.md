@@ -38,12 +38,12 @@ const freeFeatures = {
 ### Phase 2: 프리미엄 모델 도입 (12-24개월)
 **목표**: 15% 사용자의 유료 전환, ARR $1.2M 달성
 
-#### 🎯 핵심 수익 모델: "Orb Mode" 호기심 기반 결제
+#### 🎯 핵심 수익 모델: "Orb Mode" 안전 힌트 기반 결제
 ```javascript
-const godModeRevenue = {
+const orbModeRevenue = {
   core_concept: {
     trigger: '투표에서 선택받은 사용자에게 "누가 나를 선택했을까?" 호기심 유발',
-    monetization: '익명성 부분 해제를 통한 단계별 유료 힌트 제공',
+    monetization: '익명성을 유지한 상태에서 단계별 안전 힌트 제공',
     psychology: 'FOMO + 호기심 + 사회적 승인 욕구',
     target_emotion: '궁금증과 설렘'
   },
@@ -66,8 +66,8 @@ const godModeRevenue = {
     },
     full_reveal: {
       price: 4.99,           // $4.99 (6,500원)
-      reveal: '완전한 신원 공개',
-      example: '김현수가 당신을 선택했어요!'
+      reveal: '앱 내 표시명 기반 고급 힌트',
+      example: '현수 닉네임의 친구가 당신을 선택했어요!'
     }
   },
   
@@ -96,7 +96,7 @@ const proSubscription = {
   },
   
   enhanced_features: {
-    unlimited_god_mode: '무제한 Orb Mode 사용',
+    unlimited_orb_mode: '무제한 Orb Mode 안전 힌트',
     premium_templates: '50+ 프리미엄 질문 템플릿', 
     advanced_cards: '10가지 결과 카드 디자인',
     secret_messaging: '익명 메시지 발송 기능',
@@ -106,6 +106,11 @@ const proSubscription = {
   }
 };
 ```
+
+안전 원칙:
+- Orb Mode는 법적 실명, 연락처, 계정 식별자, 민감 개인정보를 공개하지 않는다.
+- 힌트는 사용자가 앱 안에서 설정한 표시명/닉네임과 Circle 맥락을 기준으로 제공한다.
+- 미성년자 사용자를 전제로 하므로 수익화 문구는 불안, 압박, 조롱을 유도하지 않고 설렘/칭찬 맥락에 한정한다.
 
 #### 타겟 사용자
 - **활발한 사용자**: 주 3회 이상 투표 생성
@@ -197,7 +202,7 @@ const competitiveAdvantage = {
 ```markdown
 | 요소 | Circly | 경쟁사 A | 경쟁사 B |
 |------|--------|---------|---------|
-| 익명성 보장 | ✅ 기본 익명 (Orb Mode로 수익화) | ⚠️ 부분 익명 | ❌ 공개 투표 |
+| 익명성 보장 | ✅ 기본 익명 + Orb Mode 안전 힌트 | ⚠️ 부분 익명 | ❌ 공개 투표 |
 | 안전 시스템 | ✅ AI+인간 검토 | ⚠️ 기본 신고 | ❌ 최소한 조치 |
 | 한국 문화 최적화 | ✅ 완전 최적화 | ❌ 번역만 | ❌ 글로벌 표준 |
 | 교육 기관 지원 | ✅ 전문 기능 | ❌ 없음 | ❌ 없음 |
@@ -212,10 +217,10 @@ const financialProjection = {
   year1: {
     total_users: 100000,
     active_monthly_users: 60000,
-    god_mode_buyers: 0,              // 베타 테스트 기간
+    orb_mode_buyers: 0,              // 베타 테스트 기간
     subscribers: 0,
     revenue: {
-      god_mode: 0,
+      orb_mode: 0,
       subscriptions: 0,
       total: 0
     },
@@ -226,10 +231,10 @@ const financialProjection = {
   year2: {
     total_users: 500000,
     active_monthly_users: 300000,
-    god_mode_buyers: 22500,          // 15% 월간 전환율 (300K * 0.3 * 0.4 * 0.25)
+    orb_mode_buyers: 22500,          // 15% 월간 전환율 (300K * 0.3 * 0.4 * 0.25)
     subscribers: 2500,               // 0.5% 구독 전환율
     revenue: {
-      god_mode: 673500,              // $22.5K buyers * $2.49 avg * 12 months
+      orb_mode: 673500,              // $22.5K buyers * $2.49 avg * 12 months
       subscriptions: 149700,         // 2.5K * $49.99 annual
       total: 823200
     },
@@ -240,10 +245,10 @@ const financialProjection = {
   year3: {
     total_users: 1200000,
     active_monthly_users: 720000,
-    god_mode_buyers: 54000,          // 더 높은 참여율
+    orb_mode_buyers: 54000,          // 더 높은 참여율
     subscribers: 12000,              // 1% 구독 전환율
     revenue: {
-      god_mode: 1616400,             // $54K buyers * $2.49 avg * 12 months  
+      orb_mode: 1616400,             // $54K buyers * $2.49 avg * 12 months
       subscriptions: 599880,         // 12K * $49.99 annual
       total: 2216280
     },
@@ -254,13 +259,13 @@ const financialProjection = {
 
 const keyMetrics = {
   customer_acquisition_cost: 3,        // $3 CAC (바이럴 효과로 낮음)
-  god_mode_ltv: 85,                    // Orb Mode 사용자 $85 LTV
+  orb_mode_ltv: 85,                    // Orb Mode 사용자 $85 LTV
   subscription_ltv: 180,               // 구독자 $180 LTV  
   blended_ltv: 95,                     // 혼합 LTV
   ltv_cac_ratio: 32,                   // 32:1 (매우 건강한 수준)
   monthly_churn_rate: 0.03,            // 3% (중독성 높은 콘텐츠)
-  god_mode_conversion_rate: 0.25,      // 25% (매우 높은 충동구매율)
-  average_god_mode_purchase: 2.49     // $2.49 평균 구매
+  orb_mode_conversion_rate: 0.25,      // 25% (매우 높은 충동구매율)
+  average_orb_mode_purchase: 2.49     // $2.49 평균 구매
 };
 ```
 
@@ -350,7 +355,7 @@ const globalizationPlan = {
 
 ### UX/UI 설계 원칙
 ```javascript
-const godModeUX = {
+const orbModeUX = {
   notification_timing: {
     trigger_moment: '투표 결과 발표 직후',
     notification_text: '🔥 누군가 당신을 "[질문내용]"에서 선택했어요!',
@@ -399,7 +404,7 @@ const implementationPhases = {
 ### 데이터베이스 설계
 ```sql
 -- Orb Mode 구매 내역
-CREATE TABLE god_mode_purchases (
+CREATE TABLE orb_mode_hint_purchases (
     id UUID PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     poll_id STRING REFERENCES polls(id), 

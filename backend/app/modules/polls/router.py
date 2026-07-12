@@ -22,6 +22,7 @@ from app.modules.polls.schemas import (
     TemplateListResponse,
     TemplateUpdate,
     UpdatePollStatusRequest,
+    VoteHintResponse,
     VoteRequest,
     VoteResponse,
     VoterRevealResponse,
@@ -238,6 +239,25 @@ async def get_my_voters(
     if not current_user.is_orb_mode:
         raise AuthorizationError("Orb Mode subscription required")
     return await service.get_voters_for_user(poll_id, current_user.id)
+
+
+@router.get(
+    "/{poll_id}/hints",
+    response_model=VoteHintResponse,
+    summary="[Orb Mode] Get safe hints for votes that selected me",
+    tags=["Orb Mode"],
+)
+async def get_my_vote_hints(
+    poll_id: uuid.UUID,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> VoteHintResponse:
+    """Return tiered safe hints for votes received by the current user."""
+    return await service.get_vote_hints_for_user(
+        poll_id,
+        current_user.id,
+        is_orb_mode=current_user.is_orb_mode,
+    )
 
 
 # ==================== Admin Endpoints ====================

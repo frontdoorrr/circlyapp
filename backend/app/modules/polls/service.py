@@ -37,6 +37,8 @@ from app.modules.polls.schemas import (
     ReceivedHeartHint,
     ReceivedHeartItem,
     ReceivedHeartReadResponse,
+    VoteHintItem,
+    VoteHintResponse,
     VoteResponse,
     VoterRevealResponse,
     VoteSessionAvailabilityResponse,
@@ -45,7 +47,7 @@ from app.modules.polls.schemas import (
 
 if TYPE_CHECKING:
     from app.modules.notifications.service import NotificationService
-    from app.modules.polls.models import Poll, VoteSession
+    from app.modules.polls.models import Poll, Vote, VoteSession
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,8 @@ class PollService:
     CANDIDATE_COUNT = 4
     SESSION_LIMIT = 12
     SESSION_COOLDOWN = timedelta(hours=1)
+    FREE_HINT_TIERS = {"CIRCLE", "TIME"}
+    ORB_HINT_TIERS = {"CIRCLE", "TIME", "INITIAL", "FULL"}
 
     def __init__(
         self,
@@ -959,6 +963,95 @@ class PollService:
             poll_id=poll_id,
             question_text=poll.question_text,
             voters=voters,
+        )
+
+    @staticmethod
+    def _time_hint(voted_at: datetime) -> str:
+        """Return a coarse time-of-day hint."""
+        hour = voted_at.hour
+        if 5 <= hour < 12:
+            return "오전 시간대에 선택했어요"
+        if 12 <= hour < 18:
+            return "오후 시간대에 선택했어요"
+        if 18 <= hour < 24:
+            return "저녁 시간대에 선택했어요"
+        return "밤 시간대에 선택했어요"
+
+    @staticmethod
+    def _safe_voter_label(vote: Vote) -> str:
+        """Return the app display label, not a legal identity."""
+        return vote.voter.username or vote.voter.display_name or "익명"
+
+    def _build_hint_texts(self, vote: Vote, circle_name: str) -> dict[str, str]:
+        """Build all safe hint tier texts for a vote."""
+        label = self._safe_voter_label(vote)
+        initial = label[0] if label else "?"
+        return {
+            "CIRCLE": f"{circle_name} Circle 친구가 선택했어요",
+            "TIME": self._time_hint(vote.created_at),
+            "INITIAL": f"앱 표시명의 첫 글자는 '{initial}'이에요",
+            "FULL": f"{vote.voter.profile_emoji or '👤'} {label} 표시명의 친구가 선택했어요",
+        }
+
+    async def get_vote_hints_for_user(
+        self,
+        poll_id: uuid.UUID,
+        user_id: uuid.UUID,
+        *,
+        is_orb_mode: bool,
+    ) -> VoteHintResponse:
+        """Return safe tiered hints for votes received by the user."""
+        poll = await self.poll_repo.find_by_id(poll_id)
+        if poll is None:
+            raise PollNotFoundError()
+
+        is_member = await self.membership_repo.exists(poll.circle_id, user_id)
+        if not is_member:
+            raise BadRequestException("You are not a member of this circle")
+
+        if self.circle_repo is None:
+            raise RuntimeError("CircleRepository is not configured")
+        circle = await self.circle_repo.find_by_id(poll.circle_id)
+        circle_name = circle.name if circle is not None else "내"
+
+        votes = await self.vote_repo.find_voters_for_user(poll_id, user_id)
+        existing_hints = await self.vote_repo.find_vote_hints_for_votes(
+            [vote.id for vote in votes]
+        )
+        hint_map = {
+            (hint.vote_id, hint.tier): hint
+            for hint in existing_hints
+        }
+        unlocked_tiers = self.ORB_HINT_TIERS if is_orb_mode else self.FREE_HINT_TIERS
+
+        response_hints: list[VoteHintItem] = []
+        for vote in votes:
+            tier_texts = self._build_hint_texts(vote, circle_name)
+            for tier in ("CIRCLE", "TIME", "INITIAL", "FULL"):
+                hint = hint_map.get((vote.id, tier))
+                if hint is None:
+                    hint = await self.vote_repo.create_vote_hint(
+                        vote_id=vote.id,
+                        user_id=user_id,
+                        tier=tier,
+                        hint_text=tier_texts[tier],
+                    )
+                    hint_map[(vote.id, tier)] = hint
+
+                unlocked = tier in unlocked_tiers
+                response_hints.append(
+                    VoteHintItem(
+                        vote_id=vote.id,
+                        tier=tier,  # type: ignore[arg-type]
+                        text=hint.hint_text if unlocked else "Orb Mode에서 열 수 있어요",
+                        unlocked=unlocked,
+                    )
+                )
+
+        return VoteHintResponse(
+            poll_id=poll_id,
+            question_text=poll.question_text,
+            hints=response_hints,
         )
 
     async def broadcast_poll(

@@ -14,6 +14,7 @@ import {
   TemplateCategory,
   VoteRequest,
   VoteResponse,
+  VoteHintResponse,
   VoteSessionCreate,
   VoteSessionAvailabilityResponse,
   VoteSessionResponse,
@@ -217,6 +218,18 @@ export async function markReceivedHeartAsRead(
 }
 
 // ==================== Orb Mode API ====================
+
+/**
+ * [Orb Mode] 나를 선택한 투표의 안전 힌트 조회
+ */
+export async function getMyVoteHints(pollId: string): Promise<VoteHintResponse> {
+  console.log('[API] GET /polls/:pollId/hints 요청:', pollId);
+  const response = await apiClient.get<ApiResponse<VoteHintResponse>>(
+    `/polls/${pollId}/hints`
+  );
+  console.log('[API] GET /polls/:pollId/hints 응답:', { status: response.status });
+  return extractData<VoteHintResponse>(response.data, (d) => d.poll_id && d.hints);
+}
 
 /**
  * [Orb Mode] 나를 선택한 투표자 목록 조회

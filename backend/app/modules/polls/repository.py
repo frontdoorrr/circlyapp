@@ -11,7 +11,14 @@ from sqlalchemy.orm import selectinload
 from app.core.enums import PollStatus, TemplateCategory
 from app.modules.auth.models import User
 from app.modules.circles.models import Circle, CircleMember
-from app.modules.polls.models import Poll, PollTemplate, ReceivedHeartRead, Vote, VoteSession
+from app.modules.polls.models import (
+    Poll,
+    PollTemplate,
+    ReceivedHeartRead,
+    Vote,
+    VoteHint,
+    VoteSession,
+)
 
 
 class VoteResultDict(TypedDict):
@@ -636,6 +643,39 @@ class VoteRepository:
             .order_by(Vote.created_at.desc())
         )
         return list(result.scalars().all())
+
+    async def find_vote_hints_for_votes(
+        self,
+        vote_ids: list[uuid.UUID],
+    ) -> list[VoteHint]:
+        """Find persisted hints for a list of votes."""
+        if not vote_ids:
+            return []
+
+        result = await self.session.execute(
+            select(VoteHint).where(VoteHint.vote_id.in_(vote_ids))
+        )
+        return list(result.scalars().all())
+
+    async def create_vote_hint(
+        self,
+        *,
+        vote_id: uuid.UUID,
+        user_id: uuid.UUID,
+        tier: str,
+        hint_text: str,
+    ) -> VoteHint:
+        """Persist a generated safe vote hint."""
+        hint = VoteHint(
+            vote_id=vote_id,
+            user_id=user_id,
+            tier=tier,
+            hint_text=hint_text,
+        )
+        self.session.add(hint)
+        await self.session.flush()
+        await self.session.refresh(hint)
+        return hint
 
     async def find_received_hearts_for_user(
         self,

@@ -143,6 +143,21 @@ export interface ReceivedHeartReadResponse {
 
 // ==================== Orb Mode Types ====================
 
+export type VoteHintTier = 'CIRCLE' | 'TIME' | 'INITIAL' | 'FULL';
+
+export interface VoteHintItem {
+  vote_id: string;
+  tier: VoteHintTier;
+  text: string;
+  unlocked: boolean;
+}
+
+export interface VoteHintResponse {
+  poll_id: string;
+  question_text: string;
+  hints: VoteHintItem[];
+}
+
 /**
  * Orb Mode 투표자 정보 - 나를 선택한 사람
  */

@@ -65,7 +65,7 @@ export default function ResultsScreen() {
 
   const handleOrbMode = () => {
     if (isOrbMode) {
-      // Orb Mode 활성화됨 - 투표자 공개 화면으로 이동
+      // Orb Mode 활성화됨 - 안전 힌트 화면으로 이동
       router.push(`/results/${id}/voters`);
     } else {
       // Orb Mode 구독 화면으로 이동
@@ -272,7 +272,7 @@ export default function ResultsScreen() {
                   styles.orbModeSubtitle,
                   !isOrbMode && styles.orbModeSubtitleDisabled,
                 ]}>
-                  {isOrbMode ? '투표자를 확인해보세요' : 'Orb Mode 구독 필요'}
+                  {isOrbMode ? '힌트를 확인해보세요' : 'Orb Mode 고급 힌트'}
                 </Text>
               </View>
               <Text style={styles.orbModeArrow}>→</Text>

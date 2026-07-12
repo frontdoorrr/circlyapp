@@ -195,7 +195,7 @@ export default function PollDetailScreen() {
     return `${seconds}초`;
   };
 
-  // Orb Mode - 투표자 보기
+  // Orb Mode - 안전 힌트 보기
   const handleOrbMode = () => {
     if (isOrbMode) {
       router.push(`/results/${id}/voters`);
@@ -449,7 +449,7 @@ export default function PollDetailScreen() {
                 styles.orbModeSubtitle,
                 !isOrbMode && styles.orbModeSubtitleDisabled,
               ]}>
-                {isOrbMode ? '투표자를 확인해보세요' : 'Orb Mode 구독 필요'}
+                {isOrbMode ? '힌트를 확인해보세요' : 'Orb Mode 고급 힌트'}
               </Text>
             </View>
             <Text style={styles.orbModeArrow}>→</Text>

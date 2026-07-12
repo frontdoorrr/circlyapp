@@ -17,8 +17,10 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 - **미완료**: 결제 시스템 연동, Subscription UI
 
 ### 1.3 MVP 범위
-- Full Reveal만 구현 (현재 로직 유지)
-- 단계별 힌트 시스템 (Level 1-4)은 Phase 2로 연기
+- 실명/계정 직접 공개 대신 안전한 단계형 힌트 시스템을 기본 계약으로 사용
+- 무료: Circle/시간대 힌트
+- Orb Mode: 이니셜/앱 내 표시명 기반 고급 힌트
+- 법적 실명, 연락처, 계정 식별자, 민감 개인정보 공개 금지
 
 ---
 
@@ -30,14 +32,14 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 |------|------|----------|
 | Backend | Vote.voter_id 컬럼 | `backend/app/modules/polls/models.py` |
 | Backend | User.is_orb_mode 필드 | `backend/app/modules/auth/models.py` |
-| Backend | GET /polls/{id}/voters API | `backend/app/modules/polls/router.py` |
+| Backend | GET /polls/{id}/hints API | `backend/app/modules/polls/router.py` |
 | Backend | get_voters_for_user() 서비스 | `backend/app/modules/polls/service.py` |
 | Backend | find_voters_for_user() 쿼리 | `backend/app/modules/polls/repository.py` |
 | Frontend | VoterInfo, VoterRevealResponse 타입 | `frontend/src/types/poll.ts` |
 | Frontend | is_orb_mode 타입 정의 | `frontend/src/types/auth.ts` |
 | Frontend | getMyVoters() API 함수 | `frontend/src/api/poll.ts` |
 | Frontend | useMyVoters() React Query 훅 | `frontend/src/hooks/usePolls.ts` |
-| Frontend | 투표자 공개 화면 | `frontend/app/results/[id]/voters.tsx` |
+| Frontend | 안전 힌트 화면 | `frontend/app/results/[id]/voters.tsx` |
 | Frontend | 구독 유도 모달 (Alert) | `frontend/app/results/[id].tsx` |
 
 ### 2.2 미완료 항목 (15%)
@@ -251,7 +253,7 @@ curl -X POST https://xxx.ngrok.io/webhooks/revenuecat \
 **UI 구성**:
 - 헤더: 이모지 (🔮) + 타이틀 + 설명
 - 기능 목록:
-  - 👀 투표에서 나를 선택한 친구 공개
+  - 👀 나를 선택한 친구의 안전한 단계형 힌트
   - 🔓 모든 투표 결과 투표자 확인
   - 💜 프리미엄 배지 획득
 - 가격 카드: 월간/연간 옵션 (선택 가능)
@@ -287,7 +289,7 @@ useEffect(() => {
 #### 검증
 - Sandbox 환경에서 구매 테스트
 - 구독 후 `is_orb_mode` 변경 확인
-- 투표자 공개 화면 접근 확인
+- 안전 힌트 화면 접근 확인
 
 ---
 
@@ -326,11 +328,11 @@ useEffect(() => {
 4. Subscription 화면 진입
 5. 구독 구매 (Sandbox)
 6. Webhook 수신 → `is_orb_mode=True` 설정
-7. 투표자 공개 화면 접근 성공
+7. 안전 힌트 화면 접근 성공
 8. 투표자 목록 정상 표시
 
 ### 에러 케이스
-- 비구독자가 `/polls/{id}/voters` 직접 접근 → 403 에러
+- 비구독자가 고급 힌트에 접근 → 잠금 상태 반환 또는 403 에러
 - 결제 실패 → 에러 메시지 표시, 재시도 가능
 - Webhook 중복 → Idempotency로 무시
 
@@ -353,7 +355,7 @@ MVP 완료 후 추가 구현 가능:
 
 | 기능 | 설명 |
 |------|------|
-| 단계별 힌트 시스템 | Level 1-4 점진적 공개 |
+| 단계별 힌트 시스템 | 무료 Circle/시간대 → Orb Mode 이니셜/앱 내 표시명 |
 | 동적 가격 / A/B 테스트 | 시간대별, 사용자별 가격 최적화 |
 | 번들 패키지 | 3개 힌트 30% 할인 등 |
 | 프리미엄 배지/아이콘 | Orb Mode 구독자 전용 UI |

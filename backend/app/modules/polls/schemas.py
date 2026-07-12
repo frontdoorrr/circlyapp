@@ -150,6 +150,26 @@ class VoterRevealResponse(BaseModel):
     voters: list[VoterInfo]
 
 
+VoteHintTier = Literal["CIRCLE", "TIME", "INITIAL", "FULL"]
+
+
+class VoteHintItem(BaseModel):
+    """단계형 안전 힌트 항목."""
+
+    vote_id: uuid.UUID
+    tier: VoteHintTier
+    text: str
+    unlocked: bool
+
+
+class VoteHintResponse(BaseModel):
+    """나를 선택한 투표에 대한 안전 힌트 응답."""
+
+    poll_id: uuid.UUID
+    question_text: str
+    hints: list[VoteHintItem]
+
+
 class ReceivedHeartHint(BaseModel):
     """무료 상태에서 보여주는 받은 하트 힌트."""
 

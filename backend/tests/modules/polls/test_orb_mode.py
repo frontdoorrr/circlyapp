@@ -190,6 +190,66 @@ class TestOrbModeVotersEndpoint:
         assert data["voters"][0]["user_id"] == str(voter.id)
 
     @pytest.mark.asyncio
+    async def test_get_vote_hints_free_user_locks_identity_tiers(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        set_current_user,
+        templates_fixture: list[PollTemplate],
+    ) -> None:
+        """Free users only receive Circle/time hints for received votes."""
+        owner = await create_user(db_session, "hint-owner@test.com", "owner")
+        voter = await create_user(db_session, "hint-voter@test.com", "minji")
+        target = await create_user(db_session, "hint-target@test.com", "target")
+        circle = await create_circle_with_members(db_session, owner, [voter, target])
+        poll = await create_poll(db_session, circle, templates_fixture[0], owner)
+        vote = await cast_vote(db_session, poll, voter, target)
+
+        set_current_user(target)
+        response = await client.get(f"/polls/{poll.id}/hints")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["poll_id"] == str(poll.id)
+        hints = data["hints"]
+        assert {hint["tier"] for hint in hints} == {"CIRCLE", "TIME", "INITIAL", "FULL"}
+        unlocked = {hint["tier"] for hint in hints if hint["unlocked"]}
+        assert unlocked == {"CIRCLE", "TIME"}
+        assert all(hint["vote_id"] == str(vote.id) for hint in hints)
+        assert all("minji" not in hint["text"] for hint in hints if not hint["unlocked"])
+
+    @pytest.mark.asyncio
+    async def test_get_vote_hints_orb_mode_unlocks_safe_identity_tiers(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        set_current_user,
+        templates_fixture: list[PollTemplate],
+    ) -> None:
+        """Orb Mode users receive initial and app display-name hints."""
+        owner = await create_user(db_session, "orb-hint-owner@test.com", "owner")
+        voter = await create_user(db_session, "orb-hint-voter@test.com", "seoyeon")
+        target = await create_user(
+            db_session,
+            "orb-hint-target@test.com",
+            "target",
+            is_orb_mode=True,
+        )
+        circle = await create_circle_with_members(db_session, owner, [voter, target])
+        poll = await create_poll(db_session, circle, templates_fixture[0], owner)
+        await cast_vote(db_session, poll, voter, target)
+
+        set_current_user(target)
+        response = await client.get(f"/polls/{poll.id}/hints")
+
+        assert response.status_code == status.HTTP_200_OK
+        hints = response.json()["hints"]
+        unlocked = {hint["tier"] for hint in hints if hint["unlocked"]}
+        assert unlocked == {"CIRCLE", "TIME", "INITIAL", "FULL"}
+        full_hint = next(hint for hint in hints if hint["tier"] == "FULL")
+        assert "seoyeon" in full_hint["text"]
+
+    @pytest.mark.asyncio
     async def test_get_voters_orb_mode_disabled(
         self,
         client: AsyncClient,
