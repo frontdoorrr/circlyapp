@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import { logger } from '../../src/utils/logger';
 import {
   useCircleDetail,
   useCircleMembers,
@@ -71,7 +72,7 @@ export default function CircleDetailScreen() {
         message: `${circle.name}에 초대합니다!\n초대 코드: ${circle.invite_code}\n\nCircly 앱에서 코드를 입력하고 참여하세요!`,
       });
     } catch (error) {
-      console.error('Share failed:', error);
+      logger.error('Share failed:', error);
     }
   };
 

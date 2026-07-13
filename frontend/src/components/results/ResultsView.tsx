@@ -9,6 +9,7 @@ import { useTheme, useThemedStyles } from '../../theme/ThemeContext';
 import type { Theme } from '../../theme/tokens';
 import type { PollDetailResponse } from '../../types/poll';
 import { useToast } from '../../providers/ToastProvider';
+import { logger } from '../../utils/logger';
 
 interface ResultsViewProps {
   poll: PollDetailResponse;
@@ -47,7 +48,7 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
         UTI: 'public.png',
       });
     } catch (error) {
-      console.error('Share error:', error);
+      logger.error('Share error:', error);
       showToast('공유 중 문제가 발생했어요. 다시 시도해주세요', 'error');
     } finally {
       setIsSharing(false);

@@ -26,6 +26,7 @@ import {
   initializePurchases,
   addCustomerInfoUpdateListener,
 } from '../services/subscription/revenuecat';
+import { logger } from '../utils/logger';
 
 interface AppInitializerProps {
   children: ReactNode;
@@ -47,7 +48,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     if (isMockAuth) {
       async function initializeMockApp() {
         try {
-          console.log('[AppInitializer] Mock Auth 앱 초기화 시작');
+          logger.log('[AppInitializer] Mock Auth 앱 초기화 시작');
           setSession(null);
 
           const onboardingCompleted = await AsyncStorage.getItem(ONBOARDING_KEY);
@@ -55,7 +56,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
             setShowOnboarding(true);
           }
         } catch (error) {
-          console.error('[AppInitializer] Mock Auth 초기화 실패:', error);
+          logger.error('[AppInitializer] Mock Auth 초기화 실패:', error);
         } finally {
           setIsReady(true);
         }
@@ -67,13 +68,13 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
     async function initializeApp() {
       try {
-        console.log('[AppInitializer] 앱 초기화 시작');
+        logger.log('[AppInitializer] 앱 초기화 시작');
 
         // 1. Supabase에서 기존 세션 로드
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        console.log('[AppInitializer] 초기 세션:', session ? '있음' : '없음');
+        logger.log('[AppInitializer] 초기 세션:', session ? '있음' : '없음');
 
         setSession(session);
 
@@ -82,9 +83,9 @@ export function AppInitializer({ children }: AppInitializerProps) {
           try {
             const userProfile = await authApi.getCurrentUser();
             setUser(userProfile);
-            console.log('[AppInitializer] 사용자 Profile 로드 완료');
+            logger.log('[AppInitializer] 사용자 Profile 로드 완료');
           } catch (profileError) {
-            console.error('[AppInitializer] Profile 로드 실패:', profileError);
+            logger.error('[AppInitializer] Profile 로드 실패:', profileError);
             // Profile 로드 실패해도 세션은 유지
           }
         }
@@ -96,9 +97,9 @@ export function AppInitializer({ children }: AppInitializerProps) {
         }
 
         setIsReady(true);
-        console.log('[AppInitializer] 앱 초기화 완료');
+        logger.log('[AppInitializer] 앱 초기화 완료');
       } catch (error) {
-        console.error('[AppInitializer] 초기화 실패:', error);
+        logger.error('[AppInitializer] 초기화 실패:', error);
         setIsReady(true); // 실패해도 앱은 실행
       }
     }
@@ -109,7 +110,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AppInitializer] Auth 상태 변경:', event);
+      logger.log('[AppInitializer] Auth 상태 변경:', event);
 
       setSession(session);
 
@@ -119,9 +120,9 @@ export function AppInitializer({ children }: AppInitializerProps) {
           try {
             const userProfile = await authApi.getCurrentUser();
             setUser(userProfile);
-            console.log('[AppInitializer] Profile 업데이트 완료');
+            logger.log('[AppInitializer] Profile 업데이트 완료');
           } catch (error) {
-            console.error('[AppInitializer] Profile 로드 실패:', error);
+            logger.error('[AppInitializer] Profile 로드 실패:', error);
           }
         }
       } else {
@@ -132,7 +133,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
     // 컴포넌트 언마운트 시 구독 해제
     return () => {
-      console.log('[AppInitializer] Auth 구독 해제');
+      logger.log('[AppInitializer] Auth 구독 해제');
       subscription.unsubscribe();
     };
   }, [setSession, setUser]);
@@ -163,7 +164,7 @@ export function AppInitializer({ children }: AppInitializerProps) {
             await notificationApi.registerPushToken(pushToken);
           }
         } catch (error) {
-          console.error('[AppInitializer] 푸시 토큰 등록 실패:', error);
+          logger.error('[AppInitializer] 푸시 토큰 등록 실패:', error);
         }
       }
     }
@@ -181,25 +182,25 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
     async function initRevenueCat() {
       try {
-        console.log('[AppInitializer] RevenueCat 초기화 시작');
+        logger.log('[AppInitializer] RevenueCat 초기화 시작');
         await initializePurchases(user!.id);
 
         // 구독 상태 변경 리스너 등록
         removeListener = addCustomerInfoUpdateListener((customerInfo) => {
           const isPro = customerInfo.entitlements.active['frontdoorrr Pro'] !== undefined;
-          console.log('[AppInitializer] 구독 상태 변경:', isPro ? 'Pro 활성' : 'Pro 비활성');
+          logger.log('[AppInitializer] 구독 상태 변경:', isPro ? 'Pro 활성' : 'Pro 비활성');
 
           // 사용자 정보 새로고침 (Pro 구독 상태 반영을 위해)
           authApi.getCurrentUser().then((updatedUser) => {
             setUser(updatedUser);
           }).catch((error) => {
-            console.error('[AppInitializer] 사용자 정보 갱신 실패:', error);
+            logger.error('[AppInitializer] 사용자 정보 갱신 실패:', error);
           });
         });
 
-        console.log('[AppInitializer] RevenueCat 초기화 완료');
+        logger.log('[AppInitializer] RevenueCat 초기화 완료');
       } catch (error) {
-        console.error('[AppInitializer] RevenueCat 초기화 실패:', error);
+        logger.error('[AppInitializer] RevenueCat 초기화 실패:', error);
         // RevenueCat 초기화 실패해도 앱 실행에는 지장 없음
       }
     }
@@ -209,18 +210,18 @@ export function AppInitializer({ children }: AppInitializerProps) {
     return () => {
       if (removeListener) {
         removeListener();
-        console.log('[AppInitializer] RevenueCat 리스너 해제');
+        logger.log('[AppInitializer] RevenueCat 리스너 해제');
       }
     };
   }, [isAuthenticated, setUser]);
 
   // 5. 푸시 알림 리스너 설정
   useEffect(() => {
-    console.log('[AppInitializer] 푸시 알림 리스너 설정');
+    logger.log('[AppInitializer] 푸시 알림 리스너 설정');
     const cleanup = setupNotificationListeners();
 
     return () => {
-      console.log('[AppInitializer] 푸시 알림 리스너 해제');
+      logger.log('[AppInitializer] 푸시 알림 리스너 해제');
       cleanup();
     };
   }, []);

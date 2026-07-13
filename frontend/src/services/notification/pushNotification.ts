@@ -8,6 +8,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import { logger } from '../../utils/logger';
 
 // 알림 핸들러 설정 (포그라운드 알림 표시)
 Notifications.setNotificationHandler({
@@ -28,7 +29,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // 실제 기기에서만 작동
   if (!Device.isDevice) {
-    console.log('Push notifications only work on physical devices');
+    logger.log('Push notifications only work on physical devices');
     return null;
   }
 
@@ -44,7 +45,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // 권한이 거부되었으면 null 반환
   if (finalStatus !== 'granted') {
-    console.log('Failed to get push token for push notification!');
+    logger.log('Failed to get push token for push notification!');
     return null;
   }
 
@@ -56,7 +57,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       Constants.expoConfig?.extra?.eas?.projectId;
 
     if (!projectId) {
-      console.warn(
+      logger.warn(
         'EAS project ID not found. Run `eas build:configure` to set up EAS.',
       );
       // 개발 환경에서는 projectId 없이도 작동할 수 있음
@@ -67,9 +68,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
         projectId: projectId ?? undefined,
       })
     ).data;
-    console.log('Expo Push Token:', token);
+    logger.log('Expo Push Token:', token);
   } catch (error) {
-    console.error('Error getting push token:', error);
+    logger.error('Error getting push token:', error);
     return null;
   }
 
@@ -147,10 +148,10 @@ export function handleNotificationResponse(
 ): void {
   const data = response.notification.request.content.data as NotificationData;
 
-  console.log('[Push] Notification tapped:', data);
+  logger.log('[Push] Notification tapped:', data);
 
   if (!data?.type) {
-    console.log('[Push] No notification type, skipping navigation');
+    logger.log('[Push] No notification type, skipping navigation');
     return;
   }
 
@@ -180,10 +181,10 @@ export function handleNotificationResponse(
         break;
 
       default:
-        console.log('[Push] Unknown notification type:', data.type);
+        logger.log('[Push] Unknown notification type:', data.type);
     }
   } catch (error) {
-    console.error('[Push] Failed to navigate:', error);
+    logger.error('[Push] Failed to navigate:', error);
   }
 }
 
@@ -194,7 +195,7 @@ export function handleNotificationResponse(
 export function setupNotificationListeners(): () => void {
   // 알림 수신 리스너 (포그라운드)
   const receivedSubscription = addNotificationReceivedListener((notification) => {
-    console.log('[Push] Notification received:', notification.request.content);
+    logger.log('[Push] Notification received:', notification.request.content);
   });
 
   // 알림 탭 리스너

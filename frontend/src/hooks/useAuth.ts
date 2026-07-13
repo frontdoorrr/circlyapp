@@ -10,6 +10,7 @@ import { LoginRequest, UserCreate, UserUpdate } from '../types/auth';
 import { useAuthStore } from '../stores/auth';
 import { supabase } from '../lib/supabase';
 import { SupabaseAuthError } from '../utils/supabaseErrors';
+import { logger } from '../utils/logger';
 
 const AUTH_MODE = process.env.EXPO_PUBLIC_AUTH_MODE || 'supabase';
 const isMockAuth = AUTH_MODE === 'mock';
@@ -24,10 +25,10 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: async (data: UserCreate) => {
-      console.log('[useRegister] 회원가입 호출:', { email: data.email, authMode: AUTH_MODE });
+      logger.log('[useRegister] 회원가입 호출:', { email: data.email, authMode: AUTH_MODE });
 
       if (isMockAuth) {
-        console.log('[useRegister] Mock Auth 회원가입 호출:', { email: data.email });
+        logger.log('[useRegister] Mock Auth 회원가입 호출:', { email: data.email });
         const authData = await authApi.devLogin(data);
         setDevSession(authData.access_token);
         setUser(authData.user);
@@ -41,22 +42,22 @@ export function useRegister() {
       });
 
       if (error) {
-        console.error('[useRegister] Supabase 에러:', error);
+        logger.error('[useRegister] Supabase 에러:', error);
         throw new SupabaseAuthError(error);
       }
 
       if (!authData.session) {
-        console.log('[useRegister] 세션 없음 - 이메일 인증 필요할 수 있음');
+        logger.log('[useRegister] 세션 없음 - 이메일 인증 필요할 수 있음');
         // 이메일 인증이 필요한 경우 세션이 없을 수 있음
         return authData;
       }
 
-      console.log('[useRegister] Supabase 회원가입 성공');
+      logger.log('[useRegister] Supabase 회원가입 성공');
 
       // 2단계: 백엔드 Profile 업데이트 (username, display_name)
       if (data.username || data.display_name) {
         try {
-          console.log('[useRegister] 백엔드 Profile 업데이트:', {
+          logger.log('[useRegister] 백엔드 Profile 업데이트:', {
             username: data.username,
             display_name: data.display_name,
           });
@@ -64,18 +65,18 @@ export function useRegister() {
             username: data.username,
             display_name: data.display_name,
           });
-          console.log('[useRegister] Profile 업데이트 성공');
+          logger.log('[useRegister] Profile 업데이트 성공');
         } catch (profileError) {
           // Profile 업데이트 실패해도 회원가입은 성공으로 처리
           // 사용자가 나중에 Profile 설정 가능
-          console.warn('[useRegister] Profile 업데이트 실패 (무시됨):', profileError);
+          logger.warn('[useRegister] Profile 업데이트 실패 (무시됨):', profileError);
         }
       }
 
       return authData;
     },
     onError: (error) => {
-      console.error('[useRegister] onError:', error);
+      logger.error('[useRegister] onError:', error);
     },
   });
 }
@@ -90,10 +91,10 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (data: LoginRequest) => {
-      console.log('[useLogin] 로그인 호출:', { email: data.email, authMode: AUTH_MODE });
+      logger.log('[useLogin] 로그인 호출:', { email: data.email, authMode: AUTH_MODE });
 
       if (isMockAuth) {
-        console.log('[useLogin] Mock Auth 로그인 호출:', { email: data.email });
+        logger.log('[useLogin] Mock Auth 로그인 호출:', { email: data.email });
         const authData = await authApi.devLogin(data);
         setDevSession(authData.access_token);
         setUser(authData.user);
@@ -106,15 +107,15 @@ export function useLogin() {
       });
 
       if (error) {
-        console.error('[useLogin] Supabase 에러:', error);
+        logger.error('[useLogin] Supabase 에러:', error);
         throw new SupabaseAuthError(error);
       }
 
-      console.log('[useLogin] 로그인 성공');
+      logger.log('[useLogin] 로그인 성공');
       return authData;
     },
     onError: (error) => {
-      console.error('[useLogin] onError:', error);
+      logger.error('[useLogin] onError:', error);
     },
   });
 }
@@ -130,27 +131,27 @@ export function useLogout() {
   return useMutation({
     mutationFn: async () => {
       if (isMockAuth) {
-        console.log('[useLogout] Mock Auth 로그아웃');
+        logger.log('[useLogout] Mock Auth 로그아웃');
         return;
       }
 
-      console.log('[useLogout] Supabase 로그아웃 호출');
+      logger.log('[useLogout] Supabase 로그아웃 호출');
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('[useLogout] Supabase 에러:', error);
+        logger.error('[useLogout] Supabase 에러:', error);
         throw new SupabaseAuthError(error);
       }
 
-      console.log('[useLogout] 로그아웃 성공');
+      logger.log('[useLogout] 로그아웃 성공');
     },
     onSuccess: () => {
-      console.log('[useLogout] onSuccess - 상태 초기화');
+      logger.log('[useLogout] onSuccess - 상태 초기화');
       logout();
       queryClient.clear();
     },
     onError: (error) => {
-      console.error('[useLogout] onError:', error);
+      logger.error('[useLogout] onError:', error);
       // 에러 발생해도 로컬 상태는 초기화
       logout();
       queryClient.clear();
@@ -201,7 +202,7 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: async () => {
-      console.log('[useDeleteAccount] 회원 탈퇴 호출');
+      logger.log('[useDeleteAccount] 회원 탈퇴 호출');
 
       // 백엔드에서 사용자 데이터 삭제 (Supabase Auth도 함께 삭제됨)
       await authApi.deleteAccount();
@@ -213,12 +214,12 @@ export function useDeleteAccount() {
       // Supabase Auth 로그아웃 (로컬 세션 정리)
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.warn('[useDeleteAccount] Supabase 로그아웃 경고:', error);
+        logger.warn('[useDeleteAccount] Supabase 로그아웃 경고:', error);
         // 백엔드 삭제는 성공했으므로 계속 진행
       }
     },
     onSuccess: () => {
-      console.log('[useDeleteAccount] 회원 탈퇴 성공 - 상태 초기화');
+      logger.log('[useDeleteAccount] 회원 탈퇴 성공 - 상태 초기화');
       logout();
       queryClient.clear();
     },

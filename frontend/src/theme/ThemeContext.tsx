@@ -21,6 +21,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightTheme, darkTheme, ThemeMode, Theme } from './tokens';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // Types
@@ -112,7 +113,7 @@ export function ThemeProvider({
         setMode(savedMode as ThemeMode);
       }
     } catch (error) {
-      console.error('Failed to load theme preferences:', error);
+      logger.error('Failed to load theme preferences:', error);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +123,7 @@ export function ThemeProvider({
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode);
     } catch (error) {
-      console.error('Failed to save theme mode:', error);
+      logger.error('Failed to save theme mode:', error);
     }
   };
 
@@ -130,7 +131,7 @@ export function ThemeProvider({
     try {
       await AsyncStorage.setItem(FOLLOW_SYSTEM_KEY, follow.toString());
     } catch (error) {
-      console.error('Failed to save follow system preference:', error);
+      logger.error('Failed to save follow system preference:', error);
     }
   };
 

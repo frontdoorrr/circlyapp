@@ -20,6 +20,7 @@ import {
   isSupabaseAuthError,
 } from '../../src/utils/supabaseErrors';
 import { useToast } from '../../src/providers/ToastProvider';
+import { logger } from '../../src/utils/logger';
 
 /**
  * Register Screen
@@ -43,7 +44,7 @@ export default function RegisterScreen() {
   const registerMutation = useRegister();
 
   const handleRegister = async () => {
-    console.log('[Register] handleRegister 호출됨', {
+    logger.log('[Register] handleRegister 호출됨', {
       isSubmitting,
       isPending: registerMutation.isPending,
       timestamp: new Date().toISOString(),
@@ -51,7 +52,7 @@ export default function RegisterScreen() {
 
     // 중복 제출 방지
     if (isSubmitting || registerMutation.isPending) {
-      console.log('[Register] 이미 제출 중입니다. 중복 요청 무시.');
+      logger.log('[Register] 이미 제출 중입니다. 중복 요청 무시.');
       return;
     }
 
@@ -74,7 +75,7 @@ export default function RegisterScreen() {
     setIsSubmitting(true); // 제출 시작
 
     try {
-      console.log('[Register] 회원가입 시도:', { email, username, display_name: displayName });
+      logger.log('[Register] 회원가입 시도:', { email, username, display_name: displayName });
 
       await registerMutation.mutateAsync({
         email,
@@ -83,11 +84,11 @@ export default function RegisterScreen() {
         display_name: displayName.trim() || undefined,
       });
 
-      console.log('[Register] 회원가입 성공 - AppInitializer가 리다이렉트 처리');
+      logger.log('[Register] 회원가입 성공 - AppInitializer가 리다이렉트 처리');
       // 성공 시 onAuthStateChange 리스너가 isAuthenticated를 true로 설정
       // → AppInitializer가 자동으로 Home 화면으로 리다이렉트
     } catch (error) {
-      console.error('[Register] 회원가입 실패:', error);
+      logger.error('[Register] 회원가입 실패:', error);
 
       if (isSupabaseAuthError(error)) {
         showToast(translateSupabaseError(error), 'error');

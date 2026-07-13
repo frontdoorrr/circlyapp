@@ -25,6 +25,7 @@ import {
 } from '../../src/services/subscription/revenuecat';
 import { useSubscription } from '../../src/hooks/useSubscription';
 import { useCurrentUser } from '../../src/hooks/useAuth';
+import { logger } from '../../src/utils/logger';
 
 /**
  * Subscription Paywall Screen
@@ -69,7 +70,7 @@ export default function SubscriptionScreen() {
     // Skip RevenueCatUI paywall - Dashboard paywall not configured
     // Error: "Offering default has no configured paywall"
     if (useCustomPaywall) {
-      console.log('[Subscription] Using custom paywall (RevenueCatUI paywall not configured)');
+      logger.log('[Subscription] Using custom paywall (RevenueCatUI paywall not configured)');
       return;
     }
 
@@ -96,11 +97,11 @@ export default function SubscriptionScreen() {
 
         if (result.error) {
           // Error - fall back to custom paywall
-          console.log('[Subscription] RevenueCatUI failed, using custom paywall');
+          logger.log('[Subscription] RevenueCatUI failed, using custom paywall');
           setUseCustomPaywall(true);
         }
       } catch (error) {
-        console.error('[Subscription] RevenueCatUI error:', error);
+        logger.error('[Subscription] RevenueCatUI error:', error);
         setUseCustomPaywall(true);
       } finally {
         setIsLoadingPaywall(false);
@@ -121,10 +122,10 @@ export default function SubscriptionScreen() {
 
         if (offering) {
           setPackages(offering.availablePackages);
-          console.log('[Subscription] Loaded packages:', offering.availablePackages.length);
+          logger.log('[Subscription] Loaded packages:', offering.availablePackages.length);
         }
       } catch (error) {
-        console.error('[Subscription] Failed to load offerings:', error);
+        logger.error('[Subscription] Failed to load offerings:', error);
       } finally {
         setIsLoading(false);
       }
@@ -169,11 +170,11 @@ export default function SubscriptionScreen() {
       }
     } catch (error: any) {
       if (isPurchaseCancelled(error)) {
-        console.log('[Subscription] User cancelled purchase');
+        logger.log('[Subscription] User cancelled purchase');
         return;
       }
 
-      console.error('[Subscription] Purchase failed:', error);
+      logger.error('[Subscription] Purchase failed:', error);
       Alert.alert('구매 실패', getErrorMessage(error));
     } finally {
       setIsPurchasing(false);
@@ -208,7 +209,7 @@ export default function SubscriptionScreen() {
         );
       }
     } catch (error: any) {
-      console.error('[Subscription] Restore failed:', error);
+      logger.error('[Subscription] Restore failed:', error);
       Alert.alert('복원 실패', getErrorMessage(error));
     } finally {
       setIsRestoring(false);

@@ -16,6 +16,7 @@ import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import { useLogout, useDeleteAccount } from '../../../src/hooks/useAuth';
+import { logger } from '../../../src/utils/logger';
 import { useSubscription } from '../../../src/hooks/useSubscription';
 import { presentCustomerCenter } from '../../../src/services/subscription/revenuecat';
 import { Text } from '../../../src/components/primitives/Text';
@@ -53,7 +54,7 @@ export default function SettingsScreen() {
       setIsOpeningCustomerCenter(true);
       await presentCustomerCenter();
     } catch (error) {
-      console.error('Failed to open Customer Center:', error);
+      logger.error('Failed to open Customer Center:', error);
     } finally {
       setIsOpeningCustomerCenter(false);
     }
@@ -123,7 +124,7 @@ export default function SettingsScreen() {
         controlsColor: tokens.colors.primary[500],
       });
     } catch (error) {
-      console.warn('Failed to open browser:', error);
+      logger.warn('Failed to open browser:', error);
     }
   };
 

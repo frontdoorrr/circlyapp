@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { apiClient } from '../api/client';
 import type { PollDuration } from '../stores/pollCreate';
 import { useToast } from '../providers/ToastProvider';
+import { logger } from '../utils/logger';
 
 /**
  * 투표 생성 API 연동 훅
@@ -70,7 +71,7 @@ export const useCreatePoll = () => {
       // Haptic feedback
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
-      console.error('Failed to create poll:', error);
+      logger.error('Failed to create poll:', error);
 
       // 에러 메시지 추출 및 알림 표시
       const message =

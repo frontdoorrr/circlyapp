@@ -21,3 +21,5 @@ export {
   formatRelativeTime,
   type TimeUrgencyLevel,
 } from './timeUtils';
+
+export { logger } from './logger';

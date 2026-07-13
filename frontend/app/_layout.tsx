@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from '../src/theme';
 import { QueryProvider } from '../src/providers/QueryProvider';
 import { AppInitializer } from '../src/providers/AppInitializer';
 import { ToastProvider } from '../src/providers/ToastProvider';
+import { logger } from '../src/utils/logger';
 
 /**
  * Root Layout
@@ -53,16 +54,16 @@ function useDeepLinkHandler() {
     // Handle deep link when app is opened from link
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
-      console.log('[DeepLink] Received URL:', url);
+      logger.log('[DeepLink] Received URL:', url);
 
       try {
         const parsedUrl = Linking.parse(url);
-        console.log('[DeepLink] Parsed URL:', parsedUrl);
+        logger.log('[DeepLink] Parsed URL:', parsedUrl);
 
         // Handle circly://join?code={code}
         if (parsedUrl.path === 'join' && parsedUrl.queryParams?.code) {
           const code = String(parsedUrl.queryParams.code).toUpperCase();
-          console.log('[DeepLink] Navigating to invite-code with code:', code);
+          logger.log('[DeepLink] Navigating to invite-code with code:', code);
           router.push({
             pathname: '/join/invite-code',
             params: { code },
@@ -73,13 +74,13 @@ function useDeepLinkHandler() {
         // Handle https://circly.app/join/{unique_id} or circly://join/{id}
         if (parsedUrl.path?.startsWith('join/')) {
           const uniqueId = parsedUrl.path.replace('join/', '');
-          console.log('[DeepLink] Navigating with unique ID:', uniqueId);
+          logger.log('[DeepLink] Navigating with unique ID:', uniqueId);
           // TODO: Convert unique_id to invite_code via API
           router.push('/join/invite-code');
           return;
         }
       } catch (error) {
-        console.error('[DeepLink] Error parsing URL:', error);
+        logger.error('[DeepLink] Error parsing URL:', error);
       }
     };
 
@@ -89,7 +90,7 @@ function useDeepLinkHandler() {
     // Check if app was opened from deep link (cold start)
     Linking.getInitialURL().then((url) => {
       if (url) {
-        console.log('[DeepLink] Initial URL:', url);
+        logger.log('[DeepLink] Initial URL:', url);
         handleDeepLink({ url });
       }
     });

@@ -15,6 +15,7 @@ import Purchases, {
 } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import { Alert } from 'react-native';
+import { logger } from '../../utils/logger';
 
 // ============================================================================
 // Configuration
@@ -83,11 +84,11 @@ export async function initializePurchases(userId?: string): Promise<CustomerInfo
         appUserID: userId ?? null,
       });
       isConfigured = true;
-      console.log('[RevenueCat] SDK configured');
+      logger.log('[RevenueCat] SDK configured');
     } else if (userId) {
       // If already configured, log in the user
       await Purchases.logIn(userId);
-      console.log('[RevenueCat] User logged in:', userId);
+      logger.log('[RevenueCat] User logged in:', userId);
     }
 
     const customerInfo = await Purchases.getCustomerInfo();
@@ -95,7 +96,7 @@ export async function initializePurchases(userId?: string): Promise<CustomerInfo
 
     return customerInfo;
   } catch (error) {
-    console.error('[RevenueCat] Initialization failed:', error);
+    logger.error('[RevenueCat] Initialization failed:', error);
     return null;
   }
 }
@@ -116,7 +117,7 @@ export function isInitialized(): boolean {
  */
 export async function hasActiveSubscription(): Promise<boolean> {
   if (!isConfigured) {
-    console.warn('[RevenueCat] SDK not initialized, returning false');
+    logger.warn('[RevenueCat] SDK not initialized, returning false');
     return false;
   }
 
@@ -124,7 +125,7 @@ export async function hasActiveSubscription(): Promise<boolean> {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo.entitlements.active[PRO_ENTITLEMENT] !== undefined;
   } catch (error) {
-    console.error('[RevenueCat] Failed to check subscription:', error);
+    logger.error('[RevenueCat] Failed to check subscription:', error);
     return false;
   }
 }
@@ -134,7 +135,7 @@ export async function hasActiveSubscription(): Promise<boolean> {
  */
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   if (!isConfigured) {
-    console.warn('[RevenueCat] SDK not initialized, returning default status');
+    logger.warn('[RevenueCat] SDK not initialized, returning default status');
     return {
       isSubscribed: false,
       entitlementInfo: null,
@@ -171,7 +172,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
       isLifetime,
     };
   } catch (error) {
-    console.error('[RevenueCat] Failed to get subscription status:', error);
+    logger.error('[RevenueCat] Failed to get subscription status:', error);
     return {
       isSubscribed: false,
       entitlementInfo: null,
@@ -188,7 +189,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
  */
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
   if (!isConfigured) {
-    console.warn('[RevenueCat] SDK not initialized');
+    logger.warn('[RevenueCat] SDK not initialized');
     return null;
   }
   return Purchases.getCustomerInfo();
@@ -203,7 +204,7 @@ export async function getCustomerInfo(): Promise<CustomerInfo | null> {
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
   if (!isConfigured) {
-    console.warn('[RevenueCat] SDK not initialized, returning null offerings');
+    logger.warn('[RevenueCat] SDK not initialized, returning null offerings');
     return null;
   }
 
@@ -211,8 +212,8 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
     const offerings = await Purchases.getOfferings();
 
     if (offerings.current) {
-      console.log('[RevenueCat] Current offering:', offerings.current.identifier);
-      console.log(
+      logger.log('[RevenueCat] Current offering:', offerings.current.identifier);
+      logger.log(
         '[RevenueCat] Available packages:',
         offerings.current.availablePackages.map((p) => ({
           id: p.identifier,
@@ -222,10 +223,10 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
       return offerings.current;
     }
 
-    console.warn('[RevenueCat] No current offering available');
+    logger.warn('[RevenueCat] No current offering available');
     return null;
   } catch (error) {
-    console.error('[RevenueCat] Failed to get offerings:', error);
+    logger.error('[RevenueCat] Failed to get offerings:', error);
     return null;
   }
 }
@@ -250,7 +251,7 @@ export async function getPackage(
  * Purchase a package
  */
 export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
-  console.log('[RevenueCat] Purchasing:', pkg.identifier);
+  logger.log('[RevenueCat] Purchasing:', pkg.identifier);
 
   const { customerInfo } = await Purchases.purchasePackage(pkg);
   logCustomerInfo(customerInfo);
@@ -267,7 +268,7 @@ export async function purchaseProduct(
   const pkg = await getPackage(productId);
 
   if (!pkg) {
-    console.error('[RevenueCat] Package not found:', productId);
+    logger.error('[RevenueCat] Package not found:', productId);
     return null;
   }
 
@@ -278,7 +279,7 @@ export async function purchaseProduct(
  * Restore previous purchases
  */
 export async function restorePurchases(): Promise<CustomerInfo> {
-  console.log('[RevenueCat] Restoring purchases...');
+  logger.log('[RevenueCat] Restoring purchases...');
 
   const customerInfo = await Purchases.restorePurchases();
   logCustomerInfo(customerInfo);
@@ -299,15 +300,15 @@ export async function presentPaywall(): Promise<PaywallResult> {
   try {
     // Ensure SDK is configured before presenting paywall
     if (!isConfigured) {
-      console.log('[RevenueCat] SDK not configured, initializing...');
+      logger.log('[RevenueCat] SDK not configured, initializing...');
       await initializePurchases();
     }
 
-    console.log('[RevenueCat] Presenting paywall...');
+    logger.log('[RevenueCat] Presenting paywall...');
 
     const result = await RevenueCatUI.presentPaywall();
 
-    console.log('[RevenueCat] Paywall result:', result);
+    logger.log('[RevenueCat] Paywall result:', result);
 
     switch (result) {
       case PAYWALL_RESULT.PURCHASED:
@@ -320,7 +321,7 @@ export async function presentPaywall(): Promise<PaywallResult> {
         return { purchased: false, restored: false, cancelled: true, error: null };
     }
   } catch (error) {
-    console.error('[RevenueCat] Paywall error:', error);
+    logger.error('[RevenueCat] Paywall error:', error);
     return {
       purchased: false,
       restored: false,
@@ -339,7 +340,7 @@ export async function presentPaywallWithOffering(
   try {
     // Ensure SDK is configured before presenting paywall
     if (!isConfigured) {
-      console.log('[RevenueCat] SDK not configured, initializing...');
+      logger.log('[RevenueCat] SDK not configured, initializing...');
       await initializePurchases();
     }
 
@@ -363,7 +364,7 @@ export async function presentPaywallWithOffering(
         return { purchased: false, restored: false, cancelled: true, error: null };
     }
   } catch (error) {
-    console.error('[RevenueCat] Paywall error:', error);
+    logger.error('[RevenueCat] Paywall error:', error);
     return {
       purchased: false,
       restored: false,
@@ -380,7 +381,7 @@ export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
   try {
     // Ensure SDK is configured before presenting paywall
     if (!isConfigured) {
-      console.log('[RevenueCat] SDK not configured, initializing...');
+      logger.log('[RevenueCat] SDK not configured, initializing...');
       await initializePurchases();
     }
 
@@ -400,7 +401,7 @@ export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
         return { purchased: false, restored: false, cancelled: true, error: null };
     }
   } catch (error) {
-    console.error('[RevenueCat] Paywall error:', error);
+    logger.error('[RevenueCat] Paywall error:', error);
     return {
       purchased: false,
       restored: false,
@@ -425,11 +426,11 @@ export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
  */
 export async function presentCustomerCenter(): Promise<void> {
   try {
-    console.log('[RevenueCat] Presenting Customer Center...');
+    logger.log('[RevenueCat] Presenting Customer Center...');
     await RevenueCatUI.presentCustomerCenter();
-    console.log('[RevenueCat] Customer Center closed');
+    logger.log('[RevenueCat] Customer Center closed');
   } catch (error) {
-    console.error('[RevenueCat] Customer Center error:', error);
+    logger.error('[RevenueCat] Customer Center error:', error);
 
     // Fallback: Show basic subscription management options
     Alert.alert(
@@ -448,7 +449,7 @@ export async function presentCustomerCenter(): Promise<void> {
  * Log in a user (identify)
  */
 export async function logIn(userId: string): Promise<CustomerInfo> {
-  console.log('[RevenueCat] Logging in user:', userId);
+  logger.log('[RevenueCat] Logging in user:', userId);
 
   const { customerInfo } = await Purchases.logIn(userId);
   logCustomerInfo(customerInfo);
@@ -460,10 +461,10 @@ export async function logIn(userId: string): Promise<CustomerInfo> {
  * Log out current user
  */
 export async function logOut(): Promise<CustomerInfo> {
-  console.log('[RevenueCat] Logging out...');
+  logger.log('[RevenueCat] Logging out...');
 
   const customerInfo = await Purchases.logOut();
-  console.log('[RevenueCat] User logged out, now anonymous');
+  logger.log('[RevenueCat] User logged out, now anonymous');
 
   return customerInfo;
 }
@@ -479,7 +480,7 @@ export function addCustomerInfoUpdateListener(
   listener: (customerInfo: CustomerInfo) => void
 ): () => void {
   if (!isConfigured) {
-    console.warn('[RevenueCat] SDK not initialized, listener not added');
+    logger.warn('[RevenueCat] SDK not initialized, listener not added');
     return () => {}; // no-op cleanup
   }
 
@@ -537,12 +538,12 @@ export function getErrorMessage(error: unknown): string {
 // ============================================================================
 
 function logCustomerInfo(customerInfo: CustomerInfo): void {
-  console.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
-  console.log(
+  logger.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
+  logger.log(
     '[RevenueCat] Active entitlements:',
     Object.keys(customerInfo.entitlements.active)
   );
-  console.log(
+  logger.log(
     '[RevenueCat] All purchased products:',
     customerInfo.allPurchasedProductIdentifiers
   );

@@ -6,6 +6,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import { ApiError, ApiErrorResponse } from '../types/api';
 import { getAccessToken, useAuthStore } from '../stores/auth';
+import { logger } from '../utils/logger';
 
 // 환경 변수에서 API URL 가져오기
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -22,22 +23,22 @@ export const apiClient: AxiosInstance = axios.create({
 // Request 인터셉터: 저장된 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(`[API Client] ${config.method?.toUpperCase()} ${config.url}`);
+    logger.log(`[API Client] ${config.method?.toUpperCase()} ${config.url}`);
 
     // Zustand store에서 토큰 가져오기
     const accessToken = getAccessToken();
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
-      console.log('[API Client] 토큰 추가됨');
+      logger.log('[API Client] 토큰 추가됨');
     } else {
-      console.log('[API Client] 토큰 없음');
+      logger.log('[API Client] 토큰 없음');
     }
 
     return config;
   },
   (error) => {
-    console.error('[API Client] Request 인터셉터 에러:', error);
+    logger.error('[API Client] Request 인터셉터 에러:', error);
     return Promise.reject(error);
   }
 );
@@ -45,11 +46,11 @@ apiClient.interceptors.request.use(
 // Response 인터셉터: 에러 처리
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`[API Client] 응답 성공: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    logger.log(`[API Client] 응답 성공: ${response.config.method?.toUpperCase()} ${response.config.url}`);
     return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
-    console.error('[API Client] 응답 에러:', {
+    logger.error('[API Client] 응답 에러:', {
       url: error.config?.url,
       status: error.response?.status,
     });
@@ -59,21 +60,21 @@ apiClient.interceptors.response.use(
 
       // 401 Unauthorized: 토큰이 있었는데 거부된 경우에만 로그아웃 (토큰 미로드 상태의 401은 무시)
       if (status === 401 && error.config?.headers?.Authorization) {
-        console.warn('[API Client] 401 Unauthorized - 로그아웃 처리');
+        logger.warn('[API Client] 401 Unauthorized - 로그아웃 처리');
         const { logout } = useAuthStore.getState();
         await logout();
       }
 
       // API 에러 객체 생성
       if (data && !data.success && data.error) {
-        console.error('[API Client] API 에러:', data.error);
+        logger.error('[API Client] API 에러:', data.error);
         throw new ApiError(data.error.code as any, data.error.message);
       }
     }
 
     // 네트워크 에러
     if (error.request && !error.response) {
-      console.error('[API Client] 네트워크 에러');
+      logger.error('[API Client] 네트워크 에러');
       throw new ApiError('NETWORK_ERROR' as any, '네트워크 연결을 확인해주세요');
     }
 

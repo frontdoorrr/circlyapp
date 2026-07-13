@@ -745,10 +745,10 @@
 - [x] `src/components/results/ResultsView.tsx` 공용 추출, `results/[id]` 정본화, poll/[id]는 결과 시 redirect
 
 #### 18.6 다크모드/버그 수정 (P1)
-- [ ] EmptyState/PollEmptyState/HomeEmptyState/CircleCard/VoteCard — 테마 전환
+- [x] EmptyState/PollEmptyState/HomeEmptyState/CircleCard/VoteCard — 테마 전환
   - [x] EmptyState/PollEmptyState/CircleCard/VoteCard 테마 전환
   - [x] HomeEmptyState 줄바꿈 문자열 수정
-- [ ] `(1-circle)/index.tsx` 리터럴 `\n` 버그, `src/utils/logger.ts` + console.* 치환
+- [x] `(1-circle)/index.tsx` 리터럴 `\n` 버그, `src/utils/logger.ts` + console.* 치환
 
 #### 18.7 홈 서클 스위처 + 고아 컴포넌트 정리 (P2)
 - [ ] 서클 선택 바텀시트, 고아 컴포넌트 채택/삭제

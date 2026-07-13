@@ -7,6 +7,7 @@ import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { useValidateInviteCode } from '../../src/hooks/useCircles';
+import { logger } from '../../src/utils/logger';
 
 /**
  * 초대 코드 입력 화면
@@ -86,7 +87,7 @@ export default function InviteCodeScreen() {
       }
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      console.error('[InviteCode] Validation error:', err);
+      logger.error('[InviteCode] Validation error:', err);
       setError('코드 확인 중 오류가 발생했어요');
     }
   };

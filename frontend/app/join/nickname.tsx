@@ -7,6 +7,7 @@ import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { useJoinCircle } from '../../src/hooks/useCircles';
+import { logger } from '../../src/utils/logger';
 
 /**
  * 닉네임 설정 화면
@@ -79,7 +80,7 @@ export default function NicknameScreen() {
       });
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      console.error('[Nickname] Join error:', err);
+      logger.error('[Nickname] Join error:', err);
 
       // 에러 처리
       const errorMessage = err?.response?.data?.error?.message || err?.message || '';

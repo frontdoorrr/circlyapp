@@ -26,6 +26,7 @@ import {
   type PaywallResult,
 } from '../services/subscription/revenuecat';
 import type { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // Query Keys
@@ -165,7 +166,7 @@ export function useSubscription(): UseSubscriptionReturn {
 
   useEffect(() => {
     const removeListener = addCustomerInfoUpdateListener((customerInfo: CustomerInfo) => {
-      console.log('[useSubscription] Customer info updated');
+      logger.log('[useSubscription] Customer info updated');
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.status() });
     });
 
