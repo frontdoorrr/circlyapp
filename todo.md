@@ -742,7 +742,7 @@
   - [x] 나머지 단순 Alert 피드백 전환
 
 #### 18.5 결과 화면 단일화 (P1)
-- [ ] `src/components/results/ResultsView.tsx` 공용 추출, `results/[id]` 정본화, poll/[id]는 결과 시 redirect
+- [x] `src/components/results/ResultsView.tsx` 공용 추출, `results/[id]` 정본화, poll/[id]는 결과 시 redirect
 
 #### 18.6 다크모드/버그 수정 (P1)
 - [ ] EmptyState/PollEmptyState/HomeEmptyState/CircleCard/VoteCard — 테마 전환
