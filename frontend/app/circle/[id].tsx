@@ -27,12 +27,14 @@ import { Button } from '../../src/components/primitives/Button';
 import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
+import { useToast } from '../../src/providers/ToastProvider';
 
 export default function CircleDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
 
   // 현재 사용자 정보
   const { data: currentUser } = useCurrentUser();
@@ -57,7 +59,7 @@ export default function CircleDetailScreen() {
     if (!circle) return;
 
     await Clipboard.setStringAsync(circle.invite_code);
-    Alert.alert('복사 완료', '초대 코드가 복사되었습니다');
+    showToast('초대 코드가 복사되었습니다', 'success');
   };
 
   // 초대 링크 공유
@@ -86,9 +88,9 @@ export default function CircleDetailScreen() {
           onPress: async () => {
             try {
               await regenerateCodeMutation.mutateAsync(id);
-              Alert.alert('완료', '새로운 초대 코드가 생성되었습니다');
+              showToast('새로운 초대 코드가 생성되었습니다', 'success');
             } catch (error) {
-              Alert.alert('오류', '초대 코드 재생성에 실패했습니다');
+              showToast('초대 코드 재생성에 실패했습니다', 'error');
             }
           }
         }
@@ -109,10 +111,10 @@ export default function CircleDetailScreen() {
           onPress: async () => {
             try {
               await leaveMutation.mutateAsync(id);
-              Alert.alert('완료', 'Circle을 나갔습니다');
+              showToast('Circle을 나갔습니다', 'success');
               router.back();
             } catch (error) {
-              Alert.alert('오류', 'Circle 나가기에 실패했습니다');
+              showToast('Circle 나가기에 실패했습니다', 'error');
             }
           }
         }

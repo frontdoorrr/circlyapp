@@ -736,10 +736,10 @@
 - [x] 진입점: 홈 FAB "+ 새 투표", `app/circle/[id].tsx` "투표 만들기" 버튼
 
 #### 18.4 Alert → Toast 마이그레이션 (P1)
-- [ ] `src/providers/ToastProvider.tsx` + useToast 훅, 단순 피드백만 교체 (파괴적 확인은 Alert 유지)
+- [x] `src/providers/ToastProvider.tsx` + useToast 훅, 단순 피드백만 교체 (파괴적 확인은 Alert 유지)
   - [x] 전역 ToastProvider/useToast 기반 추가
   - [x] 투표 생성 성공/실패 피드백 전환
-  - [ ] 나머지 단순 Alert 피드백 전환
+  - [x] 나머지 단순 Alert 피드백 전환
 
 #### 18.5 결과 화면 단일화 (P1)
 - [ ] `src/components/results/ResultsView.tsx` 공용 추출, `results/[id]` 정본화, poll/[id]는 결과 시 redirect
@@ -823,4 +823,4 @@
   - [x] `frontend/src/components/profile/ProfileInfo.tsx` — 프로필 보상 카드 노출
   - [x] `frontend/src/hooks/usePolls.ts` — vote 성공 후 auth me 캐시 갱신
   - [x] `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md` — 보상 UI/흐름 반영
-- [ ] **18.14 성별/학년 힌트** (P2, 법무 검토 필요 — 만 14세 미만 개인정보)
+- [ ] **18.14 성별/나이 힌트** (P2, 법무 검토 필요 — 선택값 비공개, 후보 필터 전용)

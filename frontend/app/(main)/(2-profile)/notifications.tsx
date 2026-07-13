@@ -18,6 +18,7 @@ import {
   useNotificationSettings,
   useUpdateNotificationSettings,
 } from '../../../src/hooks';
+import { useToast } from '../../../src/providers/ToastProvider';
 import type { Theme } from '../../../src/theme/tokens';
 
 /**
@@ -31,6 +32,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const { data: settings, isLoading, error, refetch } = useNotificationSettings();
   const { mutate: updateSettings, isPending: isUpdating } = useUpdateNotificationSettings();
 
@@ -89,7 +91,7 @@ export default function NotificationsScreen() {
           ...prev,
           [key]: !newValue,
         }));
-        Alert.alert('오류', '설정 변경에 실패했습니다. 다시 시도해주세요.');
+        showToast('설정 변경에 실패했습니다. 다시 시도해주세요.', 'error');
       },
     });
   };
@@ -121,6 +123,7 @@ export default function NotificationsScreen() {
                 vote_received: false,
                 circle_invite: false,
               });
+              showToast('전체 알림을 껐습니다', 'success');
             },
           },
         ]

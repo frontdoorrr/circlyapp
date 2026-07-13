@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import * as Sharing from 'expo-sharing';
@@ -9,6 +9,7 @@ import type { Theme } from '../../src/theme/tokens';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 import { usePollDetail } from '../../src/hooks/usePolls';
 import { LoadingSpinner, EmptyState } from '../../src/components/states';
+import { useToast } from '../../src/providers/ToastProvider';
 
 /**
  * 투표 결과 화면
@@ -23,6 +24,7 @@ export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const { data: currentUser } = useCurrentUser();
   const isOrbMode = currentUser?.is_orb_mode ?? false;
   const viewShotRef = useRef<ViewShot>(null);
@@ -40,7 +42,7 @@ export default function ResultsScreen() {
       // 공유 가능 여부 확인
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) {
-        Alert.alert('알림', '이 기기에서는 공유 기능을 사용할 수 없어요');
+        showToast('이 기기에서는 공유 기능을 사용할 수 없어요', 'error');
         return;
       }
 
@@ -57,7 +59,7 @@ export default function ResultsScreen() {
       }
     } catch (err) {
       console.error('Share error:', err);
-      Alert.alert('오류', '공유 중 문제가 발생했어요. 다시 시도해주세요');
+      showToast('공유 중 문제가 발생했어요. 다시 시도해주세요', 'error');
     } finally {
       setIsSharing(false);
     }

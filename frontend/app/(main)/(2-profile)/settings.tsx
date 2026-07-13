@@ -22,6 +22,7 @@ import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { tokens } from '../../../src/theme';
 import type { Theme } from '../../../src/theme/tokens';
+import { useToast } from '../../../src/providers/ToastProvider';
 
 // 앱 버전 (컴포넌트 외부에서 상수로 정의)
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -36,6 +37,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { theme, isDark, toggleTheme, followSystem, setFollowSystem } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const logoutMutation = useLogout();
   const deleteAccountMutation = useDeleteAccount();
   const { isSubscribed, status, isLoading: isLoadingSubscription } = useSubscription();
@@ -78,7 +80,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = () => {
     if (deleteConfirmText !== '탈퇴합니다') {
-      Alert.alert('오류', '"탈퇴합니다"를 정확히 입력해주세요');
+      showToast('"탈퇴합니다"를 정확히 입력해주세요', 'error');
       return;
     }
 
@@ -96,7 +98,7 @@ export default function SettingsScreen() {
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               router.replace('/(auth)/login');
             } catch (error) {
-              Alert.alert('오류', '회원 탈퇴 중 문제가 발생했습니다');
+              showToast('회원 탈퇴 중 문제가 발생했습니다', 'error');
             }
           },
         },

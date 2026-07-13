@@ -9,7 +9,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -34,6 +33,7 @@ import { useCurrentUser } from '../../src/hooks/useAuth';
 import { VoteCard, VoteOption } from '../../src/components/patterns/VoteCard';
 import { VoteCelebration } from '../../src/components/patterns/VoteCelebration';
 import type { MemberInfo } from '../../src/types/circle';
+import { useToast } from '../../src/providers/ToastProvider';
 
 function sampleMembers(members: MemberInfo[], count = 4): MemberInfo[] {
   const shuffled = [...members];
@@ -84,6 +84,7 @@ export default function PollDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
 
   // 사용자 정보 (Orb Mode 확인용)
   const { data: currentUser } = useCurrentUser();
@@ -117,7 +118,7 @@ export default function PollDetailScreen() {
     }
 
     if (!selectedUserId) {
-      Alert.alert('선택 오류', '투표할 친구를 선택해주세요');
+      showToast('투표할 친구를 선택해주세요', 'error');
       return;
     }
 
@@ -133,9 +134,9 @@ export default function PollDetailScreen() {
       setShowCelebration(true);
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('투표 실패', error.message);
+        showToast(error.message, 'error');
       } else {
-        Alert.alert('오류', '투표 중 문제가 발생했습니다');
+        showToast('투표 중 문제가 발생했습니다', 'error');
       }
     } finally {
       // 투표 완료 후 플래그 해제
@@ -221,7 +222,7 @@ export default function PollDetailScreen() {
 
       // 공유 가능한지 확인
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('오류', '이 기기에서는 공유 기능을 사용할 수 없습니다');
+        showToast('이 기기에서는 공유 기능을 사용할 수 없습니다', 'error');
         return;
       }
 
@@ -232,7 +233,7 @@ export default function PollDetailScreen() {
       });
     } catch (error) {
       console.error('Share failed:', error);
-      Alert.alert('오류', '결과 공유에 실패했습니다');
+      showToast('결과 공유에 실패했습니다', 'error');
     } finally {
       setIsSharing(false);
     }

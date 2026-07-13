@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useLogin } from '../../src/hooks/useAuth';
@@ -12,6 +12,7 @@ import {
   translateSupabaseError,
   isSupabaseAuthError,
 } from '../../src/utils/supabaseErrors';
+import { useToast } from '../../src/providers/ToastProvider';
 
 /**
  * Login Screen
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 제출 방지
@@ -44,7 +46,7 @@ export default function LoginScreen() {
 
     // 입력 검증
     if (!email.trim() || !password.trim()) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요');
+      showToast('이메일과 비밀번호를 입력해주세요', 'error');
       return;
     }
 
@@ -59,11 +61,11 @@ export default function LoginScreen() {
       console.error('[Login] 로그인 실패:', error);
 
       if (isSupabaseAuthError(error)) {
-        Alert.alert('로그인 실패', translateSupabaseError(error));
+        showToast(translateSupabaseError(error), 'error');
       } else if (error instanceof SupabaseAuthError) {
-        Alert.alert('로그인 실패', translateSupabaseError(error));
+        showToast(translateSupabaseError(error), 'error');
       } else {
-        Alert.alert('오류', '로그인 중 문제가 발생했습니다');
+        showToast('로그인 중 문제가 발생했습니다', 'error');
       }
     } finally {
       setIsSubmitting(false); // 제출 완료

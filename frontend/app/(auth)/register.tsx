@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -20,6 +19,7 @@ import {
   translateSupabaseError,
   isSupabaseAuthError,
 } from '../../src/utils/supabaseErrors';
+import { useToast } from '../../src/providers/ToastProvider';
 
 /**
  * Register Screen
@@ -32,6 +32,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -56,17 +57,17 @@ export default function RegisterScreen() {
 
     // 입력 검증
     if (!email.trim() || !password.trim()) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요');
+      showToast('이메일과 비밀번호를 입력해주세요', 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다');
+      showToast('비밀번호가 일치하지 않습니다', 'error');
       return;
     }
 
     if (password.length < 8) {
-      Alert.alert('입력 오류', '비밀번호는 최소 8자 이상이어야 합니다');
+      showToast('비밀번호는 최소 8자 이상이어야 합니다', 'error');
       return;
     }
 
@@ -89,11 +90,11 @@ export default function RegisterScreen() {
       console.error('[Register] 회원가입 실패:', error);
 
       if (isSupabaseAuthError(error)) {
-        Alert.alert('회원가입 실패', translateSupabaseError(error));
+        showToast(translateSupabaseError(error), 'error');
       } else if (error instanceof SupabaseAuthError) {
-        Alert.alert('회원가입 실패', translateSupabaseError(error));
+        showToast(translateSupabaseError(error), 'error');
       } else {
-        Alert.alert('오류', '회원가입 중 문제가 발생했습니다');
+        showToast('회원가입 중 문제가 발생했습니다', 'error');
       }
     } finally {
       setIsSubmitting(false); // 제출 완료

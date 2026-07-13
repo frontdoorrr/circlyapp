@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { Input } from '../primitives/Input';
 import { Text } from '../primitives/Text';
 import { tokens } from '../../theme';
 import { ApiError } from '../../types/api';
+import { useToast } from '../../providers/ToastProvider';
 
 interface JoinCircleModalProps {
   isOpen: boolean;
@@ -29,18 +29,19 @@ interface JoinCircleModalProps {
 export function JoinCircleModal({ isOpen, onClose, onSuccess }: JoinCircleModalProps) {
   const [inviteCode, setInviteCode] = useState('');
   const [nickname, setNickname] = useState('');
+  const { showToast } = useToast();
 
   const joinMutation = useJoinCircle();
 
   const handleJoin = async () => {
     // 입력 검증
     if (!inviteCode.trim() || inviteCode.length !== 6) {
-      Alert.alert('입력 오류', '초대 코드는 6자리입니다');
+      showToast('초대 코드는 6자리입니다', 'error');
       return;
     }
 
     if (!nickname.trim()) {
-      Alert.alert('입력 오류', 'Circle 내에서 사용할 닉네임을 입력해주세요');
+      showToast('Circle 내에서 사용할 닉네임을 입력해주세요', 'error');
       return;
     }
 
@@ -51,14 +52,14 @@ export function JoinCircleModal({ isOpen, onClose, onSuccess }: JoinCircleModalP
       });
 
       // 성공
-      Alert.alert('성공', 'Circle에 참여했습니다!');
+      showToast('Circle에 참여했습니다!', 'success');
       handleClose();
       onSuccess?.();
     } catch (error) {
       if (error instanceof ApiError) {
-        Alert.alert('참여 실패', error.message);
+        showToast(error.message, 'error');
       } else {
-        Alert.alert('오류', 'Circle 참여 중 문제가 발생했습니다');
+        showToast('Circle 참여 중 문제가 발생했습니다', 'error');
       }
     }
   };
