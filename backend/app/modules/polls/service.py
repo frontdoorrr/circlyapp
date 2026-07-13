@@ -157,6 +157,13 @@ class PollService:
             raise RuntimeError("UserRepository is not configured")
         return self.user_repo
 
+    async def _apply_vote_reward(self, voter_id: uuid.UUID) -> None:
+        """Grant the per-vote coin and update the daily streak."""
+        user_repo = self._require_user_repo()
+        updated_user = await user_repo.apply_vote_reward(voter_id)
+        if updated_user is None:
+            raise BadRequestException("User not found")
+
     @staticmethod
     def _build_round_robin_queue(polls: list[Poll], limit: int) -> list[Poll]:
         """Build a cross-circle round-robin queue preserving repository order."""
@@ -595,6 +602,9 @@ class PollService:
 
         # Increment poll vote count
         await self.poll_repo.increment_vote_count(poll_id)
+
+        # Grant a coin and update the daily streak
+        await self._apply_vote_reward(voter_id)
 
         # 🔔 Send "someone chose you" notification
         if self.notification_service:

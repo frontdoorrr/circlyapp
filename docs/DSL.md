@@ -273,6 +273,7 @@ module Auth {
         await function findByEmail(email: String) -> Result<User, Error>
         await function update(id: UUID, data: UserUpdate) -> Result<User, Error>
         await function updatePushToken(id: UUID, token: String) -> Result<Void, Error>
+        await function applyVoteReward(userId: UUID, votedAt: DateTime) -> Result<User, Error>
         await function deactivate(id: UUID) -> Result<Void, Error>
     }
 
@@ -319,6 +320,8 @@ module Auth {
         profileEmoji: String
         gender: UserGender
         profileVisibility: ProfileVisibility
+        coinBalance: Integer
+        streakDays: Integer
         role: UserRole
         isActive: Boolean
         createdAt: DateTime

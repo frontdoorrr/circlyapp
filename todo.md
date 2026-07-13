@@ -815,5 +815,12 @@
   - [x] `docs/DSL.md` — User/Profile에 선택형 개인정보 필드, 공개 범위, 후보 필터 사용 가능 여부 메타데이터 검토
   - [x] `prd/design/04-user-flow.md` — 온보딩/프로필 편집에서 성별 등 민감할 수 있는 정보는 선택 입력, 비공개, 나중에 변경 가능하도록 명시
   - [x] `docs/DSL.md` — PollTemplate safety_category/review_status 등 템플릿 안전 메타데이터 검토
-- [ ] **18.13 코인/스트릭** (P2, 선택)
+- [x] **18.13 코인/스트릭** (P2, 선택) — 투표 1회당 코인 적립, 일간 연속 참여 streak, 프로필 보상 표시
+  - [x] `docs/DSL.md` — User 응답에 `coin_balance`, `streak_days` 추가
+  - [x] `backend/app/modules/auth/repository.py` — `apply_vote_reward()`로 코인/스트릭 갱신
+  - [x] `backend/app/modules/polls/service.py` — vote 성공 시 보상 적용
+  - [x] `backend/migrations/versions/c0d1e2f3a4b5_add_coin_balance_and_streak_to_users.py` — users 보상 컬럼 추가
+  - [x] `frontend/src/components/profile/ProfileInfo.tsx` — 프로필 보상 카드 노출
+  - [x] `frontend/src/hooks/usePolls.ts` — vote 성공 후 auth me 캐시 갱신
+  - [x] `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md` — 보상 UI/흐름 반영
 - [ ] **18.14 성별/학년 힌트** (P2, 법무 검토 필요 — 만 14세 미만 개인정보)

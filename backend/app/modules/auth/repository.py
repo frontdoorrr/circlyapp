@@ -1,7 +1,7 @@
 """Repository for user data access."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -184,6 +184,40 @@ class UserRepository:
         user.next_session_at = next_session_at
         await self.session.flush()
         return True
+
+    async def apply_vote_reward(
+        self,
+        user_id: uuid.UUID,
+        voted_at: datetime | None = None,
+    ) -> User | None:
+        """Grant a coin and update the user's daily voting streak."""
+        user = await self.find_by_id(user_id)
+        if user is None:
+            return None
+
+        now = voted_at or datetime.now(UTC)
+        user.coin_balance += 1
+
+        if user.last_reward_at is None:
+            user.streak_days = 1
+        else:
+            last_reward_at = user.last_reward_at
+            if last_reward_at.tzinfo is None:
+                last_reward_at = last_reward_at.replace(tzinfo=UTC)
+
+            last_date = last_reward_at.astimezone(UTC).date()
+            today = now.astimezone(UTC).date()
+            if last_date == today:
+                pass
+            elif last_date == today - timedelta(days=1):
+                user.streak_days += 1
+            else:
+                user.streak_days = 1
+
+        user.last_reward_at = now
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
 
     async def deactivate(self, user_id: uuid.UUID) -> bool:
         """Deactivate a user account.

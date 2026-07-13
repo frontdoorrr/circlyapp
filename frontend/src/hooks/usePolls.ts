@@ -113,6 +113,8 @@ export function useVote() {
       queryClient.invalidateQueries({ queryKey: ['polls', pollId] });
       // 내 투표 목록도 갱신 (투표 상태 변경)
       queryClient.invalidateQueries({ queryKey: ['polls', 'my'] });
+      // Profile 보상 정보 갱신
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 }

@@ -36,6 +36,8 @@ class UserResponse(BaseModel):
     username: str | None
     display_name: str | None
     profile_emoji: str
+    coin_balance: int
+    streak_days: int
     role: str
     is_active: bool
     is_orb_mode: bool

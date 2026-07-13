@@ -25,6 +25,8 @@ export interface UserResponse {
   username: string | null;
   display_name: string | null;
   profile_emoji: string;
+  coin_balance: number;
+  streak_days: number;
   role: UserRole;
   is_active: boolean;
   is_orb_mode: boolean; // Orb Mode 구독 여부

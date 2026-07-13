@@ -133,6 +133,7 @@ class TestPollService:
             poll_repo=poll_repo,
             vote_repo=vote_repo,
             membership_repo=membership_repo,
+            user_repo=user_repo,
         )
 
         # Test
@@ -183,6 +184,7 @@ class TestPollService:
             poll_repo=poll_repo,
             vote_repo=vote_repo,
             membership_repo=membership_repo,
+            user_repo=user_repo,
         )
 
         # Test with non-existent template
@@ -237,6 +239,7 @@ class TestPollService:
             poll_repo=poll_repo,
             vote_repo=vote_repo,
             membership_repo=membership_repo,
+            user_repo=user_repo,
         )
 
         # Test with non-member trying to create poll
@@ -304,6 +307,7 @@ class TestPollService:
             poll_repo=poll_repo,
             vote_repo=vote_repo,
             membership_repo=membership_repo,
+            user_repo=user_repo,
         )
 
         # Test vote
@@ -320,6 +324,76 @@ class TestPollService:
         # Verify vote was recorded anonymously
         vote_count = await vote_repo.count_by_poll_id(poll.id)
         assert vote_count == 1
+
+        await db_session.refresh(voter)
+        assert voter.coin_balance == 1
+        assert voter.streak_days == 1
+        assert voter.last_reward_at is not None
+
+    @pytest.mark.asyncio
+    async def test_vote_success_keeps_same_day_streak_constant(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Multiple votes on the same day add coins but do not double-count streaks."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="streak-creator@example.com", password="password123")
+        )
+        voter = await user_repo.create(
+            UserCreate(email="streak-voter@example.com", password="password123")
+        )
+        voted_for = await user_repo.create(
+            UserCreate(email="streak-target@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Streak Circle"), creator.id, generate_invite_code()
+        )
+        membership_repo = MembershipRepository(db_session)
+        await membership_repo.create(circle.id, creator.id, MemberRole.OWNER)
+        await membership_repo.create(circle.id, voter.id, MemberRole.MEMBER)
+        await membership_repo.create(circle.id, voted_for.id, MemberRole.MEMBER)
+
+        template = PollTemplate(
+            category=TemplateCategory.PERSONALITY,
+            question_text="Who is the funniest?",
+            emoji="😂",
+        )
+        db_session.add(template)
+        await db_session.commit()
+        await db_session.refresh(template)
+
+        poll_repo = PollRepository(db_session)
+        first_poll = await poll_repo.create(
+            circle_id=circle.id,
+            template_id=template.id,
+            creator_id=creator.id,
+            question_text=template.question_text,
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+        second_poll = await poll_repo.create(
+            circle_id=circle.id,
+            template_id=template.id,
+            creator_id=creator.id,
+            question_text="Who is the kindest?",
+            ends_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+
+        service = PollService(
+            template_repo=TemplateRepository(db_session),
+            poll_repo=poll_repo,
+            vote_repo=VoteRepository(db_session),
+            membership_repo=membership_repo,
+            user_repo=user_repo,
+        )
+
+        await service.vote(first_poll.id, voter.id, voted_for.id)
+        await service.vote(second_poll.id, voter.id, voted_for.id)
+
+        await db_session.refresh(voter)
+        assert voter.coin_balance == 2
+        assert voter.streak_days == 1
 
     @pytest.mark.asyncio
     async def test_vote_duplicate_prevention(self, db_session: AsyncSession) -> None:
@@ -371,6 +445,7 @@ class TestPollService:
             poll_repo=poll_repo,
             vote_repo=vote_repo,
             membership_repo=membership_repo,
+            user_repo=user_repo,
         )
 
         # First vote succeeds

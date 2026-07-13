@@ -33,6 +33,17 @@ export function ProfileInfo({ user, onEdit }: ProfileInfoProps) {
 
       <Text style={styles.email}>{user.email}</Text>
 
+      <View style={styles.rewardRow}>
+        <View style={styles.rewardCard}>
+          <Text style={styles.rewardLabel}>코인</Text>
+          <Text style={styles.rewardValue}>{user.coin_balance}개</Text>
+        </View>
+        <View style={styles.rewardCard}>
+          <Text style={styles.rewardLabel}>스트릭</Text>
+          <Text style={styles.rewardValue}>{user.streak_days}일</Text>
+        </View>
+      </View>
+
       {/* 편집 버튼 */}
       <TouchableOpacity style={styles.editButton} onPress={onEdit}>
         <Text style={styles.editButtonText}>Profile 편집</Text>
@@ -79,6 +90,32 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.fontSize.sm,
     color: tokens.colors.neutral[500],
     marginBottom: tokens.spacing.lg,
+  },
+  rewardRow: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: tokens.spacing.sm,
+    marginBottom: tokens.spacing.lg,
+  },
+  rewardCard: {
+    flex: 1,
+    minHeight: 68,
+    paddingVertical: tokens.spacing.sm,
+    paddingHorizontal: tokens.spacing.md,
+    borderRadius: tokens.borderRadius.md,
+    backgroundColor: tokens.colors.neutral[50],
+    borderWidth: 1,
+    borderColor: tokens.colors.neutral[200],
+  },
+  rewardLabel: {
+    fontSize: tokens.typography.fontSize.xs,
+    color: tokens.colors.neutral[500],
+    marginBottom: tokens.spacing.xs,
+  },
+  rewardValue: {
+    fontSize: tokens.typography.fontSize.lg,
+    fontWeight: tokens.typography.fontWeight.bold,
+    color: tokens.colors.neutral[900],
   },
   editButton: {
     paddingHorizontal: tokens.spacing.lg,
