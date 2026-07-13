@@ -751,7 +751,7 @@
 - [x] `(1-circle)/index.tsx` 리터럴 `\n` 버그, `src/utils/logger.ts` + console.* 치환
 
 #### 18.7 홈 서클 스위처 + 고아 컴포넌트 정리 (P2)
-- [ ] 서클 선택 바텀시트, 고아 컴포넌트 채택/삭제
+- [x] 서클 선택 바텀시트, 고아 컴포넌트 채택/삭제
 
 #### 18.7A 통합 투표 세션 UX 1차 (P0)
 > 참고 문서: `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`, `trd/08-frontend-implementation-spec.md`

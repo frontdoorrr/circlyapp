@@ -5,8 +5,9 @@ import {
   FlatList,
   RefreshControl,
   ListRenderItem,
-  AccessibilityInfo,
   ViewStyle,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -28,24 +29,23 @@ import {
 } from '../../../src/components/patterns/PollCard';
 import { EmptyState } from '../../../src/components/states/EmptyState';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
-import { Skeleton, SkeletonCard } from '../../../src/components/states/Skeleton';
+import { SkeletonCard } from '../../../src/components/states/Skeleton';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
+import { HomeEmptyState } from '../../../src/components/home/HomeEmptyState';
+import { PollEmptyState } from '../../../src/components/home/PollEmptyState';
+import { CircleCard } from '../../../src/components/home/CircleCard';
 import { tokens, spacing, fontSizes, animations } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
-import {
-  useMyActivePolls,
-  useMyCompletedPolls,
-  useRefreshPolls,
-} from '../../../src/hooks/usePolls';
+import { useMyActivePolls, useMyCompletedPolls } from '../../../src/hooks/usePolls';
 import { useMyCircles } from '../../../src/hooks/useCircles';
 import { useUnreadCount } from '../../../src/hooks/useNotifications';
 import {
   formatTimeRemaining,
-  getTimeRemainingColor,
   isExpired,
 } from '../../../src/utils/timeUtils';
+import type { CircleResponse } from '../../../src/types/circle';
 
 // ============================================================================
 // Types
@@ -82,6 +82,8 @@ export default function HomeScreen() {
   const styles = useThemedStyles(createStyles);
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedCircleId, setSelectedCircleId] = useState<string | undefined>();
+  const [isCircleSheetVisible, setIsCircleSheetVisible] = useState(false);
   const pagerRef = useRef<PagerView>(null);
 
   // API 연동
@@ -99,16 +101,17 @@ export default function HomeScreen() {
     refetch: refetchCompleted,
   } = useMyCompletedPolls();
 
-  const { refreshActivePolls, refreshCompletedPolls } = useRefreshPolls();
-
   // 내 Circle 목록 조회
   const { data: myCircles } = useMyCircles();
 
   // 읽지 않은 알림 개수 (벨 배지)
   const { data: unreadCount } = useUnreadCount();
 
-  // 홈은 여러 Circle의 투표를 통합해서 보여준다.
-  const circleName = '전체 Circle';
+  const selectedCircle = useMemo(
+    () => myCircles?.find((circle) => circle.id === selectedCircleId),
+    [myCircles, selectedCircleId]
+  );
+  const circleName = selectedCircle?.name ?? '전체 Circle';
 
   // ============================================================================
   // 실시간 카운트다운
@@ -133,6 +136,7 @@ export default function HomeScreen() {
     if (!activePolls) return [];
 
     return activePolls
+      .filter((poll) => !selectedCircleId || poll.circle_id === selectedCircleId)
       .filter((poll) => !isExpired(poll.ends_at))
       .map((poll) => ({
         id: poll.id,
@@ -149,12 +153,14 @@ export default function HomeScreen() {
         rawEndsAt: poll.ends_at,
       }))
       .sort((a, b) => new Date(a.rawEndsAt).getTime() - new Date(b.rawEndsAt).getTime());
-  }, [activePolls]);
+  }, [activePolls, selectedCircleId]);
 
   const transformedCompletedPolls: TransformedCompletedPoll[] = useMemo(() => {
     if (!completedPolls) return [];
 
-    return completedPolls.map((poll) => ({
+    return completedPolls
+      .filter((poll) => !selectedCircleId || poll.circle_id === selectedCircleId)
+      .map((poll) => ({
       id: poll.id,
       question: poll.question,
       emoji: poll.emoji || '📊',
@@ -164,12 +170,17 @@ export default function HomeScreen() {
         voteCount: poll.winner_vote_count || 0,
       },
     }));
-  }, [completedPolls]);
+  }, [completedPolls, selectedCircleId]);
 
   const sessionReadyCount = useMemo(() => {
     if (!activePolls) return 0;
-    return activePolls.filter((poll) => !poll.has_voted && !isExpired(poll.ends_at)).length;
-  }, [activePolls]);
+    return activePolls.filter(
+      (poll) =>
+        (!selectedCircleId || poll.circle_id === selectedCircleId) &&
+        !poll.has_voted &&
+        !isExpired(poll.ends_at)
+    ).length;
+  }, [activePolls, selectedCircleId]);
 
   // ============================================================================
   // Event Handlers
@@ -235,11 +246,6 @@ export default function HomeScreen() {
     router.push('/(main)/(2-profile)' as any);
   }, [router]);
 
-  // Circle 탭으로 이동
-  const handleGoToCircles = useCallback(() => {
-    router.push('/(main)/(1-circle)' as any);
-  }, [router]);
-
   // Circle 참여 (코드로 참여)
   const handleJoinCircle = useCallback(() => {
     Haptics.selectionAsync();
@@ -253,8 +259,30 @@ export default function HomeScreen() {
 
   const handleStartSession = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/vote-session' as any);
-  }, [router]);
+    router.push(
+      selectedCircleId
+        ? (`/vote-session?circleId=${selectedCircleId}` as any)
+        : ('/vote-session' as any)
+    );
+  }, [router, selectedCircleId]);
+
+  const handleOpenCircleSheet = useCallback(() => {
+    Haptics.selectionAsync();
+    setIsCircleSheetVisible(true);
+  }, []);
+
+  const handleSelectCircle = useCallback((circleId?: string) => {
+    Haptics.selectionAsync();
+    setSelectedCircleId(circleId);
+    setIsCircleSheetVisible(false);
+  }, []);
+
+  const handleCircleCardPress = useCallback(
+    (circle: CircleResponse) => {
+      handleSelectCircle(circle.id);
+    },
+    [handleSelectCircle]
+  );
 
   // ============================================================================
   // Render Helpers
@@ -342,6 +370,20 @@ export default function HomeScreen() {
     );
   }
 
+  if (!isLoading && (!myCircles || myCircles.length === 0)) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <HomeHeader
+          circleName={circleName}
+          notificationCount={unreadCount ?? 0}
+          onNotificationPress={handleNotificationPress}
+          onProfilePress={handleProfilePress}
+        />
+        <HomeEmptyState onJoinCircle={handleJoinCircle} />
+      </View>
+    );
+  }
+
   // ============================================================================
   // Main Render
   // ============================================================================
@@ -356,9 +398,15 @@ export default function HomeScreen() {
         onProfilePress={handleProfilePress}
       />
 
+      <CircleScopeSelector
+        circleName={circleName}
+        isScoped={Boolean(selectedCircleId)}
+        onPress={handleOpenCircleSheet}
+      />
+
       <SessionStartCard
         count={sessionReadyCount}
-        circleCount={myCircles?.length ?? 0}
+        circleCount={selectedCircleId ? 1 : myCircles?.length ?? 0}
         onStart={handleStartSession}
         onCreatePoll={handleCreatePoll}
         isDark={isDark}
@@ -398,10 +446,7 @@ export default function HomeScreen() {
         <View key="active" style={styles.pageContainer}>
           {transformedActivePolls.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <EmptyState
-                variant="no-active-polls"
-                onAction={handleJoinCircle}
-              />
+              <PollEmptyState onCreatePoll={handleCreatePoll} />
             </View>
           ) : (
             <FlatList
@@ -488,7 +533,100 @@ export default function HomeScreen() {
           + 새 투표
         </Button>
       ) : null}
+
+      <CircleSwitcherSheet
+        visible={isCircleSheetVisible}
+        circles={myCircles ?? []}
+        selectedCircleId={selectedCircleId}
+        onSelectAll={() => handleSelectCircle(undefined)}
+        onSelectCircle={handleCircleCardPress}
+        onClose={() => setIsCircleSheetVisible(false)}
+      />
     </View>
+  );
+}
+
+interface CircleScopeSelectorProps {
+  circleName: string;
+  isScoped: boolean;
+  onPress: () => void;
+}
+
+function CircleScopeSelector({ circleName, isScoped, onPress }: CircleScopeSelectorProps) {
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <Pressable
+      style={styles.scopeSelector}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="홈에 표시할 Circle 선택"
+    >
+      <View>
+        <Text style={styles.scopeLabel}>{isScoped ? '선택한 Circle' : '전체 보기'}</Text>
+        <Text style={styles.scopeName} numberOfLines={1}>{circleName}</Text>
+      </View>
+      <Text style={styles.scopeChevron}>⌄</Text>
+    </Pressable>
+  );
+}
+
+interface CircleSwitcherSheetProps {
+  visible: boolean;
+  circles: CircleResponse[];
+  selectedCircleId?: string;
+  onSelectAll: () => void;
+  onSelectCircle: (circle: CircleResponse) => void;
+  onClose: () => void;
+}
+
+function CircleSwitcherSheet({
+  visible,
+  circles,
+  selectedCircleId,
+  onSelectAll,
+  onSelectCircle,
+  onClose,
+}: CircleSwitcherSheetProps) {
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+      <View style={styles.sheet}>
+        <View style={styles.sheetHandle} />
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle}>Circle 선택</Text>
+          <Pressable onPress={onClose} hitSlop={8}>
+            <Text style={styles.sheetClose}>닫기</Text>
+          </Pressable>
+        </View>
+        <Pressable
+          style={[
+            styles.allCircleRow,
+            !selectedCircleId && styles.allCircleRowSelected,
+          ]}
+          onPress={onSelectAll}
+          accessibilityRole="button"
+        >
+          <Text style={styles.allCircleTitle}>전체 Circle</Text>
+          <Text style={styles.allCircleSubtitle}>{circles.length}개 Circle의 투표 모아보기</Text>
+        </Pressable>
+        <FlatList
+          data={circles}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <CircleCard
+              circle={item}
+              index={index}
+              onPress={() => onSelectCircle(item)}
+            />
+          )}
+          contentContainerStyle={styles.sheetList}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </Modal>
   );
 }
 
@@ -714,6 +852,35 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    scopeSelector: {
+      marginHorizontal: spacing[4],
+      marginTop: spacing[3],
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[3],
+      borderRadius: tokens.borderRadius.lg,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing[3],
+    },
+    scopeLabel: {
+      marginBottom: 2,
+      fontSize: tokens.typography.fontSize.xs,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.textTertiary,
+    },
+    scopeName: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    scopeChevron: {
+      fontSize: tokens.typography.fontSize['2xl'],
+      color: theme.textTertiary,
+    },
     // PagerView styles
     pagerView: {
       flex: 1,
@@ -805,5 +972,67 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       bottom: spacing[5],
       minWidth: 120,
       ...tokens.shadows.lg,
+    },
+    sheetBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    },
+    sheet: {
+      maxHeight: '72%',
+      paddingHorizontal: spacing[4],
+      paddingTop: spacing[2],
+      paddingBottom: spacing[5],
+      borderTopLeftRadius: tokens.borderRadius.xl,
+      borderTopRightRadius: tokens.borderRadius.xl,
+      backgroundColor: theme.background,
+    },
+    sheetHandle: {
+      alignSelf: 'center',
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.border,
+      marginBottom: spacing[3],
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing[3],
+    },
+    sheetTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: theme.text,
+    },
+    sheetClose: {
+      fontSize: tokens.typography.fontSize.sm,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 600],
+    },
+    allCircleRow: {
+      padding: spacing[4],
+      borderRadius: tokens.borderRadius.lg,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: spacing[3],
+    },
+    allCircleRowSelected: {
+      borderColor: tokens.colors.primary[500],
+      backgroundColor: isDark ? tokens.colors.primary[900] : tokens.colors.primary[50],
+    },
+    allCircleTitle: {
+      marginBottom: 2,
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    allCircleSubtitle: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+    },
+    sheetList: {
+      paddingBottom: spacing[4],
     },
   });
