@@ -40,6 +40,22 @@ services:
         condition: service_healthy
     command: uv run celery -A app.tasks.celery_app worker --loglevel=info
 
+  beat:
+    profiles:
+      - worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/circly
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DEV_AUTH_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: uv run celery -A app.tasks.celery_app beat --loglevel=info
+
   db:
     image: postgres:16-alpine
     environment:

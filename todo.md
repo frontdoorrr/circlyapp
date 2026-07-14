@@ -503,14 +503,14 @@
 
 > **참고**: `prd/features/03-push-notification.md#10.5.2 Background Tasks`
 
-- [ ] `backend/app/core/celery.py` - Celery 설정
-- [ ] `backend/app/tasks/__init__.py` - Task 모듈 생성
-- [ ] `backend/app/tasks/notification_tasks.py` - 알림 스케줄 태스크
-  - [ ] `schedule_poll_deadline_notifications()` - 마감 알림 스케줄링
-  - [ ] `send_poll_deadline_notification_1h()` - 1시간 전 알림
-  - [ ] `send_poll_deadline_notification_10m()` - 10분 전 알림
-  - [ ] `send_poll_result_notification()` - 결과 발표 알림
-- [ ] `docker-compose.yml` - Celery worker, beat 추가
+- [x] `backend/app/core/celery.py` - Celery 설정
+- [x] `backend/app/tasks/__init__.py` - Task 모듈 생성
+- [x] `backend/app/tasks/notification_tasks.py` - 알림 스케줄 태스크
+  - [x] `schedule_poll_deadline_notifications()` - 마감 알림 스케줄링
+  - [x] `send_poll_deadline_notification_1h()` - 1시간 전 알림
+  - [x] `send_poll_deadline_notification_10m()` - 10분 전 알림
+  - [x] `send_poll_result_notification()` - 결과 발표 알림
+- [x] `docker-compose.yml` - Celery worker, beat 추가
 
 ### 15.4 Backend - 이벤트 연동 (즉시 발송 ✅)
 
@@ -518,7 +518,7 @@
 
 - [x] `backend/app/modules/polls/service.py` - 투표 생성 시 알림 트리거
   - [x] `create_poll()` → `notification_service.send_poll_started()` 호출
-  - [ ] `create_poll()` → 마감 알림 스케줄링 호출 (Celery 필요)
+  - [x] `create_poll()` → 마감 알림 스케줄링 호출 (Celery 필요)
 - [x] `backend/app/modules/polls/service.py` - 투표 마감 처리 시 결과 알림
   - [x] `close_poll()` → `send_poll_ended()` 호출
 - [x] `backend/app/modules/polls/service.py` - 투표 참여 시 알림

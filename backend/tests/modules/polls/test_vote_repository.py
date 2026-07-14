@@ -172,6 +172,73 @@ class TestVoteRepository:
         assert count == 2
 
     @pytest.mark.asyncio
+    async def test_find_voter_ids_by_poll_id(self, db_session: AsyncSession) -> None:
+        """Test finding users that already voted in a poll."""
+        user_repo = UserRepository(db_session)
+        voter1 = await user_repo.create(
+            UserCreate(email="voter1@example.com", password="password123")
+        )
+        voter2 = await user_repo.create(
+            UserCreate(email="voter2@example.com", password="password123")
+        )
+        other_voter = await user_repo.create(
+            UserCreate(email="other@example.com", password="password123")
+        )
+        voted_for = await user_repo.create(
+            UserCreate(email="votedfor@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Circle"), voter1.id, generate_invite_code()
+        )
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=voter1.id,
+            question_text="Test?",
+            ends_at=datetime.now() + timedelta(hours=1),
+        )
+        other_poll = Poll(
+            circle_id=circle.id,
+            creator_id=voter1.id,
+            question_text="Other?",
+            ends_at=datetime.now() + timedelta(hours=1),
+        )
+        db_session.add_all([poll, other_poll])
+        await db_session.commit()
+        await db_session.refresh(poll)
+        await db_session.refresh(other_poll)
+
+        db_session.add_all(
+            [
+                Vote(
+                    poll_id=poll.id,
+                    voter_id=voter1.id,
+                    voter_hash="hash1",
+                    voted_for_id=voted_for.id,
+                ),
+                Vote(
+                    poll_id=poll.id,
+                    voter_id=voter2.id,
+                    voter_hash="hash2",
+                    voted_for_id=voted_for.id,
+                ),
+                Vote(
+                    poll_id=other_poll.id,
+                    voter_id=other_voter.id,
+                    voter_hash="hash3",
+                    voted_for_id=voted_for.id,
+                ),
+            ]
+        )
+        await db_session.commit()
+
+        repo = VoteRepository(db_session)
+        voter_ids = await repo.find_voter_ids_by_poll_id(poll.id)
+
+        assert voter_ids == {voter1.id, voter2.id}
+
+    @pytest.mark.asyncio
     async def test_get_results_by_poll_id(self, db_session: AsyncSession) -> None:
         """Test getting vote results for a poll."""
         # Setup

@@ -543,6 +543,20 @@ class VoteRepository:
         )
         return result.scalar() or 0
 
+    async def find_voter_ids_by_poll_id(self, poll_id: uuid.UUID) -> set[uuid.UUID]:
+        """Find user IDs that have already voted in a poll.
+
+        Args:
+            poll_id: Poll UUID
+
+        Returns:
+            Set of voter user UUIDs
+        """
+        result = await self.session.execute(
+            select(Vote.voter_id).where(Vote.poll_id == poll_id)
+        )
+        return set(result.scalars().all())
+
     async def get_results_by_poll_id(self, poll_id: uuid.UUID) -> list[VoteResultDict]:
         """Get vote results for a poll.
 

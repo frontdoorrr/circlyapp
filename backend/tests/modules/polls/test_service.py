@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -141,11 +142,14 @@ class TestPollService:
             template_id=template.id,
             duration=PollDuration.THREE_HOURS,
         )
-        result = await service.create_poll(
-            circle_id=circle.id,
-            creator_id=creator.id,
-            poll_data=poll_data,
-        )
+        with patch(
+            "app.tasks.notification_tasks.schedule_poll_deadline_notifications"
+        ) as schedule_notifications:
+            result = await service.create_poll(
+                circle_id=circle.id,
+                creator_id=creator.id,
+                poll_data=poll_data,
+            )
 
         assert result is not None
         assert result.circle_id == circle.id
@@ -157,6 +161,10 @@ class TestPollService:
         # Verify ends_at is approximately 3 hours from now
         expected_end = datetime.now(UTC) + timedelta(hours=3)
         assert abs((result.ends_at - expected_end).total_seconds()) < 60  # Within 1 minute
+        schedule_notifications.assert_called_once_with(
+            str(result.id),
+            result.ends_at,
+        )
 
     @pytest.mark.asyncio
     async def test_create_poll_template_not_found(self, db_session: AsyncSession) -> None:

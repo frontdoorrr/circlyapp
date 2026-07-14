@@ -518,6 +518,14 @@ class PollService:
         # Increment template usage count
         await self.template_repo.increment_usage_count(poll_data.template_id)
 
+        # Schedule deadline reminders and result notification.
+        try:
+            from app.tasks.notification_tasks import schedule_poll_deadline_notifications
+
+            schedule_poll_deadline_notifications(str(poll.id), poll.ends_at)
+        except Exception as e:
+            logger.error("Failed to schedule poll deadline notifications: %s", e)
+
         # 🔔 Send poll started notification (excluding creator)
         if self.notification_service:
             try:
