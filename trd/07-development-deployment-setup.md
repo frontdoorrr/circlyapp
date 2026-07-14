@@ -495,7 +495,7 @@ frontend/
       "env": {
         "API_URL": "http://localhost:8000",
         "SUPABASE_URL": "YOUR_SUPABASE_URL",
-        "SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_KEY"
+        "SUPABASE_PUBLISHABLE_KEY": "YOUR_SUPABASE_PUBLISHABLE_KEY"
       }
     },
     "preview": {
@@ -504,7 +504,7 @@ frontend/
       "env": {
         "API_URL": "https://staging-api.circly.app",
         "SUPABASE_URL": "YOUR_STAGING_SUPABASE_URL",
-        "SUPABASE_ANON_KEY": "YOUR_STAGING_SUPABASE_ANON_KEY"
+        "SUPABASE_PUBLISHABLE_KEY": "YOUR_STAGING_SUPABASE_PUBLISHABLE_KEY"
       }
     },
     "production": {
@@ -512,7 +512,7 @@ frontend/
       "env": {
         "API_URL": "https://api.circly.app",
         "SUPABASE_URL": "YOUR_PROD_SUPABASE_URL",
-        "SUPABASE_ANON_KEY": "YOUR_PROD_SUPABASE_ANON_KEY"
+        "SUPABASE_PUBLISHABLE_KEY": "YOUR_PROD_SUPABASE_PUBLISHABLE_KEY"
       }
     }
   },
@@ -1146,7 +1146,7 @@ EXPO_PUBLIC_API_URL=http://localhost:8000
 
 # Supabase (Realtime)
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 
 # Sentry
 EXPO_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx

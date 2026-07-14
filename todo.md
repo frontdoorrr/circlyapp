@@ -349,7 +349,7 @@
 
 ## 고도화 작업 (TODO)
 
-- [ ] **Supabase Auth**: anon key → Publishable key로 변경 (보안 강화)
+- [x] **Supabase Auth**: anon key → Publishable key로 변경 (보안 강화)
 
 ---
 

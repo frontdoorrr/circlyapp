@@ -34,7 +34,8 @@ cp .env.example .env.local
 ```bash
 VITE_API_URL=http://localhost:8000/api/v1
 VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+# VITE_SUPABASE_ANON_KEY=your_anon_key  # legacy fallback only
 ```
 
 ### 3. 개발 서버 실행
