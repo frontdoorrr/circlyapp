@@ -24,12 +24,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.config import get_settings
-from app.core.enums import MemberRole, PollStatus, UserRole
-from app.core.security import generate_invite_code
+from app.core.enums import MemberRole, NotificationType, PollStatus, UserRole
+from app.core.security import generate_invite_code, generate_voter_hash
 from app.modules.auth.models import User
 from app.modules.circles.models import Circle, CircleMember
-from app.modules.notifications.models import Notification  # noqa: F401
-from app.modules.polls.models import Poll, PollResult, PollTemplate, Vote  # noqa: F401
+from app.modules.notifications.models import Notification
+from app.modules.polls.models import Poll, PollTemplate, Vote
 from app.modules.reports.models import Report  # noqa: F401
 
 MOCK_USER = {
@@ -327,6 +327,75 @@ async def seed_polls(
     return all_polls
 
 
+async def seed_received_hearts(
+    session: AsyncSession,
+    *,
+    mock_user: User,
+    users_by_circle: dict[int, list[User]],
+    polls: list[Poll],
+) -> None:
+    """Create votes that make the mock user appear in the received hearts inbox."""
+    created_votes = 0
+    created_notifications = 0
+
+    for poll_index, poll in enumerate(polls[:8]):
+        circle_users = users_by_circle[poll_index % len(users_by_circle)]
+        voters = circle_users[: 2 + (poll_index % 3)]
+
+        for voter in voters:
+            voter_hash = generate_voter_hash(voter.id, poll.id, salt=str(poll.id))
+            result = await session.execute(
+                select(Vote).where(
+                    Vote.poll_id == poll.id,
+                    Vote.voter_hash == voter_hash,
+                )
+            )
+            if result.scalar_one_or_none() is not None:
+                continue
+
+            session.add(
+                Vote(
+                    poll_id=poll.id,
+                    voter_id=voter.id,
+                    voter_hash=voter_hash,
+                    voted_for_id=mock_user.id,
+                    created_at=datetime.now(UTC) - timedelta(minutes=15 + poll_index * 7),
+                )
+            )
+            poll.vote_count += 1
+            created_votes += 1
+
+        if poll_index < 3:
+            result = await session.execute(
+                select(Notification).where(
+                    Notification.user_id == mock_user.id,
+                    Notification.type == NotificationType.VOTE_RECEIVED,
+                    Notification.data["poll_id"].astext == str(poll.id),
+                )
+            )
+            if result.scalar_one_or_none() is None:
+                session.add(
+                    Notification(
+                        user_id=mock_user.id,
+                        type=NotificationType.VOTE_RECEIVED,
+                        title="🎊 누군가 당신을 선택했어요!",
+                        body=f'"{poll.question_text[:28]}" 투표에서 선택받았어요',
+                        data={
+                            "type": "vote_received",
+                            "poll_id": str(poll.id),
+                            "circle_id": str(poll.circle_id),
+                            "action_url": f"circly://results/{poll.id}",
+                        },
+                        is_read=False,
+                    )
+                )
+                created_notifications += 1
+
+    await session.commit()
+    print(f"  ✅ Received hearts ready: {created_votes} new votes")
+    print(f"  ✅ Inbox notifications ready: {created_notifications} new")
+
+
 async def main() -> None:
     """Main entry point for the seed script."""
     settings = get_settings()
@@ -359,11 +428,19 @@ async def main() -> None:
         print(f"  📊 Found {len(templates)} templates")
 
         print("\n🗳️ Seeding active polls...")
-        await seed_polls(
+        polls = await seed_polls(
             session,
             circles=circles,
             creator=mock_user,
             templates=templates,
+        )
+
+        print("\n💌 Seeding received hearts / inbox...")
+        await seed_received_hearts(
+            session,
+            mock_user=mock_user,
+            users_by_circle=users_by_circle,
+            polls=polls,
         )
 
     await engine.dispose()
