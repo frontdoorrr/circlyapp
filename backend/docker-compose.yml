@@ -14,6 +14,7 @@ services:
       - DEV_AUTH_ENABLED=true
     volumes:
       - ./app:/app/app
+      - ./migrations:/app/migrations
       - ./scripts:/app/scripts
     depends_on:
       db:
@@ -38,6 +39,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./migrations:/app/migrations
     command: uv run celery -A app.tasks.celery_app worker --loglevel=info
 
   beat:
@@ -54,6 +58,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./migrations:/app/migrations
     command: uv run celery -A app.tasks.celery_app beat --loglevel=info
 
   db:
