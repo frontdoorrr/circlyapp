@@ -532,7 +532,7 @@
 - [x] `frontend/src/providers/AppInitializer.tsx` - 앱 시작 시 푸시 토큰 등록 로직 추가
   - [x] 로그인 상태일 때 `registerForPushNotificationsAsync()` 호출
   - [x] 토큰 획득 후 `registerPushToken()` API 호출
-- [ ] `frontend/src/stores/auth.ts` - 로그아웃 시 `unregisterPushToken()` 호출
+- [x] `frontend/src/hooks/useAuth.ts` - 로그아웃 시 `unregisterPushToken()` 호출
 
 ### 15.6 Frontend - 딥링크 처리 ✅
 

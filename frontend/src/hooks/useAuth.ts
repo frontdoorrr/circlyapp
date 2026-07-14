@@ -6,6 +6,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as authApi from '../api/auth';
+import * as notificationApi from '../api/notification';
 import { LoginRequest, UserCreate, UserUpdate } from '../types/auth';
 import { useAuthStore } from '../stores/auth';
 import { supabase } from '../lib/supabase';
@@ -130,6 +131,12 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
+      try {
+        await notificationApi.unregisterPushToken();
+      } catch (error) {
+        logger.warn('[useLogout] 푸시 토큰 해제 실패 (로그아웃 계속):', error);
+      }
+
       if (isMockAuth) {
         logger.log('[useLogout] Mock Auth 로그아웃');
         return;
