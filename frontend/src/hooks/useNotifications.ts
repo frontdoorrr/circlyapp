@@ -11,6 +11,7 @@ import {
   markAsRead,
   NotificationItem,
 } from '../api/notification';
+import { useAuthStore } from '../stores/auth';
 
 const LIST_KEY = ['notifications'];
 const UNREAD_KEY = ['notifications', 'unread-count'];
@@ -19,9 +20,12 @@ const UNREAD_KEY = ['notifications', 'unread-count'];
  * 알림 목록 조회 훅
  */
 export function useNotifications() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: LIST_KEY,
     queryFn: () => getNotifications(),
+    enabled: isAuthenticated,
     staleTime: 1000 * 30,
   });
 }
@@ -30,9 +34,12 @@ export function useNotifications() {
  * 읽지 않은 알림 개수 훅 (홈 벨 배지용)
  */
 export function useUnreadCount() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: UNREAD_KEY,
     queryFn: getUnreadCount,
+    enabled: isAuthenticated,
     refetchInterval: 1000 * 60,
     refetchOnWindowFocus: true,
     staleTime: 1000 * 30,
