@@ -9,6 +9,7 @@ import { QueryProvider } from '../src/providers/QueryProvider';
 import { AppInitializer } from '../src/providers/AppInitializer';
 import { ToastProvider } from '../src/providers/ToastProvider';
 import { logger } from '../src/utils/logger';
+import { resolveInviteLink } from '../src/api/circle';
 
 /**
  * Root Layout
@@ -52,7 +53,7 @@ function useDeepLinkHandler() {
 
   useEffect(() => {
     // Handle deep link when app is opened from link
-    const handleDeepLink = (event: { url: string }) => {
+    const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
       logger.log('[DeepLink] Received URL:', url);
 
@@ -75,8 +76,17 @@ function useDeepLinkHandler() {
         if (parsedUrl.path?.startsWith('join/')) {
           const uniqueId = parsedUrl.path.replace('join/', '');
           logger.log('[DeepLink] Navigating with unique ID:', uniqueId);
-          // TODO: Convert unique_id to invite_code via API
-          router.push('/join/invite-code');
+          const result = await resolveInviteLink(uniqueId);
+
+          if (result.valid && result.invite_code) {
+            router.push({
+              pathname: '/join/invite-code',
+              params: { code: result.invite_code },
+            });
+          } else {
+            logger.warn('[DeepLink] Invalid invite link:', result.message);
+            router.push('/join/invite-code');
+          }
           return;
         }
       } catch (error) {

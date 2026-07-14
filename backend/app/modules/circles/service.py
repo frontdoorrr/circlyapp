@@ -19,6 +19,7 @@ from app.modules.circles.schemas import (
     CircleResponse,
     MemberInfo,
     RegenerateInviteCodeResponse,
+    ResolveInviteLinkResponse,
     ValidateInviteCodeResponse,
 )
 from app.modules.polls.repository import PollRepository
@@ -65,16 +66,9 @@ class CircleService:
         Returns:
             CircleResponse with created circle data
         """
-        # Generate unique invite code
-        print("1111", "generate_invite_code")
         invite_code = generate_invite_code()
-        print("2222", "invite_code", invite_code)
-        # Create circle
         circle = await self.circle_repo.create(circle_data, owner_id, invite_code)
-        print("3333", "circle", circle)
-        # Add owner as first member with OWNER role
         await self.membership_repo.create(circle.id, owner_id, MemberRole.OWNER)
-        print("4444", "membership")
         return await self._to_circle_response(circle)
 
     async def join_by_code(
@@ -284,6 +278,38 @@ class CircleService:
 
         return ValidateInviteCodeResponse(
             valid=True,
+            circle_name=circle.name,
+            circle_id=circle.id,
+            member_count=circle.member_count,
+            max_members=circle.max_members,
+        )
+
+    async def resolve_invite_link(
+        self,
+        invite_link_id: uuid.UUID,
+    ) -> ResolveInviteLinkResponse:
+        """Resolve a permanent invite link ID to the current invite code."""
+        circle = await self.circle_repo.find_by_invite_link_id(invite_link_id)
+
+        if circle is None or not circle.is_active:
+            return ResolveInviteLinkResponse(
+                valid=False,
+                message="Invalid or expired invite link",
+            )
+
+        if circle.member_count >= circle.max_members:
+            return ResolveInviteLinkResponse(
+                valid=False,
+                circle_name=circle.name,
+                circle_id=circle.id,
+                member_count=circle.member_count,
+                max_members=circle.max_members,
+                message="This circle is full",
+            )
+
+        return ResolveInviteLinkResponse(
+            valid=True,
+            invite_code=circle.invite_code,
             circle_name=circle.name,
             circle_id=circle.id,
             member_count=circle.member_count,

@@ -418,6 +418,28 @@ Circle 상세 정보 및 멤버 목록을 조회합니다.
 
 ---
 
+### GET /circles/invite-links/{invite_link_id}
+
+영구 초대 링크 ID를 현재 유효한 6자리 초대 코드로 변환합니다. 앱 딥링크 `https://circly.app/join/{unique_id}` 처리에 사용합니다.
+
+**엔드포인트:** `GET /api/v1/circles/invite-links/{invite_link_id}`
+**인증 필요:** ❌
+
+**Response (200 OK):**
+```json
+{
+  "valid": true,
+  "invite_code": "A1B2C3",
+  "circle_name": "3학년 2반 친구들",
+  "circle_id": "circle-id",
+  "member_count": 26,
+  "max_members": 50,
+  "message": null
+}
+```
+
+---
+
 ### POST /circles/{circle_id}/leave
 
 Circle에서 탈퇴합니다. (OWNER는 탈퇴 불가)

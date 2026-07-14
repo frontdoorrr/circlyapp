@@ -62,3 +62,7 @@ export interface ValidateInviteCodeResponse {
   max_members: number | null;
   message: string | null;
 }
+
+export interface ResolveInviteLinkResponse extends ValidateInviteCodeResponse {
+  invite_code: string | null;
+}

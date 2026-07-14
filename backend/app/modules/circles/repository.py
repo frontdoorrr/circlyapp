@@ -38,6 +38,7 @@ class CircleRepository:
             owner_id=owner_id,
             max_members=circle_data.max_members,
             invite_code=invite_code,
+            invite_link_id=uuid.uuid4(),
             member_count=1,  # Owner is the first member
         )
         self.session.add(circle)
@@ -68,6 +69,12 @@ class CircleRepository:
             Circle if found, None otherwise
         """
         stmt = select(Circle).where(Circle.invite_code == invite_code)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def find_by_invite_link_id(self, invite_link_id: uuid.UUID) -> Circle | None:
+        """Find a circle by permanent invite link ID."""
+        stmt = select(Circle).where(Circle.invite_link_id == invite_link_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

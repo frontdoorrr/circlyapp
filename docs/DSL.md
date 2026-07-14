@@ -413,6 +413,7 @@ module Circle {
 
         await function joinByCode(userId: UUID, code: String, nickname: String) -> Result<Membership, Error>
         await function joinByLink(userId: UUID, linkId: UUID, nickname: String) -> Result<Membership, Error>
+        await function resolveInviteLink(linkId: UUID) -> Result<ResolveInviteLinkResponse, Error>
         await function leaveCircle(circleId: UUID, userId: UUID) -> Result<Void, Error>
         await function removeMember(circleId: UUID, targetUserId: UUID, requesterId: UUID) -> Result<Void, Error>
 
@@ -434,6 +435,7 @@ module Circle {
         DELETE /api/v1/circles/{id}                  -> deleteCircle
 
         POST   /api/v1/circles/join/code             -> joinByCode
+        GET    /api/v1/circles/invite-links/{linkId} -> resolveInviteLink
         POST   /api/v1/circles/join/link/{linkId}    -> joinByLink
         POST   /api/v1/circles/{id}/leave            -> leaveCircle
         DELETE /api/v1/circles/{id}/members/{userId} -> removeMember
@@ -482,6 +484,16 @@ module Circle {
         memberCount: Integer
         activePollCount: Integer
         myRole: MemberRole
+    }
+
+    type ResolveInviteLinkResponse {
+        valid: Boolean
+        inviteCode: String?
+        circleName: String?
+        circleId: UUID?
+        memberCount: Integer?
+        maxMembers: Integer?
+        message: String?
     }
 
     type Membership {

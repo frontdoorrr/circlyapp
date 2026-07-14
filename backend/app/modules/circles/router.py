@@ -13,6 +13,7 @@ from app.modules.circles.schemas import (
     JoinByCodeRequest,
     MemberInfo,
     RegenerateInviteCodeResponse,
+    ResolveInviteLinkResponse,
     UpdateCircleStatusRequest,
     ValidateInviteCodeResponse,
 )
@@ -49,6 +50,19 @@ async def get_circles(
 ) -> list[CircleResponse]:
     """Get all circles the current user is a member of."""
     return await service.get_user_circles(current_user.id)
+
+
+@router.get(
+    "/invite-links/{invite_link_id}",
+    response_model=ResolveInviteLinkResponse,
+    summary="Resolve invite link",
+)
+async def resolve_invite_link(
+    invite_link_id: uuid.UUID,
+    service: CircleServiceDep,
+) -> ResolveInviteLinkResponse:
+    """Resolve a permanent invite link ID to the current invite code."""
+    return await service.resolve_invite_link(invite_link_id)
 
 
 @router.get(

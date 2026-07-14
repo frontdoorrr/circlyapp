@@ -1,13 +1,10 @@
 """Tests for Circle and Membership repositories."""
 
-import uuid
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import MemberRole
 from app.core.security import generate_invite_code
-from app.modules.auth.models import User
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import UserCreate
 from app.modules.circles.repository import CircleRepository, MembershipRepository
@@ -51,6 +48,29 @@ class TestCircleRepository:
         found = await circle_repo.find_by_invite_code(invite_code)
         assert found is not None
         assert found.name == "Find Me"
+
+    @pytest.mark.asyncio
+    async def test_create_circle_generates_invite_link_id(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        """Test circle creation assigns a permanent invite link ID."""
+        user_repo = UserRepository(db_session)
+        user = await user_repo.create(
+            UserCreate(email="link-owner@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Link Circle"),
+            user.id,
+            generate_invite_code(),
+        )
+
+        assert circle.invite_link_id is not None
+        found = await circle_repo.find_by_invite_link_id(circle.invite_link_id)
+        assert found is not None
+        assert found.id == circle.id
 
     @pytest.mark.asyncio
     async def test_find_by_user_id(self, db_session: AsyncSession) -> None:

@@ -450,7 +450,7 @@
 
 ### 🟡 중간 (부가 기능 미완성)
 - [x] **14.5** `useAuth.ts:168,177` - 회원탈퇴 API 구현 ✅ (Profile→설정 경로 추가)
-- [ ] **14.6** `_layout.tsx:74` - 딥링크 unique_id → invite_code 변환 API
+- [x] **14.6** `_layout.tsx:74` - 딥링크 unique_id → invite_code 변환 API
 - [x] **14.7** `notifications.tsx:26` - 알림 설정 API 연동 ✅
 
 ### 🟢 낮음 (UI/UX 개선)

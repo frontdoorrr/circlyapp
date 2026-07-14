@@ -10,6 +10,7 @@ import {
   JoinByCodeRequest,
   MemberInfo,
   RegenerateInviteCodeResponse,
+  ResolveInviteLinkResponse,
   ValidateInviteCodeResponse,
 } from '../types/circle';
 import { ApiResponse } from '../types/api';
@@ -70,6 +71,23 @@ export async function validateInviteCode(code: string): Promise<ValidateInviteCo
   );
   logger.log('[API] GET /circles/validate-code/:code 응답:', { status: response.status });
   return extractData<ValidateInviteCodeResponse>(response.data, (d) => typeof d.valid === 'boolean');
+}
+
+/**
+ * 초대 링크 ID를 현재 초대 코드로 변환
+ */
+export async function resolveInviteLink(
+  inviteLinkId: string
+): Promise<ResolveInviteLinkResponse> {
+  logger.log('[API] GET /circles/invite-links/:id 요청:', inviteLinkId);
+  const response = await apiClient.get<ApiResponse<ResolveInviteLinkResponse>>(
+    `/circles/invite-links/${inviteLinkId}`
+  );
+  logger.log('[API] GET /circles/invite-links/:id 응답:', { status: response.status });
+  return extractData<ResolveInviteLinkResponse>(
+    response.data,
+    (d) => typeof d.valid === 'boolean'
+  );
 }
 
 /**

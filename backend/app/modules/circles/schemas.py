@@ -112,6 +112,12 @@ class ValidateInviteCodeResponse(BaseModel):
     message: str | None = None
 
 
+class ResolveInviteLinkResponse(ValidateInviteCodeResponse):
+    """Schema for resolving a permanent invite link to the active invite code."""
+
+    invite_code: str | None = None
+
+
 # ==================== Admin Schemas ====================
 
 
