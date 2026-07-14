@@ -24,6 +24,8 @@ export interface UserResponse {
   supabase_user_id: string | null; // Supabase Auth user ID
   username: string | null;
   display_name: string | null;
+  gender: string;
+  age_group: string;
   profile_emoji: string;
   coin_balance: number;
   streak_days: number;
@@ -42,6 +44,8 @@ export interface AuthResponse {
 export interface UserUpdate {
   username?: string;
   display_name?: string;
+  gender?: string;
+  age_group?: string;
   profile_emoji?: string;
 }
 

@@ -59,6 +59,18 @@ class User(BaseModel):
         String(100),
         nullable=True,
     )
+    gender: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="UNSPECIFIED",
+        server_default="UNSPECIFIED",
+    )
+    age_group: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="UNSPECIFIED",
+        server_default="UNSPECIFIED",
+    )
     profile_emoji: Mapped[str] = mapped_column(
         String(10),
         nullable=False,

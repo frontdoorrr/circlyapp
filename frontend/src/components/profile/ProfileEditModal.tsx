@@ -19,11 +19,30 @@ import { Input } from '../primitives/Input';
 import { Text } from '../primitives/Text';
 import { tokens } from '../../theme';
 
+type GenderValue = 'UNSPECIFIED' | 'MALE' | 'FEMALE' | 'NON_BINARY';
+type AgeGroupValue = 'UNSPECIFIED' | 'YOUNG_TEEN' | 'MID_TEEN' | 'OLDER_TEEN';
+
+const GENDER_OPTIONS: Array<{ label: string; value: GenderValue }> = [
+  { label: '선택 안 함', value: 'UNSPECIFIED' },
+  { label: '남자', value: 'MALE' },
+  { label: '여자', value: 'FEMALE' },
+  { label: '논바이너리', value: 'NON_BINARY' },
+];
+
+const AGE_GROUP_OPTIONS: Array<{ label: string; value: AgeGroupValue }> = [
+  { label: '선택 안 함', value: 'UNSPECIFIED' },
+  { label: '13-14', value: 'YOUNG_TEEN' },
+  { label: '15-16', value: 'MID_TEEN' },
+  { label: '17-18', value: 'OLDER_TEEN' },
+];
+
 interface ProfileEditModalProps {
   isOpen: boolean;
   initialData: {
     username?: string | null;
     display_name?: string | null;
+    gender?: string | null;
+    age_group?: string | null;
     profile_emoji?: string;
   };
   onSubmit: (data: UserUpdate) => Promise<void>;
@@ -53,6 +72,11 @@ interface FieldErrors {
   display_name?: string;
 }
 
+const normalizeSelection = (
+  value?: string | null,
+  fallback: GenderValue | AgeGroupValue = 'UNSPECIFIED',
+) => (value ?? fallback) as GenderValue | AgeGroupValue;
+
 export function ProfileEditModal({
   isOpen,
   initialData,
@@ -61,6 +85,12 @@ export function ProfileEditModal({
 }: ProfileEditModalProps) {
   const [username, setUsername] = useState(initialData.username || '');
   const [displayName, setDisplayName] = useState(initialData.display_name || '');
+  const [gender, setGender] = useState<GenderValue>(
+    normalizeSelection(initialData.gender, 'UNSPECIFIED') as GenderValue,
+  );
+  const [ageGroup, setAgeGroup] = useState<AgeGroupValue>(
+    normalizeSelection(initialData.age_group, 'UNSPECIFIED') as AgeGroupValue,
+  );
   const [selectedEmoji, setSelectedEmoji] = useState(initialData.profile_emoji || '😊');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -115,6 +145,8 @@ export function ProfileEditModal({
       await onSubmit({
         username: username.trim() || undefined,
         display_name: displayName.trim() || undefined,
+        gender,
+        age_group: ageGroup,
         profile_emoji: selectedEmoji,
       });
       onClose();
@@ -205,6 +237,57 @@ export function ProfileEditModal({
               )}
             </View>
 
+            <View style={styles.section}>
+              <Text style={styles.label}>성별</Text>
+              <View style={styles.optionGrid}>
+                {GENDER_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.optionChip,
+                      gender === option.value && styles.optionChipSelected,
+                    ]}
+                    onPress={() => setGender(option.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        gender === option.value && styles.optionChipTextSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>나이대</Text>
+              <View style={styles.optionGrid}>
+                {AGE_GROUP_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.optionChip,
+                      ageGroup === option.value && styles.optionChipSelected,
+                    ]}
+                    onPress={() => setAgeGroup(option.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        ageGroup === option.value && styles.optionChipTextSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.noteText}>후보 제한에만 사용되고 다른 친구에게 공개되지 않아요.</Text>
+            </View>
+
             {/* 버튼 */}
             <View style={styles.actions}>
               <Button
@@ -278,6 +361,38 @@ const styles = StyleSheet.create({
     fontWeight: tokens.typography.fontWeight.semibold,
     color: tokens.colors.neutral[700],
     marginBottom: tokens.spacing.sm,
+  },
+  optionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: tokens.spacing.sm,
+  },
+  optionChip: {
+    minHeight: 40,
+    paddingHorizontal: tokens.spacing.md,
+    borderRadius: tokens.borderRadius.md,
+    borderWidth: 1,
+    borderColor: tokens.colors.neutral[200],
+    backgroundColor: tokens.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionChipSelected: {
+    borderColor: tokens.colors.primary[500],
+    backgroundColor: tokens.colors.primary[50],
+  },
+  optionChipText: {
+    fontSize: tokens.typography.fontSize.sm,
+    color: tokens.colors.neutral[700],
+    fontWeight: tokens.typography.fontWeight.medium,
+  },
+  optionChipTextSelected: {
+    color: tokens.colors.primary[700],
+  },
+  noteText: {
+    marginTop: tokens.spacing.xs,
+    fontSize: tokens.typography.fontSize.xs,
+    color: tokens.colors.neutral[500],
   },
   emojiGrid: {
     flexDirection: 'row',

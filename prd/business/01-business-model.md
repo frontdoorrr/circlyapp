@@ -56,8 +56,8 @@ const orbModeRevenue = {
     },
     hint_level_2: {
       price: 1.99,           // $1.99 (2,600원)  
-      reveal: '성별 + 학년',
-      example: '2학년 남학생이 당신을 선택했어요!'
+      reveal: '안전 힌트 조합',
+      example: '같은 Circle의 최근 활동 멤버가 당신을 선택했어요!'
     },
     hint_level_3: {
       price: 2.99,           // $2.99 (3,900원)

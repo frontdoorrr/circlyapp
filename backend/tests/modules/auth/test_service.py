@@ -79,6 +79,8 @@ class TestAuthServiceRegister:
         assert auth_response.user.email == "minimal@example.com"
         assert auth_response.user.username is None
         assert auth_response.user.display_name is None
+        assert auth_response.user.gender == "UNSPECIFIED"
+        assert auth_response.user.age_group == "UNSPECIFIED"
 
 
 class TestAuthServiceLogin:
@@ -280,6 +282,8 @@ class TestAuthServiceUpdateProfile:
         update_data = UserUpdate(
             username="newname",
             display_name="New Display Name",
+            gender="MALE",
+            age_group="MID_TEEN",
             profile_emoji="🎉",
         )
         updated_user = await service.update_profile(auth_response.user.id, update_data)
@@ -287,6 +291,8 @@ class TestAuthServiceUpdateProfile:
         assert updated_user is not None
         assert updated_user.username == "newname"
         assert updated_user.display_name == "New Display Name"
+        assert updated_user.gender == "MALE"
+        assert updated_user.age_group == "MID_TEEN"
         assert updated_user.profile_emoji == "🎉"
 
     @pytest.mark.asyncio

@@ -25,6 +25,8 @@ class TestRegisterEndpoint:
         assert data["user"]["email"] == "newuser@example.com"
         assert data["user"]["username"] == "newuser"
         assert data["user"]["display_name"] == "New User"
+        assert data["user"]["gender"] == "UNSPECIFIED"
+        assert data["user"]["age_group"] == "UNSPECIFIED"
         assert "access_token" in data
         assert data["token_type"] == "bearer"
 
@@ -210,6 +212,8 @@ class TestUpdateMeEndpoint:
             json={
                 "username": "newname",
                 "display_name": "New Display Name",
+                "gender": "FEMALE",
+                "age_group": "OLDER_TEEN",
                 "profile_emoji": "🎉",
             },
         )
@@ -218,6 +222,8 @@ class TestUpdateMeEndpoint:
         data = response.json()
         assert data["username"] == "newname"
         assert data["display_name"] == "New Display Name"
+        assert data["gender"] == "FEMALE"
+        assert data["age_group"] == "OLDER_TEEN"
         assert data["profile_emoji"] == "🎉"
 
     @pytest.mark.asyncio
@@ -239,13 +245,14 @@ class TestUpdateMeEndpoint:
         response = await client.put(
             "/auth/me",
             headers={"Authorization": f"Bearer {token}"},
-            json={"display_name": "Only Display Changed"},
+            json={"display_name": "Only Display Changed", "gender": "MALE"},
         )
 
         assert response.status_code == 200
         data = response.json()
         assert data["username"] == "originalname"  # unchanged
         assert data["display_name"] == "Only Display Changed"
+        assert data["gender"] == "MALE"
 
     @pytest.mark.asyncio
     async def test_update_me_no_token(self, client: AsyncClient) -> None:

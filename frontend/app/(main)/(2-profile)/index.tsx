@@ -165,6 +165,8 @@ export default function ProfileScreen() {
         initialData={{
           username: user.username,
           display_name: user.display_name,
+          gender: user.gender,
+          age_group: user.age_group,
           profile_emoji: user.profile_emoji,
         }}
         onSubmit={handleUpdateProfile}

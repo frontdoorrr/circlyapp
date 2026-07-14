@@ -22,6 +22,8 @@ class UserUpdate(BaseModel):
 
     username: str | None = Field(None, min_length=2, max_length=50)
     display_name: str | None = Field(None, max_length=100)
+    gender: str | None = Field(None, max_length=20)
+    age_group: str | None = Field(None, max_length=20)
     profile_emoji: str | None = Field(None, max_length=10)
 
 
@@ -35,6 +37,8 @@ class UserResponse(BaseModel):
     supabase_user_id: str | None
     username: str | None
     display_name: str | None
+    gender: str
+    age_group: str
     profile_emoji: str
     coin_balance: int
     streak_days: int

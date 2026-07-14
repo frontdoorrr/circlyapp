@@ -48,7 +48,8 @@ database Schema {
         display_name: VARCHAR(100)
         profile_emoji: VARCHAR(10) DEFAULT '😊'
         gender: user_gender DEFAULT 'UNSPECIFIED'  // 선택 입력, 기본 비공개
-        profile_visibility: JSONB DEFAULT '{"gender":"private"}'
+        age_group: user_age_group DEFAULT 'UNSPECIFIED'  // 선택 입력, 기본 비공개
+        profile_visibility: JSONB DEFAULT '{"gender":"private","ageGroup":"private"}'
         role: user_role DEFAULT 'USER'  // USER, ADMIN
         is_active: BOOLEAN DEFAULT TRUE
         push_token: TEXT
@@ -246,6 +247,7 @@ database Schema {
     // Enum 타입 정의
     enum user_role = 'USER' | 'ADMIN'
     enum user_gender = 'MALE' | 'FEMALE' | 'NON_BINARY' | 'UNSPECIFIED'
+    enum user_age_group = 'YOUNG_TEEN' | 'MID_TEEN' | 'OLDER_TEEN' | 'UNSPECIFIED'
     enum member_role = 'OWNER' | 'ADMIN' | 'MEMBER'
     enum template_category = 'APPEARANCE' | 'CRUSH' | 'PERSONALITY' | 'TALENT' | 'SPECIAL'
     enum template_safety_category = 'COMPLIMENT' | 'SENSITIVE_COMPLIMENT' | 'REJECTED'
@@ -319,6 +321,7 @@ module Auth {
         displayName: String?
         profileEmoji: String
         gender: UserGender
+        ageGroup: UserAgeGroup
         profileVisibility: ProfileVisibility
         coinBalance: Integer
         streakDays: Integer
@@ -328,9 +331,11 @@ module Auth {
     }
 
     type UserGender = "MALE" | "FEMALE" | "NON_BINARY" | "UNSPECIFIED"
+    type UserAgeGroup = "YOUNG_TEEN" | "MID_TEEN" | "OLDER_TEEN" | "UNSPECIFIED"
 
     type ProfileVisibility {
         gender: "private"  // MVP: 후보 필터에만 사용, 다른 사용자에게 공개하지 않음
+        ageGroup: "private"  // MVP: 후보 필터에만 사용, 다른 사용자에게 공개하지 않음
     }
 
     type UserCreate {
@@ -345,6 +350,7 @@ module Auth {
         displayName?: String
         profileEmoji?: String
         gender?: UserGender
+        ageGroup?: UserAgeGroup
     }
 
     type AuthResponse {
@@ -643,8 +649,10 @@ module Poll {
     }
 
     type CandidateFilter {
-        gender?: UserGender  // 선택형 Profile 정보 기반. 개별 성별 값은 생성자에게 노출하지 않음
+        gender?: UserGender  // 서버 내부 후보 정책 전용. 개별 값은 생성자/친구에게 노출하지 않음
+        ageGroup?: UserAgeGroup  // 서버 내부 후보 정책 전용. 개별 값은 생성자/친구에게 노출하지 않음
         includeUnspecifiedGender: Boolean
+        includeUnspecifiedAgeGroup: Boolean
         excludedUserIds?: List<UUID>
     }
 
@@ -1075,8 +1083,9 @@ workflow CreatePollFlow {
        - APPEARANCE/CRUSH 카테고리는 긍정형 칭찬 질문만 허용
     2. 마감 시간 설정 (1H/3H/6H/24H)
     3. 후보 제한 필터 설정(Optional)
-       - 성별 필터는 선택 입력한 Profile 정보만 사용
-       - 개별 성별 값은 투표 생성자에게 공개하지 않음
+       - 성별/나이 값은 선택 입력한 Profile 정보만 사용
+       - MVP에서는 생성자에게 성별/나이 직접 선택 옵션을 노출하지 않음
+       - 개별 성별/나이 값은 투표 생성자/친구에게 공개하지 않음
        - 필터 적용 후 후보가 4명 미만이면 제한 완화 또는 초대 CTA 표시
     4. POST /api/v1/circles/{circleId}/polls
     5. PollService.createPoll()

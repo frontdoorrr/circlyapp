@@ -823,4 +823,4 @@
   - [x] `frontend/src/components/profile/ProfileInfo.tsx` — 프로필 보상 카드 노출
   - [x] `frontend/src/hooks/usePolls.ts` — vote 성공 후 auth me 캐시 갱신
   - [x] `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md` — 보상 UI/흐름 반영
-- [ ] **18.14 성별/나이 힌트** (P2, 법무 검토 필요 — 선택값 비공개, 후보 필터 전용)
+- [x] **18.14 성별/나이 선택 프로필** (P2 — 선택값 비공개, 후보 필터 전용, 생성자/친구에게 미공개)
