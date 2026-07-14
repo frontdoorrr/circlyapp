@@ -497,7 +497,7 @@
   - [x] `send_poll_started()` - Expo Push 호출 추가
   - [x] `send_poll_ended()` - Expo Push 호출 추가
   - [x] `send_poll_reminder()` - Expo Push 호출 추가
-- [ ] 테스트 코드 작성
+- [x] 테스트 코드 작성 (`backend/tests/modules/notifications/test_service.py` 서비스 생성자 최신화 + Expo Push mock 검증)
 
 ### 15.3 Backend - Celery 스케줄링 설정
 

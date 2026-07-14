@@ -1,24 +1,21 @@
 """Tests for Notification Service."""
 
-import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import MemberRole, NotificationType, PollStatus, TemplateCategory
+from app.core.enums import MemberRole, NotificationType, PollStatus
 from app.core.security import generate_invite_code
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import UserCreate
-from app.modules.circles.models import Circle
 from app.modules.circles.repository import CircleRepository, MembershipRepository
 from app.modules.circles.schemas import CircleCreate
 from app.modules.notifications.models import Notification
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.service import NotificationService
-from app.modules.polls.models import Poll, PollTemplate
-from app.modules.polls.repository import PollRepository
+from app.modules.polls.models import Poll
 
 
 class TestNotificationService:
@@ -51,7 +48,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         notifications = await service.get_notifications(user.id)
@@ -80,7 +77,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         notifications = await service.get_notifications(user.id, limit=2, offset=1)
@@ -121,7 +118,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         count = await service.get_unread_count(user.id)
@@ -148,7 +145,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         await service.mark_as_read(notification.id, user.id)
@@ -177,7 +174,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         await service.mark_all_as_read(user.id)
@@ -234,7 +231,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test: Send notifications to all members except creator
         circle_member_ids = [member1.id, member2.id]
@@ -253,6 +250,70 @@ class TestNotificationService:
         assert member1_notifications[0].type == NotificationType.POLL_STARTED
         assert member1_notifications[0].data["poll_id"] == str(poll.id)
         assert member1_notifications[0].data["circle_id"] == str(circle.id)
+
+    @pytest.mark.asyncio
+    async def test_send_poll_started_pushes_to_registered_tokens(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Test sending push payloads only to members with registered tokens."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="creator@example.com", password="password123")
+        )
+        member_with_token = await user_repo.create(
+            UserCreate(email="member-token@example.com", password="password123")
+        )
+        member_without_token = await user_repo.create(
+            UserCreate(email="member-no-token@example.com", password="password123")
+        )
+        member_with_token.push_token = "ExponentPushToken[token-user]"
+        member_without_token.push_token = ""
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Test Circle"), creator.id, generate_invite_code()
+        )
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Who is the funniest?",
+            status=PollStatus.ACTIVE,
+            ends_at=datetime.now(UTC) + timedelta(hours=3),
+        )
+        db_session.add(poll)
+        await db_session.commit()
+        await db_session.refresh(poll)
+
+        notification_repo = NotificationRepository(db_session)
+        expo_push_client = MagicMock()
+        expo_push_client.send_batch_push_notifications = AsyncMock(
+            return_value=[{"status": "ok", "id": "ticket-1"}]
+        )
+        service = NotificationService(
+            notification_repo,
+            user_repo,
+            expo_push_client=expo_push_client,
+        )
+
+        await service.send_poll_started(
+            poll, [creator.id, member_with_token.id, member_without_token.id]
+        )
+
+        expo_push_client.send_batch_push_notifications.assert_awaited_once()
+        messages = expo_push_client.send_batch_push_notifications.await_args.args[0]
+        assert messages == [
+            {
+                "token": "ExponentPushToken[token-user]",
+                "title": "🗳️ 새로운 투표가 시작됐어요!",
+                "body": '"Who is the funniest?" 지금 바로 참여해보세요! 👆',
+                "data": {
+                    "type": "poll_start",
+                    "poll_id": str(poll.id),
+                    "circle_id": str(circle.id),
+                    "action_url": f"circly://poll-participation/{poll.id}",
+                },
+            }
+        ]
 
     @pytest.mark.asyncio
     async def test_send_vote_received(self, db_session: AsyncSession) -> None:
@@ -284,7 +345,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test: Send vote received notification
         await service.send_vote_received(voted_for.id, poll)
@@ -328,7 +389,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         circle_member_ids = [creator.id, member.id]
@@ -341,6 +402,47 @@ class TestNotificationService:
         assert len(creator_notifications) == 1
         assert len(member_notifications) == 1
         assert creator_notifications[0].type == NotificationType.POLL_ENDED
+
+    @pytest.mark.asyncio
+    async def test_send_poll_reminder_creates_deadline_notifications(
+        self, db_session: AsyncSession
+    ) -> None:
+        """Test sending poll deadline reminders to non-voters."""
+        user_repo = UserRepository(db_session)
+        creator = await user_repo.create(
+            UserCreate(email="creator@example.com", password="password123")
+        )
+        non_voter = await user_repo.create(
+            UserCreate(email="non-voter@example.com", password="password123")
+        )
+
+        circle_repo = CircleRepository(db_session)
+        circle = await circle_repo.create(
+            CircleCreate(name="Test Circle"), creator.id, generate_invite_code()
+        )
+        poll = Poll(
+            circle_id=circle.id,
+            creator_id=creator.id,
+            question_text="Who brings the best energy to class?",
+            status=PollStatus.ACTIVE,
+            ends_at=datetime.now(UTC) + timedelta(minutes=10),
+        )
+        db_session.add(poll)
+        await db_session.commit()
+        await db_session.refresh(poll)
+
+        notification_repo = NotificationRepository(db_session)
+        service = NotificationService(notification_repo, user_repo)
+
+        await service.send_poll_reminder(poll, [non_voter.id], minutes_left=10)
+
+        notifications = await notification_repo.find_by_user_id(non_voter.id)
+        assert len(notifications) == 1
+        assert notifications[0].type == NotificationType.POLL_REMINDER
+        assert notifications[0].title == "🚨 마지막 기회!"
+        assert notifications[0].data["action_url"] == (
+            f"circly://poll-participation/{poll.id}"
+        )
 
     @pytest.mark.asyncio
     async def test_send_circle_invite(self, db_session: AsyncSession) -> None:
@@ -361,7 +463,7 @@ class TestNotificationService:
 
         # Initialize service
         notification_repo = NotificationRepository(db_session)
-        service = NotificationService(notification_repo)
+        service = NotificationService(notification_repo, user_repo)
 
         # Test
         await service.send_circle_invite(invited_user.id, circle)
