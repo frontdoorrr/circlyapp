@@ -202,7 +202,7 @@
 
 ### 11.7 UI Documentation (P2)
 - [ ] Storybook 설정 (선택적)
-- [ ] 컴포넌트 사용 가이드 작성
+- [x] 컴포넌트 사용 가이드 작성 (`frontend/src/components/README.md`)
 - [ ] **커밋**: `docs(frontend): add component documentation`
 
 ### 11.8 Responsive Testing (P2)
@@ -283,7 +283,7 @@
 
 #### 11.11.4 남은 시간 계산 유틸리티 (P0)
 - [x] `src/utils/timeUtils.ts` - 시간 계산 함수
-- [ ] **테스트**: 다양한 시간 케이스 단위 테스트
+- [x] **테스트**: 다양한 시간 케이스 단위 테스트 (`frontend/src/utils/__tests__/timeUtils.test.ts`, 13 tests passed)
 - [ ] **커밋**: `feat(frontend): add time formatting utilities`
 
 #### 11.11.5 투표 목록 API 연동 (P0)
