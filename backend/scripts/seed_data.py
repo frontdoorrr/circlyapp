@@ -6,6 +6,7 @@ Creates:
 - 5 circles that include the mock user
 - 10 dummy selectable users per circle
 - 5 active polls per circle
+- votes on every poll (varied participation, hearts to the mock user, inbox notifications)
 
 Run with: uv run python scripts/seed_data.py
 
@@ -141,7 +142,9 @@ async def seed_users(session: AsyncSession) -> tuple[User, dict[int, list[User]]
         users_by_circle[circle_index] = circle_users
 
     print(f"  ✅ Mock user ready: {mock_user.email}")
-    print(f"  ✅ Dummy users ready: {len(CIRCLE_NAMES) * MEMBERS_PER_CIRCLE} total ({created_count} new)")
+    print(
+        f"  ✅ Dummy users ready: {len(CIRCLE_NAMES) * MEMBERS_PER_CIRCLE} total ({created_count} new)"
+    )
     return mock_user, users_by_circle
 
 
@@ -286,12 +289,12 @@ async def seed_polls(
     now = datetime.now(UTC)
     all_polls: list[Poll] = []
     created_count = 0
+    extended_count = 0
 
     for circle_index, circle in enumerate(circles):
         start = (circle_index * QUESTIONS_PER_CIRCLE) % len(templates)
         selected_templates = [
-            templates[(start + offset) % len(templates)]
-            for offset in range(QUESTIONS_PER_CIRCLE)
+            templates[(start + offset) % len(templates)] for offset in range(QUESTIONS_PER_CIRCLE)
         ]
 
         for poll_index, template in enumerate(selected_templates, start=1):
@@ -318,54 +321,94 @@ async def seed_polls(
                 created_count += 1
                 await session.commit()
                 await session.refresh(poll)
+            elif poll.ends_at <= now:
+                # Reruns after the seeded deadline passed would otherwise leave
+                # every poll expired (status stays ACTIVE), hiding them in the app.
+                poll.ends_at = now + timedelta(hours=24 + poll_index)
+                extended_count += 1
+                await session.commit()
+                await session.refresh(poll)
 
             all_polls.append(poll)
 
         print(f"  ✅ {circle.name}: {QUESTIONS_PER_CIRCLE} active polls ready")
 
-    print(f"  📊 Active polls ready: {len(all_polls)} total ({created_count} new)")
+    print(
+        f"  📊 Active polls ready: {len(all_polls)} total "
+        f"({created_count} new, {extended_count} deadlines extended)"
+    )
     return all_polls
 
 
-async def seed_received_hearts(
+async def seed_votes(
     session: AsyncSession,
     *,
     mock_user: User,
+    circles: list[Circle],
     users_by_circle: dict[int, list[User]],
     polls: list[Poll],
 ) -> None:
-    """Create votes that make the mock user appear in the received hearts inbox."""
+    """Seed votes on every poll so progress bars, results, and the inbox have data.
+
+    - Voters are always members of the poll's own circle
+    - Participation varies per poll (10 → 8 → 6 → 4 → 2 voters) to test different states
+    - Roughly a third of votes go to the mock user, filling the received-hearts inbox
+    - The mock user votes on the 1st and 3rd poll of each circle, leaving the
+      others open so the voting flow itself can still be tested
+    """
+    circle_index_by_id = {circle.id: index for index, circle in enumerate(circles)}
+    poll_offset_by_circle: dict = {}
     created_votes = 0
     created_notifications = 0
+    now = datetime.now(UTC)
 
-    for poll_index, poll in enumerate(polls[:8]):
-        circle_users = users_by_circle[poll_index % len(users_by_circle)]
-        voters = circle_users[: 2 + (poll_index % 3)]
-
-        for voter in voters:
-            voter_hash = generate_voter_hash(voter.id, poll.id, salt=str(poll.id))
-            result = await session.execute(
-                select(Vote).where(
-                    Vote.poll_id == poll.id,
-                    Vote.voter_hash == voter_hash,
-                )
+    async def add_vote(poll: Poll, voter: User, target: User, minutes_ago: int) -> bool:
+        nonlocal created_votes
+        voter_hash = generate_voter_hash(voter.id, poll.id, salt=str(poll.id))
+        result = await session.execute(
+            select(Vote).where(
+                Vote.poll_id == poll.id,
+                Vote.voter_hash == voter_hash,
             )
-            if result.scalar_one_or_none() is not None:
-                continue
+        )
+        if result.scalar_one_or_none() is not None:
+            return False
 
-            session.add(
-                Vote(
-                    poll_id=poll.id,
-                    voter_id=voter.id,
-                    voter_hash=voter_hash,
-                    voted_for_id=mock_user.id,
-                    created_at=datetime.now(UTC) - timedelta(minutes=15 + poll_index * 7),
-                )
+        session.add(
+            Vote(
+                poll_id=poll.id,
+                voter_id=voter.id,
+                voter_hash=voter_hash,
+                voted_for_id=target.id,
+                created_at=now - timedelta(minutes=minutes_ago),
             )
-            poll.vote_count += 1
-            created_votes += 1
+        )
+        poll.vote_count += 1
+        created_votes += 1
+        return True
 
-        if poll_index < 3:
+    for poll in polls:
+        circle_index = circle_index_by_id[poll.circle_id]
+        offset = poll_offset_by_circle.get(poll.circle_id, 0)
+        poll_offset_by_circle[poll.circle_id] = offset + 1
+        members = users_by_circle[circle_index]
+
+        voter_count = max(2, MEMBERS_PER_CIRCLE - offset * 2)
+        for voter_index, voter in enumerate(members[:voter_count]):
+            if (voter_index + offset) % 3 == 0:
+                target = mock_user
+            else:
+                target = members[(voter_index + offset * 3) % len(members)]
+                if target.id == voter.id:
+                    target = members[(voter_index + offset * 3 + 1) % len(members)]
+            await add_vote(poll, voter, target, minutes_ago=20 + offset * 9 + voter_index * 3)
+
+        if offset in (0, 2):
+            await add_vote(poll, mock_user, members[offset], minutes_ago=10 + offset * 5)
+
+        # The first poll of each circle always sends hearts to the mock user,
+        # so give it an inbox notification as well.
+        if offset == 0:
             result = await session.execute(
                 select(Notification).where(
                     Notification.user_id == mock_user.id,
@@ -392,7 +435,7 @@ async def seed_received_hearts(
                 created_notifications += 1
 
     await session.commit()
-    print(f"  ✅ Received hearts ready: {created_votes} new votes")
+    print(f"  ✅ Votes ready: {created_votes} new votes")
     print(f"  ✅ Inbox notifications ready: {created_notifications} new")
 
 
@@ -435,10 +478,11 @@ async def main() -> None:
             templates=templates,
         )
 
-        print("\n💌 Seeding received hearts / inbox...")
-        await seed_received_hearts(
+        print("\n💌 Seeding votes / received hearts / inbox...")
+        await seed_votes(
             session,
             mock_user=mock_user,
+            circles=circles,
             users_by_circle=users_by_circle,
             polls=polls,
         )
