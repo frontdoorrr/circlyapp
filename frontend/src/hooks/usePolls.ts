@@ -200,7 +200,7 @@ export function useRefreshPolls() {
 // ==================== Orb Mode Hooks ====================
 
 /**
- * [Orb Mode] 나를 선택한 투표의 안전 힌트 조회
+ * [Orb Mode] 받은 하트의 안전 힌트 조회
  */
 export function useMyVoteHints(pollId: string, enabled = false) {
   return useQuery({
@@ -208,19 +208,5 @@ export function useMyVoteHints(pollId: string, enabled = false) {
     queryFn: () => pollApi.getMyVoteHints(pollId),
     enabled: !!pollId && enabled,
     staleTime: 5 * 60 * 1000,
-  });
-}
-
-/**
- * [Orb Mode] 나를 선택한 투표자 목록 조회
- * - Orb Mode 구독자 전용
- * - enabled: false로 시작, 필요 시 수동 호출
- */
-export function useMyVoters(pollId: string, enabled = false) {
-  return useQuery({
-    queryKey: ['polls', pollId, 'voters'],
-    queryFn: () => pollApi.getMyVoters(pollId),
-    enabled: !!pollId && enabled,
-    staleTime: 5 * 60 * 1000, // 5분 (투표자 목록은 자주 변경되지 않음)
   });
 }

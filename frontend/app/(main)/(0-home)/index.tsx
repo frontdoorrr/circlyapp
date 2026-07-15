@@ -20,7 +20,6 @@ import Animated, {
 import PagerView from 'react-native-pager-view';
 
 import { HomeHeader } from '../../../src/components/home/HomeHeader';
-import { SectionHeader } from '../../../src/components/home/SectionHeader';
 import {
   PollCard,
   ActivePollData,
@@ -28,19 +27,24 @@ import {
   VoteStatus,
 } from '../../../src/components/patterns/PollCard';
 import { EmptyState } from '../../../src/components/states/EmptyState';
-import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { SkeletonCard } from '../../../src/components/states/Skeleton';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
 import { HomeEmptyState } from '../../../src/components/home/HomeEmptyState';
-import { PollEmptyState } from '../../../src/components/home/PollEmptyState';
 import { CircleCard } from '../../../src/components/home/CircleCard';
-import { tokens, spacing, fontSizes, animations } from '../../../src/theme';
+import { tokens, spacing } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
-import { useMyActivePolls, useMyCompletedPolls } from '../../../src/hooks/usePolls';
+import {
+  useMyActivePolls,
+  useMyCompletedPolls,
+  useVoteSessionAvailability,
+} from '../../../src/hooks/usePolls';
 import { useMyCircles } from '../../../src/hooks/useCircles';
 import { useUnreadCount } from '../../../src/hooks/useNotifications';
+import { registerPushToken } from '../../../src/api/notification';
+import { useToast } from '../../../src/providers/ToastProvider';
+import { registerForPushNotificationsAsync } from '../../../src/services/notification/pushNotification';
 import {
   formatTimeRemaining,
   isExpired,
@@ -80,10 +84,12 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCircleId, setSelectedCircleId] = useState<string | undefined>();
   const [isCircleSheetVisible, setIsCircleSheetVisible] = useState(false);
+  const [isRegisteringPush, setIsRegisteringPush] = useState(false);
   const pagerRef = useRef<PagerView>(null);
 
   // API 연동
@@ -106,6 +112,11 @@ export default function HomeScreen() {
 
   // 읽지 않은 알림 개수 (벨 배지)
   const { data: unreadCount } = useUnreadCount();
+
+  const {
+    data: sessionAvailability,
+    refetch: refetchAvailability,
+  } = useVoteSessionAvailability();
 
   const selectedCircle = useMemo(
     () => myCircles?.find((circle) => circle.id === selectedCircleId),
@@ -181,6 +192,10 @@ export default function HomeScreen() {
         !isExpired(poll.ends_at)
     ).length;
   }, [activePolls, selectedCircleId]);
+  const isCoolingDown =
+    !!sessionAvailability &&
+    !sessionAvailability.can_start &&
+    sessionAvailability.remaining_seconds > 0;
 
   // ============================================================================
   // Event Handlers
@@ -197,10 +212,11 @@ export default function HomeScreen() {
       } else {
         await refetchCompleted();
       }
+      await refetchAvailability();
     } finally {
       setRefreshing(false);
     }
-  }, [activeTab, refetchActive, refetchCompleted]);
+  }, [activeTab, refetchActive, refetchAvailability, refetchCompleted]);
 
   // 탭 전환
   const handleTabChange = useCallback((tab: TabType) => {
@@ -252,11 +268,6 @@ export default function HomeScreen() {
     router.push('/join/invite-code' as any);
   }, [router]);
 
-  const handleCreatePoll = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/create' as any);
-  }, [router]);
-
   const handleStartSession = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push(
@@ -265,6 +276,29 @@ export default function HomeScreen() {
         : ('/vote-session' as any)
     );
   }, [router, selectedCircleId]);
+
+  const handleOpenInbox = useCallback(() => {
+    Haptics.selectionAsync();
+    router.push('/(main)/(1-inbox)' as any);
+  }, [router]);
+
+  const handleEnableNotifications = useCallback(async () => {
+    setIsRegisteringPush(true);
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (!token) {
+        showToast('알림 권한을 켜지 못했어요', 'error');
+        return;
+      }
+
+      await registerPushToken(token);
+      showToast('알림을 켰어요', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '알림 설정 중 문제가 발생했어요', 'error');
+    } finally {
+      setIsRegisteringPush(false);
+    }
+  }, [showToast]);
 
   const handleOpenCircleSheet = useCallback(() => {
     Haptics.selectionAsync();
@@ -408,7 +442,12 @@ export default function HomeScreen() {
         count={sessionReadyCount}
         circleCount={selectedCircleId ? 1 : myCircles?.length ?? 0}
         onStart={handleStartSession}
-        onCreatePoll={handleCreatePoll}
+        onOpenInbox={handleOpenInbox}
+        onInvite={handleJoinCircle}
+        onEnableNotifications={handleEnableNotifications}
+        isCoolingDown={isCoolingDown}
+        cooldownSeconds={sessionAvailability?.remaining_seconds ?? 0}
+        isRegisteringPush={isRegisteringPush}
         isDark={isDark}
       />
 
@@ -446,7 +485,13 @@ export default function HomeScreen() {
         <View key="active" style={styles.pageContainer}>
           {transformedActivePolls.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <PollEmptyState onCreatePoll={handleCreatePoll} />
+              <EmptyState
+                title="지금 답할 질문이 없어요"
+                description="친구를 초대하거나 받은 하트를 확인해보세요."
+                icon="💌"
+                actionLabel="친구 초대하기"
+                onAction={handleJoinCircle}
+              />
             </View>
           ) : (
             <FlatList
@@ -461,7 +506,9 @@ export default function HomeScreen() {
                   onRefresh={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setRefreshing(true);
-                    refetchActive().finally(() => setRefreshing(false));
+                    Promise.all([refetchActive(), refetchAvailability()]).finally(() =>
+                      setRefreshing(false)
+                    );
                   }}
                   tintColor={tokens.colors.primary[500]}
                   colors={[tokens.colors.primary[500]]}
@@ -502,7 +549,9 @@ export default function HomeScreen() {
                   onRefresh={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setRefreshing(true);
-                    refetchCompleted().finally(() => setRefreshing(false));
+                    Promise.all([refetchCompleted(), refetchAvailability()]).finally(() =>
+                      setRefreshing(false)
+                    );
                   }}
                   tintColor={tokens.colors.primary[500]}
                   colors={[tokens.colors.primary[500]]}
@@ -524,15 +573,6 @@ export default function HomeScreen() {
           )}
         </View>
       </PagerView>
-      {myCircles?.length ? (
-        <Button
-          onPress={handleCreatePoll}
-          style={styles.createButton}
-          accessibilityLabel="새 투표 만들기"
-        >
-          + 새 투표
-        </Button>
-      ) : null}
 
       <CircleSwitcherSheet
         visible={isCircleSheetVisible}
@@ -638,19 +678,52 @@ interface SessionStartCardProps {
   count: number;
   circleCount: number;
   onStart: () => void;
-  onCreatePoll: () => void;
+  onOpenInbox: () => void;
+  onInvite: () => void;
+  onEnableNotifications: () => void;
+  isCoolingDown: boolean;
+  cooldownSeconds: number;
+  isRegisteringPush: boolean;
   isDark: boolean;
+}
+
+function formatCooldownTime(seconds: number): string {
+  if (seconds <= 0) return '곧 열려요';
+
+  const minutes = Math.ceil(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) return `${hours}시간 ${remainingMinutes}분`;
+  if (hours > 0) return `${hours}시간`;
+  return `${minutes}분`;
 }
 
 function SessionStartCard({
   count,
   circleCount,
   onStart,
-  onCreatePoll,
+  onOpenInbox,
+  onInvite,
+  onEnableNotifications,
+  isCoolingDown,
+  cooldownSeconds,
+  isRegisteringPush,
   isDark,
 }: SessionStartCardProps) {
   const styles = useThemedStyles(createStyles);
   const hasVotes = count > 0;
+  const primaryAction = hasVotes
+    ? onStart
+    : isCoolingDown
+      ? onEnableNotifications
+      : onOpenInbox;
+  const primaryLabel = hasVotes ? '투표 시작' : isCoolingDown ? '알림 켜기' : '받은하트 보기';
+  const primaryAccessibilityLabel = hasVotes
+    ? '통합 투표 세션 시작'
+    : isCoolingDown
+      ? '다음 세션 알림 켜기'
+      : '받은 하트 보기';
 
   return (
     <Animated.View entering={FadeInUp.delay(80)} style={styles.sessionCard}>
@@ -663,21 +736,43 @@ function SessionStartCard({
         </Text>
       </View>
       <Text style={styles.sessionTitle}>
-        {hasVotes ? '친구들이 기다리는 질문부터 답하기' : '새 질문으로 Circle을 움직이기'}
+        {hasVotes
+          ? '친구들이 기다리는 질문부터 답하기'
+          : isCoolingDown
+            ? '다음 라운드를 기다리는 중'
+            : '지금은 받은 하트를 확인할 시간'}
       </Text>
       <Text style={styles.sessionDescription}>
         {hasVotes
           ? '여러 Circle의 질문을 한 번에 넘기며 답해요.'
-          : '지금은 답할 질문이 없어요. 새 투표를 만들 수 있어요.'}
+          : isCoolingDown
+            ? `다음 세션까지 ${formatCooldownTime(cooldownSeconds)} 남았어요. 알림을 켜거나 친구를 초대해 다음 참여를 놓치지 마세요.`
+            : '답할 질문이 없을 때는 내가 선택받은 순간을 확인하거나 친구를 초대해 다음 라운드를 열어보세요.'}
       </Text>
       <View style={styles.sessionActions}>
         <Button
-          onPress={hasVotes ? onStart : onCreatePoll}
+          onPress={primaryAction}
           fullWidth
-          accessibilityLabel={hasVotes ? '통합 투표 세션 시작' : '새 투표 만들기'}
+          disabled={isRegisteringPush}
+          accessibilityLabel={primaryAccessibilityLabel}
         >
-          {hasVotes ? '투표 시작' : '새 투표 만들기'}
+          {primaryLabel}
         </Button>
+        {!hasVotes && (
+          <Button
+            onPress={onInvite}
+            fullWidth
+            variant="secondary"
+            accessibilityLabel="친구 초대하기"
+          >
+            친구 초대하기
+          </Button>
+        )}
+        {!hasVotes && isCoolingDown && (
+          <Button fullWidth variant="ghost" onPress={onOpenInbox} accessibilityLabel="받은 하트 보기">
+            받은하트 보기
+          </Button>
+        )}
       </View>
     </Animated.View>
   );
@@ -940,6 +1035,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     sessionActions: {
       width: '100%',
+      gap: spacing[2],
     },
     // Tab row with join button
     tabRow: {
@@ -965,13 +1061,6 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     separator: {
       height: spacing[3], // 12px
-    },
-    createButton: {
-      position: 'absolute',
-      right: spacing[4],
-      bottom: spacing[5],
-      minWidth: 120,
-      ...tokens.shadows.lg,
     },
     sheetBackdrop: {
       flex: 1,

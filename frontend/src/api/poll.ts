@@ -18,7 +18,6 @@ import {
   VoteSessionCreate,
   VoteSessionAvailabilityResponse,
   VoteSessionResponse,
-  VoterRevealResponse,
 } from '../types/poll';
 import { ApiResponse } from '../types/api';
 import { apiClient } from './client';
@@ -221,7 +220,7 @@ export async function markReceivedHeartAsRead(
 // ==================== Orb Mode API ====================
 
 /**
- * [Orb Mode] 나를 선택한 투표의 안전 힌트 조회
+ * [Orb Mode] 받은 하트의 안전 힌트 조회
  */
 export async function getMyVoteHints(pollId: string): Promise<VoteHintResponse> {
   logger.log('[API] GET /polls/:pollId/hints 요청:', pollId);
@@ -230,17 +229,4 @@ export async function getMyVoteHints(pollId: string): Promise<VoteHintResponse> 
   );
   logger.log('[API] GET /polls/:pollId/hints 응답:', { status: response.status });
   return extractData<VoteHintResponse>(response.data, (d) => d.poll_id && d.hints);
-}
-
-/**
- * [Orb Mode] 나를 선택한 투표자 목록 조회
- * - Orb Mode 구독자 전용
- */
-export async function getMyVoters(pollId: string): Promise<VoterRevealResponse> {
-  logger.log('[API] GET /polls/:pollId/voters 요청:', pollId);
-  const response = await apiClient.get<ApiResponse<VoterRevealResponse>>(
-    `/polls/${pollId}/voters`
-  );
-  logger.log('[API] GET /polls/:pollId/voters 응답:', { status: response.status });
-  return extractData<VoterRevealResponse>(response.data, (d) => d.poll_id && d.voters);
 }

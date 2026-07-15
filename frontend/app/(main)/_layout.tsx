@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { tokens } from '../../src/theme';
 import { useTheme } from '../../src/theme/ThemeContext';
+import { useReceivedHearts } from '../../src/hooks/usePolls';
 
 /**
  * Main Layout with Tabs
@@ -15,6 +16,9 @@ import { useTheme } from '../../src/theme/ThemeContext';
  */
 export default function MainLayout() {
   const { theme, isDark } = useTheme();
+  const { data: receivedHearts } = useReceivedHearts();
+  const unreadHeartCount =
+    receivedHearts?.reduce((sum, item) => sum + (item.is_read ? 0 : item.received_count), 0) ?? 0;
 
   return (
     <Tabs
@@ -57,6 +61,15 @@ export default function MainLayout() {
         name="(1-inbox)"
         options={{
           title: '받은하트',
+          tabBarBadge: unreadHeartCount > 0 ? unreadHeartCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: tokens.colors.primary[500],
+            color: tokens.colors.white,
+            fontSize: 10,
+            fontWeight: tokens.typography.fontWeight.bold,
+            minWidth: 18,
+            height: 18,
+          },
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size} color={color} />
           ),

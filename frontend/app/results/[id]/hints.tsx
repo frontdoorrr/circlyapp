@@ -5,13 +5,14 @@ import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
 import { useMyVoteHints } from '../../../src/hooks/usePolls';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import type { VoteHintTier } from '../../../src/types/poll';
 
 /**
  * Orb Mode - 안전 힌트 화면
  *
- * 나를 선택한 투표의 단계형 힌트를 순차적으로 표시합니다.
+ * 받은 하트의 단계형 안전 힌트를 순차적으로 표시합니다.
  */
-export default function VotersScreen() {
+export default function HintsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -54,6 +55,20 @@ export default function VotersScreen() {
   }
 
   const receivedCount = new Set(data.hints.map((hint) => hint.vote_id)).size;
+  const formatHintTier = (tier: VoteHintTier): string => {
+    switch (tier) {
+      case 'CIRCLE':
+        return 'Circle 힌트';
+      case 'TIME':
+        return '시간대 힌트';
+      case 'INITIAL':
+        return '이니셜 힌트';
+      case 'FULL':
+        return '고급 안전 힌트';
+      default:
+        return '안전 힌트';
+    }
+  };
 
   return (
     <>
@@ -73,29 +88,29 @@ export default function VotersScreen() {
           {/* 헤더 */}
           <View style={styles.header}>
             <Text style={styles.headerEmoji}>🔮</Text>
-            <Text style={styles.headerTitle}>나를 선택한 힌트</Text>
+            <Text style={styles.headerTitle}>받은 하트 안전 힌트</Text>
             <Text style={styles.headerQuestion}>{data.question_text}</Text>
             <Text style={styles.headerCount}>
-              총 {receivedCount}명이 선택했어요
+              이 질문에서 {receivedCount}개의 하트를 받았어요
             </Text>
           </View>
 
           {/* 힌트 리스트 */}
           {data.hints.length > 0 ? (
-            <View style={styles.votersList}>
+            <View style={styles.hintsList}>
               {data.hints.map((hint, index) => (
                 <Animated.View
                   key={`${hint.vote_id}-${hint.tier}`}
                   entering={FadeInDown.delay(index * 150).duration(400)}
-                  style={styles.voterCard}
+                  style={styles.hintCard}
                 >
-                  <Text style={styles.voterEmoji}>{hint.unlocked ? '✨' : '🔒'}</Text>
-                  <View style={styles.voterInfo}>
-                    <Text style={styles.voterName}>
+                  <Text style={styles.hintEmoji}>{hint.unlocked ? '✨' : '🔒'}</Text>
+                  <View style={styles.hintInfo}>
+                    <Text style={styles.hintText}>
                       {hint.text}
                     </Text>
-                    <Text style={styles.voterTime}>
-                      {hint.unlocked ? hint.tier : 'Orb Mode 힌트'}
+                    <Text style={styles.hintTier}>
+                      {hint.unlocked ? formatHintTier(hint.tier) : 'Orb Mode 안전 힌트'}
                     </Text>
                   </View>
                 </Animated.View>
@@ -183,10 +198,10 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: tokens.typography.fontSize.base,
       color: theme.textTertiary,
     },
-    votersList: {
+    hintsList: {
       gap: tokens.spacing.md,
     },
-    voterCard: {
+    hintCard: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.card,
@@ -203,21 +218,21 @@ const createStyles = (theme: Theme, isDark: boolean) =>
             elevation: 2,
           }),
     },
-    voterEmoji: {
+    hintEmoji: {
       fontSize: 40,
       lineHeight: 48,
       textAlign: 'center',
     },
-    voterInfo: {
+    hintInfo: {
       flex: 1,
     },
-    voterName: {
+    hintText: {
       fontSize: tokens.typography.fontSize.lg,
       fontWeight: tokens.typography.fontWeight.semibold,
       color: theme.text,
       marginBottom: 2,
     },
-    voterTime: {
+    hintTier: {
       fontSize: tokens.typography.fontSize.sm,
       color: theme.textTertiary,
     },

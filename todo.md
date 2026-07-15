@@ -355,7 +355,7 @@
 
 ## Phase 13: Orb Mode 수익화 구현
 
-> **핵심 기능**: 유료 구독자(Orb Mode)가 "누가 나를 선택했는지" 볼 수 있는 기능
+> **핵심 기능**: 유료 구독자(Orb Mode)가 받은 하트 맥락에서 단계형 안전 힌트를 볼 수 있는 기능
 > **참고 문서**: `docs/DSL.md` (votes 테이블, 보안 정책), `prd/business/01-business-model.md`
 
 ### 13.1 Backend: Vote 모델 수정 (P0)
@@ -824,3 +824,30 @@
   - [x] `frontend/src/hooks/usePolls.ts` — vote 성공 후 auth me 캐시 갱신
   - [x] `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md` — 보상 UI/흐름 반영
 - [x] **18.14 성별/나이 선택 프로필** (P2 — 선택값 비공개, 후보 필터 전용, 생성자/친구에게 미공개)
+- [x] **18.15 Gas식 화면 구성 PRD 정렬** (P0)
+  - [x] `prd/00-prd.md` — 4탭 구조(Home Play Lobby/받은하트/Circle/Profile), 받은하트 1급 화면, 후보 부족 초대 우선, Orb 안전 힌트 반영
+  - [x] `prd/design/01-ux-guide.md` — Flame/성별 힌트/생성 탭 중심 표현 제거, Home Play Lobby와 받은하트 보상 루프 추가
+  - [x] `prd/business/03-safety-moderation.md` — 외모/호감/크러시 질문을 긍정형 핵심 카테고리로 정리
+- [x] **18.16 Home Play Lobby 정리** (P0)
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 답할 투표가 없을 때 Create 대신 받은하트/초대 CTA로 전환
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 일반 사용자용 플로팅 `+ 새 투표` CTA 제거
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 진행 중 Empty State를 투표 생성이 아닌 친구 초대 중심으로 변경
+- [x] **18.17 일반 사용자 Create 진입점 제거/축소** (P0)
+  - [x] `frontend/app/circle/[id].tsx` — Circle 상세의 일반 사용자 투표 생성 CTA 제거
+  - [x] `frontend/app/create/index.tsx` — 직접 접근 시 관리자/운영 템플릿 전용 안내 화면으로 제한
+- [x] **18.18 Home 상태별 CTA 정리** (P0)
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 세션 가능 상태는 `투표 시작` CTA 유지
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 쿨다운 상태는 알림 켜기/친구 초대 CTA 우선 노출
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 답할 질문 없음 상태는 받은하트/친구 초대 CTA로 정리
+- [x] **18.19 받은하트 탭 보상감 강화** (P0)
+  - [x] `frontend/app/(main)/_layout.tsx` — 받은하트 탭 unread badge 연결
+  - [x] `frontend/app/(main)/(1-inbox)/index.tsx` — 새 하트/오늘/전체 요약 카드 강화
+  - [x] `frontend/app/(main)/(1-inbox)/index.tsx` — Orb 안전 힌트 CTA를 받은하트 맥락에 배치
+- [x] **18.20 Orb Mode 문구/화면 안전 힌트 기준 정리** (P0)
+  - [x] `frontend/src/components/results/ResultsView.tsx` — 결과 화면 Orb CTA를 공개형 문구에서 안전 힌트 문구로 변경
+  - [x] `frontend/app/results/[id]/voters.tsx` — 힌트 화면 헤더/티어 라벨을 안전 힌트 기준으로 변경
+  - [x] `frontend/app/subscription/index.tsx` — 구독 혜택 문구를 실명/투표자 공개가 아닌 단계형 힌트로 변경
+- [x] **18.21 Orb Mode 내부 reveal/voters 명명 정리** (P1)
+  - [x] `frontend/app/results/[id]/voters.tsx` → `hints.tsx` 라우트명 변경
+  - [x] `frontend/src/api/poll.ts`, `frontend/src/hooks/usePolls.ts`, `frontend/src/types/poll.ts` — 미사용 투표자 공개 API 래퍼/타입 제거
+  - [x] `frontend/app/results/[id].tsx` — Orb 진입 라우트를 힌트 화면으로 변경

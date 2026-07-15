@@ -157,22 +157,3 @@ export interface VoteHintResponse {
   question_text: string;
   hints: VoteHintItem[];
 }
-
-/**
- * Orb Mode 투표자 정보 - 나를 선택한 사람
- */
-export interface VoterInfo {
-  user_id: string;
-  nickname: string | null;
-  profile_emoji: string;
-  voted_at: string; // ISO 8601
-}
-
-/**
- * Orb Mode API 응답 - 나를 선택한 투표자 목록
- */
-export interface VoterRevealResponse {
-  poll_id: string;
-  question_text: string;
-  voters: VoterInfo[];
-}

@@ -24,7 +24,7 @@ export default function ResultsScreen() {
 
   const handleOrbMode = () => {
     if (isOrbMode) {
-      router.push(`/results/${id}/voters`);
+      router.push(`/results/${id}/hints`);
     } else {
       router.push('/subscription');
     }

@@ -145,7 +145,7 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
                   !isOrbMode && styles.orbModeTitleDisabled,
                 ]}
               >
-                누가 나를 선택했는지 보기
+                받은 하트 힌트 보기
               </Text>
               <Text
                 style={[
@@ -153,7 +153,7 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
                   !isOrbMode && styles.orbModeSubtitleDisabled,
                 ]}
               >
-                {isOrbMode ? '힌트를 확인해보세요' : 'Orb Mode 고급 힌트'}
+                {isOrbMode ? '안전한 단계형 힌트를 확인해보세요' : 'Orb Mode 안전 힌트'}
               </Text>
             </View>
             <Text style={styles.orbModeArrow}>→</Text>
