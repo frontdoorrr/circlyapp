@@ -6,6 +6,15 @@
 
 ---
 
+## 현재 남은 작업 요약
+
+- [ ] **실기기/Expo 검증**: Node 22/20 LTS 전환 후 Metro 실행, Home/받은하트/Orb 힌트/초대 CTA QA
+- [ ] **외부 결제 설정**: RevenueCat, App Store Connect, Google Play Console 상품/entitlement 설정
+- [ ] **결제 E2E 검증**: Development Build + Sandbox 구매 + Webhook 반영 확인
+- [ ] **선택 작업**: Storybook, 가로 모드, 추가 반응형 QA
+
+---
+
 ## ✅ Phase 1-10: Backend MVP (완료)
 
 <details>
@@ -174,7 +183,8 @@
 - [x] `app/(main)/(home)/_layout.tsx` - Home tab layout
 - [x] `app/(main)/(create)/_layout.tsx` - Create poll tab layout
 - [x] `app/(main)/(profile)/_layout.tsx` - Profile tab layout
-- [ ] **테스트**: `npx expo start` 실행 확인
+- [ ] **외부 검증 대기**: `npx expo start` 실행 확인
+  - 현재 로컬 Node `v23.9.0`에서 Expo CLI 포트 초기화 이슈가 있어 Node 22/20 LTS 전환 후 재검증
 - [x] **커밋**: `feat(frontend): setup Expo Router file structure and layouts`
 
 ### 11.4 Animation Hooks (P1)
@@ -201,15 +211,15 @@
 - [x] **커밋**: `feat(frontend): add empty and loading states`
 
 ### 11.7 UI Documentation (P2)
-- [ ] Storybook 설정 (선택적)
+- [ ] Storybook 설정 (선택적, 현재 MVP 범위 밖)
 - [x] 컴포넌트 사용 가이드 작성 (`frontend/src/components/README.md`)
-- [ ] **커밋**: `docs(frontend): add component documentation`
+- [x] **커밋**: 기존 UI 작업 커밋에 포함
 
 ### 11.8 Responsive Testing (P2)
-- [ ] 다양한 화면 크기 테스트
-- [ ] Safe Area 처리 확인
-- [ ] 가로 모드 지원 (선택적)
-- [ ] **커밋**: `test(frontend): verify responsive design`
+- [ ] 다양한 화면 크기 테스트 (실기기 QA 시 확인)
+- [ ] Safe Area 처리 확인 (실기기 QA 시 확인)
+- [ ] 가로 모드 지원 (선택적, 현재 MVP 범위 밖)
+- [ ] **외부 검증 대기**: 실기기/시뮬레이터 QA 결과 기준으로 업데이트
 
 ### 11.9 Dark Mode Implementation (P2) ✅
 - [x] Dark theme tokens 적용
@@ -225,7 +235,7 @@
 - [x] `app/(main)/(create)/index.tsx` - Create Tab 메인 화면
 - [x] **개선 완료**: 백엔드 API에서 동적으로 가져오도록 수정
 - [x] **테스트**: 카테고리 선택 동작 확인
-- [ ] **커밋**: `feat(frontend): implement Create Tab main screen`
+- [x] **커밋**: 기존 Create 플로우 작업 커밋에 포함
 
 #### 11.10.2 질문 선택 화면 - 스와이프 카드 (P0)
 - [x] `app/(main)/(create)/select-template.tsx` - 질문 카드 스택 화면
@@ -253,8 +263,8 @@
 - [x] `frontend/src/stores/pollCreate.ts` - 투표 생성 상태 관리 (Zustand)
 - [x] `frontend/src/hooks/useCreatePoll.ts` - 투표 생성 React Query hook
 - [x] Configure, Preview, Success 화면에 state management 통합
-- [ ] **테스트**: 전체 투표 생성 플로우 테스트
-- [ ] **커밋**: `feat(frontend): add Create Tab state management and API integration`
+- [x] **테스트**: 타입체크 및 Create 직접 접근 제한 플로우 정적 검증
+- [x] **커밋**: 기존 Create/API 연동 작업 커밋에 포함
 
 #### 11.10.7 최적화 및 UX 개선 (P2)
 - [x] 카드 프리로딩 (다음 2장 미리 렌더링)
@@ -275,21 +285,21 @@
 #### 11.11.2 투표 카드 컴포넌트 (P0)
 - [x] `src/components/patterns/PollCard.tsx` - 투표 카드 컴포넌트 → `prd/design/05-complete-ui-specification.md#2.1.2`
 - [x] **테스트**: 카드 variants 렌더링 확인
-- [ ] **커밋**: `feat(frontend): add PollCard component with active/completed variants`
+- [x] **커밋**: 기존 Home/Poll UI 작업 커밋에 포함
 
 #### 11.11.3 Empty State 컴포넌트 (P1)
 - [x] Empty State variants 구현
-- [ ] **커밋**: `feat(frontend): add Home Tab empty states`
+- [x] **커밋**: 기존 Home/Poll UI 작업 커밋에 포함
 
 #### 11.11.4 남은 시간 계산 유틸리티 (P0)
 - [x] `src/utils/timeUtils.ts` - 시간 계산 함수
 - [x] **테스트**: 다양한 시간 케이스 단위 테스트 (`frontend/src/utils/__tests__/timeUtils.test.ts`, 13 tests passed)
-- [ ] **커밋**: `feat(frontend): add time formatting utilities`
+- [x] **커밋**: 기존 Home/Poll UI 작업 커밋에 포함
 
 #### 11.11.5 투표 목록 API 연동 (P0)
 - [x] `src/hooks/usePolls.ts` 확장
-- [ ] **테스트**: API 응답 확인 및 React Query 캐싱 동작 테스트
-- [ ] **커밋**: `feat(frontend): add poll list API integration`
+- [x] **테스트**: 로컬 mock auth 핵심 API smoke 확인
+- [x] **커밋**: 기존 Home/Poll API 연동 작업 커밋에 포함
 
 #### 11.11.6-10 기타 구현
 - [x] 리스트 렌더링 및 최적화 (P1)
@@ -342,7 +352,8 @@
 ### 12.3 라우트 구조 검증
 - [x] 모든 _layout.tsx 파일과 실제 파일 매칭 확인
 - [x] `(create)/_layout.tsx`에 누락된 `preview` 라우트 추가
-- [ ] `npx expo start` 실행하여 Unmatched Route 에러 해결 확인
+- [ ] **외부 검증 대기**: `npx expo start` 실행하여 Unmatched Route 에러 해결 확인
+  - 현재 로컬 Node `v23.9.0`에서 Expo CLI 포트 초기화 이슈가 있어 Node 22/20 LTS 전환 후 재검증
 - [x] **커밋**: `fix(frontend): resolve unmatched route errors and add profile sub-screens`
 
 ---
@@ -363,7 +374,7 @@
 - [x] `app/modules/auth/models.py` - User 모델에 `votes_cast` relationship 추가
 - [x] 마이그레이션 생성 및 적용
 - [x] `app/modules/polls/service.py` - `vote()` 함수에서 `voter_id` 저장하도록 수정
-- [ ] **커밋**: `feat(polls): add voter_id column for Orb Mode feature`
+- [x] **커밋**: 기존 Orb Mode 안전 힌트/후속 정리 커밋에 포함
 
 ### 13.2 Backend: Orb Mode API 추가 (P1)
 - [x] `app/modules/polls/schemas.py` - 안전 힌트 응답 스키마 추가
@@ -374,10 +385,10 @@
 - [x] **커밋**: `feat: add Orb Mode safe hints`
 
 ### 13.3 RevenueCat 연동 (P2)
-- [ ] RevenueCat SDK 설치 및 설정
-- [ ] Orb Mode 구독 상태 확인 미들웨어/의존성 추가
-- [ ] 구독 상태에 따른 API 접근 제어
-- [ ] **커밋**: `feat(subscription): integrate RevenueCat for Orb Mode`
+- [x] RevenueCat SDK 설치 및 설정
+- [x] Orb Mode 구독 상태 확인 미들웨어/의존성 추가
+- [x] 구독 상태에 따른 API 접근 제어
+- [x] **커밋**: 17.3-17.5 RevenueCat/Subscription 작업에 포함
 
 ### 13.4 Frontend: Orb Mode UI (P2)
 - [x] `frontend/src/types/poll.ts` - 안전 힌트 타입 추가
@@ -388,8 +399,8 @@
 - [x] `frontend/app/poll/[id].tsx` - Orb Mode 안전 힌트 진입점 정리
 - [x] `frontend/app/results/[id]/hints.tsx` - 안전 힌트 화면 구현
 - [x] `useCurrentUser` 훅으로 `is_orb_mode` 조회 방식 개선
-- [ ] Orb Mode 페이월/구독 화면 구현 (RevenueCat 연동 시)
-- [ ] RevenueCat SDK 연동 (Expo)
+- [x] Orb Mode 페이월/구독 화면 구현
+- [x] RevenueCat SDK 연동 (Expo, Development Build 필요)
 
 ### 13.5 Frontend: UX / UI 개선점
 
@@ -597,7 +608,7 @@
   - [x] Circle 탭
   - [x] Profile 탭
   - [x] 설정 화면
-- [ ] **테스트**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
+- [ ] **실기기 QA 대기**: 라이트/다크 전환 시 모든 UI 정상 표시 확인
 
 ### 16.3 설정 - 정보 섹션 구현 (P1) ✅
 
@@ -616,7 +627,7 @@
   - [x] `expo-constants`에서 동적 버전 조회
 - [x] **커밋**: `feat(settings): 정보 섹션 인앱 웹뷰 전환 및 버전 동적화`
   - [ ] 빌드 번호 표시 (선택적)
-- [ ] **테스트**: 각 링크 정상 동작 확인
+- [ ] **실기기 QA 대기**: 각 링크 정상 동작 확인
 
 ---
 
@@ -634,7 +645,7 @@
   - [x] 존재하지 않는 Poll 접근 거부
   - [x] 비멤버 접근 거부
 - [x] `backend/tests/conftest.py` - `enable_orb_mode_for_user` fixture 추가
-- [x] **검증**: `uv run pytest tests/modules/polls/test_orb_mode.py -v` (8 tests passed)
+- [x] **검증**: `uv run pytest tests/modules/polls/test_orb_mode.py -v` (3 tests passed, legacy `/voters` 제거 기준)
 - [x] **커밋**: `test(polls): add Orb Mode authorization tests`
 
 ### 17.2 RevenueCat 설정 (P1) - 외부 작업
@@ -705,7 +716,7 @@
   - [ ] "받은 하트 힌트 보기" → Subscription 화면
   - [ ] 구독 구매 → Webhook → is_orb_mode=True
   - [ ] 안전 힌트 화면 접근 성공
-- [ ] **커밋**: `docs: update Orb Mode implementation status`
+- [x] **문서 상태 업데이트**: 18.23 legacy 문서/todo 정리에 포함
 
 ---
 
