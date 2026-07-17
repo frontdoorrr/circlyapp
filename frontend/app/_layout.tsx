@@ -133,7 +133,9 @@ function ThemedApp() {
       >
         {/* Auth & Onboarding */}
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-        <Stack.Screen name="join" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="join/invite-code" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="join/nickname" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="join/success" options={{ animation: 'slide_from_right' }} />
 
         {/* Main App */}
         <Stack.Screen name="(main)" options={{ animation: 'fade' }} />

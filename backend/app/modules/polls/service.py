@@ -40,7 +40,6 @@ from app.modules.polls.schemas import (
     VoteHintItem,
     VoteHintResponse,
     VoteResponse,
-    VoterRevealResponse,
     VoteSessionAvailabilityResponse,
     VoteSessionResponse,
 )
@@ -931,58 +930,6 @@ class PollService:
             raise BadRequestException("Template not found")
         return PollTemplateResponse.model_validate(template)
 
-    async def get_voters_for_user(
-        self,
-        poll_id: uuid.UUID,
-        user_id: uuid.UUID,
-    ) -> VoterRevealResponse:
-        """Orb Mode: 특정 투표에서 나를 선택한 사람들 조회.
-
-        Args:
-            poll_id: Poll UUID
-            user_id: Current user UUID (투표 대상자)
-
-        Returns:
-            VoterRevealResponse with list of voters
-
-        Raises:
-            PollNotFoundError: If poll not found
-            BadRequestException: If user not in circle
-
-        Note: Orb Mode 검증은 router에서 수행
-        """
-        from app.modules.polls.schemas import VoterInfo
-
-        # 1. Poll 조회
-        poll = await self.poll_repo.find_by_id(poll_id)
-        if poll is None:
-            raise PollNotFoundError()
-
-        # 2. 유저가 Circle 멤버인지 확인
-        is_member = await self.membership_repo.exists(poll.circle_id, user_id)
-        if not is_member:
-            raise BadRequestException("You are not a member of this circle")
-
-        # 3. 나에게 투표한 사람들 조회
-        votes = await self.vote_repo.find_voters_for_user(poll_id, user_id)
-
-        # 4. VoterInfo 리스트 생성
-        voters = [
-            VoterInfo(
-                user_id=vote.voter.id,
-                nickname=vote.voter.username,
-                profile_emoji=vote.voter.profile_emoji or "👤",
-                voted_at=vote.created_at,
-            )
-            for vote in votes
-        ]
-
-        return VoterRevealResponse(
-            poll_id=poll_id,
-            question_text=poll.question_text,
-            voters=voters,
-        )
-
     @staticmethod
     def _time_hint(voted_at: datetime) -> str:
         """Return a coarse time-of-day hint."""
@@ -1032,7 +979,7 @@ class PollService:
         circle = await self.circle_repo.find_by_id(poll.circle_id)
         circle_name = circle.name if circle is not None else "내"
 
-        votes = await self.vote_repo.find_voters_for_user(poll_id, user_id)
+        votes = await self.vote_repo.find_votes_received_by_user(poll_id, user_id)
         existing_hints = await self.vote_repo.find_vote_hints_for_votes(
             [vote.id for vote in votes]
         )

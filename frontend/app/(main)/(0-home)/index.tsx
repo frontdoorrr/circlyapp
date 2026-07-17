@@ -196,6 +196,7 @@ export default function HomeScreen() {
     !!sessionAvailability &&
     !sessionAvailability.can_start &&
     sessionAvailability.remaining_seconds > 0;
+  const canStartSession = sessionAvailability?.can_start ?? sessionReadyCount > 0;
 
   // ============================================================================
   // Event Handlers
@@ -445,6 +446,7 @@ export default function HomeScreen() {
         onOpenInbox={handleOpenInbox}
         onInvite={handleJoinCircle}
         onEnableNotifications={handleEnableNotifications}
+        canStartSession={canStartSession}
         isCoolingDown={isCoolingDown}
         cooldownSeconds={sessionAvailability?.remaining_seconds ?? 0}
         isRegisteringPush={isRegisteringPush}
@@ -681,6 +683,7 @@ interface SessionStartCardProps {
   onOpenInbox: () => void;
   onInvite: () => void;
   onEnableNotifications: () => void;
+  canStartSession: boolean;
   isCoolingDown: boolean;
   cooldownSeconds: number;
   isRegisteringPush: boolean;
@@ -706,20 +709,21 @@ function SessionStartCard({
   onOpenInbox,
   onInvite,
   onEnableNotifications,
+  canStartSession,
   isCoolingDown,
   cooldownSeconds,
   isRegisteringPush,
   isDark,
 }: SessionStartCardProps) {
   const styles = useThemedStyles(createStyles);
-  const hasVotes = count > 0;
-  const primaryAction = hasVotes
+  const showStart = canStartSession || count > 0;
+  const primaryAction = showStart
     ? onStart
     : isCoolingDown
       ? onEnableNotifications
       : onOpenInbox;
-  const primaryLabel = hasVotes ? '투표 시작' : isCoolingDown ? '알림 켜기' : '받은하트 보기';
-  const primaryAccessibilityLabel = hasVotes
+  const primaryLabel = showStart ? '투표 시작' : isCoolingDown ? '알림 켜기' : '받은하트 보기';
+  const primaryAccessibilityLabel = showStart
     ? '통합 투표 세션 시작'
     : isCoolingDown
       ? '다음 세션 알림 켜기'
@@ -732,18 +736,22 @@ function SessionStartCard({
           <Text style={styles.sessionBadgeText}>{circleCount} Circle</Text>
         </View>
         <Text style={styles.sessionCountText}>
-          {hasVotes ? `${count}개 대기 중` : '대기 중인 투표 없음'}
+          {showStart
+            ? count > 0
+              ? `${count}개 대기 중`
+              : '세션 시작 가능'
+            : '대기 중인 투표 없음'}
         </Text>
       </View>
       <Text style={styles.sessionTitle}>
-        {hasVotes
+        {showStart
           ? '친구들이 기다리는 질문부터 답하기'
           : isCoolingDown
             ? '다음 라운드를 기다리는 중'
             : '지금은 받은 하트를 확인할 시간'}
       </Text>
       <Text style={styles.sessionDescription}>
-        {hasVotes
+        {showStart
           ? '여러 Circle의 질문을 한 번에 넘기며 답해요.'
           : isCoolingDown
             ? `다음 세션까지 ${formatCooldownTime(cooldownSeconds)} 남았어요. 알림을 켜거나 친구를 초대해 다음 참여를 놓치지 마세요.`
@@ -758,7 +766,7 @@ function SessionStartCard({
         >
           {primaryLabel}
         </Button>
-        {!hasVotes && (
+        {!showStart && (
           <Button
             onPress={onInvite}
             fullWidth
@@ -768,7 +776,7 @@ function SessionStartCard({
             친구 초대하기
           </Button>
         )}
-        {!hasVotes && isCoolingDown && (
+        {!showStart && isCoolingDown && (
           <Button fullWidth variant="ghost" onPress={onOpenInbox} accessibilityLabel="받은 하트 보기">
             받은하트 보기
           </Button>

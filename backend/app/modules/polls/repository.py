@@ -636,17 +636,17 @@ class VoteRepository:
             for row in result.all()
         ]
 
-    async def find_voters_for_user(
+    async def find_votes_received_by_user(
         self, poll_id: uuid.UUID, voted_for_id: uuid.UUID
     ) -> list["Vote"]:
-        """Orb Mode: 특정 poll에서 user에게 투표한 사람들 조회.
+        """Find votes that selected a user in a poll.
 
         Args:
             poll_id: Poll UUID
             voted_for_id: 투표 받은 사람 UUID
 
         Returns:
-            List of Vote objects with voter relationship loaded
+            List of Vote objects with voter relationship loaded for hint generation
         """
         from app.modules.polls.models import Vote
 

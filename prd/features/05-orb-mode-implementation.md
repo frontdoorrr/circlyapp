@@ -13,7 +13,7 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 
 ### 1.2 현재 상태
 - **완료율**: 85%
-- **핵심 기능**: 구현됨 (투표자 공개 로직)
+- **핵심 기능**: 구현됨 (받은 하트 안전 힌트 로직)
 - **미완료**: 결제 시스템 연동, Subscription UI
 
 ### 1.3 MVP 범위
@@ -33,13 +33,13 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 | Backend | Vote.voter_id 컬럼 | `backend/app/modules/polls/models.py` |
 | Backend | User.is_orb_mode 필드 | `backend/app/modules/auth/models.py` |
 | Backend | GET /polls/{id}/hints API | `backend/app/modules/polls/router.py` |
-| Backend | get_voters_for_user() 서비스 | `backend/app/modules/polls/service.py` |
-| Backend | find_voters_for_user() 쿼리 | `backend/app/modules/polls/repository.py` |
-| Frontend | VoterInfo, VoterRevealResponse 타입 | `frontend/src/types/poll.ts` |
+| Backend | 안전 힌트 조회 서비스 | `backend/app/modules/polls/service.py` |
+| Backend | 안전 힌트 생성용 쿼리 | `backend/app/modules/polls/repository.py` |
+| Frontend | VoteHintResponse 타입 | `frontend/src/types/poll.ts` |
 | Frontend | is_orb_mode 타입 정의 | `frontend/src/types/auth.ts` |
-| Frontend | getMyVoters() API 함수 | `frontend/src/api/poll.ts` |
-| Frontend | useMyVoters() React Query 훅 | `frontend/src/hooks/usePolls.ts` |
-| Frontend | 안전 힌트 화면 | `frontend/app/results/[id]/voters.tsx` |
+| Frontend | getMyVoteHints() API 함수 | `frontend/src/api/poll.ts` |
+| Frontend | useMyVoteHints() React Query 훅 | `frontend/src/hooks/usePolls.ts` |
+| Frontend | 안전 힌트 화면 | `frontend/app/results/[id]/hints.tsx` |
 | Frontend | 구독 유도 모달 (Alert) | `frontend/app/results/[id].tsx` |
 
 ### 2.2 미완료 항목 (15%)
@@ -61,10 +61,10 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 1. **테스트 파일 생성**: `backend/tests/modules/polls/test_orb_mode.py`
 
 2. **테스트 케이스**:
-   - `test_get_voters_orb_mode_enabled` - 구독자 접근 허용
-   - `test_get_voters_orb_mode_disabled` - 비구독자 403 에러
-   - `test_get_voters_poll_not_found` - 존재하지 않는 Poll
-   - `test_get_voters_not_circle_member` - 비멤버 접근 거부
+   - `test_get_hints_orb_mode_enabled` - 구독자 안전 힌트 접근 허용
+   - `test_get_hints_orb_mode_disabled` - 비구독자 잠금/제한 응답
+   - `test_get_hints_poll_not_found` - 존재하지 않는 Poll
+   - `test_get_hints_not_circle_member` - 비멤버 접근 거부
 
 3. **conftest.py 헬퍼 추가**:
    ```python
@@ -253,8 +253,8 @@ curl -X POST https://xxx.ngrok.io/webhooks/revenuecat \
 **UI 구성**:
 - 헤더: 이모지 (🔮) + 타이틀 + 설명
 - 기능 목록:
-  - 👀 나를 선택한 친구의 안전한 단계형 힌트
-  - 🔓 모든 투표 결과 투표자 확인
+  - 👀 받은 하트의 안전한 단계형 힌트
+  - 🔓 받은 하트의 고급 안전 힌트
   - 💜 프리미엄 배지 획득
 - 가격 카드: 월간/연간 옵션 (선택 가능)
 - CTA 버튼: "구독하기"
@@ -268,7 +268,7 @@ curl -X POST https://xxx.ngrok.io/webhooks/revenuecat \
 ```tsx
 const handleOrbMode = () => {
   if (isOrbMode) {
-    router.push(`/results/${id}/voters`);
+    router.push(`/results/${id}/hints`);
   } else {
     router.push('/subscription');  // Alert 대신 화면 이동
   }
@@ -324,12 +324,12 @@ useEffect(() => {
 ### 정상 플로우
 1. Sandbox 테스터 계정으로 앱 로그인
 2. Circle 가입 및 투표 참여
-3. 결과 화면에서 "누가 선택했는지 보기" 탭
+3. 결과 화면에서 "받은 하트 힌트 보기" 탭
 4. Subscription 화면 진입
 5. 구독 구매 (Sandbox)
 6. Webhook 수신 → `is_orb_mode=True` 설정
 7. 안전 힌트 화면 접근 성공
-8. 투표자 목록 정상 표시
+8. 무료/Orb 힌트 티어 정상 표시
 
 ### 에러 케이스
 - 비구독자가 고급 힌트에 접근 → 잠금 상태 반환 또는 403 에러

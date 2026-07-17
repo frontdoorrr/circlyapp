@@ -125,31 +125,6 @@ class VoteSessionResponse(BaseModel):
     completed_at: datetime | None
 
 
-class VoterInfo(BaseModel):
-    """Orb Mode 투표자 정보 - 나를 선택한 사람.
-
-    용도: Orb Mode 구독자가 "누가 나를 선택했는지" 조회
-    사용처: VoterRevealResponse.voters
-    """
-
-    user_id: uuid.UUID
-    nickname: str | None
-    profile_emoji: str
-    voted_at: datetime
-
-
-class VoterRevealResponse(BaseModel):
-    """Orb Mode API 응답 - 나를 선택한 투표자 목록.
-
-    용도: GET /polls/{id}/voters 엔드포인트 응답
-    권한: Orb Mode 구독자 전용
-    """
-
-    poll_id: uuid.UUID
-    question_text: str
-    voters: list[VoterInfo]
-
-
 VoteHintTier = Literal["CIRCLE", "TIME", "INITIAL", "FULL"]
 
 

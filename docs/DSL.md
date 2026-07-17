@@ -1502,7 +1502,7 @@ security SecurityPolicy {
             - RevenueCat 연동으로 구독 상태 확인
         }
         orb_mode: {
-            - 구독자가 "누가 나를 선택했는지"를 안전한 단계형 힌트로 확인
+            - 구독자가 받은 하트의 맥락을 안전한 단계형 힌트로 확인
             - 핵심 수익화 모델
             - API: GET /api/v1/polls/{id}/hints
             - Circle 멤버십 검증 필수

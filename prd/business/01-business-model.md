@@ -42,7 +42,7 @@ const freeFeatures = {
 ```javascript
 const orbModeRevenue = {
   core_concept: {
-    trigger: '투표에서 선택받은 사용자에게 "누가 나를 선택했을까?" 호기심 유발',
+    trigger: '투표에서 선택받은 사용자에게 받은 하트의 맥락을 더 알고 싶은 호기심 유발',
     monetization: '익명성을 유지한 상태에서 단계별 안전 힌트 제공',
     psychology: 'FOMO + 호기심 + 사회적 승인 욕구',
     target_emotion: '궁금증과 설렘'
@@ -51,29 +51,29 @@ const orbModeRevenue = {
   pricing_tiers: {
     hint_level_1: {
       price: 0.99,           // $0.99 (1,300원)
-      reveal: '첫 글자 힌트',
+      hint: '첫 글자 힌트',
       example: '"ㄱ"씨가 당신을 선택했어요!'
     },
     hint_level_2: {
       price: 1.99,           // $1.99 (2,600원)  
-      reveal: '안전 힌트 조합',
+      hint: '안전 힌트 조합',
       example: '같은 Circle의 최근 활동 멤버가 당신을 선택했어요!'
     },
     hint_level_3: {
       price: 2.99,           // $2.99 (3,900원)
-      reveal: '이니셜 + 추가 힌트',
+      hint: '이니셜 + 추가 힌트',
       example: 'K.H씨 (같은 반 친구)가 당신을 선택했어요!'
     },
-    full_reveal: {
+    full_hint: {
       price: 4.99,           // $4.99 (6,500원)
-      reveal: '앱 내 표시명 기반 고급 힌트',
+      hint: '앱 내 표시명 기반 고급 힌트',
       example: '현수 닉네임의 친구가 당신을 선택했어요!'
     }
   },
   
   conversion_funnel: {
     notification_trigger: '🔥 누군가 당신을 선택했어요!',
-    curiosity_button: '"누가 선택했는지 궁금하다면?" 버튼',
+    curiosity_button: '"받은 하트 힌트 보기" 버튼',
     pricing_screen: '단계별 힌트 가격 제시',
     impulse_purchase: '즉시 결제 유도',
     satisfaction: '힌트 공개 + 더 알고 싶은 욕구 자극'
@@ -359,11 +359,11 @@ const orbModeUX = {
   notification_timing: {
     trigger_moment: '투표 결과 발표 직후',
     notification_text: '🔥 누군가 당신을 "[질문내용]"에서 선택했어요!',
-    call_to_action: '누가 선택했는지 궁금하다면?',
+    call_to_action: '받은 하트 힌트 보기',
     urgency_factor: '24시간 한정 할인!'
   },
   
-  reveal_screen_design: {
+  hint_screen_design: {
     mystery_card: '블러 처리된 Profile 실루엣',
     pricing_ladder: '단계별 힌트 가격 (저렴한 것부터)',
     social_proof: '"124명이 이미 확인했어요!"',
@@ -412,7 +412,7 @@ CREATE TABLE orb_mode_hint_purchases (
     hint_level INTEGER,  -- 1,2,3,4 (힌트 단계)
     price_paid DECIMAL(5,2),
     purchased_at TIMESTAMP,
-    revealed_info JSONB  -- 공개된 힌트 정보
+    unlocked_hint_info JSONB  -- 해금된 힌트 정보
 );
 
 -- 가격 A/B 테스트

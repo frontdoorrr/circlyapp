@@ -366,12 +366,12 @@
 - [ ] **커밋**: `feat(polls): add voter_id column for Orb Mode feature`
 
 ### 13.2 Backend: Orb Mode API 추가 (P1)
-- [x] `app/modules/polls/schemas.py` - `VoterInfo`, `VoterRevealResponse` 스키마 추가
-- [x] `app/modules/polls/router.py` - Orb Mode 전용 엔드포인트 추가 (GET /{poll_id}/voters)
-- [x] `app/modules/polls/service.py` - `get_voters_for_user()` 함수 구현
-- [x] `app/modules/polls/repository.py` - `find_voters_for_user()` 쿼리 추가
+- [x] `app/modules/polls/schemas.py` - 안전 힌트 응답 스키마 추가
+- [x] `app/modules/polls/router.py` - Orb Mode 전용 힌트 엔드포인트 추가 (GET /{poll_id}/hints)
+- [x] `app/modules/polls/service.py` - 받은 하트 기반 힌트 조회 함수 구현
+- [x] `app/modules/polls/repository.py` - 받은 하트 힌트 생성용 쿼리 추가
 - [x] `app/modules/auth/models.py` - `is_orb_mode` 필드 추가
-- [x] **커밋**: `feat: add Orb Mode feature for voter reveal`
+- [x] **커밋**: `feat: add Orb Mode safe hints`
 
 ### 13.3 RevenueCat 연동 (P2)
 - [ ] RevenueCat SDK 설치 및 설정
@@ -380,13 +380,13 @@
 - [ ] **커밋**: `feat(subscription): integrate RevenueCat for Orb Mode`
 
 ### 13.4 Frontend: Orb Mode UI (P2)
-- [x] `frontend/src/types/poll.ts` - `VoterInfo`, `VoterRevealResponse` 타입 추가
+- [x] `frontend/src/types/poll.ts` - 안전 힌트 타입 추가
 - [x] `frontend/src/types/auth.ts` - `is_orb_mode` 필드 추가
-- [x] `frontend/src/api/poll.ts` - `getMyVoters()` API 함수 추가
-- [x] `frontend/src/hooks/usePolls.ts` - `useMyVoters()` 훅 추가
-- [x] `frontend/app/results/[id].tsx` - "누가 선택했는지 보기" 버튼 추가
-- [x] `frontend/app/poll/[id].tsx` - "누가 선택했는지 보기" 버튼 추가
-- [x] `frontend/app/results/[id]/voters.tsx` - 투표자 공개 화면 구현
+- [x] `frontend/src/api/poll.ts` - `getMyVoteHints()` API 함수 추가
+- [x] `frontend/src/hooks/usePolls.ts` - `useMyVoteHints()` 훅 추가
+- [x] `frontend/app/results/[id].tsx` - `받은 하트 힌트 보기` 버튼 추가
+- [x] `frontend/app/poll/[id].tsx` - Orb Mode 안전 힌트 진입점 정리
+- [x] `frontend/app/results/[id]/hints.tsx` - 안전 힌트 화면 구현
 - [x] `useCurrentUser` 훅으로 `is_orb_mode` 조회 방식 개선
 - [ ] Orb Mode 페이월/구독 화면 구현 (RevenueCat 연동 시)
 - [ ] RevenueCat SDK 연동 (Expo)
@@ -629,10 +629,10 @@
 ### 17.1 Backend: Orb Mode 테스트 (P0) ✅
 
 - [x] `backend/tests/modules/polls/test_orb_mode.py` - 테스트 파일 생성
-  - [x] `test_get_voters_orb_mode_enabled` - 구독자 접근 허용
-  - [x] `test_get_voters_orb_mode_disabled` - 비구독자 403 에러
-  - [x] `test_get_voters_poll_not_found` - 존재하지 않는 Poll
-  - [x] `test_get_voters_not_circle_member` - 비멤버 접근 거부
+  - [x] Orb Mode 구독자 안전 힌트 접근 허용
+  - [x] 비구독자 고급 힌트 제한/잠금 응답
+  - [x] 존재하지 않는 Poll 접근 거부
+  - [x] 비멤버 접근 거부
 - [x] `backend/tests/conftest.py` - `enable_orb_mode_for_user` fixture 추가
 - [x] **검증**: `uv run pytest tests/modules/polls/test_orb_mode.py -v` (8 tests passed)
 - [x] **커밋**: `test(polls): add Orb Mode authorization tests`
@@ -687,7 +687,7 @@
 
 - [x] `frontend/app/subscription/index.tsx` - Paywall UI
   - [x] 헤더 (이모지 + 타이틀 + 설명)
-  - [x] 기능 목록 (투표자 공개, 프리미엄 배지)
+  - [x] 기능 목록 (안전 힌트, 프리미엄 배지)
   - [x] 가격 카드 (월간/연간)
   - [x] CTA 버튼 ("구독하기")
   - [x] 복원 링크 ("구매 내역 복원")
@@ -702,9 +702,9 @@
 
 - [ ] Sandbox 테스터로 전체 플로우 테스트
   - [ ] 로그인 → 투표 참여 → 결과 화면
-  - [ ] "누가 선택했는지 보기" → Subscription 화면
+  - [ ] "받은 하트 힌트 보기" → Subscription 화면
   - [ ] 구독 구매 → Webhook → is_orb_mode=True
-  - [ ] 투표자 공개 화면 접근 성공
+  - [ ] 안전 힌트 화면 접근 성공
 - [ ] **커밋**: `docs: update Orb Mode implementation status`
 
 ---
@@ -845,9 +845,22 @@
   - [x] `frontend/app/(main)/(1-inbox)/index.tsx` — Orb 안전 힌트 CTA를 받은하트 맥락에 배치
 - [x] **18.20 Orb Mode 문구/화면 안전 힌트 기준 정리** (P0)
   - [x] `frontend/src/components/results/ResultsView.tsx` — 결과 화면 Orb CTA를 공개형 문구에서 안전 힌트 문구로 변경
-  - [x] `frontend/app/results/[id]/voters.tsx` — 힌트 화면 헤더/티어 라벨을 안전 힌트 기준으로 변경
+  - [x] `frontend/app/results/[id]/hints.tsx` — 힌트 화면 헤더/티어 라벨을 안전 힌트 기준으로 변경
   - [x] `frontend/app/subscription/index.tsx` — 구독 혜택 문구를 실명/투표자 공개가 아닌 단계형 힌트로 변경
 - [x] **18.21 Orb Mode 내부 reveal/voters 명명 정리** (P1)
   - [x] `frontend/app/results/[id]/voters.tsx` → `hints.tsx` 라우트명 변경
   - [x] `frontend/src/api/poll.ts`, `frontend/src/hooks/usePolls.ts`, `frontend/src/types/poll.ts` — 미사용 투표자 공개 API 래퍼/타입 제거
   - [x] `frontend/app/results/[id].tsx` — Orb 진입 라우트를 힌트 화면으로 변경
+- [x] **18.23 legacy 문서/todo 정리** (P1)
+  - [x] `todo.md` — Orb Mode 작업/E2E 문구를 투표자 공개에서 안전 힌트 기준으로 정리
+  - [x] `prd/features/05-orb-mode-implementation.md` — 현재 구현 상태와 검증 시나리오를 hints 라우트 기준으로 정리
+  - [x] `prd/business/01-business-model.md`, `docs/DSL.md` — 수익화/보안 문구를 받은 하트 안전 힌트 기준으로 정리
+  - [x] 후속: 백엔드 실제 `/voters` endpoint/service/test 명명은 API 호환성 검토 후 안전 힌트 기준으로 정리
+- [x] **18.22 실제 기기/Expo UX 검증** (P0)
+  - [x] `frontend` 타입체크로 라우트/타입 안전성 확인
+  - [x] Home 상태별 CTA 정적 검증: 투표 시작/쿨다운/받은하트/초대
+  - [x] `frontend/app/(main)/(0-home)/index.tsx` — 서버 session availability 기준으로 투표 시작 CTA 우선 판단하도록 보정
+  - [x] 받은하트 탭 badge 및 `/results/[id]/hints` 라우트 정적 검증
+  - [x] `/create` 직접 접근 제한 화면 정적 검증
+  - [x] 로컬 mock auth 및 핵심 API smoke 확인: dev-login, 받은하트, 세션 availability, 알림 unread count
+  - [x] Expo 개발 서버 실행 준비 확인: LAN API URL 갱신 및 Metro 8081 응답 확인
