@@ -8,7 +8,7 @@
 
 ## 현재 남은 작업 요약
 
-- [ ] **실기기/Expo 검증**: Node 22/20 LTS 전환 후 Metro 실행, Home/받은하트/Orb 힌트/초대 CTA QA
+- [ ] **실기기 QA**: Home/받은하트/Orb 힌트/초대 CTA QA
 - [ ] **외부 결제 설정**: RevenueCat, App Store Connect, Google Play Console 상품/entitlement 설정
 - [ ] **결제 E2E 검증**: Development Build + Sandbox 구매 + Webhook 반영 확인
 - [ ] **선택 작업**: Storybook, 가로 모드, 추가 반응형 QA
@@ -183,8 +183,9 @@
 - [x] `app/(main)/(home)/_layout.tsx` - Home tab layout
 - [x] `app/(main)/(create)/_layout.tsx` - Create poll tab layout
 - [x] `app/(main)/(profile)/_layout.tsx` - Profile tab layout
-- [ ] **외부 검증 대기**: `npx expo start` 실행 확인
-  - 현재 로컬 Node `v23.9.0`에서 Expo CLI 포트 초기화 이슈가 있어 Node 22/20 LTS 전환 후 재검증
+- [x] **검증**: Node 22.23.1로 `npx expo start --lan --port 8081 --clear` 실행 확인
+  - Metro 응답 확인: `http://localhost:8081` 200 OK
+  - 전역 Node 23.9.0은 유지, Circly 실행 시 `/opt/homebrew/opt/node@22/bin`만 사용
 - [x] **커밋**: `feat(frontend): setup Expo Router file structure and layouts`
 
 ### 11.4 Animation Hooks (P1)
@@ -352,8 +353,7 @@
 ### 12.3 라우트 구조 검증
 - [x] 모든 _layout.tsx 파일과 실제 파일 매칭 확인
 - [x] `(create)/_layout.tsx`에 누락된 `preview` 라우트 추가
-- [ ] **외부 검증 대기**: `npx expo start` 실행하여 Unmatched Route 에러 해결 확인
-  - 현재 로컬 Node `v23.9.0`에서 Expo CLI 포트 초기화 이슈가 있어 Node 22/20 LTS 전환 후 재검증
+- [x] **검증**: Node 22.23.1로 `npx expo start --lan --port 8081 --clear` 실행하여 Metro 시작 확인
 - [x] **커밋**: `fix(frontend): resolve unmatched route errors and add profile sub-screens`
 
 ---
