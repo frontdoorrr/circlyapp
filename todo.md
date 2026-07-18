@@ -907,6 +907,17 @@
   - [x] (P2) `app/(main)/(2-profile)/index.tsx` — Orb Mode 상태/진입 row 추가, 로컬 Toast를 전역 ToastProvider로 통일
   - [x] TypeScript/lint/jest 검증 (0 errors, 16 tests passed)
   - [ ] 실기기/시뮬레이터 QA: 받은하트 요약 1줄, Circle 카드, Profile Orb row/Toast 확인 (18.24 QA와 함께)
+- [x] **18.26 받은하트 기획 의도 복원 — 순수 보상 인박스** (P0)
+  > 참고 문서: `prd/design/04-user-flow.md` (받은 하트 플로우: 요약 + 하트 리스트만), `prd/research/gas-app-analysis.md` (F03: 결과 아카이브 없음, Inbox는 수신 보상 전용)
+  > 배경: 18.24에서 홈의 완료됨 탭을 받은하트로 옮겼으나, "지난 투표 결과"는 보상이 아닌 Circle 관리 정보라 탭 의도를 흐림.
+  - [x] `app/(main)/(1-inbox)/index.tsx` — "지난 투표 결과" 섹션 제거 (기획서 화면 구성과 일치: 요약 1줄 + 하트 리스트)
+  - [x] `app/circle/[id].tsx` — "지난 투표" 섹션 추가 (`useMyCompletedPolls`를 circle_id로 필터, `/results/[id]` 연결)
+  - [x] TypeScript/lint/jest 검증 (0 errors, 16 tests passed)
+- [x] **18.27 탭바 슬라이딩 인디케이터** (P1)
+  > 참고 문서: `prd/design/03-animations.md` (spring 프리셋), `src/theme/animations.ts` (`springConfigs`)
+  - [x] `src/components/navigation/FloatingTabBar.tsx` — 탭별 정적 원형 강조를 단일 인디케이터로 교체, 탭 전환 시 spring 슬라이드 (`springConfigs.stiff`)
+  - [x] TypeScript/lint/jest 검증 (0 errors, 16 tests passed)
+  - [ ] 실기기 QA: 탭 전환 슬라이드 확인 (18.24 QA와 함께)
 - [x] **18.22 실제 기기/Expo UX 검증** (P0)
   - [x] `frontend` 타입체크로 라우트/타입 안전성 확인
   - [x] Home 상태별 CTA 정적 검증: 투표 시작/쿨다운/받은하트/초대

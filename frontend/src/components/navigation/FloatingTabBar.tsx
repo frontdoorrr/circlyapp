@@ -1,13 +1,18 @@
-import React, { type ComponentProps } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { useVoteSessionAvailability } from '../../hooks/usePolls';
-import { tokens } from '../../theme';
+import { tokens, springConfigs } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';
 import { GlassSurface } from '../primitives/GlassSurface';
 import { Text } from '../primitives/Text';
@@ -31,6 +36,12 @@ interface FloatingTabBarProps extends BottomTabBarProps {
   unreadHeartCount: number;
 }
 
+// 인디케이터 위치 계산용 레이아웃 상수 (styles.tabList/tab/iconBubble 값과 동기화)
+const TAB_LIST_H_PADDING = 5;
+const TAB_LIST_V_PADDING = 5;
+const INDICATOR_SIZE = 36;
+const TAB_CONTENT_HEIGHT = 36 + 2 + 14; // iconBubble + gap + label lineHeight
+
 export function FloatingTabBar({
   state,
   descriptors,
@@ -53,6 +64,53 @@ export function FloatingTabBar({
     router.push('/vote-session' as never);
   };
 
+  // 선택 탭 원형 강조 슬라이드
+  const visibleRoutes = state.routes.filter((route) => tabAppearance[route.name]);
+  const activeVisibleIndex = visibleRoutes.findIndex(
+    (route) => route.key === state.routes[state.index]?.key
+  );
+  const [tabListLayout, setTabListLayout] = useState({ width: 0, height: 0 });
+  const indicatorX = useSharedValue(0);
+  const isFirstPosition = useRef(true);
+
+  const slotWidth =
+    tabListLayout.width > 0 && visibleRoutes.length > 0
+      ? (tabListLayout.width - TAB_LIST_H_PADDING * 2) / visibleRoutes.length
+      : 0;
+  const indicatorTop =
+    TAB_LIST_V_PADDING +
+    Math.max(
+      0,
+      (tabListLayout.height - TAB_LIST_V_PADDING * 2 - TAB_CONTENT_HEIGHT) / 2
+    );
+
+  useEffect(() => {
+    if (slotWidth === 0 || activeVisibleIndex < 0) return;
+
+    const targetX =
+      TAB_LIST_H_PADDING +
+      activeVisibleIndex * slotWidth +
+      (slotWidth - INDICATOR_SIZE) / 2;
+
+    if (isFirstPosition.current) {
+      indicatorX.value = targetX;
+      isFirstPosition.current = false;
+    } else {
+      indicatorX.value = withSpring(targetX, springConfigs.stiff);
+    }
+  }, [activeVisibleIndex, slotWidth, indicatorX]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
+
+  const handleTabListLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setTabListLayout((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height }
+    );
+  };
+
   return (
     <View
       pointerEvents="box-none"
@@ -70,10 +128,17 @@ export function FloatingTabBar({
                 : 'rgba(255,255,255,0.82)',
             },
           ]}
-          contentStyle={styles.tabList}
+          contentStyle={styles.tabListFrame}
           tintColor={isDark ? '#31244d' : '#f5f3ff'}
           accessibilityLabel="메인 메뉴"
         >
+          <View style={styles.tabList} onLayout={handleTabListLayout}>
+          {slotWidth > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.indicator, { top: indicatorTop }, indicatorStyle]}
+            />
+          )}
           {state.routes.map((route, index) => {
             const appearance = tabAppearance[route.name];
             if (!appearance) return null;
@@ -109,7 +174,7 @@ export function FloatingTabBar({
                 accessibilityLabel={options.tabBarAccessibilityLabel ?? appearance.label}
                 style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
               >
-                <View style={[styles.iconBubble, isFocused && styles.iconBubbleActive]}>
+                <View style={styles.iconBubble}>
                   <Ionicons
                     name={isFocused ? appearance.activeIcon : appearance.icon}
                     size={22}
@@ -134,6 +199,7 @@ export function FloatingTabBar({
               </Pressable>
             );
           })}
+          </View>
         </GlassSurface>
       </View>
 
@@ -209,12 +275,28 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     borderWidth: 1,
   },
+  tabListFrame: {
+    flex: 1,
+  },
   tabList: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
-    paddingHorizontal: 5,
-    paddingVertical: 5,
+    paddingHorizontal: TAB_LIST_H_PADDING,
+    paddingVertical: TAB_LIST_V_PADDING,
+  },
+  indicator: {
+    position: 'absolute',
+    left: 0,
+    width: INDICATOR_SIZE,
+    height: INDICATOR_SIZE,
+    borderRadius: INDICATOR_SIZE / 2,
+    backgroundColor: tokens.colors.primary[500],
+    shadowColor: tokens.colors.primary[500],
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.36,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tab: {
     flex: 1,
@@ -228,19 +310,11 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.96 }],
   },
   iconBubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: INDICATOR_SIZE,
+    height: INDICATOR_SIZE,
+    borderRadius: INDICATOR_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconBubbleActive: {
-    backgroundColor: tokens.colors.primary[500],
-    shadowColor: tokens.colors.primary[500],
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.36,
-    shadowRadius: 8,
-    elevation: 4,
   },
   label: {
     maxWidth: '100%',
