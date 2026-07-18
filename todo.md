@@ -926,3 +926,10 @@
   - [x] `/create` 직접 접근 제한 화면 정적 검증
   - [x] 로컬 mock auth 및 핵심 API smoke 확인: dev-login, 받은하트, 세션 availability, 알림 unread count
   - [x] Expo 개발 서버 실행 준비 확인: LAN API URL 갱신 및 Metro 8081 응답 확인
+- [x] **18.28 설정 허브 UX 및 저장 안정성 정리** (P1)
+  > 참고 문서: `prd/design/04-user-flow.md` (Profile 설정/알림 플로우), `prd/features/03-push-notification.md` (알림 설정 및 개인화), `prd/design/02-ui-design-system.md` (다크 모드/접근성)
+  - [x] `app/(main)/(2-profile)/settings.tsx` — Profile 편집 직접 진입, 알림 설정 진입, 오류 피드백 및 접근성 보완
+  - [x] `app/(main)/(2-profile)/index.tsx` — 중복 다크 모드/로그아웃 제거 후 설정 허브 진입점 통합
+  - [x] `app/(main)/(2-profile)/notifications.tsx` — 저장 중 중복 변경 방지, 전체 토글 실패 원복/오류 처리
+  - [x] 존재하지 않는 Circle별 알림 설정 안내 제거
+  - [x] TypeScript/lint/jest/iOS export 검증

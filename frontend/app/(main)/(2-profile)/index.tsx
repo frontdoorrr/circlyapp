@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useCurrentUser, useUpdateProfile, useLogout } from '../../../src/hooks/useAuth';
-import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCurrentUser, useUpdateProfile } from '../../../src/hooks/useAuth';
+import { useThemedStyles } from '../../../src/theme/ThemeContext';
 import { ProfileInfo } from '../../../src/components/profile/ProfileInfo';
 import { ProfileEditModal } from '../../../src/components/profile/ProfileEditModal';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
 import { Text } from '../../../src/components/primitives/Text';
-import { Button } from '../../../src/components/primitives/Button';
 import { useToast } from '../../../src/providers/ToastProvider';
 import { tokens } from '../../../src/theme';
 import { ApiError } from '../../../src/types/api';
@@ -23,8 +22,8 @@ import type { Theme } from '../../../src/theme/tokens';
  */
 export default function ProfileScreen() {
   const router = useRouter();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
-  const { isDark, toggleTheme } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { showToast } = useToast();
   const [isEditModalOpen, setEditModalOpen] = useState(false);
@@ -35,8 +34,11 @@ export default function ProfileScreen() {
   // Profile 수정
   const updateProfileMutation = useUpdateProfile();
 
-  // 로그아웃
-  const logoutMutation = useLogout();
+  useEffect(() => {
+    if (edit === 'true') {
+      setEditModalOpen(true);
+    }
+  }, [edit]);
 
   const handleUpdateProfile = async (data: UserUpdate) => {
     try {
@@ -51,22 +53,11 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '로그아웃',
-          style: 'destructive',
-          onPress: async () => {
-            await logoutMutation.mutateAsync();
-            router.replace('/(auth)/login');
-          }
-        }
-      ]
-    );
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    if (edit === 'true') {
+      router.replace('/(main)/(2-profile)');
+    }
   };
 
   if (userLoading) {
@@ -122,52 +113,21 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* 설정 섹션 */}
+        {/* 설정 허브 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>설정</Text>
           <View style={styles.card}>
-            {/* 다크 모드 토글 */}
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={toggleTheme}
-            >
-              <Text style={styles.settingItemText}>
-                🌙 다크 모드
-              </Text>
-              <Text style={styles.settingItemValue}>
-                {isDark ? 'ON' : 'OFF'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* 알림 설정 */}
-            <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/(main)/(2-profile)/notifications')}
-            >
-              <Text style={styles.settingItemText}>🔔 알림 설정</Text>
-              <Text style={styles.settingItemArrow}>›</Text>
-            </TouchableOpacity>
-
-            {/* 설정 (회원탈퇴 포함) */}
             <TouchableOpacity
               style={[styles.settingItem, styles.lastItem]}
               onPress={() => router.push('/(main)/(2-profile)/settings')}
+              accessibilityRole="button"
+              accessibilityLabel="설정 열기"
+              accessibilityHint="알림, 화면, 구독 및 계정 설정을 엽니다"
             >
-              <Text style={styles.settingItemText}>⚙️ 설정</Text>
+              <Text style={styles.settingItemText}>⚙️ 앱 및 계정 설정</Text>
               <Text style={styles.settingItemArrow}>›</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        {/* 로그아웃 버튼 */}
-        <View style={styles.logoutSection}>
-          <Button
-            variant="ghost"
-            onPress={handleLogout}
-            fullWidth
-          >
-            로그아웃
-          </Button>
         </View>
       </ScrollView>
 
@@ -182,7 +142,7 @@ export default function ProfileScreen() {
           profile_emoji: user.profile_emoji,
         }}
         onSubmit={handleUpdateProfile}
-        onClose={() => setEditModalOpen(false)}
+        onClose={handleCloseEditModal}
       />
     </View>
   );
@@ -248,10 +208,6 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     lastItem: {
       borderBottomWidth: 0,
-    },
-    logoutSection: {
-      marginTop: tokens.spacing.md,
-      marginBottom: tokens.spacing.xl,
     },
     errorText: {
       fontSize: tokens.typography.fontSize.base,

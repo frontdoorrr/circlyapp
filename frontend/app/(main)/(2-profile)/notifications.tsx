@@ -30,11 +30,12 @@ import type { Theme } from '../../../src/theme/tokens';
  */
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { theme, isDark } = useTheme();
+  const { isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { showToast } = useToast();
   const { data: settings, isLoading, error, refetch } = useNotificationSettings();
-  const { mutate: updateSettings, isPending: isUpdating } = useUpdateNotificationSettings();
+  const { mutateAsync: updateSettings, isPending: isUpdating } =
+    useUpdateNotificationSettings();
 
   // 로컬 상태 (API 연동 전 즉각적인 UI 반응을 위해)
   const [localSettings, setLocalSettings] = useState({
@@ -67,7 +68,9 @@ export default function NotificationsScreen() {
     localSettings.circleInvite;
 
   const handleToggle = async (key: keyof typeof localSettings) => {
-    await Haptics.selectionAsync();
+    if (isUpdating) return;
+
+    void Haptics.selectionAsync().catch(() => undefined);
     const newValue = !localSettings[key];
 
     // 즉시 로컬 상태 업데이트 (낙관적 업데이트)
@@ -84,20 +87,51 @@ export default function NotificationsScreen() {
     if (key === 'voteReceived') updatePayload.vote_received = newValue;
     if (key === 'circleInvite') updatePayload.circle_invite = newValue;
 
-    updateSettings(updatePayload, {
-      onError: () => {
-        // 실패 시 원복
-        setLocalSettings((prev) => ({
-          ...prev,
-          [key]: !newValue,
-        }));
-        showToast('설정 변경에 실패했습니다. 다시 시도해주세요.', 'error');
-      },
-    });
+    try {
+      await updateSettings(updatePayload);
+    } catch {
+      // 실패 시 원복
+      setLocalSettings((prev) => ({
+        ...prev,
+        [key]: !newValue,
+      }));
+      showToast('설정 변경에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
+  };
+
+  const applyAllSettings = async (enabled: boolean) => {
+    if (isUpdating) return;
+
+    const previousSettings = localSettings;
+    const nextSettings = {
+      pollStarted: enabled,
+      pollReminder: enabled,
+      pollEnded: enabled,
+      voteReceived: enabled,
+      circleInvite: enabled,
+    };
+
+    setLocalSettings(nextSettings);
+
+    try {
+      await updateSettings({
+        poll_started: enabled,
+        poll_reminder: enabled,
+        poll_ended: enabled,
+        vote_received: enabled,
+        circle_invite: enabled,
+      });
+      showToast(enabled ? '전체 알림을 켰습니다' : '전체 알림을 껐습니다', 'success');
+    } catch {
+      setLocalSettings(previousSettings);
+      showToast('설정 변경에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
   };
 
   const handleToggleAll = async () => {
-    await Haptics.selectionAsync();
+    if (isUpdating) return;
+
+    void Haptics.selectionAsync().catch(() => undefined);
 
     if (allEnabled) {
       // 전체 알림 끄기 확인
@@ -109,41 +143,14 @@ export default function NotificationsScreen() {
           {
             text: '끄기',
             onPress: () => {
-              setLocalSettings({
-                pollStarted: false,
-                pollReminder: false,
-                pollEnded: false,
-                voteReceived: false,
-                circleInvite: false,
-              });
-              updateSettings({
-                poll_started: false,
-                poll_reminder: false,
-                poll_ended: false,
-                vote_received: false,
-                circle_invite: false,
-              });
-              showToast('전체 알림을 껐습니다', 'success');
+              void applyAllSettings(false);
             },
           },
         ]
       );
     } else {
       // 전체 알림 켜기
-      setLocalSettings({
-        pollStarted: true,
-        pollReminder: true,
-        pollEnded: true,
-        voteReceived: true,
-        circleInvite: true,
-      });
-      updateSettings({
-        poll_started: true,
-        poll_reminder: true,
-        poll_ended: true,
-        vote_received: true,
-        circle_invite: true,
-      });
+      await applyAllSettings(true);
     }
   };
 
@@ -158,7 +165,13 @@ export default function NotificationsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로 가기"
+            hitSlop={8}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>알림 설정</Text>
@@ -176,7 +189,13 @@ export default function NotificationsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로 가기"
+            hitSlop={8}
+          >
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>알림 설정</Text>
@@ -184,7 +203,12 @@ export default function NotificationsScreen() {
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>설정을 불러오지 못했습니다</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => refetch()}
+            accessibilityRole="button"
+            accessibilityLabel="알림 설정 다시 불러오기"
+          >
             <Text style={styles.retryText}>다시 시도</Text>
           </TouchableOpacity>
         </View>
@@ -196,7 +220,13 @@ export default function NotificationsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+          hitSlop={8}
+        >
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>알림 설정</Text>
@@ -224,8 +254,11 @@ export default function NotificationsScreen() {
               <Switch
                 value={allEnabled}
                 onValueChange={handleToggleAll}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="전체 알림"
+                accessibilityState={{ disabled: isUpdating }}
               />
             </View>
           </View>
@@ -246,8 +279,10 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollStarted}
                 onValueChange={() => handleToggle('pollStarted')}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="새 투표 알림"
               />
             </View>
 
@@ -262,8 +297,10 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollReminder}
                 onValueChange={() => handleToggle('pollReminder')}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="투표 마감 임박 알림"
               />
             </View>
 
@@ -278,8 +315,10 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.pollEnded}
                 onValueChange={() => handleToggle('pollEnded')}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="투표 결과 알림"
               />
             </View>
 
@@ -294,8 +333,10 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.voteReceived}
                 onValueChange={() => handleToggle('voteReceived')}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="누군가 나를 선택했을 때 알림"
               />
             </View>
 
@@ -310,18 +351,18 @@ export default function NotificationsScreen() {
               <Switch
                 value={localSettings.circleInvite}
                 onValueChange={() => handleToggle('circleInvite')}
+                disabled={isUpdating}
                 trackColor={switchTrackColor}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="Circle 초대 알림"
               />
             </View>
           </View>
         </View>
 
-        {/* 안내 문구 */}
         <View style={styles.infoSection}>
           <Text style={styles.infoText}>
-            💡 알림 설정은 Circle별로 다르게 설정할 수도 있어요.{'\n'}
-            Circle 상세 화면에서 개별 설정이 가능합니다.
+            변경한 알림 설정은 로그인한 모든 기기에 적용됩니다.
           </Text>
         </View>
       </ScrollView>

@@ -55,6 +55,7 @@ export default function SettingsScreen() {
       await presentCustomerCenter();
     } catch (error) {
       logger.error('Failed to open Customer Center:', error);
+      showToast('구독 관리 화면을 열지 못했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setIsOpeningCustomerCenter(false);
     }
@@ -70,9 +71,17 @@ export default function SettingsScreen() {
           text: '로그아웃',
           style: 'destructive',
           onPress: async () => {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            await logoutMutation.mutateAsync();
-            router.replace('/(auth)/login');
+            void Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success
+            ).catch(() => undefined);
+            try {
+              await logoutMutation.mutateAsync();
+            } catch (error) {
+              logger.warn('Failed to sign out remotely:', error);
+              showToast('원격 로그아웃에 실패했지만 기기에서는 로그아웃했습니다.', 'info');
+            } finally {
+              router.replace('/(auth)/login');
+            }
           },
         },
       ]
@@ -96,9 +105,11 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await deleteAccountMutation.mutateAsync();
-              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              void Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success
+              ).catch(() => undefined);
               router.replace('/(auth)/login');
-            } catch (error) {
+            } catch {
               showToast('회원 탈퇴 중 문제가 발생했습니다', 'error');
             }
           },
@@ -125,6 +136,7 @@ export default function SettingsScreen() {
       });
     } catch (error) {
       logger.warn('Failed to open browser:', error);
+      showToast('페이지를 열지 못했습니다. 네트워크 연결을 확인해주세요.', 'error');
     }
   };
 
@@ -132,7 +144,13 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="뒤로 가기"
+          hitSlop={8}
+        >
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>설정</Text>
@@ -148,10 +166,17 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>👤 계정 관리</Text>
           <View style={styles.card}>
             <TouchableOpacity
-              style={styles.settingItem}
-              onPress={() => router.push('/(main)/(2-profile)' as any)}
+              style={[styles.settingItem, styles.noBorder]}
+              onPress={() =>
+                router.push({
+                  pathname: '/(main)/(2-profile)',
+                  params: { edit: 'true' },
+                } as any)
+              }
+              accessibilityRole="button"
+              accessibilityLabel="프로필 수정"
             >
-              <Text style={styles.settingItemText}>Profile 수정</Text>
+              <Text style={styles.settingItemText}>프로필 수정</Text>
               <Text style={styles.settingItemArrow}>›</Text>
             </TouchableOpacity>
           </View>
@@ -161,6 +186,15 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🎨 앱 설정</Text>
           <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={() => router.push('/(main)/(2-profile)/notifications')}
+              accessibilityRole="button"
+              accessibilityLabel="알림 설정"
+            >
+              <Text style={styles.settingItemText}>알림 설정</Text>
+              <Text style={styles.settingItemArrow}>›</Text>
+            </TouchableOpacity>
             <View style={styles.settingItem}>
               <Text style={styles.settingItemText}>다크 모드</Text>
               <Switch
@@ -172,6 +206,10 @@ export default function SettingsScreen() {
                   true: tokens.colors.primary[500],
                 }}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="다크 모드"
+                accessibilityHint={
+                  followSystem ? '시스템 설정 따르기를 끄면 변경할 수 있습니다' : undefined
+                }
               />
             </View>
             <View style={[styles.settingItem, styles.noBorder]}>
@@ -184,6 +222,7 @@ export default function SettingsScreen() {
                   true: tokens.colors.primary[500],
                 }}
                 thumbColor={tokens.colors.white}
+                accessibilityLabel="시스템 화면 설정 따르기"
               />
             </View>
           </View>
@@ -221,6 +260,9 @@ export default function SettingsScreen() {
                   style={[styles.settingItem, styles.noBorder]}
                   onPress={handleManageSubscription}
                   disabled={isOpeningCustomerCenter}
+                  accessibilityRole="button"
+                  accessibilityLabel="구독 관리"
+                  accessibilityState={{ disabled: isOpeningCustomerCenter }}
                 >
                   <Text style={styles.settingItemText}>구독 관리</Text>
                   {isOpeningCustomerCenter ? (
@@ -239,6 +281,8 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={[styles.settingItem, styles.noBorder]}
                   onPress={() => router.push('/subscription' as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Pro로 업그레이드"
                 >
                   <Text style={styles.upgradeText}>Pro로 업그레이드</Text>
                   <Text style={styles.settingItemArrow}>›</Text>
@@ -255,6 +299,8 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => openLink('https://circly.app/privacy')}
+              accessibilityRole="link"
+              accessibilityLabel="개인정보처리방침 열기"
             >
               <Text style={styles.settingItemText}>개인정보처리방침</Text>
               <Text style={styles.settingItemArrow}>›</Text>
@@ -262,6 +308,8 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => openLink('https://circly.app/terms')}
+              accessibilityRole="link"
+              accessibilityLabel="서비스 이용약관 열기"
             >
               <Text style={styles.settingItemText}>서비스 이용약관</Text>
               <Text style={styles.settingItemArrow}>›</Text>
@@ -269,6 +317,8 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.settingItem}
               onPress={() => openLink('https://circly.app/licenses')}
+              accessibilityRole="link"
+              accessibilityLabel="오픈소스 라이선스 열기"
             >
               <Text style={styles.settingItemText}>오픈소스 라이선스</Text>
               <Text style={styles.settingItemArrow}>›</Text>
@@ -287,12 +337,20 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.settingItem}
               onPress={handleLogout}
+              disabled={logoutMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="로그아웃"
+              accessibilityState={{ disabled: logoutMutation.isPending }}
             >
               <Text style={styles.dangerText}>로그아웃</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.settingItem, styles.noBorder]}
               onPress={() => setShowDeleteConfirm(true)}
+              disabled={deleteAccountMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="회원 탈퇴"
+              accessibilityState={{ disabled: deleteAccountMutation.isPending }}
             >
               <Text style={styles.dangerText}>회원 탈퇴</Text>
             </TouchableOpacity>
@@ -318,6 +376,9 @@ export default function SettingsScreen() {
               onChangeText={setDeleteConfirmText}
               placeholder="탈퇴합니다"
               placeholderTextColor={theme.textTertiary}
+              editable={!deleteAccountMutation.isPending}
+              accessibilityLabel="회원 탈퇴 확인 문구"
+              accessibilityHint="탈퇴합니다를 정확히 입력하세요"
             />
             <View style={styles.deleteButtonRow}>
               <Button
@@ -328,6 +389,7 @@ export default function SettingsScreen() {
                   setDeleteConfirmText('');
                 }}
                 style={styles.deleteButton}
+                disabled={deleteAccountMutation.isPending}
               >
                 취소
               </Button>
@@ -336,6 +398,8 @@ export default function SettingsScreen() {
                 size="md"
                 onPress={handleDeleteAccount}
                 style={styles.deleteConfirmButton}
+                loading={deleteAccountMutation.isPending}
+                accessibilityLabel="회원 탈퇴 최종 확인"
               >
                 탈퇴하기
               </Button>
