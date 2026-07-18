@@ -1,7 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { tokens } from '../../src/theme';
-import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import { useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { useCurrentUser } from '../../src/hooks/useAuth';
 import { usePollDetail } from '../../src/hooks/usePolls';
@@ -15,7 +14,6 @@ import { ResultsView } from '../../src/components/results/ResultsView';
  */
 export default function ResultsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { theme } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { data: currentUser } = useCurrentUser();
   const isOrbMode = currentUser?.is_orb_mode ?? false;
@@ -26,7 +24,7 @@ export default function ResultsScreen() {
     if (isOrbMode) {
       router.push(`/results/${id}/hints`);
     } else {
-      router.push('/subscription');
+      router.push({ pathname: '/subscription', params: { poll_id: id } } as any);
     }
   };
 
@@ -99,7 +97,12 @@ export default function ResultsScreen() {
           headerBackTitle: '뒤로',
         }}
       />
-      <ResultsView poll={poll} isOrbMode={isOrbMode} onOpenOrbMode={handleOrbMode} />
+      <ResultsView
+        poll={poll}
+        isOrbMode={isOrbMode}
+        onOpenOrbMode={handleOrbMode}
+        currentUserId={currentUser?.id}
+      />
     </>
   );
 }

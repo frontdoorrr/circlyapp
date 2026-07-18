@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
 import { useMarkReceivedHeartAsRead, useReceivedHearts } from '../../../src/hooks/usePolls';
 import { useUnreadCount } from '../../../src/hooks/useNotifications';
+import { useCurrentUser } from '../../../src/hooks/useAuth';
 import { tokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
@@ -40,6 +41,8 @@ export default function InboxScreen() {
   const styles = useThemedStyles(createStyles);
   const { data, isLoading, isRefetching, refetch } = useReceivedHearts();
   const { data: notificationUnreadCount } = useUnreadCount();
+  const { data: currentUser } = useCurrentUser();
+  const isOrbMode = currentUser?.is_orb_mode ?? false;
   const { mutateAsync: markAsReadAsync } = useMarkReceivedHeartAsRead();
   const hearts = useMemo(() => data ?? [], [data]);
   const unreadCount = useMemo(
@@ -78,6 +81,18 @@ export default function InboxScreen() {
       router.push(`/results/${item.poll_id}` as any);
     },
     [markAsReadAsync, router]
+  );
+
+  const handleHintPress = useCallback(
+    async (item: ReceivedHeartItem) => {
+      await Haptics.selectionAsync();
+      if (isOrbMode) {
+        router.push(`/results/${item.poll_id}/hints` as any);
+      } else {
+        router.push({ pathname: '/subscription', params: { poll_id: item.poll_id } } as any);
+      }
+    },
+    [isOrbMode, router]
   );
 
   const handleGoVote = useCallback(() => {
@@ -168,17 +183,40 @@ export default function InboxScreen() {
               >
                 {!item.is_read && <View style={styles.unreadIndicator} />}
                 <View style={styles.cardContent}>
-                  <Text style={styles.question} numberOfLines={2}>
-                    {item.emoji ? `${item.emoji} ` : ''}
-                    {item.question_text}
-                  </Text>
-                  <Text style={styles.meta}>
-                    {item.received_count}명이 선택했어요 ·{' '}
-                    {formatRelativeTime(item.latest_received_at)}
-                  </Text>
-                  <Text style={styles.circleName} numberOfLines={1}>
-                    {item.circle_name}
-                  </Text>
+                  {item.is_read ? (
+                    <>
+                      <Text style={styles.question} numberOfLines={2}>
+                        {item.emoji ? `${item.emoji} ` : ''}
+                        {item.question_text}
+                      </Text>
+                      <Text style={styles.meta}>
+                        {item.received_count}명이 선택했어요 ·{' '}
+                        {formatRelativeTime(item.latest_received_at)}
+                      </Text>
+                      <Text style={styles.circleName} numberOfLines={1}>
+                        {item.circle_name}
+                      </Text>
+                      <Pressable
+                        onPress={() => handleHintPress(item)}
+                        style={({ pressed }) => [
+                          styles.hintChip,
+                          pressed && styles.hintChipPressed,
+                        ]}
+                        hitSlop={4}
+                        accessibilityRole="button"
+                        accessibilityLabel="이 하트의 힌트 보기"
+                      >
+                        <Text style={styles.hintChipText}>🔮 힌트 보기</Text>
+                      </Pressable>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.question}>💖 누군가 나를 선택했어요</Text>
+                      <Text style={styles.meta}>
+                        탭해서 확인하기 · {formatRelativeTime(item.latest_received_at)}
+                      </Text>
+                    </>
+                  )}
                 </View>
                 <Text style={styles.arrow}>›</Text>
               </Pressable>
@@ -318,6 +356,24 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     circleName: {
       fontSize: tokens.typography.fontSize.sm,
       color: theme.textTertiary,
+    },
+    hintChip: {
+      alignSelf: 'flex-start',
+      marginTop: tokens.spacing.xs,
+      paddingVertical: tokens.spacing.xs,
+      paddingHorizontal: tokens.spacing.sm,
+      borderRadius: tokens.borderRadius.full,
+      backgroundColor: isDark ? theme.backgroundTertiary : tokens.colors.primary[50],
+      borderWidth: 1,
+      borderColor: isDark ? theme.border : tokens.colors.primary[200],
+    },
+    hintChipPressed: {
+      opacity: 0.7,
+    },
+    hintChipText: {
+      fontSize: tokens.typography.fontSize.xs,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: tokens.colors.primary[isDark ? 300 : 600],
     },
     arrow: {
       marginLeft: tokens.spacing.md,

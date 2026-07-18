@@ -5,7 +5,7 @@ import { captureRef } from 'react-native-view-shot';
 import { ResultCard } from '../share/ResultCard';
 import { EmptyState } from '../states';
 import { tokens } from '../../theme';
-import { useTheme, useThemedStyles } from '../../theme/ThemeContext';
+import { useThemedStyles } from '../../theme/ThemeContext';
 import type { Theme } from '../../theme/tokens';
 import type { PollDetailResponse } from '../../types/poll';
 import { useToast } from '../../providers/ToastProvider';
@@ -15,10 +15,12 @@ interface ResultsViewProps {
   poll: PollDetailResponse;
   isOrbMode: boolean;
   onOpenOrbMode: () => void;
+  currentUserId?: string;
 }
 
-export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps) {
-  const { theme, isDark } = useTheme();
+const TOP_RESULTS_COUNT = 3;
+
+export function ResultsView({ poll, isOrbMode, onOpenOrbMode, currentUserId }: ResultsViewProps) {
   const styles = useThemedStyles(createStyles);
   const { showToast } = useToast();
   const viewShotRef = useRef<View | null>(null);
@@ -57,6 +59,13 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
 
   const getBarWidth = (percentage: number) => `${percentage}%` as const;
 
+  // 정서 안전을 위해 전체 순위 대신 TOP 3만 공개하고, 내 득표는 개인화해서 보여준다.
+  const topResults = (poll.results ?? []).slice(0, TOP_RESULTS_COUNT);
+  const othersCount = (poll.results ?? []).length - topResults.length;
+  const myResult = currentUserId
+    ? poll.results?.find((result) => result.user_id === currentUserId)
+    : undefined;
+
   if (!poll.results || poll.results.length === 0) {
     return (
       <View style={styles.container}>
@@ -83,7 +92,7 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
           </View>
 
           <View style={styles.resultsList}>
-            {poll.results.map((result, index) => (
+            {topResults.map((result, index) => (
               <View key={result.user_id} style={styles.resultItem}>
                 <View style={styles.rank}>
                   {index === 0 && <Text style={styles.rankEmoji}>👑</Text>}
@@ -117,6 +126,12 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
             ))}
           </View>
 
+          {othersCount > 0 && (
+            <Text style={styles.othersText}>
+              그 외 {othersCount}명의 친구들도 하트를 받았어요 💖
+            </Text>
+          )}
+
           <View style={styles.branding}>
             <Text style={styles.brandingText}>🗳️ Circly</Text>
           </View>
@@ -126,6 +141,17 @@ export function ResultsView({ poll, isOrbMode, onOpenOrbMode }: ResultsViewProps
           <Text style={styles.infoText}>⏰ 투표가 종료되었어요</Text>
           <Text style={styles.infoSubtext}>결과를 친구들과 공유해보세요!</Text>
         </View>
+
+        {myResult && myResult.vote_count > 0 && (
+          <View style={styles.myResultCard}>
+            <Text style={styles.myResultTitle}>
+              💖 너는 {myResult.vote_count}표를 받았어
+            </Text>
+            <Text style={styles.myResultSubtext}>
+              누가 보냈는지 힌트로 확인해보세요
+            </Text>
+          </View>
+        )}
 
         <Pressable
           style={[
@@ -283,6 +309,31 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     barFill: {
       height: '100%',
       borderRadius: tokens.borderRadius.full,
+    },
+    othersText: {
+      marginTop: tokens.spacing.lg,
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textTertiary,
+      textAlign: 'center',
+    },
+    myResultCard: {
+      marginTop: tokens.spacing.lg,
+      padding: tokens.spacing.lg,
+      borderRadius: tokens.borderRadius.lg,
+      backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : tokens.colors.primary[50],
+      borderWidth: 1,
+      borderColor: isDark ? tokens.colors.primary[700] : tokens.colors.primary[200],
+      alignItems: 'center',
+    },
+    myResultTitle: {
+      fontSize: tokens.typography.fontSize.lg,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.primary[isDark ? 300 : 700],
+      marginBottom: tokens.spacing.xs,
+    },
+    myResultSubtext: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: tokens.colors.primary[isDark ? 400 : 600],
     },
     branding: {
       alignItems: 'center',

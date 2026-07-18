@@ -7,7 +7,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState, useEffect, useCallback } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PurchasesPackage } from 'react-native-purchases';
@@ -49,8 +49,18 @@ export default function SubscriptionScreen() {
   useTheme(); // For themed styles
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
+  const { poll_id: pollId } = useLocalSearchParams<{ poll_id?: string }>();
   const { refetch: refetchUser } = useCurrentUser();
   const { refresh } = useSubscription();
+
+  // 받은 하트 문맥에서 진입한 경우, 구독 완료 후 해당 힌트 화면으로 이어준다.
+  const finishAfterSubscribe = useCallback(() => {
+    if (pollId) {
+      router.replace(`/results/${pollId}/hints` as any);
+    } else {
+      router.back();
+    }
+  }, [pollId]);
 
   // Skip RevenueCatUI Paywall - use Custom Paywall directly
   // RevenueCatUI requires Dashboard Paywall configuration which is not set up
@@ -85,7 +95,7 @@ export default function SubscriptionScreen() {
           // Success! Refresh user and go back
           await refetchUser();
           await refresh();
-          router.back();
+          finishAfterSubscribe();
           return;
         }
 
@@ -109,7 +119,7 @@ export default function SubscriptionScreen() {
     }
 
     tryRevenueCatPaywall();
-  }, [useCustomPaywall, refetchUser, refresh]);
+  }, [useCustomPaywall, refetchUser, refresh, finishAfterSubscribe]);
 
   // Load offerings for custom paywall
   useEffect(() => {
@@ -159,11 +169,11 @@ export default function SubscriptionScreen() {
 
         Alert.alert(
           '구독 완료!',
-          'Pro 기능이 활성화되었습니다!',
+          pollId ? '이제 받은 하트의 힌트를 확인할 수 있어요!' : 'Pro 기능이 활성화되었습니다!',
           [
             {
-              text: '확인',
-              onPress: () => router.back(),
+              text: pollId ? '힌트 보러 가기' : '확인',
+              onPress: finishAfterSubscribe,
             },
           ]
         );
@@ -198,7 +208,7 @@ export default function SubscriptionScreen() {
           [
             {
               text: '확인',
-              onPress: () => router.back(),
+              onPress: finishAfterSubscribe,
             },
           ]
         );
@@ -323,10 +333,12 @@ export default function SubscriptionScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerEmoji}>⭐</Text>
+            <Text style={styles.headerEmoji}>{pollId ? '🔮' : '⭐'}</Text>
             <Text style={styles.headerTitle}>Pro</Text>
             <Text style={styles.headerSubtitle}>
-              모든 프리미엄 기능을 이용해보세요
+              {pollId
+                ? '이 하트를 보낸 사람의 안전 힌트를 확인해보세요'
+                : '모든 프리미엄 기능을 이용해보세요'}
             </Text>
           </View>
 
