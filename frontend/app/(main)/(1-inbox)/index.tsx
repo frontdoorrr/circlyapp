@@ -2,12 +2,19 @@ import React, { useCallback, useMemo } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../../src/components/primitives/Button';
 import { Text } from '../../../src/components/primitives/Text';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
-import { useMarkReceivedHeartAsRead, useReceivedHearts } from '../../../src/hooks/usePolls';
+import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
+import {
+  useMarkReceivedHeartAsRead,
+  useMyCompletedPolls,
+  useReceivedHearts,
+} from '../../../src/hooks/usePolls';
+import { useUnreadCount } from '../../../src/hooks/useNotifications';
 import { tokens } from '../../../src/theme';
-import { useThemedStyles } from '../../../src/theme/ThemeContext';
+import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
 import type { ReceivedHeartItem } from '../../../src/types/poll';
 
@@ -33,10 +40,13 @@ function formatRelativeTime(value: string): string {
 
 export default function InboxScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { data, isLoading, isRefetching, refetch } = useReceivedHearts();
+  const { data: completedPolls } = useMyCompletedPolls();
+  const { data: notificationUnreadCount } = useUnreadCount();
   const { mutateAsync: markAsReadAsync } = useMarkReceivedHeartAsRead();
-  const hearts = data ?? [];
+  const hearts = useMemo(() => data ?? [], [data]);
   const unreadCount = useMemo(
     () => hearts.reduce((sum, item) => sum + (item.is_read ? 0 : item.received_count), 0),
     [hearts]
@@ -79,9 +89,23 @@ export default function InboxScreen() {
     router.push('/vote-session' as any);
   }, [router]);
 
+  const handleOpenNotifications = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/notifications' as any);
+  }, [router]);
+
+  const handleOpenResult = useCallback(
+    (pollId: string) => {
+      Haptics.selectionAsync();
+      router.push(`/results/${pollId}` as any);
+    },
+    [router]
+  );
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.center]}>
+        <LiquidBackground />
         <Stack.Screen options={{ headerShown: false }} />
         <LoadingSpinner />
       </View>
@@ -90,6 +114,7 @@ export default function InboxScreen() {
 
   return (
     <View style={styles.container}>
+      <LiquidBackground />
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -97,50 +122,37 @@ export default function InboxScreen() {
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>받은 하트</Text>
-          <Text style={styles.subtitle}>친구들이 나를 고른 순간을 모아봤어요</Text>
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryIcon}>💖</Text>
-          <View style={styles.summaryText}>
-            <Text style={styles.summaryEyebrow}>
-              {unreadCount > 0 ? '새 하트가 도착했어요' : '받은 하트를 모아봤어요'}
-            </Text>
-            <Text style={styles.summaryCount}>{unreadCount > 0 ? unreadCount : totalCount}</Text>
-            <Text style={styles.summaryLabel}>
-              {unreadCount > 0 ? '아직 안 읽은 하트' : '누적 받은 하트'}
-            </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.header}>
+            <Text style={styles.title}>받은 하트</Text>
+            <Text style={styles.subtitle}>친구들이 나를 고른 순간을 모아봤어요</Text>
           </View>
-        </View>
-
-        <View style={styles.metricGrid}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{todayCount}</Text>
-            <Text style={styles.metricLabel}>오늘</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{unreadCount}</Text>
-            <Text style={styles.metricLabel}>새 하트</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{totalCount}</Text>
-            <Text style={styles.metricLabel}>전체</Text>
-          </View>
+          <Pressable
+            onPress={handleOpenNotifications}
+            style={styles.bellButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`알림 보기, 읽지 않은 알림 ${notificationUnreadCount ?? 0}개`}
+          >
+            <Ionicons name="notifications-outline" size={22} color={theme.text} />
+            {(notificationUnreadCount ?? 0) > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>
+                  {(notificationUnreadCount ?? 0) > 9 ? '9+' : notificationUnreadCount}
+                </Text>
+              </View>
+            )}
+          </Pressable>
         </View>
 
         {hearts.length > 0 && (
-          <View style={styles.orbCard}>
-            <View style={styles.orbText}>
-              <Text style={styles.orbTitle}>Orb 힌트</Text>
-              <Text style={styles.orbDescription}>
-                받은 하트 상세에서 Circle과 시간대 같은 안전한 힌트를 확인할 수 있어요.
-              </Text>
-            </View>
-            <Button variant="secondary" size="sm" onPress={() => handlePress(hearts[0])}>
-              힌트 보기
-            </Button>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>
+              💖{' '}
+              {unreadCount > 0
+                ? `새 하트 ${unreadCount}개 · 전체 ${totalCount}개`
+                : `오늘 ${todayCount}개 · 전체 ${totalCount}개`}
+            </Text>
           </View>
         )}
 
@@ -186,6 +198,37 @@ export default function InboxScreen() {
             ))}
           </View>
         )}
+
+        {(completedPolls?.length ?? 0) > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>지난 투표 결과</Text>
+            <View style={styles.list}>
+              {completedPolls!.map((poll) => (
+                <Pressable
+                  key={poll.id}
+                  onPress={() => handleOpenResult(poll.id)}
+                  style={({ pressed }) => [styles.heartCard, pressed && styles.pressedCard]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${poll.question} 결과 보기`}
+                >
+                  <View style={styles.cardContent}>
+                    <Text style={styles.question} numberOfLines={2}>
+                      {poll.emoji ? `${poll.emoji} ` : ''}
+                      {poll.question}
+                    </Text>
+                    <Text style={styles.meta}>
+                      1위 {poll.winner_name || '알 수 없음'} · {poll.winner_vote_count || 0}표
+                    </Text>
+                    <Text style={styles.circleName} numberOfLines={1}>
+                      {poll.circle_name || 'Circle'}
+                    </Text>
+                  </View>
+                  <Text style={styles.arrow}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -204,11 +247,46 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     content: {
       paddingTop: tokens.spacing['2xl'],
       paddingHorizontal: tokens.spacing.lg,
-      paddingBottom: tokens.spacing['2xl'],
+      paddingBottom: 120,
       gap: tokens.spacing.lg,
     },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: tokens.spacing.md,
+    },
     header: {
+      flex: 1,
       gap: tokens.spacing.xs,
+    },
+    bellButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: tokens.borderRadius.full,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    bellBadge: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: tokens.colors.semantic.error[500],
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    bellBadgeText: {
+      fontSize: 10,
+      lineHeight: 12,
+      fontWeight: tokens.typography.fontWeight.bold,
+      color: tokens.colors.white,
     },
     title: {
       fontSize: tokens.typography.fontSize['3xl'],
@@ -219,88 +297,19 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: tokens.typography.fontSize.sm,
       color: theme.textSecondary,
     },
-    summaryCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: tokens.spacing.md,
-      padding: tokens.spacing.lg,
-      borderRadius: tokens.borderRadius['2xl'],
+    summaryRow: {
+      alignSelf: 'flex-start',
+      paddingVertical: tokens.spacing.sm,
+      paddingHorizontal: tokens.spacing.md,
+      borderRadius: tokens.borderRadius.full,
       backgroundColor: isDark ? theme.card : tokens.colors.primary[50],
       borderWidth: 1,
       borderColor: theme.border,
     },
-    summaryIcon: {
-      fontSize: 42,
-      lineHeight: 48,
-    },
     summaryText: {
-      flex: 1,
-      gap: tokens.spacing.xs,
-    },
-    summaryEyebrow: {
       fontSize: tokens.typography.fontSize.sm,
       fontWeight: tokens.typography.fontWeight.semibold,
       color: tokens.colors.primary[isDark ? 300 : 700],
-    },
-    summaryCount: {
-      fontSize: tokens.typography.fontSize['4xl'],
-      fontWeight: tokens.typography.fontWeight.bold,
-      color: theme.text,
-      lineHeight: 40,
-    },
-    summaryLabel: {
-      fontSize: tokens.typography.fontSize.sm,
-      color: theme.textSecondary,
-    },
-    metricGrid: {
-      flexDirection: 'row',
-      gap: tokens.spacing.sm,
-    },
-    metricCard: {
-      flex: 1,
-      alignItems: 'center',
-      gap: tokens.spacing.xs,
-      paddingVertical: tokens.spacing.md,
-      paddingHorizontal: tokens.spacing.sm,
-      borderRadius: tokens.borderRadius.lg,
-      backgroundColor: theme.card,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    metricValue: {
-      fontSize: tokens.typography.fontSize['2xl'],
-      fontWeight: tokens.typography.fontWeight.bold,
-      color: theme.text,
-      lineHeight: 30,
-    },
-    metricLabel: {
-      fontSize: tokens.typography.fontSize.xs,
-      fontWeight: tokens.typography.fontWeight.semibold,
-      color: theme.textSecondary,
-    },
-    orbCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: tokens.spacing.md,
-      padding: tokens.spacing.md,
-      borderRadius: tokens.borderRadius.lg,
-      backgroundColor: isDark ? theme.card : tokens.colors.neutral[50],
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    orbText: {
-      flex: 1,
-      gap: 2,
-    },
-    orbTitle: {
-      fontSize: tokens.typography.fontSize.base,
-      fontWeight: tokens.typography.fontWeight.bold,
-      color: theme.text,
-    },
-    orbDescription: {
-      fontSize: tokens.typography.fontSize.sm,
-      lineHeight: 19,
-      color: theme.textSecondary,
     },
     sectionTitle: {
       fontSize: tokens.typography.fontSize.lg,

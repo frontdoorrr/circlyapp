@@ -7,9 +7,10 @@ import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import { ProfileInfo } from '../../../src/components/profile/ProfileInfo';
 import { ProfileEditModal } from '../../../src/components/profile/ProfileEditModal';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
+import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
 import { Text } from '../../../src/components/primitives/Text';
 import { Button } from '../../../src/components/primitives/Button';
-import { Toast, ToastType } from '../../../src/components/primitives/Toast';
+import { useToast } from '../../../src/providers/ToastProvider';
 import { tokens } from '../../../src/theme';
 import { ApiError } from '../../../src/types/api';
 import { UserUpdate } from '../../../src/types/auth';
@@ -23,24 +24,10 @@ import type { Theme } from '../../../src/theme/tokens';
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { theme, isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { showToast } = useToast();
   const [isEditModalOpen, setEditModalOpen] = useState(false);
-
-  // Toast 상태
-  const [toast, setToast] = useState<{
-    visible: boolean;
-    message: string;
-    type: ToastType;
-  }>({ visible: false, message: '', type: 'success' });
-
-  const showToast = (message: string, type: ToastType = 'success') => {
-    setToast({ visible: true, message, type });
-  };
-
-  const hideToast = () => {
-    setToast(prev => ({ ...prev, visible: false }));
-  };
 
   // 사용자 정보 조회
   const { data: user, isLoading: userLoading } = useCurrentUser();
@@ -85,6 +72,7 @@ export default function ProfileScreen() {
   if (userLoading) {
     return (
       <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
+        <LiquidBackground />
         <LoadingSpinner />
       </View>
     );
@@ -93,6 +81,7 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={[styles.centerContainer, { paddingTop: insets.top }]}>
+        <LiquidBackground />
         <Text style={styles.errorText}>사용자 정보를 불러올 수 없습니다</Text>
       </View>
     );
@@ -100,6 +89,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <LiquidBackground />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -109,6 +99,28 @@ export default function ProfileScreen() {
           user={user}
           onEdit={() => setEditModalOpen(true)}
         />
+
+        {/* Orb Mode */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Orb Mode</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={[styles.settingItem, styles.lastItem]}
+              onPress={() => router.push('/subscription' as any)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                user.is_orb_mode ? 'Orb Mode 구독 관리' : 'Orb Mode 알아보기'
+              }
+            >
+              <Text style={styles.settingItemText}>🔮 안전 힌트 구독</Text>
+              {user.is_orb_mode ? (
+                <Text style={styles.settingItemValue}>구독 중</Text>
+              ) : (
+                <Text style={styles.settingItemArrow}>›</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* 설정 섹션 */}
         <View style={styles.section}>
@@ -172,14 +184,6 @@ export default function ProfileScreen() {
         onSubmit={handleUpdateProfile}
         onClose={() => setEditModalOpen(false)}
       />
-
-      {/* Toast 알림 */}
-      <Toast
-        visible={toast.visible}
-        message={toast.message}
-        type={toast.type}
-        onHide={hideToast}
-      />
     </View>
   );
 }
@@ -202,6 +206,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     scrollContent: {
       padding: tokens.spacing.lg,
+      paddingBottom: 120,
     },
     section: {
       marginBottom: tokens.spacing.lg,

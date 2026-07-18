@@ -8,7 +8,13 @@
 
 ## 현재 남은 작업 요약
 
-- [ ] **실기기 QA**: Home/받은하트/Orb 힌트/초대 CTA QA
+- [x] **로컬 로그인 네트워크 장애 재점검**: 변경된 LAN IP 반영 및 mock `dev-login` 재검증
+- [x] **로컬 로그인 네트워크 장애 복구**: Compose API 상태, LAN API 접근, mock `dev-login` 검증
+- [x] **iOS Liquid Glass 1차 적용**: 공용 material, Home 헤더/컨트롤, 하단 탭바, 플랫폼 fallback
+- [x] **플로팅 글라스 탭바**: 캡슐형 4탭 내비게이션과 투표 세션 퀵 액션
+- [x] **Home 배경 단순화**: 원형 오브 제거 및 저채도 그라데이션 적용
+- [x] **메인 탭 배경 통일**: 하트/Circle/프로필에 동일한 저채도 그라데이션 적용
+- [ ] **실기기 QA**: Liquid Glass/Home/받은하트/Orb 힌트/초대 CTA QA
 - [ ] **외부 결제 설정**: RevenueCat, App Store Connect, Google Play Console 상품/entitlement 설정
 - [ ] **결제 E2E 검증**: Development Build + Sandbox 구매 + Webhook 반영 확인
 - [ ] **선택 작업**: Storybook, 가로 모드, 추가 반응형 QA
@@ -103,6 +109,22 @@
 ## Phase 11: Frontend Development
 
 > **참고 문서**: `prd/design/02-ui-design-system.md`, `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md`
+
+### iOS Liquid Glass 디자인 개선
+> **참고 문서**: `prd/design/02-ui-design-system.md`, `prd/design/03-animations.md`, Apple Human Interface Guidelines - Materials, Expo SDK 54 GlassEffect/BlurView
+- [x] iOS 26 네이티브 Liquid Glass와 구형 iOS/Android fallback을 제공하는 공용 surface 구현
+- [x] Home 배경, 헤더, Circle 선택, 투표 세션 카드, 탭 선택 UI 개선
+- [x] 하단 탭바에 system material blur 적용
+- [x] 투명도 감소 접근성 설정과 라이트/다크 모드 대응
+- [x] TypeScript, 테스트, lint 검증
+
+### 플로팅 글라스 탭바
+> **참고 문서**: `prd/design/02-ui-design-system.md`, 사용자 제공 Liquid Glass 플로팅 메뉴 레퍼런스 이미지
+- [x] 4개 메인 탭을 플로팅 캡슐형 글라스 내비게이션으로 교체
+- [x] 선택 탭 원형 강조, 짧은 한글 라벨, 받은하트 배지 적용
+- [x] 별도 원형 투표 세션 퀵 액션과 쿨다운 상태 적용
+- [x] 각 탭 콘텐츠/FAB의 하단 안전 여백 조정
+- [x] TypeScript, 테스트, lint, iOS bundle 검증
 
 ### Gas 레퍼런스 화면/플로우 분석
 > **참고 문서**: YouTube `How to use Gas App | Gas School App`, `prd/research/gas-app-analysis.md`, `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`
@@ -867,6 +889,24 @@
   - [x] `prd/features/05-orb-mode-implementation.md` — 현재 구현 상태와 검증 시나리오를 hints 라우트 기준으로 정리
   - [x] `prd/business/01-business-model.md`, `docs/DSL.md` — 수익화/보안 문구를 받은 하트 안전 힌트 기준으로 정리
   - [x] 후속: 백엔드 실제 `/voters` endpoint/service/test 명명은 API 호환성 검토 후 안전 힌트 기준으로 정리
+- [x] **18.24 홈 CTA 다이어트 — Gas식 단일 CTA 홈** (P0)
+  > 참고 문서: `prd/research/gas-app-analysis.md` (S09 홈 상태 머신, S13 쿨다운, "각 화면이 하나의 행동만 요구한다"), `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`
+  > 배경: 기존 홈은 탭 가능 영역 8종+(벨/프로필/스코프/세션 카드/탭 2개/참여/카드 피드). 상태별 단일 CTA 화면으로 재구성.
+  - [x] `app/(main)/(0-home)/index.tsx` — 홈을 상태 머신으로 재구성 (no-circle/ready/cooldown/empty, 상태별 주 CTA 1개 + 보조 1개)
+  - [x] 홈에서 PollCard 피드/진행 중·완료됨 탭/PagerView 제거, 대기 질문은 미리보기 한 줄로 대체
+  - [x] 홈에서 CircleScopeSelector/CircleSwitcherSheet 제거 (Circle별 세션은 Circle 탭 → `circle/[id]` CTA가 담당)
+  - [x] 홈 헤더 단순화: 알림 벨/프로필 아이콘 제거, 워드마크만 표시 (`HomeHeader`/`HomeEmptyState` 삭제)
+  - [x] `app/(main)/(1-inbox)/index.tsx` — 알림 진입점 통합(벨+배지) 및 지난 투표 결과 섹션 추가 (완료됨 탭 대체)
+  - [x] TypeScript/lint/jest 검증 (0 errors, 16 tests passed)
+  - [ ] 실기기/시뮬레이터 QA: 4개 홈 상태 전환, 받은하트 알림 벨/지난 결과 동작 확인
+  - [ ] 후속 검토: 미사용 `PollCard` 패턴 컴포넌트 정리 여부 결정
+- [x] **18.25 서브 탭 다이어트 — 받은하트/Circle/Profile** (P0~P2)
+  > 참고 문서: `prd/research/gas-app-analysis.md` (S15 Inbox 미니멀 원칙, S18 맥락 기반 페이월, S20 Profile 허브), `prd/design/05-complete-ui-specification.md`
+  - [x] (P0) `app/(main)/(1-inbox)/index.tsx` — 요약 카드+메트릭 그리드를 요약 1줄로 축소, Orb 힌트 배너 제거 (페이월 진입은 결과 상세 유지)
+  - [x] (P2) `app/(main)/(1-circle)/index.tsx` — Circle 카드의 초대 코드 상시 노출 제거 (공유는 상세 화면 담당)
+  - [x] (P2) `app/(main)/(2-profile)/index.tsx` — Orb Mode 상태/진입 row 추가, 로컬 Toast를 전역 ToastProvider로 통일
+  - [x] TypeScript/lint/jest 검증 (0 errors, 16 tests passed)
+  - [ ] 실기기/시뮬레이터 QA: 받은하트 요약 1줄, Circle 카드, Profile Orb row/Toast 확인 (18.24 QA와 함께)
 - [x] **18.22 실제 기기/Expo UX 검증** (P0)
   - [x] `frontend` 타입체크로 라우트/타입 안전성 확인
   - [x] Home 상태별 CTA 정적 검증: 투표 시작/쿨다운/받은하트/초대

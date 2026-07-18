@@ -16,6 +16,7 @@ import { useMyCircles } from '../../../src/hooks/useCircles';
 import { Text } from '../../../src/components/primitives/Text';
 import { EmptyState } from '../../../src/components/states/EmptyState';
 import { SkeletonCard } from '../../../src/components/states/Skeleton';
+import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
 import { tokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
@@ -67,6 +68,7 @@ export default function CircleListScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <LiquidBackground />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>내 Circle</Text>
         </View>
@@ -81,6 +83,7 @@ export default function CircleListScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <LiquidBackground />
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>내 Circle</Text>
@@ -138,7 +141,7 @@ export default function CircleListScreen() {
         entering={FadeIn.delay(300).duration(300)}
         style={[
           styles.fabContainer,
-          { bottom: insets.bottom + 16 },
+          { bottom: insets.bottom + 96 },
         ]}
       >
         <Pressable
@@ -167,7 +170,6 @@ interface CircleCardProps {
     name: string;
     description?: string | null;
     member_count: number;
-    invite_code: string;
   };
   onPress: () => void;
   theme: Theme;
@@ -202,7 +204,6 @@ function CircleCard({ circle, onPress, theme, isDark, styles }: CircleCardProps)
         <View style={styles.memberBadge}>
           <Text style={styles.memberCount}>👥 {circle.member_count}명</Text>
         </View>
-        <Text style={[styles.inviteCode, { color: theme.textTertiary }]}>코드: {circle.invite_code}</Text>
       </View>
 
       <View style={styles.circleArrow}>
@@ -261,7 +262,7 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     },
     listContent: {
       padding: tokens.spacing.lg,
-      paddingBottom: 100, // FAB 공간 확보
+      paddingBottom: 180, // 플로팅 탭바와 FAB 공간 확보
     },
     separator: {
       height: tokens.spacing.md,
@@ -320,9 +321,6 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: tokens.typography.fontSize.xs,
       fontWeight: tokens.typography.fontWeight.medium,
       color: tokens.colors.primary[isDark ? 400 : 600],
-    },
-    inviteCode: {
-      fontSize: tokens.typography.fontSize.xs,
     },
     circleArrow: {
       paddingLeft: tokens.spacing.sm,
