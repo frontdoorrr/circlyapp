@@ -933,3 +933,8 @@
   - [x] `app/(main)/(2-profile)/notifications.tsx` — 저장 중 중복 변경 방지, 전체 토글 실패 원복/오류 처리
   - [x] 존재하지 않는 Circle별 알림 설정 안내 제거
   - [x] TypeScript/lint/jest/iOS export 검증
+- [x] **18.29 Profile 선택 보상 UI 제외** (P2)
+  > 참고 문서: `prd/design/04-user-flow.md`, `prd/design/05-complete-ui-specification.md`, `todo.md#1813-코인스트릭`
+  - [x] `src/components/profile/ProfileInfo.tsx` — 사용처가 없는 코인/스트릭 타일 제거
+  - [x] 사용자 플로우/UI 명세에서 활동 보상 영역 제거 (백엔드 적립 데이터는 유지)
+  - [x] TypeScript/lint/jest 검증
