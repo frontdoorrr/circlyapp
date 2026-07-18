@@ -938,3 +938,7 @@
   - [x] `src/components/profile/ProfileInfo.tsx` — 사용처가 없는 코인/스트릭 타일 제거
   - [x] 사용자 플로우/UI 명세에서 활동 보상 영역 제거 (백엔드 적립 데이터는 유지)
   - [x] TypeScript/lint/jest 검증
+- [x] **18.30 Profile 정보 카드 다크 모드 보정** (P1)
+  > 참고 문서: `prd/design/02-ui-design-system.md#Dark-Theme`, `frontend/src/theme/tokens.ts`
+  - [x] `src/components/profile/ProfileInfo.tsx` — 카드/텍스트/이모지/편집 버튼을 테마 토큰으로 전환
+  - [x] TypeScript/lint/jest 검증

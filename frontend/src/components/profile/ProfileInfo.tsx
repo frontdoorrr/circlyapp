@@ -7,7 +7,8 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { UserResponse } from '../../types/auth';
 import { Text } from '../primitives/Text';
-import { tokens } from '../../theme';
+import { tokens, useThemedStyles } from '../../theme';
+import type { Theme } from '../../theme/tokens';
 
 interface ProfileInfoProps {
   user: UserResponse;
@@ -15,6 +16,8 @@ interface ProfileInfoProps {
 }
 
 export function ProfileInfo({ user, onEdit }: ProfileInfoProps) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.container}>
       {/* Profile 이모지 */}
@@ -34,27 +37,36 @@ export function ProfileInfo({ user, onEdit }: ProfileInfoProps) {
       <Text style={styles.email}>{user.email}</Text>
 
       {/* 편집 버튼 */}
-      <TouchableOpacity style={styles.editButton} onPress={onEdit}>
-        <Text style={styles.editButtonText}>Profile 편집</Text>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={onEdit}
+        accessibilityRole="button"
+        accessibilityLabel="프로필 편집"
+      >
+        <Text style={styles.editButtonText}>프로필 편집</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme, isDark: boolean) => StyleSheet.create({
   container: {
     alignItems: 'center',
     padding: tokens.spacing.lg,
-    backgroundColor: tokens.colors.white,
+    backgroundColor: theme.card,
     borderRadius: tokens.borderRadius.lg,
     marginBottom: tokens.spacing.lg,
-    ...tokens.shadows.sm,
+    ...(isDark
+      ? { borderWidth: 1, borderColor: theme.border }
+      : tokens.shadows.sm),
   },
   emojiContainer: {
     width: 120,      // 100 → 120 (iOS 이모지 렌더링 여유 공간)
     height: 120,     // 100 → 120
     borderRadius: 60,
-    backgroundColor: tokens.colors.primary[50],
+    backgroundColor: isDark
+      ? theme.backgroundTertiary
+      : tokens.colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: tokens.spacing.md,
@@ -67,17 +79,17 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: tokens.typography.fontSize['2xl'],
     fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.neutral[900],
+    color: theme.text,
     marginBottom: tokens.spacing.xs,
   },
   username: {
     fontSize: tokens.typography.fontSize.base,
-    color: tokens.colors.neutral[600],
+    color: theme.textSecondary,
     marginBottom: tokens.spacing.xs,
   },
   email: {
     fontSize: tokens.typography.fontSize.sm,
-    color: tokens.colors.neutral[500],
+    color: theme.textTertiary,
     marginBottom: tokens.spacing.lg,
   },
   editButton: {
@@ -85,12 +97,12 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing.sm,
     borderRadius: tokens.borderRadius.md,
     borderWidth: 1,
-    borderColor: tokens.colors.primary[200],
-    backgroundColor: tokens.colors.primary[50],
+    borderColor: tokens.colors.primary[isDark ? 700 : 200],
+    backgroundColor: tokens.colors.primary[isDark ? 900 : 50],
   },
   editButtonText: {
     fontSize: tokens.typography.fontSize.sm,
     fontWeight: tokens.typography.fontWeight.semibold,
-    color: tokens.colors.primary[600],
+    color: tokens.colors.primary[isDark ? 300 : 600],
   },
 });
