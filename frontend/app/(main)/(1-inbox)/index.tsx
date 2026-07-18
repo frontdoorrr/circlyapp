@@ -7,11 +7,7 @@ import { Button } from '../../../src/components/primitives/Button';
 import { Text } from '../../../src/components/primitives/Text';
 import { LoadingSpinner } from '../../../src/components/states/LoadingSpinner';
 import { LiquidBackground } from '../../../src/components/primitives/LiquidBackground';
-import {
-  useMarkReceivedHeartAsRead,
-  useMyCompletedPolls,
-  useReceivedHearts,
-} from '../../../src/hooks/usePolls';
+import { useMarkReceivedHeartAsRead, useReceivedHearts } from '../../../src/hooks/usePolls';
 import { useUnreadCount } from '../../../src/hooks/useNotifications';
 import { tokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
@@ -43,7 +39,6 @@ export default function InboxScreen() {
   const { theme } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { data, isLoading, isRefetching, refetch } = useReceivedHearts();
-  const { data: completedPolls } = useMyCompletedPolls();
   const { data: notificationUnreadCount } = useUnreadCount();
   const { mutateAsync: markAsReadAsync } = useMarkReceivedHeartAsRead();
   const hearts = useMemo(() => data ?? [], [data]);
@@ -93,14 +88,6 @@ export default function InboxScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/notifications' as any);
   }, [router]);
-
-  const handleOpenResult = useCallback(
-    (pollId: string) => {
-      Haptics.selectionAsync();
-      router.push(`/results/${pollId}` as any);
-    },
-    [router]
-  );
 
   if (isLoading) {
     return (
@@ -197,37 +184,6 @@ export default function InboxScreen() {
               </Pressable>
             ))}
           </View>
-        )}
-
-        {(completedPolls?.length ?? 0) > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>지난 투표 결과</Text>
-            <View style={styles.list}>
-              {completedPolls!.map((poll) => (
-                <Pressable
-                  key={poll.id}
-                  onPress={() => handleOpenResult(poll.id)}
-                  style={({ pressed }) => [styles.heartCard, pressed && styles.pressedCard]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${poll.question} 결과 보기`}
-                >
-                  <View style={styles.cardContent}>
-                    <Text style={styles.question} numberOfLines={2}>
-                      {poll.emoji ? `${poll.emoji} ` : ''}
-                      {poll.question}
-                    </Text>
-                    <Text style={styles.meta}>
-                      1위 {poll.winner_name || '알 수 없음'} · {poll.winner_vote_count || 0}표
-                    </Text>
-                    <Text style={styles.circleName} numberOfLines={1}>
-                      {poll.circle_name || 'Circle'}
-                    </Text>
-                  </View>
-                  <Text style={styles.arrow}>›</Text>
-                </Pressable>
-              ))}
-            </View>
-          </>
         )}
       </ScrollView>
     </View>

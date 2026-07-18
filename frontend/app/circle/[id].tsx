@@ -3,7 +3,7 @@
  *
  * Circle 상세 정보 및 멤버 관리
  */
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,6 +22,7 @@ import {
   useRegenerateInviteCode,
 } from '../../src/hooks/useCircles';
 import { useCurrentUser } from '../../src/hooks/useAuth';
+import { useMyCompletedPolls } from '../../src/hooks/usePolls';
 import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
 import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
@@ -43,6 +44,13 @@ export default function CircleDetailScreen() {
   // Circle 정보 및 멤버 조회
   const { data: circle, isLoading: circleLoading } = useCircleDetail(id);
   const { data: members, isLoading: membersLoading } = useCircleMembers(id);
+
+  // 이 Circle의 지난 투표 (완료된 투표 기록)
+  const { data: completedPolls } = useMyCompletedPolls();
+  const circleCompletedPolls = useMemo(
+    () => (completedPolls ?? []).filter((poll) => poll.circle_id === id),
+    [completedPolls, id]
+  );
 
   // Circle 나가기
   const leaveMutation = useLeaveCircle();
@@ -263,6 +271,35 @@ export default function CircleDetailScreen() {
           </View>
         </View>
 
+        {/* 지난 투표 */}
+        {circleCompletedPolls.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>지난 투표 ({circleCompletedPolls.length})</Text>
+            <View style={styles.pollList}>
+              {circleCompletedPolls.map((poll) => (
+                <TouchableOpacity
+                  key={poll.id}
+                  style={styles.pollItem}
+                  onPress={() => router.push(`/results/${poll.id}` as any)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${poll.question} 결과 보기`}
+                >
+                  <View style={styles.pollInfo}>
+                    <Text style={styles.pollQuestion} numberOfLines={1}>
+                      {poll.emoji ? `${poll.emoji} ` : ''}
+                      {poll.question}
+                    </Text>
+                    <Text style={styles.pollMeta}>
+                      1위 {poll.winner_name || '알 수 없음'} · {poll.winner_vote_count || 0}표
+                    </Text>
+                  </View>
+                  <Text style={styles.pollArrow}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Circle 나가기 */}
         <View style={styles.dangerZone}>
           <Button
@@ -453,6 +490,39 @@ const createStyles = (theme: Theme, isDark: boolean) =>
       fontSize: tokens.typography.fontSize.sm,
       color: tokens.colors.primary[isDark ? 400 : 600],
       marginTop: tokens.spacing.xs,
+    },
+    pollList: {
+      backgroundColor: theme.card,
+      borderRadius: tokens.borderRadius.lg,
+      overflow: 'hidden',
+      ...(isDark
+        ? { borderWidth: 1, borderColor: theme.border }
+        : tokens.shadows.sm),
+    },
+    pollItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: tokens.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    pollInfo: {
+      flex: 1,
+      gap: tokens.spacing.xs,
+    },
+    pollQuestion: {
+      fontSize: tokens.typography.fontSize.base,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      color: theme.text,
+    },
+    pollMeta: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+    },
+    pollArrow: {
+      marginLeft: tokens.spacing.sm,
+      fontSize: 24,
+      color: theme.textTertiary,
     },
     dangerZone: {
       marginTop: tokens.spacing.lg,
