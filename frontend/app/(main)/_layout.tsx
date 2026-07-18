@@ -1,9 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { tokens } from '../../src/theme';
-import { useTheme } from '../../src/theme/ThemeContext';
 import { useReceivedHearts } from '../../src/hooks/usePolls';
+import { FloatingTabBar } from '../../src/components/navigation/FloatingTabBar';
 
 /**
  * Main Layout with Tabs
@@ -15,7 +12,6 @@ import { useReceivedHearts } from '../../src/hooks/usePolls';
  * - 다크모드 지원
  */
 export default function MainLayout() {
-  const { theme, isDark } = useTheme();
   const { data: receivedHearts } = useReceivedHearts();
   const unreadHeartCount =
     receivedHearts?.reduce((sum, item) => sum + (item.is_read ? 0 : item.received_count), 0) ?? 0;
@@ -23,28 +19,17 @@ export default function MainLayout() {
   return (
     <Tabs
       initialRouteName="(0-home)"
+      tabBar={(props) => (
+        <FloatingTabBar {...props} unreadHeartCount={unreadHeartCount} />
+      )}
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: tokens.spacing.sm,
-          paddingHorizontal: tokens.spacing.md,
-          backgroundColor: theme.card,
-          borderTopWidth: 1,
-          borderTopColor: theme.border,
-          ...(isDark ? {} : tokens.shadows.sm),
-        },
-        tabBarActiveTintColor: tokens.colors.primary[isDark ? 400 : 500],
-        tabBarInactiveTintColor: theme.textTertiary,
-        tabBarLabelStyle: {
-          fontSize: tokens.typography.fontSize.xs,
-          fontWeight: tokens.typography.fontWeight.medium,
-          fontFamily: tokens.typography.fontFamily.sans,
-          marginTop: 4,
-        },
-        tabBarIconStyle: {
-          marginTop: 4,
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
         },
       }}
     >
@@ -52,9 +37,6 @@ export default function MainLayout() {
         name="(0-home)"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
@@ -62,35 +44,18 @@ export default function MainLayout() {
         options={{
           title: '받은하트',
           tabBarBadge: unreadHeartCount > 0 ? unreadHeartCount : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: tokens.colors.primary[500],
-            color: tokens.colors.white,
-            fontSize: 10,
-            fontWeight: tokens.typography.fontWeight.bold,
-            minWidth: 18,
-            height: 18,
-          },
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="(1-circle)"
         options={{
           title: 'Circle',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'people-circle' : 'people-circle-outline'} size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="(2-profile)"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
-          ),
         }}
       />
     </Tabs>

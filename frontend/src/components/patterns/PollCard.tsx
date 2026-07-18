@@ -401,7 +401,7 @@ function ProgressBarFill({ percentage }: ProgressBarFillProps) {
 
   React.useEffect(() => {
     width.value = withSpring(percentage, animations.spring.responsive);
-  }, [percentage]);
+  }, [percentage, width]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${width.value}%`,
@@ -423,13 +423,13 @@ function ProgressBarFill({ percentage }: ProgressBarFillProps) {
 const createStyles = (theme: Theme, isDark: boolean) =>
   StyleSheet.create({
     card: {
-      backgroundColor: theme.card,
+      backgroundColor: isDark ? 'rgba(31, 26, 40, 0.82)' : 'rgba(255, 255, 255, 0.82)',
       borderRadius: borderRadius['2xl'], // 20px
       padding: spacing[5], // 20px
       marginBottom: spacing[3], // 12px
-      ...(isDark
-        ? { borderWidth: 1, borderColor: theme.border }
-        : tokens.shadows.sm),
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.86)',
+      ...(isDark ? {} : tokens.shadows.xs),
     },
     questionHeader: {
       flexDirection: 'row',
