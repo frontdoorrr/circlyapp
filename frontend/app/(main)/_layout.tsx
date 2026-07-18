@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useReceivedHearts } from '../../src/hooks/usePolls';
 import { FloatingTabBar } from '../../src/components/navigation/FloatingTabBar';
 
@@ -12,6 +13,7 @@ import { FloatingTabBar } from '../../src/components/navigation/FloatingTabBar';
  * - 다크모드 지원
  */
 export default function MainLayout() {
+  const reduceMotion = useReducedMotion();
   const { data: receivedHearts } = useReceivedHearts();
   const unreadHeartCount =
     receivedHearts?.reduce((sum, item) => sum + (item.is_read ? 0 : item.received_count), 0) ?? 0;
@@ -24,6 +26,7 @@ export default function MainLayout() {
       )}
       screenOptions={{
         headerShown: false,
+        animation: reduceMotion ? 'none' : 'fade',
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
           position: 'absolute',

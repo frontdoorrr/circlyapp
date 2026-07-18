@@ -942,3 +942,9 @@
   > 참고 문서: `prd/design/02-ui-design-system.md#Dark-Theme`, `frontend/src/theme/tokens.ts`
   - [x] `src/components/profile/ProfileInfo.tsx` — 카드/텍스트/이모지/편집 버튼을 테마 토큰으로 전환
   - [x] TypeScript/lint/jest 검증
+- [x] **18.31 하단 탭 본문 전환 피드백** (P1)
+  > 참고 문서: `prd/design/03-animations.md` (모션 감소 설정), `frontend/src/components/navigation/FloatingTabBar.tsx`
+  - [x] `app/(main)/_layout.tsx` — 탭 본문에 짧은 cross-fade 적용
+  - [x] 시스템 모션 감소 활성화 시 화면 전환 애니메이션 비활성화
+  - [x] `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md` — 탭 메뉴와 본문 전환 계약 동기화
+  - [x] TypeScript/lint/jest/iOS export 검증

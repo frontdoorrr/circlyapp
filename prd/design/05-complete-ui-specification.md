@@ -238,18 +238,22 @@
 - 퍼센트 텍스트: text-sm, font-medium, primary-600
 
 **탭바**
-- 높이: 80px (Safe Area 포함)
-- 배경: white
-- 상단 테두리: 1px solid gray-100
-- 아이템 4개 균등 분배
-- 아이콘: 24px
-- 라벨: text-xs (12px)
-- 비활성: gray-400
-- 활성: primary-500
+- 구성: 플로팅 글래스 캡슐 안의 Home/받은하트/Circle/Profile 4개 메뉴 + 우측 투표 세션 퀵 액션
+- 위치: 화면 좌우 12px, Safe Area 하단에서 최소 16px 위
+- 배경: thick glass surface. 다크 모드에서는 보라색 계열 tint와 반투명 흰색 테두리 사용
+- 메뉴: 4개 균등 분배, 아이콘 22px, 라벨 text-xs
+- 비활성: outline 아이콘 + `textSecondary`
+- 활성: filled 아이콘 + 흰색, 라벨은 primary 색상 및 semibold
 - 활성 인디케이터:
-  - 아이콘 위 4px
-  - 5px 원형
-  - 배경: primary-500
+  - 36x36px 원형
+  - 선택 탭의 아이콘 뒤에 배치
+  - 탭 변경 시 `spring-stiff` 프리셋으로 좌우 슬라이드
+- 받은하트 unread badge: 9 초과 시 `9+`로 표시
+- 탭 선택 시 selection haptic 제공
+- 본문 전환:
+  - 위치 이동 없는 150ms cross-fade
+  - 시스템 모션 감소 설정 활성화 시 애니메이션 없이 즉시 전환
+- 퀵 액션: 세션 가능 시 sparkles, 쿨다운 시 hourglass. 비활성 상태에서는 탭할 수 없음
 
 ---
 

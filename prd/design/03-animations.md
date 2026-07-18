@@ -272,6 +272,29 @@ const heartDeliverySequence = {
 
 ### 4. 페이지 전환 애니메이션
 
+#### 하단 탭 전환 (Sliding Indicator + Cross-fade)
+
+- Home/받은하트/Circle/Profile 전환 시 하단의 36px 원형 활성 인디케이터는 선택한 탭까지 spring으로 이동한다.
+- 탭 본문은 위치 이동 없이 150ms cross-fade로 교체한다. 인디케이터가 방향성을 담당하므로 본문에 좌우 slide를 중복 적용하지 않는다.
+- 탭을 누를 때 selection haptic을 한 번 제공한다.
+- 시스템의 모션 감소 설정이 활성화되면 본문 cross-fade를 비활성화하고 즉시 전환한다. 탭 선택 상태와 색상 변화는 유지한다.
+
+```typescript
+const bottomTabTransition = {
+  indicator: {
+    animation: 'spring',
+    preset: 'spring-stiff',
+  },
+  scene: {
+    animation: 'fade',
+    duration: 150,
+  },
+  reduceMotion: {
+    sceneAnimation: 'none',
+  },
+};
+```
+
 #### 질문 간 전환 (Card Flip Effect)
 ```javascript
 const questionTransition = {
