@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -15,6 +15,7 @@ import { tokens, spacing } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme/ThemeContext';
 import type { Theme } from '../../../src/theme/tokens';
 import {
+  useCreateRound,
   useMyActivePolls,
   useVoteSessionAvailability,
 } from '../../../src/hooks/usePolls';
@@ -23,22 +24,9 @@ import { registerPushToken } from '../../../src/api/notification';
 import { useToast } from '../../../src/providers/ToastProvider';
 import { registerForPushNotificationsAsync } from '../../../src/services/notification/pushNotification';
 import { isExpired } from '../../../src/utils/timeUtils';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-/**
- * 홈 상태 머신
- * Spec: prd/research/gas-app-analysis.md - S09 (Home/Round Ready), S13 (Cooldown)
- *
- * Gas 원칙 "한 화면 = 한 행동": 어떤 상태에서도 주 CTA는 1개.
- * - ready: 답할 질문 있음 → 투표 시작
- * - cooldown: 라운드 완료 후 → 알림 켜고 기다리기
- * - empty: 답할 질문 없음 → 받은하트 보기
- * - no-circle: 신규 사용자 → 초대 코드 입력
- */
-type HomeState = 'ready' | 'cooldown' | 'empty' | 'no-circle';
+import { buildInviteUrl } from '../../../src/services/invite/inviteUrl';
+import { ApiError } from '../../../src/types/api';
+import { getHomeState } from '../../../src/utils/homeState';
 
 // ============================================================================
 // Home Screen Component
@@ -64,6 +52,7 @@ export default function HomeScreen() {
   const {
     data: myCircles,
     isLoading: isLoadingCircles,
+    refetch: refetchCircles,
   } = useMyCircles();
 
   const {
@@ -88,12 +77,30 @@ export default function HomeScreen() {
     sessionAvailability.remaining_seconds > 0;
   const canStartSession = sessionAvailability?.can_start ?? pendingPolls.length > 0;
 
-  const homeState: HomeState = useMemo(() => {
-    if (!myCircles || myCircles.length === 0) return 'no-circle';
-    if (canStartSession && pendingPolls.length > 0) return 'ready';
-    if (isCoolingDown) return 'cooldown';
-    return 'empty';
-  }, [myCircles, canStartSession, pendingPolls.length, isCoolingDown]);
+  const homeState = useMemo(
+    () =>
+      getHomeState({
+        circles: (myCircles ?? []).map((circle) => ({
+          id: circle.id,
+          memberCount: circle.member_count,
+          activePollCount: circle.active_polls_count,
+          role: circle.my_role,
+        })),
+        pendingPollCircleIds: pendingPolls.map((poll) => poll.circle_id),
+        canStartSession,
+        isCoolingDown,
+      }),
+    [myCircles, pendingPolls, canStartSession, isCoolingDown]
+  );
+  const actionCircle = useMemo(
+    () =>
+      'circleId' in homeState
+        ? myCircles?.find((circle) => circle.id === homeState.circleId)
+        : undefined,
+    [homeState, myCircles]
+  );
+  const membersNeeded = Math.max(0, 5 - (actionCircle?.member_count ?? 0));
+  const createRoundMutation = useCreateRound(actionCircle?.id ?? '');
 
   // 쿨다운 마감 시각 (서버 remaining_seconds 기준으로 고정)
   const cooldownDeadline = useMemo(() => {
@@ -117,11 +124,11 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRefreshing(true);
     try {
-      await Promise.all([refetchActive(), refetchAvailability()]);
+      await Promise.all([refetchActive(), refetchCircles(), refetchAvailability()]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchActive, refetchAvailability]);
+  }, [refetchActive, refetchCircles, refetchAvailability]);
 
   const handleStartSession = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -142,6 +149,40 @@ export default function HomeScreen() {
     Haptics.selectionAsync();
     router.push('/circle/create' as any);
   }, [router]);
+
+  const handleOpenCircle = useCallback(() => {
+    if (!actionCircle) return;
+    Haptics.selectionAsync();
+    router.push(`/circle/${actionCircle.id}` as any);
+  }, [actionCircle, router]);
+
+  const handleShareInvite = useCallback(async () => {
+    if (!actionCircle) return;
+    Haptics.selectionAsync();
+    const inviteUrl = buildInviteUrl(actionCircle.invite_link_id);
+    await Share.share({
+      message: `🎉 Circly에서 익명 칭찬 투표해요!\nCircle: ${actionCircle.name}\n링크: ${inviteUrl}\n코드: ${actionCircle.invite_code}\n\n링크를 누르면 바로 참여할 수 있어요.`,
+      url: inviteUrl,
+    });
+  }, [actionCircle]);
+
+  const handleCreateRound = useCallback(async () => {
+    if (!actionCircle) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await createRoundMutation.mutateAsync();
+      showToast('질문 5개로 라운드가 열렸어요', 'success');
+    } catch (error) {
+      const code = error instanceof ApiError ? error.code : undefined;
+      if (code === 'ROUND_ALREADY_ACTIVE') {
+        showToast('이미 진행 중인 라운드가 있어요', 'error');
+      } else if (code === 'NOT_ENOUGH_MEMBERS') {
+        showToast('라운드를 열려면 멤버가 5명 이상 필요해요', 'error');
+      } else {
+        showToast('라운드를 열지 못했어요. 다시 시도해주세요', 'error');
+      }
+    }
+  }, [actionCircle, createRoundMutation, showToast]);
 
   const handleEnableNotifications = useCallback(async () => {
     setIsRegisteringPush(true);
@@ -213,7 +254,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {homeState === 'ready' && (
+        {homeState.kind === 'ready' && (
           <StateView
             emoji="💌"
             title={`${pendingPolls.length}개의 질문이 기다리고 있어요`}
@@ -234,7 +275,7 @@ export default function HomeScreen() {
           />
         )}
 
-        {homeState === 'cooldown' && (
+        {homeState.kind === 'cooldown' && (
           <StateView
             emoji="🎉"
             title={`다음 라운드까지 ${formatCooldownTime(
@@ -251,11 +292,68 @@ export default function HomeScreen() {
           />
         )}
 
-        {homeState === 'empty' && (
+        {homeState.kind === 'can-open-round' && (
+          <StateView
+            emoji="🚀"
+            title={`${actionCircle?.name ?? 'Circle'}의 라운드를 열어볼까요?`}
+            description="친구가 충분히 모였어요. 칭찬 질문 5개를 열면 바로 투표를 시작할 수 있어요."
+            primaryLabel="라운드 열기"
+            primaryAccessibilityLabel="칭찬 질문 5개로 라운드 열기"
+            primaryDisabled={createRoundMutation.isPending}
+            onPrimary={handleCreateRound}
+            secondaryLabel="Circle 확인하기"
+            onSecondary={handleOpenCircle}
+            isDark={isDark}
+          />
+        )}
+
+        {homeState.kind === 'needs-members' && (
+          <StateView
+            emoji="🫶"
+            title={`친구 ${membersNeeded}명만 더 초대하면 돼요`}
+            description={`${actionCircle?.name ?? 'Circle'}에 5명이 모이면 첫 칭찬 라운드를 열 수 있어요.`}
+            primaryLabel="친구 초대하기"
+            primaryAccessibilityLabel="Circle 영구 초대 링크 공유"
+            onPrimary={handleShareInvite}
+            secondaryLabel="Circle 확인하기"
+            onSecondary={handleOpenCircle}
+            isDark={isDark}
+          />
+        )}
+
+        {homeState.kind === 'candidate-shortage' && (
+          <StateView
+            emoji="👥"
+            title="선택할 친구가 부족해요"
+            description="라운드는 열려 있지만 4명의 후보가 필요해요. 친구를 초대하면 투표를 이어갈 수 있어요."
+            primaryLabel="친구 초대하기"
+            primaryAccessibilityLabel="후보를 늘리기 위해 친구 초대 링크 공유"
+            onPrimary={handleShareInvite}
+            secondaryLabel="Circle 확인하기"
+            onSecondary={handleOpenCircle}
+            isDark={isDark}
+          />
+        )}
+
+        {homeState.kind === 'empty' && actionCircle?.active_polls_count === 0 && (
+          <StateView
+            emoji="⏳"
+            title="아직 열린 라운드가 없어요"
+            description="관리자가 라운드를 준비하고 있어요. 친구를 더 초대해 Circle을 채워보세요."
+            primaryLabel="친구 초대하기"
+            primaryAccessibilityLabel="라운드를 기다리며 친구 초대 링크 공유"
+            onPrimary={handleShareInvite}
+            secondaryLabel="Circle 확인하기"
+            onSecondary={handleOpenCircle}
+            isDark={isDark}
+          />
+        )}
+
+        {homeState.kind === 'empty' && actionCircle?.active_polls_count !== 0 && (
           <StateView
             emoji="🕊️"
-            title="지금 답할 질문이 없어요"
-            description="받은 하트를 확인하거나 친구를 초대해 다음 라운드를 열어보세요."
+            title="이번 라운드 답변을 모두 마쳤어요"
+            description="친구들의 답을 기다리는 동안 받은 하트를 확인해보세요."
             primaryLabel="받은하트 보기"
             primaryAccessibilityLabel="받은 하트 보기"
             onPrimary={handleOpenInbox}
@@ -265,7 +363,7 @@ export default function HomeScreen() {
           />
         )}
 
-        {homeState === 'no-circle' && (
+        {homeState.kind === 'no-circle' && (
           <StateView
             emoji="⭕"
             title="첫 Circle에 참여해보세요"

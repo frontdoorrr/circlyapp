@@ -1002,10 +1002,11 @@
   - [x] 라운드를 연 사용자도 후보가 되도록 현재 투표자만 제외하는 후보 정책 적용
   - [x] Circle 상세에 상태별 초대/대기/`첫 라운드 열기`/`새 라운드 열기`/투표 CTA 연결
   - [x] 회귀 검증 — Backend 184 passed, Frontend 28 passed, typecheck/lint 오류 0, iOS export 성공
-- [ ] **19.3 Home 첫 가치 상태 연결** (P0)
-  - [ ] `needs-members`/`can-open-round` 상태와 역할별 주 CTA 추가
-  - [ ] 라운드 생성 직후 Home/세션 query 갱신
-  - [ ] 후보 부족과 활성 라운드 없음 안내 분리
+- [x] **19.3 Home 첫 가치 상태 연결** (P0)
+  - [x] Circle 응답 `my_role` 계약 복구 및 `needs-members`/`can-open-round` 역할별 주 CTA 추가
+  - [x] 라운드 생성 직후 Circle/Home/세션 query 재조회 완료까지 대기
+  - [x] 후보 부족, 활성 라운드 없음, 라운드 답변 완료 안내 분리
+  - [x] 회귀 검증 — Backend 184 passed, Frontend 38 passed, typecheck/lint 오류 0, iOS export 성공
 - [ ] **19.4 결과 최종화 신뢰성** (P0)
   - [ ] Backend TDD — 예약 마감·중복 마감·만료 Poll sweep·알림 중복 방지
   - [ ] `finalizeDuePolls()` 및 Celery Beat 복구 작업

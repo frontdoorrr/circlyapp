@@ -256,10 +256,22 @@ PollService.finalizeDuePolls(now, limit) -> finalizedCount
 
 ### 19.3 Home 첫 가치 상태 연결 (P0)
 
-- `no-circle`, `needs-members`, `can-open-round`, `ready`, `cooldown`, `empty` 상태 계약 정리
+- `no-circle`, `needs-members`, `can-open-round`, `ready`, `candidate-shortage`, `cooldown`, `empty` 상태 계약 정리
 - OWNER/ADMIN은 라운드 열기 CTA, MEMBER는 친구 초대/대기 CTA 표시
 - 라운드 생성 성공 시 Circle/Home/투표 세션 query invalidate
 - 후보 부족과 라운드 없음의 안내 문구를 분리
+
+상태 우선순위와 주 행동:
+
+1. `ready`: 답할 활성 Poll이 있고 4명의 후보를 구성할 수 있음 → `투표 시작`
+2. `candidate-shortage`: 활성 Poll은 있으나 현재 멤버가 5명 미만임 → `친구 초대하기`
+3. `cooldown`: 서버 세션 쿨다운이 진행 중임 → `알림 켜고 기다리기`
+4. `can-open-round`: 활성 Poll이 없고 5명 이상이며 OWNER/ADMIN임 → `첫 라운드 열기`
+5. `needs-members`: 활성 Poll이 없고 5명 미만임 → `친구 초대하기`
+6. `empty`: MEMBER가 관리자 라운드를 기다리거나 현재 라운드 답변을 완료함 → 초대 또는 `받은하트 보기`
+7. `no-circle`: 참여한 Circle이 없음 → `초대 코드 입력`
+
+여러 Circle이 동시에 존재할 때는 즉시 투표 가능한 Circle을 가장 먼저 보여주고, 그다음으로 사용자가 직접 라운드를 열 수 있는 Circle을 우선한다. 라운드 생성 mutation은 Circle 목록, Home 활성 Poll, 세션 가능 상태의 재조회가 끝난 뒤 성공 처리하여 앱 재실행 없이 `ready`로 전환한다.
 
 완료 조건:
 

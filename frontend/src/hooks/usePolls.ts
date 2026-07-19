@@ -86,11 +86,13 @@ export function useCreateRound(circleId: string) {
   return useMutation({
     mutationFn: () => pollApi.createRound(circleId, { duration: '6H' }),
     retry: false,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['circles', circleId] });
-      queryClient.invalidateQueries({ queryKey: ['circles', 'my'] });
-      queryClient.invalidateQueries({ queryKey: ['polls', 'my'] });
-      queryClient.invalidateQueries({ queryKey: ['polls', 'sessions'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['circles', circleId] }),
+        queryClient.invalidateQueries({ queryKey: ['circles', 'my'] }),
+        queryClient.invalidateQueries({ queryKey: ['polls', 'my'] }),
+        queryClient.invalidateQueries({ queryKey: ['polls', 'sessions'] }),
+      ]);
     },
   });
 }

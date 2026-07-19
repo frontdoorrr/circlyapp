@@ -45,6 +45,7 @@ async def test_circle_flow(client: AsyncClient) -> None:
     circle_data = create_response.json()
     assert circle_data["name"] == "Test Circle"
     assert circle_data["member_count"] == 1
+    assert circle_data["my_role"] == "OWNER"
     invite_code = circle_data["invite_code"]
     circle_id = circle_data["id"]
 
@@ -55,6 +56,7 @@ async def test_circle_flow(client: AsyncClient) -> None:
     )
     assert owner_circles.status_code == 200
     assert len(owner_circles.json()) == 1
+    assert owner_circles.json()[0]["my_role"] == "OWNER"
 
     # Member joins by code
     join_response = await client.post(
@@ -67,6 +69,14 @@ async def test_circle_flow(client: AsyncClient) -> None:
     )
     assert join_response.status_code == 200
     assert join_response.json()["member_count"] == 2
+    assert join_response.json()["my_role"] == "MEMBER"
+
+    member_circles = await client.get(
+        "/circles",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert member_circles.status_code == 200
+    assert member_circles.json()[0]["my_role"] == "MEMBER"
 
     # Get circle details
     detail_response = await client.get(
@@ -76,6 +86,7 @@ async def test_circle_flow(client: AsyncClient) -> None:
     assert detail_response.status_code == 200
     detail_data = detail_response.json()
     assert len(detail_data["members"]) == 2
+    assert detail_data["my_role"] == "OWNER"
 
     # Member leaves circle
     leave_response = await client.post(

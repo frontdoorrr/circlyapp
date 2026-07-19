@@ -39,6 +39,7 @@ class CircleResponse(BaseModel):
     max_members: int
     member_count: int
     active_polls_count: int = 0
+    my_role: MemberRole | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -75,6 +76,7 @@ class CircleDetail(BaseModel):
     max_members: int
     member_count: int
     active_polls_count: int = 0
+    my_role: MemberRole | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime

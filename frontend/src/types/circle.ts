@@ -23,6 +23,7 @@ export interface CircleResponse {
   max_members: number;
   member_count: number;
   active_polls_count: number; // 진행 중인 투표 수
+  my_role: MemberRole; // 현재 사용자의 Circle 역할
   is_active: boolean;
   created_at: string;
   updated_at: string;
