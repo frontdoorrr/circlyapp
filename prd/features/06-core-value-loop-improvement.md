@@ -201,6 +201,14 @@ Authorization: Bearer <token>
 - `NOT_ENOUGH_TEMPLATES`: 사용 가능한 검수 템플릿 부족
 - `CIRCLE_NOT_FOUND`: Circle이 없거나 비활성
 
+서버 처리 규칙:
+
+- Circle 단위 PostgreSQL transaction advisory lock을 획득한 뒤 ACTIVE Poll 존재 여부를 검사한다.
+- `is_active=true`인 운영 승인 템플릿 중 최근 해당 Circle에서 사용한 질문을 우선 제외한다.
+- 카테고리를 라운드로빈으로 선택해 한 카테고리에 질문이 몰리지 않게 한다.
+- 5개 Poll은 동일한 `ends_at`을 사용하며 모두 생성된 뒤에만 트랜잭션을 커밋한다.
+- 후보 조회에서는 현재 투표자만 제외하고 Poll 생성자는 제외하지 않는다.
+
 ### 5.3 결과 복구
 
 ```text

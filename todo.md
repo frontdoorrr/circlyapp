@@ -995,12 +995,13 @@
   - [ ] 외부 설정 — `circly.app` DNS/호스팅, Android signing SHA-256, association 파일 배포
   - [x] 로그인 전후 딥링크 컨텍스트 보존 및 영구 링크 직접 가입 구현
   - [x] 회귀 검증 — Backend 176 passed, Frontend 23 passed, typecheck/lint 오류 0, iOS export 성공
-- [ ] **19.2 안전한 Circle 라운드 생성** (P0)
-  - [ ] Backend TDD — OWNER/ADMIN, 최소 5명, ACTIVE 라운드 중복 방지, 템플릿 5개 생성
-  - [ ] 라운드 생성 API/타입/오류 코드를 `docs/DSL.md`에 확정
-  - [ ] 검수 템플릿 카테고리 분산 및 최근 질문 재사용 완화
-  - [ ] 라운드를 연 사용자도 후보가 되도록 후보 정책 정리
-  - [ ] Circle 상세에 상태별 `첫 라운드 열기`/`새 라운드 열기` CTA 연결
+- [x] **19.2 안전한 Circle 라운드 생성** (P0)
+  - [x] Backend TDD — OWNER/ADMIN, 최소 5명, ACTIVE 라운드 중복 방지, 템플릿 5개 생성
+  - [x] 라운드 생성 API/타입/오류 코드를 `docs/DSL.md`에 확정
+  - [x] 활성 운영 템플릿 카테고리 분산 및 최근 질문 재사용 완화
+  - [x] 라운드를 연 사용자도 후보가 되도록 현재 투표자만 제외하는 후보 정책 적용
+  - [x] Circle 상세에 상태별 초대/대기/`첫 라운드 열기`/`새 라운드 열기`/투표 CTA 연결
+  - [x] 회귀 검증 — Backend 184 passed, Frontend 28 passed, typecheck/lint 오류 0, iOS export 성공
 - [ ] **19.3 Home 첫 가치 상태 연결** (P0)
   - [ ] `needs-members`/`can-open-round` 상태와 역할별 주 CTA 추가
   - [ ] 라운드 생성 직후 Home/세션 query 갱신

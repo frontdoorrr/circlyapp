@@ -22,6 +22,17 @@ export interface PollCreate {
   question_text?: string; // 템플릿 텍스트 오버라이드 (선택)
 }
 
+export interface RoundCreate {
+  duration?: PollDuration; // 기본 6H
+}
+
+export interface RoundCreateResponse {
+  circle_id: string;
+  created_count: number;
+  polls: PollResponse[];
+  ends_at: string;
+}
+
 export interface PollResponse {
   id: string; // UUID
   circle_id: string;

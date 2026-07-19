@@ -38,6 +38,12 @@ class PollCreate(BaseModel):
     duration: PollDuration
 
 
+class RoundCreate(BaseModel):
+    """Schema for opening a server-selected five-question round."""
+
+    duration: PollDuration = PollDuration.SIX_HOURS
+
+
 class PollResponse(BaseModel):
     """Schema for poll response."""
 
@@ -64,6 +70,15 @@ class PollResponse(BaseModel):
     # Winner info for completed polls
     winner_name: str | None = None
     winner_vote_count: int | None = None
+
+
+class RoundCreateResponse(BaseModel):
+    """Schema returned after a Circle round is created atomically."""
+
+    circle_id: uuid.UUID
+    created_count: int
+    polls: list[PollResponse]
+    ends_at: datetime
 
 
 class VoteOption(BaseModel):

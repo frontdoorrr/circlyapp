@@ -289,10 +289,10 @@ class TestVoteRepository:
         assert results[1]["vote_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_find_candidate_options_excludes_voter_and_creator(
+    async def test_find_candidate_options_excludes_only_current_voter(
         self, db_session: AsyncSession
     ) -> None:
-        """Candidate options exclude the current voter and poll creator."""
+        """Candidate options keep the round creator and exclude only the voter."""
         user_repo = UserRepository(db_session)
         creator = await user_repo.create(
             UserCreate(email="creator@example.com", password="password123")
@@ -317,11 +317,13 @@ class TestVoteRepository:
         candidates = await repo.find_candidate_options(
             circle_id=circle.id,
             requester_id=voter.id,
-            creator_id=creator.id,
         )
 
-        assert [candidate["user_id"] for candidate in candidates] == [member.id]
-        assert candidates[0]["nickname"] == "Candidate"
+        assert [candidate["user_id"] for candidate in candidates] == [
+            creator.id,
+            member.id,
+        ]
+        assert candidates[1]["nickname"] == "Candidate"
 
     @pytest.mark.asyncio
     async def test_find_candidate_options_orders_by_received_count(
@@ -375,15 +377,16 @@ class TestVoteRepository:
         candidates = await repo.find_candidate_options(
             circle_id=circle.id,
             requester_id=voter.id,
-            creator_id=creator.id,
         )
 
         assert [candidate["user_id"] for candidate in candidates] == [
+            creator.id,
             underexposed.id,
             popular.id,
         ]
         assert candidates[0]["received_count"] == 0
-        assert candidates[1]["received_count"] == 1
+        assert candidates[1]["received_count"] == 0
+        assert candidates[2]["received_count"] == 1
 
     @pytest.mark.asyncio
     async def test_received_hearts_read_state(

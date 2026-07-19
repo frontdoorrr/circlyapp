@@ -564,6 +564,12 @@ module Poll {
             duration: PollDuration
         ) -> Result<PollResponse, Error>
 
+        await function createRound(
+            circleId: UUID,
+            creatorId: UUID,
+            duration: PollDuration = "6H"
+        ) -> Result<RoundCreateResponse, Error>
+
         await function getPoll(pollId: UUID, userId: UUID) -> Result<PollDetail, Error>
         await function getCirclePolls(circleId: UUID, status?: PollStatus) -> List<PollListItem>
         await function cancelPoll(pollId: UUID, userId: UUID) -> Result<Void, Error>
@@ -594,6 +600,7 @@ module Poll {
         GET    /api/v1/polls/templates                -> getTemplates
 
         POST   /api/v1/circles/{circleId}/polls       -> createPoll
+        POST   /api/v1/polls/circles/{circleId}/rounds -> createRound
         GET    /api/v1/circles/{circleId}/polls       -> getCirclePolls
         GET    /api/v1/polls/{id}                     -> getPoll
         DELETE /api/v1/polls/{id}                     -> cancelPoll
@@ -657,6 +664,17 @@ module Poll {
         creatorId: UUID
         questionText: String
         candidateFilter?: CandidateFilter
+        endsAt: DateTime
+    }
+
+    type RoundCreate {
+        duration: PollDuration = "6H"
+    }
+
+    type RoundCreateResponse {
+        circleId: UUID
+        createdCount: Integer  // 항상 5
+        polls: List<PollResponse>
         endsAt: DateTime
     }
 
@@ -1479,6 +1497,9 @@ api_standards APIResponseFormat {
         POLL_004: "자기 자신에게 투표할 수 없습니다"
         POLL_005: "동시 진행 가능한 투표 수를 초과했습니다"
         POLL_006 (INVALID_VOTE_TARGET): "같은 Circle 멤버만 투표 대상으로 선택할 수 있습니다"
+        NOT_ENOUGH_MEMBERS: "라운드를 시작하려면 Circle 멤버가 5명 이상 필요합니다"
+        ROUND_ALREADY_ACTIVE: "이 Circle에는 이미 진행 중인 라운드가 있습니다"
+        NOT_ENOUGH_TEMPLATES: "라운드에 사용할 승인된 템플릿이 부족합니다"
 
         // General
         VALIDATION_ERROR: "입력값 검증 실패"

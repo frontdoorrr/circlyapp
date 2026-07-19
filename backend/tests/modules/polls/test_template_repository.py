@@ -1,12 +1,18 @@
 """Tests for Template Repository."""
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import TemplateCategory
-from app.modules.polls.models import PollTemplate
+from app.core.enums import PollStatus, TemplateCategory
+from app.core.security import generate_invite_code
+from app.modules.auth.repository import UserRepository
+from app.modules.auth.schemas import UserCreate
+from app.modules.circles.repository import CircleRepository
+from app.modules.circles.schemas import CircleCreate
+from app.modules.polls.models import Poll, PollTemplate
 from app.modules.polls.repository import TemplateRepository
 
 
@@ -103,6 +109,55 @@ class TestTemplateRepository:
         found = await repo.find_by_id(uuid.uuid4())
 
         assert found is None
+
+    @pytest.mark.asyncio
+    async def test_round_candidates_prioritize_not_recent_and_exclude_inactive(
+        self,
+        db_session: AsyncSession,
+    ) -> None:
+        """Fresh active questions come before recently used or inactive ones."""
+        owner = await UserRepository(db_session).create(
+            UserCreate(email="template-round-owner@example.com", password="password123")
+        )
+        circle = await CircleRepository(db_session).create(
+            CircleCreate(name="Template Round"),
+            owner.id,
+            generate_invite_code(),
+        )
+        recent = PollTemplate(
+            category=TemplateCategory.PERSONALITY,
+            question_text="Recently used?",
+            is_active=True,
+            usage_count=0,
+        )
+        fresh = PollTemplate(
+            category=TemplateCategory.TALENT,
+            question_text="Fresh but globally used?",
+            is_active=True,
+            usage_count=99,
+        )
+        inactive = PollTemplate(
+            category=TemplateCategory.SPECIAL,
+            question_text="Disabled?",
+            is_active=False,
+        )
+        db_session.add_all([recent, fresh, inactive])
+        await db_session.flush()
+        db_session.add(
+            Poll(
+                circle_id=circle.id,
+                template_id=recent.id,
+                creator_id=owner.id,
+                question_text=recent.question_text,
+                status=PollStatus.COMPLETED,
+                ends_at=datetime.now(UTC) - timedelta(hours=1),
+            )
+        )
+        await db_session.commit()
+
+        candidates = await TemplateRepository(db_session).find_round_candidates(circle.id)
+
+        assert [template.id for template in candidates] == [fresh.id, recent.id]
 
     @pytest.mark.asyncio
     async def test_increment_usage_count(self, db_session: AsyncSession) -> None:

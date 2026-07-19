@@ -128,6 +128,105 @@ class TestPollFlow:
         }
 
     @pytest.mark.asyncio
+    async def test_owner_opens_five_question_round_once_and_remains_candidate(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+    ) -> None:
+        """A five-member Circle opens one round and keeps its owner selectable."""
+        owner_login = await client.post(
+            "/auth/dev-login",
+            json={"email": "round-owner@example.com", "password": "password123"},
+        )
+        owner_token = owner_login.json()["access_token"]
+        circle_response = await client.post(
+            "/circles",
+            json={"name": "Round Circle"},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        circle = circle_response.json()
+
+        member_tokens = []
+        for index in range(4):
+            login = await client.post(
+                "/auth/dev-login",
+                json={
+                    "email": f"round-member-{index}@example.com",
+                    "password": "password123",
+                },
+            )
+            token = login.json()["access_token"]
+            member_tokens.append(token)
+            join = await client.post(
+                "/circles/join/code",
+                json={
+                    "invite_code": circle["invite_code"],
+                    "nickname": f"Round Member {index}",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert join.status_code == status.HTTP_200_OK
+
+        categories = [
+            TemplateCategory.PERSONALITY,
+            TemplateCategory.PERSONALITY,
+            TemplateCategory.APPEARANCE,
+            TemplateCategory.TALENT,
+            TemplateCategory.SPECIAL,
+            TemplateCategory.SPECIAL,
+        ]
+        db_session.add_all(
+            [
+                PollTemplate(
+                    category=category,
+                    question_text=f"Round question {index}?",
+                    emoji="💜",
+                    is_active=True,
+                )
+                for index, category in enumerate(categories)
+            ]
+        )
+        await db_session.commit()
+
+        create_round = await client.post(
+            f"/polls/circles/{circle['id']}/rounds",
+            json={"duration": "6H"},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+
+        assert create_round.status_code == status.HTTP_201_CREATED
+        round_data = create_round.json()
+        assert round_data["created_count"] == 5
+        assert len(round_data["polls"]) == 5
+        assert {poll["ends_at"] for poll in round_data["polls"]} == {
+            round_data["ends_at"]
+        }
+
+        duplicate = await client.post(
+            f"/polls/circles/{circle['id']}/rounds",
+            json={"duration": "6H"},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        assert duplicate.status_code == status.HTTP_400_BAD_REQUEST
+        assert duplicate.json()["error"]["code"] == "ROUND_ALREADY_ACTIVE"
+
+        members = await client.get(
+            f"/circles/{circle['id']}/members",
+            headers={"Authorization": f"Bearer {member_tokens[0]}"},
+        )
+        owner_id = next(
+            member["user_id"] for member in members.json() if member["role"] == "OWNER"
+        )
+        candidates = await client.get(
+            f"/polls/{round_data['polls'][0]['id']}/candidates",
+            headers={"Authorization": f"Bearer {member_tokens[0]}"},
+        )
+        assert candidates.status_code == status.HTTP_200_OK
+        candidate_ids = {candidate["user_id"] for candidate in candidates.json()["candidates"]}
+        assert owner_id in candidate_ids
+        assert len(candidate_ids) == 4
+
+    @pytest.mark.asyncio
     async def test_complete_poll_flow(
         self,
         client: AsyncClient,

@@ -78,6 +78,24 @@ export function useStartVoteSession() {
 }
 
 /**
+ * 안전한 Circle 라운드 생성
+ */
+export function useCreateRound(circleId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => pollApi.createRound(circleId, { duration: '6H' }),
+    retry: false,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['circles', circleId] });
+      queryClient.invalidateQueries({ queryKey: ['circles', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['polls', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['polls', 'sessions'] });
+    },
+  });
+}
+
+/**
  * 서버 투표 세션 현재 질문 건너뛰기
  */
 export function useSkipVoteSessionPoll() {

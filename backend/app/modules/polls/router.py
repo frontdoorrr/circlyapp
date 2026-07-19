@@ -17,6 +17,8 @@ from app.modules.polls.schemas import (
     PollTemplateResponse,
     ReceivedHeartItem,
     ReceivedHeartReadResponse,
+    RoundCreate,
+    RoundCreateResponse,
     TemplateCreate,
     TemplateListResponse,
     TemplateUpdate,
@@ -114,6 +116,26 @@ async def create_poll(
 ) -> PollResponse:
     """Create a new poll in a circle."""
     return await service.create_poll(circle_id, current_user.id, poll_data)
+
+
+@router.post(
+    "/circles/{circle_id}/rounds",
+    response_model=RoundCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Open a safe five-question Circle round",
+)
+async def create_round(
+    circle_id: uuid.UUID,
+    round_data: RoundCreate,
+    current_user: CurrentUserDep,
+    service: PollServiceDep,
+) -> RoundCreateResponse:
+    """Open a server-selected round for a Circle as OWNER or ADMIN."""
+    return await service.create_round(
+        circle_id,
+        current_user.id,
+        round_data.duration,
+    )
 
 
 @router.post(

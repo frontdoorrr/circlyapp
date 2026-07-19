@@ -41,7 +41,10 @@ export type PollErrorCode =
   | 'ALREADY_VOTED'
   | 'SELF_VOTE_NOT_ALLOWED'
   | 'MAX_POLLS_EXCEEDED'
-  | 'NOT_CIRCLE_MEMBER';
+  | 'NOT_CIRCLE_MEMBER'
+  | 'NOT_ENOUGH_MEMBERS'
+  | 'ROUND_ALREADY_ACTIVE'
+  | 'NOT_ENOUGH_TEMPLATES';
 
 export type GeneralErrorCode =
   | 'FORBIDDEN'

@@ -11,6 +11,8 @@ import {
   PollTemplateResponse,
   ReceivedHeartItem,
   ReceivedHeartReadResponse,
+  RoundCreate,
+  RoundCreateResponse,
   TemplateCategory,
   VoteRequest,
   VoteResponse,
@@ -138,6 +140,27 @@ export async function startVoteSession(
   return extractData<VoteSessionResponse>(
     response.data,
     (d) => d.id && d.status && Array.isArray(d.poll_ids)
+  );
+}
+
+/**
+ * OWNER/ADMIN이 서버 선정 질문 5개로 Circle 라운드 열기
+ */
+export async function createRound(
+  circleId: string,
+  data: RoundCreate = { duration: '6H' }
+): Promise<RoundCreateResponse> {
+  logger.log('[API] POST /polls/circles/:circleId/rounds 요청:', { circleId, data });
+  const response = await apiClient.post<ApiResponse<RoundCreateResponse>>(
+    `/polls/circles/${circleId}/rounds`,
+    data
+  );
+  logger.log('[API] POST /polls/circles/:circleId/rounds 응답:', {
+    status: response.status,
+  });
+  return extractData<RoundCreateResponse>(
+    response.data,
+    (d) => d.circle_id && d.created_count === 5 && Array.isArray(d.polls)
   );
 }
 

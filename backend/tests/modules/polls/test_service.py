@@ -908,7 +908,8 @@ class TestPollService:
         membership_repo = MembershipRepository(db_session)
         await membership_repo.create(circle.id, owner.id, MemberRole.OWNER)
 
-        cooldown_until = datetime.now(UTC) + timedelta(hours=1)
+        # Keep the cooldown start clearly before the DB-generated joined_at timestamp.
+        cooldown_until = datetime.now(UTC) + timedelta(minutes=59)
         await user_repo.update_next_session_at(owner.id, cooldown_until)
         await db_session.commit()
 
@@ -988,3 +989,168 @@ class TestPollService:
 
         with pytest.raises(BadRequestException, match="Received heart not found"):
             await service.mark_received_heart_as_read(outsider.id, poll.id)
+
+
+class TestCreateRound:
+    """Tests for the safe five-question Circle round contract."""
+
+    @staticmethod
+    def build_service(
+        *,
+        role: MemberRole = MemberRole.OWNER,
+        member_count: int = 5,
+        active_polls: list[object] | None = None,
+        templates: list[object] | None = None,
+    ) -> tuple[PollService, SimpleNamespace]:
+        circle_id = uuid.uuid4()
+        creator_id = uuid.uuid4()
+        now = datetime.now(UTC)
+        categories = [
+            TemplateCategory.PERSONALITY,
+            TemplateCategory.PERSONALITY,
+            TemplateCategory.PERSONALITY,
+            TemplateCategory.APPEARANCE,
+            TemplateCategory.TALENT,
+            TemplateCategory.SPECIAL,
+        ]
+        round_templates = templates or [
+            SimpleNamespace(
+                id=uuid.uuid4(),
+                category=category,
+                question_text=f"Question {index}",
+            )
+            for index, category in enumerate(categories)
+        ]
+
+        circle_repo = SimpleNamespace(
+            find_by_id=AsyncMock(
+                return_value=SimpleNamespace(
+                    id=circle_id,
+                    is_active=True,
+                    member_count=member_count,
+                )
+            )
+        )
+        membership_repo = SimpleNamespace(
+            find_membership=AsyncMock(return_value=SimpleNamespace(role=role)),
+        )
+        template_repo = SimpleNamespace(
+            find_round_candidates=AsyncMock(return_value=round_templates),
+            increment_usage_count=AsyncMock(),
+        )
+        poll_repo = SimpleNamespace(
+            acquire_circle_round_lock=AsyncMock(),
+            find_active_by_circle_id=AsyncMock(return_value=active_polls or []),
+            create=AsyncMock(),
+        )
+
+        def create_poll(**kwargs: object) -> SimpleNamespace:
+            return SimpleNamespace(
+                id=uuid.uuid4(),
+                circle_id=kwargs["circle_id"],
+                template_id=kwargs["template_id"],
+                creator_id=kwargs["creator_id"],
+                question_text=kwargs["question_text"],
+                status=PollStatus.ACTIVE,
+                ends_at=kwargs["ends_at"],
+                vote_count=0,
+                created_at=now,
+                updated_at=now,
+            )
+
+        poll_repo.create.side_effect = create_poll
+        service = PollService(
+            template_repo=template_repo,
+            poll_repo=poll_repo,
+            vote_repo=SimpleNamespace(),
+            membership_repo=membership_repo,
+            circle_repo=circle_repo,
+        )
+        context = SimpleNamespace(
+            circle_id=circle_id,
+            creator_id=creator_id,
+            poll_repo=poll_repo,
+            template_repo=template_repo,
+            templates=round_templates,
+        )
+        return service, context
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("role", [MemberRole.OWNER, MemberRole.ADMIN])
+    async def test_manager_creates_five_diversified_polls_with_one_deadline(
+        self,
+        role: MemberRole,
+    ) -> None:
+        service, context = self.build_service(role=role)
+
+        with patch(
+            "app.tasks.notification_tasks.schedule_poll_deadline_notifications"
+        ) as schedule_notifications:
+            result = await service.create_round(
+                context.circle_id,
+                context.creator_id,
+                PollDuration.SIX_HOURS,
+            )
+
+        assert result.created_count == 5
+        assert len(result.polls) == 5
+        assert {poll.ends_at for poll in result.polls} == {result.ends_at}
+        selected_categories = [
+            next(t.category for t in context.templates if t.id == poll.template_id)
+            for poll in result.polls
+        ]
+        assert set(selected_categories) == set(TemplateCategory)
+        assert max(selected_categories.count(category) for category in TemplateCategory) == 2
+        context.poll_repo.acquire_circle_round_lock.assert_awaited_once_with(
+            context.circle_id
+        )
+        assert context.poll_repo.create.await_count == 5
+        assert context.template_repo.increment_usage_count.await_count == 5
+        assert schedule_notifications.call_count == 5
+
+    @pytest.mark.asyncio
+    async def test_member_cannot_create_round(self) -> None:
+        service, context = self.build_service(role=MemberRole.MEMBER)
+
+        with pytest.raises(AuthorizationError) as exc_info:
+            await service.create_round(context.circle_id, context.creator_id)
+
+        assert exc_info.value.code == "FORBIDDEN"
+
+    @pytest.mark.asyncio
+    async def test_round_requires_five_members(self) -> None:
+        service, context = self.build_service(member_count=4)
+
+        with pytest.raises(BadRequestException) as exc_info:
+            await service.create_round(context.circle_id, context.creator_id)
+
+        assert exc_info.value.code == "NOT_ENOUGH_MEMBERS"
+        assert exc_info.value.details == {"required": 5, "current": 4}
+
+    @pytest.mark.asyncio
+    async def test_active_round_blocks_duplicate_request(self) -> None:
+        service, context = self.build_service(active_polls=[SimpleNamespace(id=uuid.uuid4())])
+
+        with pytest.raises(BadRequestException) as exc_info:
+            await service.create_round(context.circle_id, context.creator_id)
+
+        assert exc_info.value.code == "ROUND_ALREADY_ACTIVE"
+        context.poll_repo.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_round_requires_five_eligible_templates(self) -> None:
+        templates = [
+            SimpleNamespace(
+                id=uuid.uuid4(),
+                category=TemplateCategory.PERSONALITY,
+                question_text=f"Question {index}",
+            )
+            for index in range(4)
+        ]
+        service, context = self.build_service(templates=templates)
+
+        with pytest.raises(BadRequestException) as exc_info:
+            await service.create_round(context.circle_id, context.creator_id)
+
+        assert exc_info.value.code == "NOT_ENOUGH_TEMPLATES"
+        context.poll_repo.create.assert_not_awaited()

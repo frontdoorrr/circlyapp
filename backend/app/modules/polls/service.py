@@ -8,10 +8,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from app.core.enums import PollStatus, TemplateCategory
+from app.core.enums import MemberRole, PollStatus, TemplateCategory
 from app.core.exceptions import (
     AuthorizationError,
     BadRequestException,
+    CircleNotFoundError,
     PollNotFoundError,
 )
 from app.core.security import generate_voter_hash
@@ -38,6 +39,7 @@ from app.modules.polls.schemas import (
     ReceivedHeartHint,
     ReceivedHeartItem,
     ReceivedHeartReadResponse,
+    RoundCreateResponse,
     VoteHintItem,
     VoteHintResponse,
     VoteResponse,
@@ -47,7 +49,7 @@ from app.modules.polls.schemas import (
 
 if TYPE_CHECKING:
     from app.modules.notifications.service import NotificationService
-    from app.modules.polls.models import Poll, Vote, VoteSession
+    from app.modules.polls.models import Poll, PollTemplate, Vote, VoteSession
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,8 @@ class PollService:
     """Service for poll operations."""
 
     CANDIDATE_COUNT = 4
+    ROUND_POLL_COUNT = 5
+    ROUND_MIN_MEMBERS = 5
     SESSION_LIMIT = 12
     SESSION_COOLDOWN = timedelta(hours=1)
     FREE_HINT_TIERS = {"CIRCLE", "TIME"}
@@ -446,7 +450,6 @@ class PollService:
         rows = await self.vote_repo.find_candidate_options(
             circle_id=poll.circle_id,
             requester_id=user_id,
-            creator_id=poll.creator_id,
         )
 
         if shuffle:
@@ -473,6 +476,114 @@ class PollService:
                 for row in selected_rows
             ],
         )
+
+    async def create_round(
+        self,
+        circle_id: uuid.UUID,
+        creator_id: uuid.UUID,
+        duration: PollDuration = PollDuration.SIX_HOURS,
+    ) -> RoundCreateResponse:
+        """Atomically open a server-selected five-question Circle round."""
+        if self.circle_repo is None:
+            raise RuntimeError("CircleRepository is not configured")
+
+        circle = await self.circle_repo.find_by_id(circle_id)
+        if circle is None or not circle.is_active:
+            raise CircleNotFoundError(str(circle_id))
+
+        membership = await self.membership_repo.find_membership(circle_id, creator_id)
+        if membership is None or membership.role not in {
+            MemberRole.OWNER,
+            MemberRole.ADMIN,
+        }:
+            raise AuthorizationError("Circle OWNER 또는 ADMIN만 라운드를 열 수 있습니다")
+
+        if circle.member_count < self.ROUND_MIN_MEMBERS:
+            raise BadRequestException(
+                "라운드를 시작하려면 Circle 멤버가 5명 이상 필요합니다",
+                code="NOT_ENOUGH_MEMBERS",
+                details={
+                    "required": self.ROUND_MIN_MEMBERS,
+                    "current": circle.member_count,
+                },
+            )
+
+        await self.poll_repo.acquire_circle_round_lock(circle_id)
+        if await self.poll_repo.find_active_by_circle_id(circle_id):
+            raise BadRequestException(
+                "이 Circle에는 이미 진행 중인 라운드가 있습니다",
+                code="ROUND_ALREADY_ACTIVE",
+            )
+
+        candidates = await self.template_repo.find_round_candidates(circle_id)
+        selected_templates = self._select_round_templates(candidates)
+        if len(selected_templates) < self.ROUND_POLL_COUNT:
+            raise BadRequestException(
+                "라운드에 사용할 승인된 템플릿이 부족합니다",
+                code="NOT_ENOUGH_TEMPLATES",
+                details={
+                    "required": self.ROUND_POLL_COUNT,
+                    "current": len(selected_templates),
+                },
+            )
+
+        ends_at = self._calculate_end_time(duration)
+        polls = []
+        for template in selected_templates:
+            poll = await self.poll_repo.create(
+                circle_id=circle_id,
+                template_id=template.id,
+                creator_id=creator_id,
+                question_text=template.question_text,
+                ends_at=ends_at,
+            )
+            await self.template_repo.increment_usage_count(template.id)
+            polls.append(poll)
+
+        try:
+            from app.tasks.notification_tasks import schedule_poll_deadline_notifications
+
+            for poll in polls:
+                schedule_poll_deadline_notifications(str(poll.id), poll.ends_at)
+        except Exception as error:
+            logger.error("Failed to schedule round deadline notifications: %s", error)
+
+        if self.notification_service and polls:
+            try:
+                members = await self.membership_repo.find_by_circle_id(circle_id)
+                member_ids = [member.user_id for member in members if member.user_id != creator_id]
+                if member_ids:
+                    await self.notification_service.send_poll_started(polls[0], member_ids)
+            except Exception as error:
+                logger.error("Failed to send round started notification: %s", error)
+
+        poll_responses = [self._poll_to_response(poll, has_voted=False) for poll in polls]
+        return RoundCreateResponse(
+            circle_id=circle_id,
+            created_count=len(poll_responses),
+            polls=poll_responses,
+            ends_at=ends_at,
+        )
+
+    def _select_round_templates(
+        self,
+        templates: list[PollTemplate],
+    ) -> list[PollTemplate]:
+        """Select templates round-robin by category while preserving repo priority."""
+        buckets: dict[TemplateCategory, list[PollTemplate]] = {
+            category: [] for category in TemplateCategory
+        }
+        for template in templates:
+            buckets[template.category].append(template)
+
+        selected: list[PollTemplate] = []
+        while len(selected) < self.ROUND_POLL_COUNT and any(buckets.values()):
+            for category in TemplateCategory:
+                if buckets[category]:
+                    selected.append(buckets[category].pop(0))
+                    if len(selected) == self.ROUND_POLL_COUNT:
+                        break
+        return selected
 
     async def create_poll(
         self,

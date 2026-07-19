@@ -92,6 +92,31 @@ class TemplateRepository:
         )
         return result.scalar_one_or_none()
 
+    async def find_round_candidates(
+        self,
+        circle_id: uuid.UUID,
+        recent_limit: int = 10,
+    ) -> list[PollTemplate]:
+        """Return active templates, prioritizing questions not recently used here."""
+        recent_result = await self.session.execute(
+            select(Poll.template_id)
+            .where(Poll.circle_id == circle_id, Poll.template_id.is_not(None))
+            .order_by(Poll.created_at.desc())
+            .limit(recent_limit)
+        )
+        recent_template_ids = set(recent_result.scalars().all())
+
+        result = await self.session.execute(
+            select(PollTemplate)
+            .where(PollTemplate.is_active == True)  # noqa: E712
+            .order_by(PollTemplate.usage_count.asc(), PollTemplate.created_at.asc())
+        )
+        templates = list(result.scalars().all())
+        return sorted(
+            templates,
+            key=lambda template: template.id in recent_template_ids,
+        )
+
     async def increment_usage_count(self, template_id: uuid.UUID) -> None:
         """Increment template usage count.
 
@@ -247,6 +272,11 @@ class PollRepository:
     def __init__(self, session: AsyncSession) -> None:
         """Initialize repository with database session."""
         self.session = session
+
+    async def acquire_circle_round_lock(self, circle_id: uuid.UUID) -> None:
+        """Serialize round creation requests for a Circle within the transaction."""
+        lock_key = int.from_bytes(circle_id.bytes[:8], byteorder="big", signed=True)
+        await self.session.execute(select(func.pg_advisory_xact_lock(lock_key)))
 
     async def create(
         self,
@@ -582,14 +612,12 @@ class VoteRepository:
         self,
         circle_id: uuid.UUID,
         requester_id: uuid.UUID,
-        creator_id: uuid.UUID,
     ) -> list[CandidateOptionDict]:
         """Find eligible vote candidates ordered by least received votes first.
 
         Args:
             circle_id: Circle UUID
             requester_id: Current voter UUID
-            creator_id: Poll creator UUID
 
         Returns:
             Candidate rows with exposure/fairness count
@@ -604,8 +632,6 @@ class VoteRepository:
             .group_by(Vote.voted_for_id)
             .subquery()
         )
-        excluded_ids = {requester_id, creator_id}
-
         result = await self.session.execute(
             select(
                 CircleMember.user_id,
@@ -617,7 +643,7 @@ class VoteRepository:
             .outerjoin(received_counts, CircleMember.user_id == received_counts.c.user_id)
             .where(
                 CircleMember.circle_id == circle_id,
-                CircleMember.user_id.notin_(excluded_ids),
+                CircleMember.user_id != requester_id,
                 User.is_active == True,  # noqa: E712
             )
             .order_by(

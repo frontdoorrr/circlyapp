@@ -22,20 +22,21 @@ import {
   useRegenerateInviteCode,
 } from '../../src/hooks/useCircles';
 import { useCurrentUser } from '../../src/hooks/useAuth';
-import { useMyCompletedPolls } from '../../src/hooks/usePolls';
+import { useCreateRound, useMyCompletedPolls } from '../../src/hooks/usePolls';
 import { LoadingSpinner } from '../../src/components/states/LoadingSpinner';
 import { Text } from '../../src/components/primitives/Text';
 import { Button } from '../../src/components/primitives/Button';
 import { tokens } from '../../src/theme';
-import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
+import { useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { useToast } from '../../src/providers/ToastProvider';
 import { buildInviteUrl } from '../../src/services/invite/inviteUrl';
+import { ApiError } from '../../src/types/api';
+import { getCircleRoundAction } from '../../src/utils/circleRound';
 
 export default function CircleDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { theme, isDark } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { showToast } = useToast();
 
@@ -52,6 +53,16 @@ export default function CircleDetailScreen() {
     () => (completedPolls ?? []).filter((poll) => poll.circle_id === id),
     [completedPolls, id]
   );
+  const currentMembership = members?.find((member) => member.user_id === currentUser?.id);
+  const membersNeeded = Math.max(0, 5 - (circle?.member_count ?? 0));
+  const roundAction = getCircleRoundAction({
+    activePollCount: circle?.active_polls_count ?? 0,
+    memberCount: circle?.member_count ?? 0,
+    role: currentMembership?.role,
+  });
+
+  // 안전한 5문항 라운드 생성
+  const createRoundMutation = useCreateRound(id);
 
   // Circle 나가기
   const leaveMutation = useLeaveCircle();
@@ -96,11 +107,41 @@ export default function CircleDetailScreen() {
             try {
               await regenerateCodeMutation.mutateAsync(id);
               showToast('새로운 초대 코드가 생성되었습니다', 'success');
-            } catch (error) {
+            } catch {
               showToast('초대 코드 재생성에 실패했습니다', 'error');
             }
           }
         }
+      ]
+    );
+  };
+
+  const handleCreateRound = () => {
+    Alert.alert(
+      circleCompletedPolls.length > 0 ? '새 라운드 열기' : '첫 라운드 열기',
+      '검수된 칭찬 질문 5개가 열리고 6시간 동안 투표할 수 있어요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '라운드 열기',
+          onPress: async () => {
+            try {
+              await createRoundMutation.mutateAsync();
+              showToast('질문 5개로 라운드가 열렸어요', 'success');
+            } catch (error) {
+              const code = error instanceof ApiError ? error.code : undefined;
+              if (code === 'ROUND_ALREADY_ACTIVE') {
+                showToast('이미 진행 중인 라운드가 있어요', 'error');
+              } else if (code === 'NOT_ENOUGH_MEMBERS') {
+                showToast('라운드를 열려면 멤버가 5명 이상 필요해요', 'error');
+              } else if (code === 'NOT_ENOUGH_TEMPLATES') {
+                showToast('사용 가능한 질문이 부족해요', 'error');
+              } else {
+                showToast('라운드를 열지 못했어요. 다시 시도해주세요', 'error');
+              }
+            }
+          },
+        },
       ]
     );
   };
@@ -120,7 +161,7 @@ export default function CircleDetailScreen() {
               await leaveMutation.mutateAsync(id);
               showToast('Circle을 나갔습니다', 'success');
               router.back();
-            } catch (error) {
+            } catch {
               showToast('Circle 나가기에 실패했습니다', 'error');
             }
           }
@@ -198,13 +239,33 @@ export default function CircleDetailScreen() {
         </View>
 
         <View style={styles.circleActionSection}>
-          <Button
-            fullWidth
-            onPress={() => router.push(`/vote-session?circleId=${id}` as any)}
-            disabled={(circle.active_polls_count ?? 0) === 0}
-          >
-            이 Circle 투표하기
-          </Button>
+          {roundAction === 'VOTE' ? (
+            <Button
+              fullWidth
+              onPress={() => router.push(`/vote-session?circleId=${id}` as any)}
+            >
+              이 Circle 투표하기
+            </Button>
+          ) : roundAction === 'INVITE' ? (
+            <>
+              <Button fullWidth onPress={handleShareInvite}>
+                첫 라운드까지 {membersNeeded}명 더 초대하기
+              </Button>
+              <Text style={styles.actionHint}>5명이 모이면 칭찬 질문 5개를 열 수 있어요</Text>
+            </>
+          ) : roundAction === 'CREATE' ? (
+            <Button
+              fullWidth
+              onPress={handleCreateRound}
+              loading={createRoundMutation.isPending}
+            >
+              {circleCompletedPolls.length > 0 ? '새 라운드 열기' : '첫 라운드 열기'}
+            </Button>
+          ) : (
+            <Button fullWidth onPress={() => {}} disabled>
+              관리자가 라운드를 준비하고 있어요
+            </Button>
+          )}
         </View>
 
         {/* 초대 코드 섹션 */}
@@ -386,6 +447,11 @@ const createStyles = (theme: Theme, isDark: boolean) =>
     circleActionSection: {
       gap: tokens.spacing.sm,
       marginBottom: tokens.spacing.lg,
+    },
+    actionHint: {
+      fontSize: tokens.typography.fontSize.sm,
+      color: theme.textSecondary,
+      textAlign: 'center',
     },
     sectionTitle: {
       fontSize: tokens.typography.fontSize.lg,
