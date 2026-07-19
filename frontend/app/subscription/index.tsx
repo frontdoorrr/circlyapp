@@ -21,7 +21,8 @@ import {
   restorePurchases,
   getErrorMessage,
   isPurchaseCancelled,
-  PRODUCT_IDS,
+  PACKAGE_IDS,
+  hasOrbModeEntitlement,
 } from '../../src/services/subscription/revenuecat';
 import { useSubscription } from '../../src/hooks/useSubscription';
 import { useCurrentUser } from '../../src/hooks/useAuth';
@@ -42,9 +43,12 @@ import { logger } from '../../src/utils/logger';
  *
  * Features:
  * - Show subscription benefits
- * - Monthly/Yearly/Lifetime pricing options
+ * - Monthly/Yearly pricing options
  * - Purchase and restore functionality
  */
+const ORB_MODE_SYNC_ATTEMPTS = 6;
+const ORB_MODE_SYNC_DELAY_MS = 1000;
+
 export default function SubscriptionScreen() {
   useTheme(); // For themed styles
   const styles = useThemedStyles(createStyles);
@@ -62,6 +66,46 @@ export default function SubscriptionScreen() {
     }
   }, [pollId]);
 
+  const waitForOrbModeSync = useCallback(async (): Promise<boolean> => {
+    for (let attempt = 0; attempt < ORB_MODE_SYNC_ATTEMPTS; attempt += 1) {
+      const result = await refetchUser();
+      if (result.data?.is_orb_mode) {
+        return true;
+      }
+
+      if (attempt < ORB_MODE_SYNC_ATTEMPTS - 1) {
+        await new Promise((resolve) => setTimeout(resolve, ORB_MODE_SYNC_DELAY_MS));
+      }
+    }
+
+    return false;
+  }, [refetchUser]);
+
+  const completeSubscription = useCallback(async () => {
+    await refresh();
+    const isSynced = await waitForOrbModeSync();
+
+    if (!isSynced) {
+      Alert.alert(
+        '결제 완료',
+        'Orb Mode 구독은 완료됐지만 서버에 반영 중이에요. 잠시 후 다시 확인해주세요.',
+        [{ text: '확인', onPress: () => router.back() }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      '구독 완료!',
+      pollId ? '이제 받은 하트의 힌트를 확인할 수 있어요!' : 'Orb Mode가 활성화되었습니다!',
+      [
+        {
+          text: pollId ? '힌트 보러 가기' : '확인',
+          onPress: finishAfterSubscribe,
+        },
+      ]
+    );
+  }, [finishAfterSubscribe, pollId, refresh, waitForOrbModeSync]);
+
   // Skip RevenueCatUI Paywall - use Custom Paywall directly
   // RevenueCatUI requires Dashboard Paywall configuration which is not set up
   const [useCustomPaywall, setUseCustomPaywall] = useState(true);
@@ -72,7 +116,7 @@ export default function SubscriptionScreen() {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<string>(PRODUCT_IDS.MONTHLY);
+  const [selectedPackage, setSelectedPackage] = useState<string>(PACKAGE_IDS.MONTHLY);
 
   // RevenueCatUI Paywall - currently disabled
   // Enable this when Dashboard Paywall is configured and published
@@ -92,10 +136,7 @@ export default function SubscriptionScreen() {
         const result = await presentPaywall();
 
         if (result.purchased || result.restored) {
-          // Success! Refresh user and go back
-          await refetchUser();
-          await refresh();
-          finishAfterSubscribe();
+          await completeSubscription();
           return;
         }
 
@@ -119,7 +160,7 @@ export default function SubscriptionScreen() {
     }
 
     tryRevenueCatPaywall();
-  }, [useCustomPaywall, refetchUser, refresh, finishAfterSubscribe]);
+  }, [useCustomPaywall, completeSubscription]);
 
   // Load offerings for custom paywall
   useEffect(() => {
@@ -162,23 +203,12 @@ export default function SubscriptionScreen() {
       const customerInfo = await purchasePackage(pkg);
 
       // Check subscription success
-      const hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
-      if (hasEntitlement) {
-        await refetchUser();
-        await refresh();
-
-        Alert.alert(
-          '구독 완료!',
-          pollId ? '이제 받은 하트의 힌트를 확인할 수 있어요!' : 'Pro 기능이 활성화되었습니다!',
-          [
-            {
-              text: pollId ? '힌트 보러 가기' : '확인',
-              onPress: finishAfterSubscribe,
-            },
-          ]
-        );
+      if (hasOrbModeEntitlement(customerInfo)) {
+        await completeSubscription();
+      } else {
+        Alert.alert('구매 확인 필요', 'Orb Mode 구독 상태를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isPurchaseCancelled(error)) {
         logger.log('[Subscription] User cancelled purchase');
         return;
@@ -197,28 +227,15 @@ export default function SubscriptionScreen() {
       setIsRestoring(true);
       const customerInfo = await restorePurchases();
 
-      const hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
-      if (hasEntitlement) {
-        await refetchUser();
-        await refresh();
-
-        Alert.alert(
-          '복원 완료!',
-          '구독이 복원되었습니다.',
-          [
-            {
-              text: '확인',
-              onPress: finishAfterSubscribe,
-            },
-          ]
-        );
+      if (hasOrbModeEntitlement(customerInfo)) {
+        await completeSubscription();
       } else {
         Alert.alert(
           '복원 실패',
           '복원할 구독이 없습니다. 같은 Apple/Google 계정인지 확인해주세요.'
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[Subscription] Restore failed:', error);
       Alert.alert('복원 실패', getErrorMessage(error));
     } finally {
@@ -232,12 +249,10 @@ export default function SubscriptionScreen() {
     if (!pkg) {
       // Default prices (before RevenueCat connection)
       switch (packageId) {
-        case PRODUCT_IDS.MONTHLY:
+        case PACKAGE_IDS.MONTHLY:
           return { price: '$4.99', period: '월', savings: null };
-        case PRODUCT_IDS.YEARLY:
+        case PACKAGE_IDS.YEARLY:
           return { price: '$49.99', period: '년', savings: '17% 할인' };
-        case PRODUCT_IDS.LIFETIME:
-          return { price: '$99.99', period: '평생', savings: '베스트 가치' };
         default:
           return { price: '...', period: '', savings: null };
       }
@@ -246,8 +261,8 @@ export default function SubscriptionScreen() {
     const product = pkg.product;
 
     // Calculate savings for yearly
-    if (packageId === PRODUCT_IDS.YEARLY) {
-      const monthlyPkg = packages.find((p) => p.identifier === PRODUCT_IDS.MONTHLY);
+    if (packageId === PACKAGE_IDS.YEARLY) {
+      const monthlyPkg = packages.find((p) => p.identifier === PACKAGE_IDS.MONTHLY);
       if (monthlyPkg) {
         const annualPrice = product.price;
         const monthlyPrice = monthlyPkg.product.price * 12;
@@ -262,8 +277,8 @@ export default function SubscriptionScreen() {
 
     return {
       price: product.priceString,
-      period: packageId === PRODUCT_IDS.MONTHLY ? '월' : packageId === PRODUCT_IDS.YEARLY ? '년' : '평생',
-      savings: packageId === PRODUCT_IDS.LIFETIME ? '베스트 가치' : null,
+      period: packageId === PACKAGE_IDS.MONTHLY ? '월' : '년',
+      savings: null,
     };
   };
 
@@ -273,7 +288,7 @@ export default function SubscriptionScreen() {
       <>
         <Stack.Screen
           options={{
-            title: 'Pro',
+            title: 'Orb Mode',
             headerShown: true,
             headerBackTitle: '뒤로',
           }}
@@ -292,7 +307,7 @@ export default function SubscriptionScreen() {
       <>
         <Stack.Screen
           options={{
-            title: 'Pro',
+            title: 'Orb Mode',
             headerShown: true,
             headerBackTitle: '뒤로',
           }}
@@ -309,15 +324,13 @@ export default function SubscriptionScreen() {
     return null; // RevenueCatUI paywall handles everything
   }
 
-  const monthlyInfo = getPackageInfo(PRODUCT_IDS.MONTHLY);
-  const yearlyInfo = getPackageInfo(PRODUCT_IDS.YEARLY);
-  const lifetimeInfo = getPackageInfo(PRODUCT_IDS.LIFETIME);
-
+  const monthlyInfo = getPackageInfo(PACKAGE_IDS.MONTHLY);
+  const yearlyInfo = getPackageInfo(PACKAGE_IDS.YEARLY);
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Pro',
+          title: 'Orb Mode',
           headerShown: true,
           headerBackTitle: '뒤로',
         }}
@@ -334,17 +347,17 @@ export default function SubscriptionScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerEmoji}>{pollId ? '🔮' : '⭐'}</Text>
-            <Text style={styles.headerTitle}>Pro</Text>
+            <Text style={styles.headerTitle}>Orb Mode</Text>
             <Text style={styles.headerSubtitle}>
               {pollId
                 ? '이 하트를 보낸 사람의 안전 힌트를 확인해보세요'
-                : '모든 프리미엄 기능을 이용해보세요'}
+                : 'Orb Mode의 프리미엄 기능을 이용해보세요'}
             </Text>
           </View>
 
           {/* Features */}
           <View style={styles.featuresSection}>
-            <Text style={styles.sectionTitle}>Pro 혜택</Text>
+            <Text style={styles.sectionTitle}>Orb Mode 혜택</Text>
 
             <View style={styles.featureItem}>
               <Text style={styles.featureIcon}>👀</Text>
@@ -387,8 +400,8 @@ export default function SubscriptionScreen() {
               price={monthlyInfo.price}
               period={monthlyInfo.period}
               savings={monthlyInfo.savings}
-              isSelected={selectedPackage === PRODUCT_IDS.MONTHLY}
-              onPress={() => setSelectedPackage(PRODUCT_IDS.MONTHLY)}
+              isSelected={selectedPackage === PACKAGE_IDS.MONTHLY}
+              onPress={() => setSelectedPackage(PACKAGE_IDS.MONTHLY)}
               styles={styles}
             />
 
@@ -398,21 +411,11 @@ export default function SubscriptionScreen() {
               price={yearlyInfo.price}
               period={yearlyInfo.period}
               savings={yearlyInfo.savings}
-              isSelected={selectedPackage === PRODUCT_IDS.YEARLY}
-              onPress={() => setSelectedPackage(PRODUCT_IDS.YEARLY)}
+              isSelected={selectedPackage === PACKAGE_IDS.YEARLY}
+              onPress={() => setSelectedPackage(PACKAGE_IDS.YEARLY)}
               styles={styles}
             />
 
-            {/* Lifetime */}
-            <PriceCard
-              title="평생 구독"
-              price={lifetimeInfo.price}
-              period={lifetimeInfo.period}
-              savings={lifetimeInfo.savings}
-              isSelected={selectedPackage === PRODUCT_IDS.LIFETIME}
-              onPress={() => setSelectedPackage(PRODUCT_IDS.LIFETIME)}
-              styles={styles}
-            />
           </View>
 
           {/* Legal */}

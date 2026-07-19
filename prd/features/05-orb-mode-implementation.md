@@ -1,8 +1,8 @@
 # Orb Mode 구현 계획
 
 > **작성일**: 2025-01-11
-> **상태**: 진행 예정
-> **예상 기간**: 5-7일
+> **최종 갱신**: 2026-07-19
+> **상태**: 코드 구현 완료, 외부 결제 설정 및 Sandbox E2E 대기
 
 ---
 
@@ -12,9 +12,9 @@
 Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 
 ### 1.2 현재 상태
-- **완료율**: 85%
-- **핵심 기능**: 구현됨 (받은 하트 안전 힌트 로직)
-- **미완료**: 결제 시스템 연동, Subscription UI
+- **코드 구현**: 완료 (안전 힌트, Subscription UI, RevenueCat SDK, Backend Webhook)
+- **프로덕션 계약**: entitlement `orb_mode`, 상품 `orb_mode_monthly`/`orb_mode_annual`
+- **남은 작업**: App Store Connect/Google Play/RevenueCat Dashboard 설정, 플랫폼 public SDK key 및 webhook secret 주입, Development Build Sandbox E2E
 
 ### 1.3 MVP 범위
 - 실명/계정 직접 공개 대신 안전한 단계형 힌트 시스템을 기본 계약으로 사용
@@ -26,7 +26,7 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 
 ## 2. 현재 구현 상태
 
-### 2.1 완료 항목 (85%)
+### 2.1 코드 구현 완료 항목
 
 | 영역 | 항목 | 파일 위치 |
 |------|------|----------|
@@ -41,12 +41,16 @@ Circly Orb Mode (유료화) MVP 완성 - RevenueCat 결제 시스템 연동
 | Frontend | useMyVoteHints() React Query 훅 | `frontend/src/hooks/usePolls.ts` |
 | Frontend | 안전 힌트 화면 | `frontend/app/results/[id]/hints.tsx` |
 | Frontend | 구독 유도 모달 (Alert) | `frontend/app/results/[id].tsx` |
+| Backend | RevenueCat Webhook 및 idempotency | `backend/app/modules/subscription/` |
+| Frontend | RevenueCat SDK 래퍼 및 구독 상태 훅 | `frontend/src/services/subscription/revenuecat.ts`, `frontend/src/hooks/useSubscription.ts` |
+| Frontend | 월간/연간 Paywall 및 구매 복원 | `frontend/app/subscription/index.tsx` |
 
-### 2.2 미완료 항목 (15%)
+### 2.2 외부 설정 및 검증 대기
 
-1. **Backend 테스트 코드** - Orb Mode 권한 검증 테스트
-2. **RevenueCat 연동** - 결제 시스템 (Backend Webhook + Frontend SDK)
-3. **Subscription 화면** - Paywall UI
+1. App Store Connect 및 Google Play Console에 월간/연간 구독 상품 생성
+2. RevenueCat Dashboard에서 `orb_mode` entitlement, offering, 월간/연간 package 연결
+3. 배포 환경에 플랫폼 public SDK key와 `REVENUECAT_WEBHOOK_SECRET` 주입
+4. Development Build에서 구매·복원·갱신·취소·만료 Sandbox E2E 수행
 
 ---
 
@@ -212,7 +216,8 @@ async def handle_webhook(request: Request):
     # 3. 이벤트 처리
     #    - INITIAL_PURCHASE → is_orb_mode=True
     #    - RENEWAL → is_orb_mode=True (갱신)
-    #    - CANCELLATION/EXPIRATION → is_orb_mode=False
+    #    - CANCELLATION → 만료일까지 유지
+    #    - EXPIRATION/BILLING_ISSUE → is_orb_mode=False
     # 4. 200 반환
 ```
 

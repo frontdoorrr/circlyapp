@@ -25,6 +25,7 @@ import { tokens } from '../theme';
 import {
   initializePurchases,
   addCustomerInfoUpdateListener,
+  hasOrbModeEntitlement,
 } from '../services/subscription/revenuecat';
 import { logger } from '../utils/logger';
 
@@ -187,10 +188,13 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
         // 구독 상태 변경 리스너 등록
         removeListener = addCustomerInfoUpdateListener((customerInfo) => {
-          const isPro = customerInfo.entitlements.active['frontdoorrr Pro'] !== undefined;
-          logger.log('[AppInitializer] 구독 상태 변경:', isPro ? 'Pro 활성' : 'Pro 비활성');
+          const hasOrbMode = hasOrbModeEntitlement(customerInfo);
+          logger.log(
+            '[AppInitializer] 구독 상태 변경:',
+            hasOrbMode ? 'Orb Mode 활성' : 'Orb Mode 비활성'
+          );
 
-          // 사용자 정보 새로고침 (Pro 구독 상태 반영을 위해)
+          // 사용자 정보 새로고침 (Orb Mode 구독 상태 반영을 위해)
           authApi.getCurrentUser().then((updatedUser) => {
             setUser(updatedUser);
           }).catch((error) => {

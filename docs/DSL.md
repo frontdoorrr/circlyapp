@@ -1506,6 +1506,13 @@ security SecurityPolicy {
             - 핵심 수익화 모델
             - API: GET /api/v1/polls/{id}/hints
             - Circle 멤버십 검증 필수
+            - RevenueCat entitlement: `orb_mode`
+            - Store product IDs: `orb_mode_monthly`, `orb_mode_annual`
+            - RevenueCat package IDs: `$rc_monthly`, `$rc_annual`
+            - RevenueCat app_user_id는 인증된 User.id(UUID)와 일치
+            - `orb_mode` entitlement가 포함된 webhook만 User.is_orb_mode를 변경
+            - CANCELLATION은 만료일까지 권한 유지, EXPIRATION/BILLING_ISSUE에서 비활성화
+            - webhook 처리 실패는 non-2xx로 응답하여 RevenueCat 재시도 허용
         }
     }
 

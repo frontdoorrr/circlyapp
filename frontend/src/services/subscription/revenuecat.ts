@@ -14,27 +14,39 @@ import Purchases, {
   PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { logger } from '../../utils/logger';
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-// RevenueCat API Keys
-// For production, use environment variables:
-// const API_KEY = Constants.expoConfig?.extra?.revenueCatApiKey ?? 'YOUR_KEY';
-const REVENUECAT_API_KEY = 'test_buCwmBrvrkYvGBmDlmmgplDcQai';
+export const ORB_MODE_ENTITLEMENT = 'orb_mode';
 
-// Entitlement identifier
-const PRO_ENTITLEMENT = 'frontdoorrr Pro';
+function getRevenueCatApiKey(): string | null {
+  const platformKey =
+    Platform.OS === 'ios'
+      ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY
+      : Platform.OS === 'android'
+        ? process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
+        : undefined;
 
-// Product identifiers
+  const testStoreKey = __DEV__
+    ? process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY?.trim()
+    : undefined;
+
+  return platformKey?.trim() || testStoreKey || null;
+}
+
 // RevenueCat standard package identifiers
-export const PRODUCT_IDS = {
+export const PACKAGE_IDS = {
   MONTHLY: '$rc_monthly',
   YEARLY: '$rc_annual',
-  LIFETIME: '$rc_lifetime',
+} as const;
+
+export const ORB_MODE_PRODUCT_IDS = {
+  MONTHLY: 'orb_mode_monthly',
+  YEARLY: 'orb_mode_annual',
 } as const;
 
 // ============================================================================
@@ -79,8 +91,14 @@ export async function initializePurchases(userId?: string): Promise<CustomerInfo
 
     // Configure SDK
     if (!isConfigured) {
+      const apiKey = getRevenueCatApiKey();
+      if (!apiKey) {
+        logger.warn(`[RevenueCat] ${Platform.OS} public SDK key is not configured`);
+        return null;
+      }
+
       Purchases.configure({
-        apiKey: REVENUECAT_API_KEY,
+        apiKey,
         appUserID: userId ?? null,
       });
       isConfigured = true;
@@ -113,7 +131,14 @@ export function isInitialized(): boolean {
 // ============================================================================
 
 /**
- * Check if user has active Pro subscription
+ * Check whether RevenueCat reports the Orb Mode entitlement as active.
+ */
+export function hasOrbModeEntitlement(customerInfo: CustomerInfo): boolean {
+  return customerInfo.entitlements.active[ORB_MODE_ENTITLEMENT] !== undefined;
+}
+
+/**
+ * Check if user has active Orb Mode subscription
  */
 export async function hasActiveSubscription(): Promise<boolean> {
   if (!isConfigured) {
@@ -123,7 +148,7 @@ export async function hasActiveSubscription(): Promise<boolean> {
 
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    return customerInfo.entitlements.active[PRO_ENTITLEMENT] !== undefined;
+    return hasOrbModeEntitlement(customerInfo);
   } catch (error) {
     logger.error('[RevenueCat] Failed to check subscription:', error);
     return false;
@@ -148,7 +173,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    const entitlement = customerInfo.entitlements.active[PRO_ENTITLEMENT];
+    const entitlement = customerInfo.entitlements.active[ORB_MODE_ENTITLEMENT];
 
     if (!entitlement) {
       return {
@@ -161,15 +186,13 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
       };
     }
 
-    const isLifetime = entitlement.productIdentifier === PRODUCT_IDS.LIFETIME;
-
     return {
       isSubscribed: true,
       entitlementInfo: entitlement,
       expirationDate: entitlement.expirationDate ? new Date(entitlement.expirationDate) : null,
       willRenew: entitlement.willRenew,
       productIdentifier: entitlement.productIdentifier,
-      isLifetime,
+      isLifetime: entitlement.expirationDate === null,
     };
   } catch (error) {
     logger.error('[RevenueCat] Failed to get subscription status:', error);
@@ -235,7 +258,7 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
  * Get specific package from current offering
  */
 export async function getPackage(
-  packageId: typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]
+  packageId: typeof PACKAGE_IDS[keyof typeof PACKAGE_IDS]
 ): Promise<PurchasesPackage | null> {
   const offering = await getOfferings();
   if (!offering) return null;
@@ -263,7 +286,7 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerIn
  * Purchase a product by ID
  */
 export async function purchaseProduct(
-  productId: typeof PRODUCT_IDS[keyof typeof PRODUCT_IDS]
+  productId: typeof PACKAGE_IDS[keyof typeof PACKAGE_IDS]
 ): Promise<CustomerInfo | null> {
   const pkg = await getPackage(productId);
 
@@ -352,7 +375,8 @@ export async function presentPaywallWithOffering(
     }
 
     const result = await RevenueCatUI.presentPaywallIfNeeded({
-      requiredEntitlementIdentifier: PRO_ENTITLEMENT,
+      requiredEntitlementIdentifier: ORB_MODE_ENTITLEMENT,
+      offering,
     });
 
     switch (result) {
@@ -375,7 +399,7 @@ export async function presentPaywallWithOffering(
 }
 
 /**
- * Present paywall only if user doesn't have Pro entitlement
+ * Present paywall only if user doesn't have Orb Mode entitlement
  */
 export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
   try {
@@ -386,7 +410,7 @@ export async function presentPaywallIfNeeded(): Promise<PaywallResult> {
     }
 
     const result = await RevenueCatUI.presentPaywallIfNeeded({
-      requiredEntitlementIdentifier: PRO_ENTITLEMENT,
+      requiredEntitlementIdentifier: ORB_MODE_ENTITLEMENT,
     });
 
     switch (result) {
@@ -567,12 +591,10 @@ export function formatExpirationDate(date: Date | null): string {
  */
 export function getSubscriptionPeriodName(productId: string | null): string {
   switch (productId) {
-    case PRODUCT_IDS.MONTHLY:
+    case ORB_MODE_PRODUCT_IDS.MONTHLY:
       return '월간';
-    case PRODUCT_IDS.YEARLY:
+    case ORB_MODE_PRODUCT_IDS.YEARLY:
       return '연간';
-    case PRODUCT_IDS.LIFETIME:
-      return '평생';
     default:
       return '구독';
   }

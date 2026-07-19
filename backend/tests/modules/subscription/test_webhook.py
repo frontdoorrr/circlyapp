@@ -1,13 +1,13 @@
 """Tests for RevenueCat Webhook handling."""
 
 import uuid
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import patch
 
 from app.modules.auth.models import User
 from app.modules.subscription.models import WebhookEvent
@@ -98,6 +98,7 @@ class TestRevenueCatWebhook:
                         "type": "RENEWAL",
                         "app_user_id": user_id,
                         "product_id": "orb_mode_monthly",
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -136,6 +137,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_expiration_{uuid.uuid4().hex[:8]}",
                         "type": "EXPIRATION",
                         "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -168,6 +170,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_billing_{uuid.uuid4().hex[:8]}",
                         "type": "BILLING_ISSUE",
                         "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -193,6 +196,7 @@ class TestRevenueCatWebhook:
                 "id": event_id,
                 "type": "INITIAL_PURCHASE",
                 "app_user_id": user_id,
+                "entitlement_ids": ["orb_mode"],
             },
         }
 
@@ -241,6 +245,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_cancel_{uuid.uuid4().hex[:8]}",
                         "type": "CANCELLATION",
                         "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -272,6 +277,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_unauthorized_{uuid.uuid4().hex[:8]}",
                         "type": "INITIAL_PURCHASE",
                         "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -346,6 +352,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_unknown_user_{uuid.uuid4().hex[:8]}",
                         "type": "INITIAL_PURCHASE",
                         "app_user_id": "00000000-0000-0000-0000-000000000000",
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -377,6 +384,7 @@ class TestRevenueCatWebhook:
                         "id": f"evt_uncancel_{uuid.uuid4().hex[:8]}",
                         "type": "UNCANCELLATION",
                         "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
                     },
                 },
             )
@@ -386,3 +394,98 @@ class TestRevenueCatWebhook:
         # Verify Orb Mode is activated
         await db_session.refresh(user)
         assert user.is_orb_mode is True
+
+    @pytest.mark.asyncio
+    async def test_webhook_other_entitlement_does_not_activate_orb_mode(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """A purchase for another entitlement must not unlock Orb Mode."""
+        user_id = await self._create_user(db_session)
+        event_id = f"evt_other_entitlement_{uuid.uuid4().hex[:8]}"
+
+        with patch("app.modules.subscription.router.get_settings") as mock_settings:
+            mock_settings.return_value.revenuecat_webhook_secret = ""
+            mock_settings.return_value.is_development = True
+
+            response = await client.post(
+                "/webhooks/revenuecat",
+                json={
+                    "api_version": "1.0",
+                    "event": {
+                        "id": event_id,
+                        "type": "INITIAL_PURCHASE",
+                        "app_user_id": user_id,
+                        "product_id": "other_monthly",
+                        "entitlement_ids": ["other_entitlement"],
+                    },
+                },
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        result = await db_session.execute(select(User).where(User.id == user_id))
+        assert result.scalar_one().is_orb_mode is False
+
+        webhook_repo = WebhookEventRepository(db_session)
+        assert await webhook_repo.find_by_event_id(event_id) is not None
+
+    @pytest.mark.asyncio
+    async def test_webhook_other_entitlement_does_not_deactivate_orb_mode(
+        self, client: AsyncClient, db_session: AsyncSession, enable_orb_mode_for_user
+    ) -> None:
+        """Expiration for another entitlement must not lock Orb Mode."""
+        user_id = await self._create_user(db_session)
+        await enable_orb_mode_for_user(user_id)
+
+        with patch("app.modules.subscription.router.get_settings") as mock_settings:
+            mock_settings.return_value.revenuecat_webhook_secret = ""
+            mock_settings.return_value.is_development = True
+
+            response = await client.post(
+                "/webhooks/revenuecat",
+                json={
+                    "api_version": "1.0",
+                    "event": {
+                        "id": f"evt_other_expiration_{uuid.uuid4().hex[:8]}",
+                        "type": "EXPIRATION",
+                        "app_user_id": user_id,
+                        "entitlement_ids": ["other_entitlement"],
+                    },
+                },
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        result = await db_session.execute(select(User).where(User.id == user_id))
+        assert result.scalar_one().is_orb_mode is True
+
+    @pytest.mark.asyncio
+    async def test_webhook_processing_failure_returns_retryable_error(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        """Unexpected processing failures must return non-2xx for RevenueCat retries."""
+        user_id = await self._create_user(db_session)
+
+        with (
+            patch("app.modules.subscription.router.get_settings") as mock_settings,
+            patch(
+                "app.modules.subscription.service.SubscriptionService.process_webhook",
+                new_callable=AsyncMock,
+                side_effect=RuntimeError("database unavailable"),
+            ),
+        ):
+            mock_settings.return_value.revenuecat_webhook_secret = ""
+            mock_settings.return_value.is_development = True
+
+            response = await client.post(
+                "/webhooks/revenuecat",
+                json={
+                    "api_version": "1.0",
+                    "event": {
+                        "id": f"evt_failure_{uuid.uuid4().hex[:8]}",
+                        "type": "INITIAL_PURCHASE",
+                        "app_user_id": user_id,
+                        "entitlement_ids": ["orb_mode"],
+                    },
+                },
+            )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

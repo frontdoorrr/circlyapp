@@ -948,3 +948,14 @@
   - [x] 시스템 모션 감소 활성화 시 화면 전환 애니메이션 비활성화
   - [x] `prd/design/03-animations.md`, `prd/design/05-complete-ui-specification.md` — 탭 메뉴와 본문 전환 계약 동기화
   - [x] TypeScript/lint/jest/iOS export 검증
+- [x] **18.32 RevenueCat 프로덕션 계약 정리** (P0)
+  > 참고 문서: `docs/DSL.md` (Subscription/Orb Mode), `prd/features/05-orb-mode-implementation.md`, `trd/07-development-deployment-setup.md`
+  - [x] Backend TDD — `orb_mode` entitlement 이벤트만 구독 상태에 반영하고 처리 실패 시 재시도 가능한 오류 응답
+  - [x] Frontend — 플랫폼별 RevenueCat public SDK key를 환경변수로 분리하고 `orb_mode` entitlement 판정을 공통화
+  - [x] 구매/복원 완료 후 Backend `is_orb_mode` 반영을 확인한 뒤 힌트 화면으로 이동
+  - [x] `.env.example`, DSL, Orb Mode 구현 문서 계약 동기화
+  - [x] 결제 모듈 테스트/린트 + Frontend 타입체크/린트/Jest/iOS export 검증 및 커밋
+- [ ] **18.33 Backend legacy 테스트 수집 오류 복구** (P1)
+  > 참고 문서: `docs/DSL.md` (Auth), `trd/06-authentication-architecture.md`
+  - [ ] Supabase Auth 전환 후 제거된 `create_access_token`을 참조하는 auth/polls legacy 테스트를 현재 인증 계약으로 갱신
+  - [ ] `backend` 전체 pytest 수집 및 회귀 테스트 복구

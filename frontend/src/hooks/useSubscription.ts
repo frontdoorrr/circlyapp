@@ -8,7 +8,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CustomerInfo } from 'react-native-purchases';
+import type {
+  CustomerInfo,
+  PurchasesOffering,
+  PurchasesPackage,
+} from 'react-native-purchases';
 import {
   getSubscriptionStatus,
   hasActiveSubscription,
@@ -21,11 +25,10 @@ import {
   addCustomerInfoUpdateListener,
   isPurchaseCancelled,
   getErrorMessage,
-  isInitialized,
+  hasOrbModeEntitlement,
   type SubscriptionStatus,
   type PaywallResult,
 } from '../services/subscription/revenuecat';
-import type { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
 import { logger } from '../utils/logger';
 
 // ============================================================================
@@ -181,8 +184,8 @@ export function useSubscription(): UseSubscriptionReturn {
     async (pkg: PurchasesPackage): Promise<boolean> => {
       try {
         setError(null);
-        await purchaseMutation.mutateAsync(pkg);
-        return true;
+        const customerInfo = await purchaseMutation.mutateAsync(pkg);
+        return hasOrbModeEntitlement(customerInfo);
       } catch (err) {
         if (isPurchaseCancelled(err)) {
           return false;
@@ -197,8 +200,7 @@ export function useSubscription(): UseSubscriptionReturn {
     try {
       setError(null);
       const customerInfo = await restoreMutation.mutateAsync();
-      const hasEntitlement = Object.keys(customerInfo.entitlements.active).length > 0;
-      return hasEntitlement;
+      return hasOrbModeEntitlement(customerInfo);
     } catch {
       return false;
     }

@@ -15,6 +15,8 @@ from app.modules.subscription.schemas import (
 
 logger = logging.getLogger(__name__)
 
+ORB_MODE_ENTITLEMENT = "orb_mode"
+
 # Event types that activate Orb Mode
 ACTIVATION_EVENTS = {
     "INITIAL_PURCHASE",
@@ -69,6 +71,7 @@ class SubscriptionService:
         event_id = event.id
         event_type = event.type
         app_user_id = event.app_user_id
+        entitlement_ids = event.entitlement_ids or []
 
         logger.info(
             "Processing webhook event: id=%s, type=%s, user=%s",
@@ -82,8 +85,15 @@ class SubscriptionService:
             logger.info("Duplicate event skipped: %s", event_id)
             return False
 
-        # 2. Determine action based on event type
-        if event_type in ACTIVATION_EVENTS:
+        # 2. Only Orb Mode entitlement events may change Orb Mode access.
+        if ORB_MODE_ENTITLEMENT not in entitlement_ids:
+            logger.info(
+                "Ignoring non-Orb entitlement event: id=%s, entitlements=%s",
+                event_id,
+                entitlement_ids,
+            )
+
+        elif event_type in ACTIVATION_EVENTS:
             await self._update_orb_mode(app_user_id, enabled=True)
             logger.info("Orb Mode activated for user: %s", app_user_id)
 

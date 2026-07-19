@@ -1,6 +1,7 @@
 """Subscription module router for RevenueCat webhook handling."""
 
 import logging
+import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -60,7 +61,7 @@ def verify_webhook_secret(authorization: str | None) -> bool:
         return False
 
     token = parts[1]
-    return token == settings.revenuecat_webhook_secret
+    return secrets.compare_digest(token, settings.revenuecat_webhook_secret)
 
 
 @router.post(
@@ -124,14 +125,14 @@ async def handle_revenuecat_webhook(
             )
 
     except Exception as e:
-        # Log error but return 200 to prevent RevenueCat from retrying
-        # (we've already logged the event, so we don't want duplicates)
+        # Return non-2xx so RevenueCat retries transient processing failures.
+        # The DB dependency rolls the transaction back when this exception is raised.
         logger.exception(
             "Error processing webhook event %s: %s",
             payload.event.id,
             str(e),
         )
-        return WebhookResponse(
-            success=False,
-            message="Error processing event, but acknowledged",
-        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook processing failed",
+        ) from e
