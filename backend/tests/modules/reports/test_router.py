@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ReportReason, ReportStatus, ReportTargetType
 from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import UserCreate
 from app.modules.reports.models import Report
 
 
@@ -21,7 +20,7 @@ class TestReportRouter:
         """Test POST /reports endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -29,7 +28,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -65,7 +64,7 @@ class TestReportRouter:
         """Test POST /reports without optional description."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -73,7 +72,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -103,7 +102,7 @@ class TestReportRouter:
         """Test creating duplicate report returns 400."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -111,7 +110,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -157,7 +156,7 @@ class TestReportRouter:
         """Test self-report returns 400."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -165,7 +164,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -204,7 +203,7 @@ class TestReportRouter:
             },
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
     async def test_create_report_invalid_target_type(
@@ -213,7 +212,7 @@ class TestReportRouter:
         """Test POST /reports with invalid target type."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -221,7 +220,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -240,7 +239,7 @@ class TestReportRouter:
             headers={"Authorization": f"Bearer {token}"},
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     @pytest.mark.asyncio
     async def test_create_report_invalid_reason(
@@ -249,7 +248,7 @@ class TestReportRouter:
         """Test POST /reports with invalid reason."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -257,7 +256,7 @@ class TestReportRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "reporter@example.com",
                 "password": "password123",
@@ -276,4 +275,4 @@ class TestReportRouter:
             headers={"Authorization": f"Bearer {token}"},
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

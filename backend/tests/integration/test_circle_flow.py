@@ -31,17 +31,17 @@ class TestCircleFlow:
         """
         # Step 1: Owner registers
         owner_register = await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
                 "username": "circleowner",
             },
         )
-        assert owner_register.status_code == status.HTTP_201_CREATED
+        assert owner_register.status_code == status.HTTP_200_OK
 
         owner_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -68,17 +68,17 @@ class TestCircleFlow:
 
         # Step 3: Member registers
         member_register = await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "member@example.com",
                 "password": "password123",
                 "username": "circlemember",
             },
         )
-        assert member_register.status_code == status.HTTP_201_CREATED
+        assert member_register.status_code == status.HTTP_200_OK
 
         member_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "member@example.com",
                 "password": "password123",
@@ -144,7 +144,7 @@ class TestCircleFlow:
         """Test joining with non-existent invite code."""
         # Register user
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -152,7 +152,7 @@ class TestCircleFlow:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -179,7 +179,7 @@ class TestCircleFlow:
         """Test that existing member cannot join again."""
         # Owner registers and creates circle
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -187,7 +187,7 @@ class TestCircleFlow:
             },
         )
         owner_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -221,7 +221,7 @@ class TestCircleFlow:
         """Test user can list their circles."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -229,7 +229,7 @@ class TestCircleFlow:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -268,7 +268,7 @@ class TestCircleFlow:
         """Test that non-member cannot view circle details."""
         # Owner creates circle
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -276,7 +276,7 @@ class TestCircleFlow:
             },
         )
         owner_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -293,7 +293,7 @@ class TestCircleFlow:
 
         # Non-member registers
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",
@@ -301,7 +301,7 @@ class TestCircleFlow:
             },
         )
         outsider_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",

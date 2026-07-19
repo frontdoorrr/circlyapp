@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NotificationType
 from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import UserCreate
 from app.modules.notifications.models import Notification
 
 
@@ -19,7 +18,7 @@ class TestNotificationRouter:
         """Test GET /notifications endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -27,7 +26,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -75,7 +74,7 @@ class TestNotificationRouter:
         """Test GET /notifications with pagination."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -83,7 +82,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -123,14 +122,14 @@ class TestNotificationRouter:
         response = await client.get("/notifications")
 
         # FastAPI returns 422 for missing required dependencies
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
     async def test_get_unread_count(self, client: AsyncClient, db_session: AsyncSession) -> None:
         """Test GET /notifications/unread-count endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -138,7 +137,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -190,7 +189,7 @@ class TestNotificationRouter:
         """Test PUT /notifications/{id}/read endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -198,7 +197,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -241,7 +240,7 @@ class TestNotificationRouter:
         """Test PUT /notifications/read-all endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -249,7 +248,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -297,7 +296,7 @@ class TestNotificationRouter:
         """Test marking non-existent notification as read."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -305,7 +304,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -335,7 +334,7 @@ class TestNotificationRouter:
         """Test marking another user's notification as read."""
         # Register user 1
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user1@example.com",
                 "password": "password123",
@@ -345,7 +344,7 @@ class TestNotificationRouter:
 
         # Register and login user 2
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user2@example.com",
                 "password": "password123",
@@ -353,7 +352,7 @@ class TestNotificationRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user2@example.com",
                 "password": "password123",

@@ -1,21 +1,12 @@
 """Tests for Poll Router."""
 
-import uuid
-from datetime import UTC, datetime, timedelta
-
 import pytest
 from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import MemberRole, TemplateCategory
-from app.core.security import create_access_token, generate_invite_code
-from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import UserCreate
-from app.modules.circles.repository import CircleRepository, MembershipRepository
-from app.modules.circles.schemas import CircleCreate
-from app.modules.polls.models import Poll, PollTemplate
-from app.modules.polls.repository import TemplateRepository
+from app.core.enums import TemplateCategory
+from app.modules.polls.models import PollTemplate
 
 
 @pytest.fixture
@@ -71,10 +62,10 @@ class TestPollRouter:
     async def test_create_poll(
         self, client: AsyncClient, templates_fixture: list[PollTemplate]
     ) -> None:
-        """Test POST /polls/circles/{circle_id}/polls endpoint."""
+        """Test POST /polls/circles/{circle_id} endpoint."""
         # Register and login
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -82,7 +73,7 @@ class TestPollRouter:
             },
         )
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "user@example.com",
                 "password": "password123",
@@ -100,7 +91,7 @@ class TestPollRouter:
 
         # Create poll
         response = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(templates_fixture[0].id),
                 "duration": "3H",
@@ -119,7 +110,7 @@ class TestPollRouter:
         """Test POST /polls/{poll_id}/vote endpoint."""
         # Register two users
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "voter@example.com",
                 "password": "password123",
@@ -127,7 +118,7 @@ class TestPollRouter:
             },
         )
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "target@example.com",
                 "password": "password123",
@@ -137,7 +128,7 @@ class TestPollRouter:
 
         # Login as voter
         login_response = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "voter@example.com",
                 "password": "password123",
@@ -147,7 +138,7 @@ class TestPollRouter:
 
         # Get target user id
         login_response2 = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "target@example.com",
                 "password": "password123",
@@ -173,7 +164,7 @@ class TestPollRouter:
 
         # Create poll
         poll_response = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(templates_fixture[0].id),
                 "duration": "3H",

@@ -1,332 +1,242 @@
-"""Tests for AuthService."""
+"""Tests for the current Supabase-backed AuthService."""
 
 import uuid
-from datetime import timedelta
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from supabase_auth.errors import AuthApiError
 
 from app.core.exceptions import BadRequestException, UnauthorizedException
-from app.core.security import create_access_token
 from app.modules.auth.repository import UserRepository
-from app.modules.auth.schemas import LoginRequest, UserCreate, UserUpdate
+from app.modules.auth.schemas import DevLoginRequest, LoginRequest, UserCreate, UserUpdate
 from app.modules.auth.service import AuthService
 
 
+def supabase_auth_response(
+    user_id: str,
+    *,
+    access_token: str = "supabase-access-token",
+    with_session: bool = True,
+) -> SimpleNamespace:
+    """Build the subset of the Supabase auth response used by AuthService."""
+    session = SimpleNamespace(access_token=access_token) if with_session else None
+    return SimpleNamespace(user=SimpleNamespace(id=user_id), session=session)
+
+
 class TestAuthServiceRegister:
-    """Tests for AuthService.register method."""
+    """Tests for Supabase registration and local profile creation."""
 
     @pytest.mark.asyncio
     async def test_register_success(self, db_session: AsyncSession) -> None:
-        """Test successful user registration."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        supabase_user_id = str(uuid.uuid4())
+        supabase = MagicMock()
+        supabase.auth.sign_up.return_value = supabase_auth_response(supabase_user_id)
 
-        user_data = UserCreate(
-            email="newuser@example.com",
-            password="securepassword123",
-            username="newuser",
-            display_name="New User",
-        )
+        with patch("app.modules.auth.service.get_supabase_client", return_value=supabase):
+            response = await service.register(
+                UserCreate(
+                    email="newuser@example.com",
+                    password="securepassword123",
+                    username="newuser",
+                    display_name="New User",
+                )
+            )
 
-        auth_response = await service.register(user_data)
-
-        assert auth_response is not None
-        assert auth_response.user.email == "newuser@example.com"
-        assert auth_response.user.username == "newuser"
-        assert auth_response.user.display_name == "New User"
-        assert auth_response.access_token is not None
-        assert auth_response.token_type == "bearer"
-
-        # Verify password was hashed (not stored as plain text)
-        user = await repo.find_by_email("newuser@example.com")
-        assert user is not None
-        assert user.hashed_password != "securepassword123"
+        assert response.user.email == "newuser@example.com"
+        assert response.user.supabase_user_id == supabase_user_id
+        assert response.user.username == "newuser"
+        assert response.access_token == "supabase-access-token"
+        supabase.auth.sign_up.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_register_duplicate_email(self, db_session: AsyncSession) -> None:
-        """Test registration with duplicate email."""
+    async def test_register_duplicate_supabase_user(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        supabase_user_id = str(uuid.uuid4())
+        await repo.create_from_supabase(supabase_user_id, "duplicate@example.com")
+        supabase = MagicMock()
+        supabase.auth.sign_up.return_value = supabase_auth_response(supabase_user_id)
 
-        user_data = UserCreate(
-            email="duplicate@example.com",
-            password="password123",
-        )
-
-        # Register first user
-        await service.register(user_data)
-
-        # Try to register with same email
-        with pytest.raises(BadRequestException) as exc_info:
-            await service.register(user_data)
-
-        assert "already registered" in str(exc_info.value).lower()
+        with (
+            patch("app.modules.auth.service.get_supabase_client", return_value=supabase),
+            pytest.raises(BadRequestException, match="already registered"),
+        ):
+            await service.register(
+                UserCreate(email="duplicate@example.com", password="password123")
+            )
 
     @pytest.mark.asyncio
-    async def test_register_without_optional_fields(self, db_session: AsyncSession) -> None:
-        """Test registration without optional fields."""
+    async def test_register_without_supabase_session(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
-
-        user_data = UserCreate(
-            email="minimal@example.com",
-            password="password123",
+        supabase = MagicMock()
+        supabase.auth.sign_up.return_value = supabase_auth_response(
+            str(uuid.uuid4()), with_session=False
         )
 
-        auth_response = await service.register(user_data)
+        with patch("app.modules.auth.service.get_supabase_client", return_value=supabase):
+            response = await service.register(
+                UserCreate(email="confirm@example.com", password="password123")
+            )
 
-        assert auth_response.user.email == "minimal@example.com"
-        assert auth_response.user.username is None
-        assert auth_response.user.display_name is None
-        assert auth_response.user.gender == "UNSPECIFIED"
-        assert auth_response.user.age_group == "UNSPECIFIED"
+        assert response.access_token == ""
+        assert response.user.email == "confirm@example.com"
 
 
 class TestAuthServiceLogin:
-    """Tests for AuthService.login method."""
+    """Tests for Supabase login and local profile lookup."""
 
     @pytest.mark.asyncio
-    async def test_login_success(self, db_session: AsyncSession) -> None:
-        """Test successful login."""
+    async def test_login_creates_missing_local_profile(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        supabase_user_id = str(uuid.uuid4())
+        supabase = MagicMock()
+        supabase.auth.sign_in_with_password.return_value = supabase_auth_response(supabase_user_id)
 
-        # Register a user first
-        user_data = UserCreate(
-            email="loginuser@example.com",
-            password="mypassword123",
-            username="loginuser",
-        )
-        await service.register(user_data)
+        with patch("app.modules.auth.service.get_supabase_client", return_value=supabase):
+            response = await service.login(
+                LoginRequest(email="loginuser@example.com", password="password123")
+            )
 
-        # Login with correct credentials
-        login_request = LoginRequest(
-            email="loginuser@example.com",
-            password="mypassword123",
-        )
-        auth_response = await service.login(login_request)
-
-        assert auth_response is not None
-        assert auth_response.user.email == "loginuser@example.com"
-        assert auth_response.user.username == "loginuser"
-        assert auth_response.access_token is not None
-        assert auth_response.token_type == "bearer"
+        assert response.user.email == "loginuser@example.com"
+        assert response.user.supabase_user_id == supabase_user_id
+        assert response.access_token == "supabase-access-token"
 
     @pytest.mark.asyncio
-    async def test_login_invalid_email(self, db_session: AsyncSession) -> None:
-        """Test login with non-existent email."""
+    async def test_login_reuses_local_profile(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
-
-        login_request = LoginRequest(
-            email="nonexistent@example.com",
-            password="password123",
+        supabase_user_id = str(uuid.uuid4())
+        existing = await repo.create_from_supabase(
+            supabase_user_id,
+            "existing@example.com",
+            username="existing",
         )
+        supabase = MagicMock()
+        supabase.auth.sign_in_with_password.return_value = supabase_auth_response(supabase_user_id)
 
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.login(login_request)
+        with patch("app.modules.auth.service.get_supabase_client", return_value=supabase):
+            response = await service.login(
+                LoginRequest(email="existing@example.com", password="password123")
+            )
 
-        assert "invalid credentials" in str(exc_info.value).lower()
+        assert response.user.id == existing.id
+        assert response.user.username == "existing"
 
     @pytest.mark.asyncio
-    async def test_login_invalid_password(self, db_session: AsyncSession) -> None:
-        """Test login with incorrect password."""
-        repo = UserRepository(db_session)
-        service = AuthService(repo)
-
-        # Register a user
-        user_data = UserCreate(
-            email="wrongpass@example.com",
-            password="correctpassword",
-        )
-        await service.register(user_data)
-
-        # Try to login with wrong password
-        login_request = LoginRequest(
-            email="wrongpass@example.com",
-            password="wrongpassword",
+    async def test_login_invalid_credentials(self, db_session: AsyncSession) -> None:
+        service = AuthService(UserRepository(db_session))
+        supabase = MagicMock()
+        supabase.auth.sign_in_with_password.side_effect = AuthApiError(
+            "Invalid credentials", 400, None
         )
 
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.login(login_request)
-
-        assert "invalid credentials" in str(exc_info.value).lower()
+        with (
+            patch("app.modules.auth.service.get_supabase_client", return_value=supabase),
+            pytest.raises(UnauthorizedException, match="Invalid credentials"),
+        ):
+            await service.login(LoginRequest(email="missing@example.com", password="password123"))
 
     @pytest.mark.asyncio
     async def test_login_inactive_user(self, db_session: AsyncSession) -> None:
-        """Test login with deactivated user account."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        supabase_user_id = str(uuid.uuid4())
+        user = await repo.create_from_supabase(supabase_user_id, "inactive@example.com")
+        await repo.deactivate(user.id)
+        supabase = MagicMock()
+        supabase.auth.sign_in_with_password.return_value = supabase_auth_response(supabase_user_id)
 
-        # Register and deactivate a user
-        user_data = UserCreate(
-            email="inactive@example.com",
-            password="password123",
-        )
-        auth_response = await service.register(user_data)
-        await repo.deactivate(auth_response.user.id)
-
-        # Try to login
-        login_request = LoginRequest(
-            email="inactive@example.com",
-            password="password123",
-        )
-
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.login(login_request)
-
-        assert "inactive" in str(exc_info.value).lower()
+        with (
+            patch("app.modules.auth.service.get_supabase_client", return_value=supabase),
+            pytest.raises(UnauthorizedException, match="inactive"),
+        ):
+            await service.login(LoginRequest(email="inactive@example.com", password="password123"))
 
 
-class TestAuthServiceGetCurrentUser:
-    """Tests for AuthService.get_current_user method."""
+class TestAuthServiceDevLogin:
+    """Tests for local development authentication."""
 
     @pytest.mark.asyncio
-    async def test_get_current_user_success(self, db_session: AsyncSession) -> None:
-        """Test getting current user with valid token."""
+    async def test_dev_login_creates_and_reuses_user(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        request = DevLoginRequest(email="dev@example.com", username="developer")
 
-        # Register a user
-        user_data = UserCreate(
-            email="tokenuser@example.com",
-            password="password123",
-            username="tokenuser",
-        )
-        auth_response = await service.register(user_data)
+        first = await service.dev_login(request)
+        second = await service.dev_login(request)
 
-        # Get current user using the token
-        user = await service.get_current_user(auth_response.access_token)
-
-        assert user is not None
-        assert user.id == auth_response.user.id
-        assert user.email == "tokenuser@example.com"
-        assert user.username == "tokenuser"
+        assert first.user.id == second.user.id
+        assert first.access_token == f"dev:{first.user.id}"
+        assert first.user.supabase_user_id == "dev:dev@example.com"
 
     @pytest.mark.asyncio
-    async def test_get_current_user_invalid_token(self, db_session: AsyncSession) -> None:
-        """Test getting current user with invalid token."""
+    async def test_dev_login_rejects_inactive_user(self, db_session: AsyncSession) -> None:
         repo = UserRepository(db_session)
         service = AuthService(repo)
+        user = await repo.create_from_supabase("dev:inactive@example.com", "inactive@example.com")
+        await repo.deactivate(user.id)
 
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.get_current_user("invalid.token.here")
-
-        assert "invalid token" in str(exc_info.value).lower()
-
-    @pytest.mark.asyncio
-    async def test_get_current_user_expired_token(self, db_session: AsyncSession) -> None:
-        """Test getting current user with expired token."""
-        repo = UserRepository(db_session)
-        service = AuthService(repo)
-
-        # Register a user
-        user_data = UserCreate(
-            email="expired@example.com",
-            password="password123",
-        )
-        auth_response = await service.register(user_data)
-
-        # Create an expired token (expires in -1 second)
-        expired_token = create_access_token(
-            subject=auth_response.user.id,
-            expires_delta=timedelta(seconds=-1),
-        )
-
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.get_current_user(expired_token)
-
-        assert "invalid token" in str(exc_info.value).lower()
-
-    @pytest.mark.asyncio
-    async def test_get_current_user_deleted_user(self, db_session: AsyncSession) -> None:
-        """Test getting current user when user is deleted from database."""
-        repo = UserRepository(db_session)
-        service = AuthService(repo)
-
-        # Register a user
-        user_data = UserCreate(
-            email="deleted@example.com",
-            password="password123",
-        )
-        auth_response = await service.register(user_data)
-
-        # Deactivate the user
-        await repo.deactivate(auth_response.user.id)
-
-        with pytest.raises(UnauthorizedException) as exc_info:
-            await service.get_current_user(auth_response.access_token)
-
-        assert "user not found" in str(exc_info.value).lower()
+        with pytest.raises(UnauthorizedException, match="inactive"):
+            await service.dev_login(DevLoginRequest(email="inactive@example.com"))
 
 
 class TestAuthServiceUpdateProfile:
-    """Tests for AuthService.update_profile method."""
+    """Tests for local profile updates."""
 
     @pytest.mark.asyncio
     async def test_update_profile_success(self, db_session: AsyncSession) -> None:
-        """Test successful profile update."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
-
-        # Register a user
-        user_data = UserCreate(
-            email="updateme@example.com",
-            password="password123",
+        user = await repo.create_from_supabase(
+            str(uuid.uuid4()),
+            "updateme@example.com",
             username="oldname",
         )
-        auth_response = await service.register(user_data)
 
-        # Update profile
-        update_data = UserUpdate(
-            username="newname",
-            display_name="New Display Name",
-            gender="MALE",
-            age_group="MID_TEEN",
-            profile_emoji="🎉",
+        updated = await service.update_profile(
+            user.id,
+            UserUpdate(
+                username="newname",
+                display_name="New Display Name",
+                gender="MALE",
+                age_group="MID_TEEN",
+                profile_emoji="🎉",
+            ),
         )
-        updated_user = await service.update_profile(auth_response.user.id, update_data)
 
-        assert updated_user is not None
-        assert updated_user.username == "newname"
-        assert updated_user.display_name == "New Display Name"
-        assert updated_user.gender == "MALE"
-        assert updated_user.age_group == "MID_TEEN"
-        assert updated_user.profile_emoji == "🎉"
+        assert updated.username == "newname"
+        assert updated.display_name == "New Display Name"
+        assert updated.gender == "MALE"
+        assert updated.age_group == "MID_TEEN"
+        assert updated.profile_emoji == "🎉"
 
     @pytest.mark.asyncio
     async def test_update_profile_partial(self, db_session: AsyncSession) -> None:
-        """Test partial profile update."""
         repo = UserRepository(db_session)
         service = AuthService(repo)
-
-        # Register a user
-        user_data = UserCreate(
-            email="partial@example.com",
-            password="password123",
+        user = await repo.create_from_supabase(
+            str(uuid.uuid4()),
+            "partial@example.com",
             username="originalname",
             display_name="Original Display",
         )
-        auth_response = await service.register(user_data)
 
-        # Update only display name
-        update_data = UserUpdate(display_name="Only Display Changed")
-        updated_user = await service.update_profile(auth_response.user.id, update_data)
+        updated = await service.update_profile(
+            user.id, UserUpdate(display_name="Only Display Changed")
+        )
 
-        assert updated_user is not None
-        assert updated_user.username == "originalname"  # unchanged
-        assert updated_user.display_name == "Only Display Changed"
+        assert updated.username == "originalname"
+        assert updated.display_name == "Only Display Changed"
 
     @pytest.mark.asyncio
     async def test_update_profile_nonexistent_user(self, db_session: AsyncSession) -> None:
-        """Test updating profile of non-existent user."""
-        repo = UserRepository(db_session)
-        service = AuthService(repo)
+        service = AuthService(UserRepository(db_session))
 
-        update_data = UserUpdate(username="newname")
-
-        with pytest.raises(BadRequestException) as exc_info:
-            await service.update_profile(uuid.uuid4(), update_data)
-
-        assert "not found" in str(exc_info.value).lower()
+        with pytest.raises(BadRequestException, match="not found"):
+            await service.update_profile(uuid.uuid4(), UserUpdate(username="newname"))

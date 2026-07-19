@@ -6,14 +6,12 @@ Tests the complete Poll flows:
 3. PollEndFlow: Results are calculated when poll ends
 """
 
-import uuid
-
 import pytest
 from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import PollStatus, TemplateCategory
+from app.core.enums import TemplateCategory
 from app.modules.polls.models import PollTemplate
 
 
@@ -42,7 +40,7 @@ class TestPollFlow:
         """Setup a circle with owner and two members for testing."""
         # Register owner
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -50,7 +48,7 @@ class TestPollFlow:
             },
         )
         owner_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "owner@example.com",
                 "password": "password123",
@@ -70,7 +68,7 @@ class TestPollFlow:
 
         # Register and join member 1
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "member1@example.com",
                 "password": "password123",
@@ -78,7 +76,7 @@ class TestPollFlow:
             },
         )
         member1_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "member1@example.com",
                 "password": "password123",
@@ -93,7 +91,7 @@ class TestPollFlow:
 
         # Register and join member 2
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "member2@example.com",
                 "password": "password123",
@@ -101,7 +99,7 @@ class TestPollFlow:
             },
         )
         member2_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "member2@example.com",
                 "password": "password123",
@@ -167,7 +165,7 @@ class TestPollFlow:
 
         # Step 1: Owner creates a poll
         create_poll = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(poll_template.id),
                 "duration": "1H",
@@ -244,7 +242,7 @@ class TestPollFlow:
 
         # Create poll
         create_poll = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(poll_template.id),
                 "duration": "1H",
@@ -302,7 +300,7 @@ class TestPollFlow:
 
         # Create poll
         create_poll = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(poll_template.id),
                 "duration": "1H",
@@ -393,7 +391,7 @@ class TestPollFlow:
 
         # Register outsider
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",
@@ -401,7 +399,7 @@ class TestPollFlow:
             },
         )
         outsider_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",
@@ -411,7 +409,7 @@ class TestPollFlow:
 
         # Try to create poll
         create_poll = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(poll_template.id),
                 "duration": "1H",
@@ -451,7 +449,7 @@ class TestPollFlow:
 
         # Create poll
         create_poll = await client.post(
-            f"/polls/circles/{circle_id}/polls",
+            f"/polls/circles/{circle_id}",
             json={
                 "template_id": str(poll_template.id),
                 "duration": "1H",
@@ -462,7 +460,7 @@ class TestPollFlow:
 
         # Register outsider
         await client.post(
-            "/auth/register",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",
@@ -470,7 +468,7 @@ class TestPollFlow:
             },
         )
         outsider_login = await client.post(
-            "/auth/login",
+            "/auth/dev-login",
             json={
                 "email": "outsider@example.com",
                 "password": "password123",

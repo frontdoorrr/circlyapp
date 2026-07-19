@@ -955,7 +955,8 @@
   - [x] 구매/복원 완료 후 Backend `is_orb_mode` 반영을 확인한 뒤 힌트 화면으로 이동
   - [x] `.env.example`, DSL, Orb Mode 구현 문서 계약 동기화
   - [x] 결제 모듈 테스트/린트 + Frontend 타입체크/린트/Jest/iOS export 검증 및 커밋
-- [ ] **18.33 Backend legacy 테스트 수집 오류 복구** (P1)
+- [x] **18.33 Backend legacy 테스트 수집 오류 복구** (P1)
   > 참고 문서: `docs/DSL.md` (Auth), `trd/06-authentication-architecture.md`
-  - [ ] Supabase Auth 전환 후 제거된 `create_access_token`을 참조하는 auth/polls legacy 테스트를 현재 인증 계약으로 갱신
-  - [ ] `backend` 전체 pytest 수집 및 회귀 테스트 복구
+  - [x] Supabase Auth 전환 후 제거된 `create_access_token` 및 `/auth/register`, `/auth/login` 참조를 현행 Supabase/dev auth 계약으로 갱신
+  - [x] Poll 생성 라우트와 미인증 응답 코드 등 legacy API 기대값을 현재 라우터 계약으로 갱신
+  - [x] `backend` 전체 pytest 복구: 168 passed, 1 skipped

@@ -28,7 +28,7 @@ class TestUserRepositoryCreate:
         assert user.email == "test@example.com"
         assert user.username == "testuser"
         assert user.display_name == "Test User"
-        assert user.hashed_password == "hashedpassword123"
+        assert user.supabase_user_id is None
         assert user.is_active is True
 
     @pytest.mark.asyncio

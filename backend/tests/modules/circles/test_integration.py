@@ -9,26 +9,26 @@ async def test_circle_flow(client: AsyncClient) -> None:
     """Test complete circle creation and joining flow."""
     # Register first user (owner)
     owner_response = await client.post(
-        "/auth/register",
+        "/auth/dev-login",
         json={
             "email": "owner@example.com",
             "password": "password123",
             "username": "owner",
         },
     )
-    assert owner_response.status_code == 201
+    assert owner_response.status_code == 200
     owner_token = owner_response.json()["access_token"]
 
     # Register second user (member)
     member_response = await client.post(
-        "/auth/register",
+        "/auth/dev-login",
         json={
             "email": "member@example.com",
             "password": "password123",
             "username": "member",
         },
     )
-    assert member_response.status_code == 201
+    assert member_response.status_code == 200
     member_token = member_response.json()["access_token"]
 
     # Create circle
