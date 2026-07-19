@@ -33,7 +33,8 @@ class CircleResponse(BaseModel):
     name: str
     description: str | None
     invite_code: str
-    invite_link_id: uuid.UUID | None
+    invite_code_expires_at: datetime
+    invite_link_id: uuid.UUID
     owner_id: uuid.UUID
     max_members: int
     member_count: int
@@ -68,7 +69,8 @@ class CircleDetail(BaseModel):
     name: str
     description: str | None
     invite_code: str
-    invite_link_id: uuid.UUID | None
+    invite_code_expires_at: datetime
+    invite_link_id: uuid.UUID
     owner_id: uuid.UUID
     max_members: int
     member_count: int
@@ -90,7 +92,6 @@ class JoinByCodeRequest(BaseModel):
 class JoinByLinkRequest(BaseModel):
     """Schema for joining circle by invite link."""
 
-    invite_link_id: uuid.UUID
     nickname: str | None = Field(None, min_length=1, max_length=50)
 
 
@@ -98,6 +99,8 @@ class RegenerateInviteCodeResponse(BaseModel):
     """Schema for regenerate invite code response."""
 
     invite_code: str
+    invite_code_expires_at: datetime
+    invite_link_id: uuid.UUID
     message: str = "Invite code regenerated successfully"
 
 

@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "C7BD46D5TK.com.frontdoorrrr.circly"
+        ],
+        "components": [
+          {
+            "/": "/join/*",
+            "comment": "Circly Circle invite links"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -74,6 +74,8 @@ Circle 생성/참여
 - 영구 링크 가입은 만료 가능한 6자리 코드로 변환하지 않고 `invite_link_id`로 직접 처리한다.
 - 공유 메시지에는 Circle 이름, 실제 초대 링크, 6자리 코드를 함께 표시한다.
 - 앱 설치 사용자는 링크 탭 시 참여 화면으로 이동한다.
+- HTTPS 도메인 검증 전에는 `circly://join/{invite_link_id}` 앱 스킴을 사용하고,
+  association 배포 후 `EXPO_PUBLIC_INVITE_BASE_URL`로 Universal/App Link를 활성화한다.
 - 웹 랜딩 및 설치 후 deferred deep link는 스토어 배포 단계의 후속 작업으로 분리한다.
 
 ### 3.2 라운드 정책
@@ -228,6 +230,7 @@ PollService.finalizeDuePolls(now, limit) -> finalizedCount
 
 - 링크를 탭하면 코드 수동 입력 없이 해당 Circle 참여 플로우로 이동한다.
 - 만료 코드는 거부되지만 유효한 영구 링크는 계속 가입에 사용할 수 있다.
+- 프로덕션 HTTPS 전환은 DNS, association 파일, Android signing fingerprint 배포 후 완료한다.
 
 ### 19.2 안전한 Circle 라운드 생성 (P0)
 

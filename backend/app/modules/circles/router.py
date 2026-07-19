@@ -11,6 +11,7 @@ from app.modules.circles.schemas import (
     CircleListResponse,
     CircleResponse,
     JoinByCodeRequest,
+    JoinByLinkRequest,
     MemberInfo,
     RegenerateInviteCodeResponse,
     ResolveInviteLinkResponse,
@@ -109,6 +110,25 @@ async def join_by_code(
     """Join a circle using invite code."""
     return await service.join_by_code(
         join_data.invite_code,
+        current_user.id,
+        join_data.nickname,
+    )
+
+
+@router.post(
+    "/join/link/{invite_link_id}",
+    response_model=CircleResponse,
+    summary="Join circle by permanent invite link",
+)
+async def join_by_link(
+    invite_link_id: uuid.UUID,
+    join_data: JoinByLinkRequest,
+    current_user: CurrentUserDep,
+    service: CircleServiceDep,
+) -> CircleResponse:
+    """Join a Circle directly without relying on the fallback code."""
+    return await service.join_by_link(
+        invite_link_id,
         current_user.id,
         join_data.nickname,
     )

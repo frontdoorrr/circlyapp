@@ -18,7 +18,7 @@ export interface CircleResponse {
   description: string | null;
   invite_code: string; // 6자리
   invite_code_expires_at: string; // ISO 8601
-  invite_link_id: string | null; // 초대 링크 ID (UUID, 영구 사용)
+  invite_link_id: string; // 초대 링크 ID (UUID, 영구 사용)
   owner_id: string; // UUID
   max_members: number;
   member_count: number;
@@ -48,10 +48,15 @@ export interface JoinByCodeRequest {
   nickname?: string; // Circle 내 사용할 닉네임 (선택)
 }
 
+export interface JoinByLinkRequest {
+  nickname?: string;
+}
+
 export interface RegenerateInviteCodeResponse {
   invite_code: string;
   message: string; // 성공 메시지
-  invite_code_expires_at?: string; // 만료 시간 (선택, 백엔드 확인 필요)
+  invite_code_expires_at: string;
+  invite_link_id: string;
 }
 
 export interface ValidateInviteCodeResponse {
@@ -64,5 +69,5 @@ export interface ValidateInviteCodeResponse {
 }
 
 export interface ResolveInviteLinkResponse extends ValidateInviteCodeResponse {
-  invite_code: string | null;
+  invite_code?: string | null; // 구버전 응답 호환용; 영구 링크 가입에는 사용하지 않음
 }

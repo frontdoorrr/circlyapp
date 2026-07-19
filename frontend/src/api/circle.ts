@@ -8,6 +8,7 @@ import {
   CircleDetail,
   CircleResponse,
   JoinByCodeRequest,
+  JoinByLinkRequest,
   MemberInfo,
   RegenerateInviteCodeResponse,
   ResolveInviteLinkResponse,
@@ -97,6 +98,22 @@ export async function joinCircleByCode(data: JoinByCodeRequest): Promise<CircleR
   logger.log('[API] POST /circles/join/code 요청:', data);
   const response = await apiClient.post<ApiResponse<CircleResponse>>('/circles/join/code', data);
   logger.log('[API] POST /circles/join/code 응답:', { status: response.status });
+  return extractData<CircleResponse>(response.data, (d) => d.id && d.name);
+}
+
+/**
+ * 영구 초대 링크로 Circle 참여
+ */
+export async function joinCircleByLink(
+  inviteLinkId: string,
+  data: JoinByLinkRequest
+): Promise<CircleResponse> {
+  logger.log('[API] POST /circles/join/link/:id 요청:', inviteLinkId);
+  const response = await apiClient.post<ApiResponse<CircleResponse>>(
+    `/circles/join/link/${inviteLinkId}`,
+    data
+  );
+  logger.log('[API] POST /circles/join/link/:id 응답:', { status: response.status });
   return extractData<CircleResponse>(response.data, (d) => d.id && d.name);
 }
 

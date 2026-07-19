@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -9,7 +9,9 @@ import { QueryProvider } from '../src/providers/QueryProvider';
 import { AppInitializer } from '../src/providers/AppInitializer';
 import { ToastProvider } from '../src/providers/ToastProvider';
 import { logger } from '../src/utils/logger';
-import { resolveInviteLink } from '../src/api/circle';
+import { useAuthStore } from '../src/stores/auth';
+import { savePendingInviteLinkId } from '../src/services/invite/pendingInvite';
+import { extractInviteLinkId } from '../src/services/invite/inviteUrl';
 
 /**
  * Root Layout
@@ -50,6 +52,7 @@ export default function RootLayout() {
  */
 function useDeepLinkHandler() {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     // Handle deep link when app is opened from link
@@ -72,20 +75,19 @@ function useDeepLinkHandler() {
           return;
         }
 
-        // Handle https://circly.app/join/{unique_id} or circly://join/{id}
-        if (parsedUrl.path?.startsWith('join/')) {
-          const uniqueId = parsedUrl.path.replace('join/', '');
+        // Handle https://host/join/{unique_id} or circly://join/{id}
+        const uniqueId = extractInviteLinkId(url);
+        if (uniqueId) {
           logger.log('[DeepLink] Navigating with unique ID:', uniqueId);
-          const result = await resolveInviteLink(uniqueId);
+          await savePendingInviteLinkId(uniqueId);
 
-          if (result.valid && result.invite_code) {
+          if (isAuthenticated) {
             router.push({
-              pathname: '/join/invite-code',
-              params: { code: result.invite_code },
+              pathname: '/join/invite-link',
+              params: { linkId: uniqueId },
             });
           } else {
-            logger.warn('[DeepLink] Invalid invite link:', result.message);
-            router.push('/join/invite-code');
+            router.push('/(auth)/login');
           }
           return;
         }
@@ -108,7 +110,7 @@ function useDeepLinkHandler() {
     return () => {
       subscription.remove();
     };
-  }, [router]);
+  }, [isAuthenticated, router]);
 }
 
 /**
@@ -134,6 +136,7 @@ function ThemedApp() {
         {/* Auth & Onboarding */}
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
         <Stack.Screen name="join/invite-code" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="join/invite-link" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="join/nickname" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="join/success" options={{ animation: 'slide_from_right' }} />
 

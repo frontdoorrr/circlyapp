@@ -413,6 +413,7 @@ module Circle {
 
         await function joinByCode(userId: UUID, code: String, nickname: String) -> Result<Membership, Error>
         await function joinByLink(userId: UUID, linkId: UUID, nickname: String) -> Result<Membership, Error>
+        // 영구 linkId로 직접 가입하며 만료 가능한 inviteCode로 변환하지 않음
         await function resolveInviteLink(linkId: UUID) -> Result<ResolveInviteLinkResponse, Error>
         await function leaveCircle(circleId: UUID, userId: UUID) -> Result<Void, Error>
         await function removeMember(circleId: UUID, targetUserId: UUID, requesterId: UUID) -> Result<Void, Error>
@@ -488,7 +489,6 @@ module Circle {
 
     type ResolveInviteLinkResponse {
         valid: Boolean
-        inviteCode: String?
         circleName: String?
         circleId: UUID?
         memberCount: Integer?
@@ -1080,6 +1080,8 @@ workflow JoinCircleFlow {
     2. POST /api/v1/circles/join/code (또는 /join/link/{linkId})
     3. CircleService.joinByCode() 또는 joinByLink()
        - Circle 존재 확인
+       - 6자리 코드는 발급 후 24시간 만료 확인
+       - 영구 linkId 가입은 6자리 코드 만료와 독립적으로 처리
        - 멤버 제한 확인 (validateMemberLimit)
        - 중복 가입 확인
        - Membership 생성

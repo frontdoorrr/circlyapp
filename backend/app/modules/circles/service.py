@@ -1,6 +1,7 @@
 """Business logic for circles module."""
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from app.core.enums import MemberRole
 from app.core.exceptions import (
@@ -27,6 +28,8 @@ from app.modules.polls.repository import PollRepository
 
 class CircleService:
     """Service for circle operations."""
+
+    INVITE_CODE_TTL = timedelta(hours=24)
 
     def __init__(
         self,
@@ -94,8 +97,31 @@ class CircleService:
         """
         # Find circle by invite code
         circle = await self.circle_repo.find_by_invite_code(invite_code)
+        if circle is None or not circle.is_active or self._is_invite_code_expired(circle):
+            raise InvalidInviteCodeError()
+
+        return await self._join_circle(circle, user_id, nickname)
+
+    async def join_by_link(
+        self,
+        invite_link_id: uuid.UUID,
+        user_id: uuid.UUID,
+        nickname: str | None = None,
+    ) -> CircleResponse:
+        """Join a Circle through its permanent link identifier."""
+        circle = await self.circle_repo.find_by_invite_link_id(invite_link_id)
         if circle is None or not circle.is_active:
             raise InvalidInviteCodeError()
+
+        return await self._join_circle(circle, user_id, nickname)
+
+    async def _join_circle(
+        self,
+        circle: Circle,
+        user_id: uuid.UUID,
+        nickname: str | None,
+    ) -> CircleResponse:
+        """Apply the shared membership checks and join mutation."""
 
         # Check if already a member
         is_member = await self.membership_repo.exists(circle.id, user_id)
@@ -114,7 +140,17 @@ class CircleService:
 
         # Refresh circle data
         updated_circle = await self.circle_repo.find_by_id(circle.id)
+        if updated_circle is None:
+            raise CircleNotFoundError(str(circle.id))
         return await self._to_circle_response(updated_circle)
+
+    @staticmethod
+    def _is_invite_code_expired(circle: Circle) -> bool:
+        """Return whether a Circle's fallback invite code has expired."""
+        expires_at = circle.invite_code_expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        return expires_at <= datetime.now(UTC)
 
     async def get_user_circles(self, user_id: uuid.UUID) -> list[CircleResponse]:
         """Get all circles a user is a member of.
@@ -238,11 +274,22 @@ class CircleService:
 
         # Generate new invite code
         new_code = generate_invite_code()
+        expires_at = datetime.now(UTC) + self.INVITE_CODE_TTL
 
         # Update circle
-        await self.circle_repo.update_invite_code(circle_id, new_code)
+        updated_circle = await self.circle_repo.update_invite_code(
+            circle_id,
+            new_code,
+            expires_at,
+        )
+        if updated_circle is None:
+            raise CircleNotFoundError(str(circle_id))
 
-        return RegenerateInviteCodeResponse(invite_code=new_code)
+        return RegenerateInviteCodeResponse(
+            invite_code=new_code,
+            invite_code_expires_at=expires_at,
+            invite_link_id=updated_circle.invite_link_id,
+        )
 
     async def validate_invite_code(
         self,
@@ -259,7 +306,7 @@ class CircleService:
         # Find circle by invite code
         circle = await self.circle_repo.find_by_invite_code(invite_code)
 
-        if circle is None or not circle.is_active:
+        if circle is None or not circle.is_active or self._is_invite_code_expired(circle):
             return ValidateInviteCodeResponse(
                 valid=False,
                 message="Invalid or expired invite code",
@@ -288,7 +335,7 @@ class CircleService:
         self,
         invite_link_id: uuid.UUID,
     ) -> ResolveInviteLinkResponse:
-        """Resolve a permanent invite link ID to the current invite code."""
+        """Resolve a permanent invite link without depending on fallback code expiry."""
         circle = await self.circle_repo.find_by_invite_link_id(invite_link_id)
 
         if circle is None or not circle.is_active:
@@ -309,7 +356,6 @@ class CircleService:
 
         return ResolveInviteLinkResponse(
             valid=True,
-            invite_code=circle.invite_code,
             circle_name=circle.name,
             circle_id=circle.id,
             member_count=circle.member_count,

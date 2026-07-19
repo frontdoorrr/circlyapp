@@ -28,6 +28,7 @@ import {
   hasOrbModeEntitlement,
 } from '../services/subscription/revenuecat';
 import { logger } from '../utils/logger';
+import { getPendingInviteLinkId } from '../services/invite/pendingInvite';
 
 interface AppInitializerProps {
   children: ReactNode;
@@ -144,15 +145,35 @@ export function AppInitializer({ children }: AppInitializerProps) {
     if (!isReady || isLoading || showOnboarding) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    let cancelled = false;
 
-    // 로그인되지 않았는데 메인 화면에 있으면 → 로그인 화면으로
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login');
+    async function routeForAuthState() {
+      // 로그인되지 않았는데 메인 화면에 있으면 → 로그인 화면으로
+      if (!isAuthenticated && !inAuthGroup) {
+        router.replace('/(auth)/login');
+        return;
+      }
+
+      // 로그인되었는데 로그인 화면에 있으면 → 보존한 초대 또는 Home
+      if (isAuthenticated && inAuthGroup) {
+        const pendingInviteLinkId = await getPendingInviteLinkId();
+        if (cancelled) return;
+
+        if (pendingInviteLinkId) {
+          router.replace({
+            pathname: '/join/invite-link',
+            params: { linkId: pendingInviteLinkId },
+          });
+        } else {
+          router.replace('/(main)/(0-home)');
+        }
+      }
     }
-    // 로그인되었는데 로그인 화면에 있으면 → Home 화면으로
-    else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(main)/(0-home)');
-    }
+
+    routeForAuthState();
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated, segments, isReady, isLoading, showOnboarding, router]);
 
   // 3. 인증 성공 시 푸시 토큰 등록

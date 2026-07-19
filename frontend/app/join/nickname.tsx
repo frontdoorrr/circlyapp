@@ -6,7 +6,8 @@ import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from '
 import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
-import { useJoinCircle } from '../../src/hooks/useCircles';
+import { useJoinCircle, useJoinCircleByLink } from '../../src/hooks/useCircles';
+import { clearPendingInviteLinkId } from '../../src/services/invite/pendingInvite';
 import { logger } from '../../src/utils/logger';
 
 /**
@@ -18,8 +19,9 @@ import { logger } from '../../src/utils/logger';
  * - 완료 시 성공 화면으로 이동
  */
 export default function NicknameScreen() {
-  const { inviteCode, circleName, circleId, memberCount, maxMembers } = useLocalSearchParams<{
-    inviteCode: string;
+  const { inviteCode, inviteLinkId, circleName, circleId, memberCount, maxMembers } = useLocalSearchParams<{
+    inviteCode?: string;
+    inviteLinkId?: string;
     circleName: string;
     circleId: string;
     memberCount: string;
@@ -32,7 +34,8 @@ export default function NicknameScreen() {
   const [error, setError] = useState('');
 
   const joinMutation = useJoinCircle();
-  const isJoining = joinMutation.isPending;
+  const joinByLinkMutation = useJoinCircleByLink(inviteLinkId ?? '');
+  const isJoining = joinMutation.isPending || joinByLinkMutation.isPending;
 
   // Animation values
   const buttonScale = useSharedValue(1);
@@ -63,10 +66,17 @@ export default function NicknameScreen() {
     });
 
     try {
-      await joinMutation.mutateAsync({
-        invite_code: inviteCode,
-        nickname: nickname,
-      });
+      if (inviteLinkId) {
+        await joinByLinkMutation.mutateAsync({ nickname });
+        await clearPendingInviteLinkId();
+      } else if (inviteCode) {
+        await joinMutation.mutateAsync({
+          invite_code: inviteCode,
+          nickname,
+        });
+      } else {
+        throw new Error('초대 정보가 없습니다');
+      }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
@@ -83,16 +93,30 @@ export default function NicknameScreen() {
       logger.error('[Nickname] Join error:', err);
 
       // 에러 처리
+      const errorCode = err?.response?.data?.error?.code || '';
       const errorMessage = err?.response?.data?.error?.message || err?.message || '';
 
-      if (errorMessage.includes('already') || errorMessage.includes('ALREADY_MEMBER')) {
+      if (errorCode === 'ALREADY_MEMBER' || errorMessage.includes('already')) {
+        if (inviteLinkId) {
+          await clearPendingInviteLinkId();
+        }
+        if (circleId) {
+          router.replace({ pathname: '/circle/[id]', params: { id: circleId } });
+          return;
+        }
         setError('이미 참여 중인 Circle이에요');
-      } else if (errorMessage.includes('duplicate') || errorMessage.includes('nickname')) {
+      } else if (errorCode === 'ALREADY_EXISTS' || errorMessage.includes('duplicate') || errorMessage.includes('nickname')) {
         setError('이미 사용 중인 닉네임이에요');
-      } else if (errorMessage.includes('full') || errorMessage.includes('CIRCLE_FULL')) {
+      } else if (errorCode === 'CIRCLE_FULL' || errorMessage.includes('full')) {
+        if (inviteLinkId) {
+          await clearPendingInviteLinkId();
+        }
         setError('이 Circle은 인원이 가득 찼어요');
-      } else if (errorMessage.includes('invalid') || errorMessage.includes('INVALID_INVITE_CODE')) {
-        setError('초대 코드가 만료되었어요');
+      } else if (errorCode === 'INVALID_INVITE_CODE' || errorMessage.includes('invalid')) {
+        if (inviteLinkId) {
+          await clearPendingInviteLinkId();
+        }
+        setError(inviteLinkId ? '초대 링크가 유효하지 않아요' : '초대 코드가 만료되었어요');
       } else {
         setError('참여에 실패했어요. 다시 시도해주세요');
       }
@@ -136,7 +160,7 @@ export default function NicknameScreen() {
               </Text>
               <Text style={styles.circleInfoDot}>•</Text>
               <Text style={styles.circleInfoText}>
-                📝 {inviteCode}
+                {inviteLinkId ? '🔗 초대 링크로 참여' : `📝 ${inviteCode}`}
               </Text>
             </View>
           </Animated.View>

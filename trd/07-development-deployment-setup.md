@@ -532,6 +532,32 @@ frontend/
 }
 ```
 
+#### 2.4.1 Circle 초대 Universal Link / App Link
+
+Circle 영구 초대 링크는 `https://circly.app/join/{invite_link_id}` 형식을 사용한다.
+도메인 검증 전 Development Build는 `circly://join/{invite_link_id}`를 fallback으로
+사용하며, 검증 완료 후 `EXPO_PUBLIC_INVITE_BASE_URL=https://circly.app`을 주입한다.
+
+- iOS: `frontend/app.json`의 `ios.associatedDomains`에 `applinks:circly.app` 등록
+- Android: `android.intentFilters`에 `https://circly.app/join/*`와 `autoVerify=true` 등록
+- iOS association 원본: `frontend/public/.well-known/apple-app-site-association`
+- Android association 템플릿: `frontend/public/.well-known/assetlinks.json.example`
+
+프로덕션 배포 전 다음 외부 설정을 완료한다.
+
+1. EAS/Play signing certificate의 SHA-256 fingerprint를 확인한다.
+2. `assetlinks.json.example`의 placeholder를 실제 fingerprint로 교체해
+   `https://circly.app/.well-known/assetlinks.json`에 확장자 없이 배포한다.
+3. Apple association 파일을
+   `https://circly.app/.well-known/apple-app-site-association`에 확장자와 redirect 없이 배포한다.
+4. 두 응답의 `Content-Type`을 `application/json`으로 설정한다.
+5. Development/Preview Build에서 로그인 전후 초대 컨텍스트가 유지되는지 확인한다.
+
+```bash
+curl -i https://circly.app/.well-known/apple-app-site-association
+curl -i https://circly.app/.well-known/assetlinks.json
+```
+
 ### 2.5 로컬 개발 환경 설정
 
 ```bash

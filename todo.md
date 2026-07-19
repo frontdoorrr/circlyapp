@@ -987,12 +987,14 @@
   - [x] 초대/라운드/후보 공정성/결과 최종화 정책 결정
   - [x] 최소 실행단위, API 초안, E2E 출시 게이트 작성
 - [ ] **19.1 초대 계약 복구** (P0)
-  - [ ] Backend TDD — 초대 코드 24시간 만료·재발급·영구 링크 해석
-  - [ ] DB/DSL/Backend/Frontend `invite_code_expires_at` 계약 일치
-  - [ ] 만료 코드에 의존하지 않는 `POST /circles/join/link/{invite_link_id}` 직접 가입
-  - [ ] Circle 공유 메시지에 실제 `https://circly.app/join/{invite_link_id}` 포함
-  - [ ] iOS Universal Link/Android App Link 및 도메인 association 설정
-  - [ ] 로그인 전후 딥링크 컨텍스트 보존 검증
+  - [x] Backend TDD — 초대 코드 24시간 만료·재발급·영구 링크 해석
+  - [x] DB/DSL/Backend/Frontend `invite_code_expires_at` 계약 일치
+  - [x] 만료 코드에 의존하지 않는 `POST /circles/join/link/{invite_link_id}` 직접 가입
+  - [x] Circle 공유 메시지에 영구 링크 포함 — 도메인 검증 전 `circly://`, 검증 후 HTTPS 전환
+  - [x] iOS Universal Link/Android App Link 앱 설정 및 association 원본/템플릿 준비
+  - [ ] 외부 설정 — `circly.app` DNS/호스팅, Android signing SHA-256, association 파일 배포
+  - [x] 로그인 전후 딥링크 컨텍스트 보존 및 영구 링크 직접 가입 구현
+  - [x] 회귀 검증 — Backend 176 passed, Frontend 23 passed, typecheck/lint 오류 0, iOS export 성공
 - [ ] **19.2 안전한 Circle 라운드 생성** (P0)
   - [ ] Backend TDD — OWNER/ADMIN, 최소 5명, ACTIVE 라운드 중복 방지, 템플릿 5개 생성
   - [ ] 라운드 생성 API/타입/오류 코드를 `docs/DSL.md`에 확정

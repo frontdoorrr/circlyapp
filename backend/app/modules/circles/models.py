@@ -1,7 +1,7 @@
 """Circle and CircleMember models."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -13,6 +13,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,6 +26,11 @@ if TYPE_CHECKING:
     from app.modules.polls.models import Poll
 
 
+def default_invite_code_expiration() -> datetime:
+    """Return the expiration timestamp for a newly issued fallback code."""
+    return datetime.now(UTC) + timedelta(hours=24)
+
+
 class Circle(BaseModel):
     """Circle (group) model.
 
@@ -33,6 +39,7 @@ class Circle(BaseModel):
         name: Circle name (max 100 chars)
         description: Circle description
         invite_code: 6-character unique invite code
+        invite_code_expires_at: Expiration timestamp for the fallback invite code
         invite_link_id: UUID for invite link
         owner_id: Foreign key to users table
         max_members: Maximum number of members (default 50)
@@ -58,10 +65,17 @@ class Circle(BaseModel):
         nullable=False,
         index=True,
     )
-    invite_link_id: Mapped[uuid.UUID | None] = mapped_column(
+    invite_code_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=default_invite_code_expiration,
+        server_default=text("(now() + interval '24 hours')"),
+    )
+    invite_link_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         unique=True,
-        nullable=True,
+        nullable=False,
+        default=uuid.uuid4,
     )
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

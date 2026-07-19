@@ -135,12 +135,18 @@ class CircleRepository:
         await self.session.refresh(circle)
         return circle
 
-    async def update_invite_code(self, circle_id: uuid.UUID, new_code: str) -> Circle | None:
+    async def update_invite_code(
+        self,
+        circle_id: uuid.UUID,
+        new_code: str,
+        expires_at: datetime,
+    ) -> Circle | None:
         """Update circle's invite code.
 
         Args:
             circle_id: UUID of the circle
             new_code: New invite code
+            expires_at: Expiration timestamp for the new code
 
         Returns:
             Updated circle if found, None otherwise
@@ -150,6 +156,7 @@ class CircleRepository:
             return None
 
         circle.invite_code = new_code
+        circle.invite_code_expires_at = expires_at
         await self.session.flush()
         await self.session.refresh(circle)
         return circle

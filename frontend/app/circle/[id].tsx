@@ -30,6 +30,7 @@ import { tokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme/ThemeContext';
 import type { Theme } from '../../src/theme/tokens';
 import { useToast } from '../../src/providers/ToastProvider';
+import { buildInviteUrl } from '../../src/services/invite/inviteUrl';
 
 export default function CircleDetailScreen() {
   const router = useRouter();
@@ -71,8 +72,10 @@ export default function CircleDetailScreen() {
     if (!circle) return;
 
     try {
+      const inviteUrl = buildInviteUrl(circle.invite_link_id);
       await Share.share({
-        message: `${circle.name}에 초대합니다!\n초대 코드: ${circle.invite_code}\n\nCircly 앱에서 코드를 입력하고 참여하세요!`,
+        message: `🎉 Circly에서 익명 칭찬 투표해요!\nCircle: ${circle.name}\n링크: ${inviteUrl}\n코드: ${circle.invite_code}\n\n링크를 누르면 바로 참여할 수 있어요.`,
+        url: inviteUrl,
       });
     } catch (error) {
       logger.error('Share failed:', error);
