@@ -2,13 +2,14 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import MemberRole, PollStatus, TemplateCategory
-from app.core.exceptions import BadRequestException
+from app.core.exceptions import AuthorizationError, BadRequestException
 from app.core.security import generate_invite_code, generate_voter_hash
 from app.modules.auth.repository import UserRepository
 from app.modules.auth.schemas import UserCreate
@@ -337,6 +338,38 @@ class TestPollService:
         assert voter.coin_balance == 1
         assert voter.streak_days == 1
         assert voter.last_reward_at is not None
+
+    @pytest.mark.asyncio
+    async def test_vote_rejects_non_member(self) -> None:
+        """A user outside the poll's Circle cannot cast a vote."""
+        poll_id = uuid.uuid4()
+        circle_id = uuid.uuid4()
+        voter_id = uuid.uuid4()
+        poll_repo = MagicMock()
+        poll_repo.find_by_id = AsyncMock(
+            return_value=SimpleNamespace(
+                id=poll_id,
+                circle_id=circle_id,
+                status=PollStatus.ACTIVE,
+            )
+        )
+        membership_repo = MagicMock()
+        membership_repo.exists = AsyncMock(return_value=False)
+        vote_repo = MagicMock()
+        vote_repo.create = AsyncMock()
+
+        service = PollService(
+            template_repo=MagicMock(),
+            poll_repo=poll_repo,
+            vote_repo=vote_repo,
+            membership_repo=membership_repo,
+        )
+
+        with pytest.raises(AuthorizationError, match="Circle member"):
+            await service.vote(poll_id, voter_id, uuid.uuid4())
+
+        membership_repo.exists.assert_awaited_once_with(circle_id, voter_id)
+        vote_repo.create.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_vote_success_keeps_same_day_streak_constant(

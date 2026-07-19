@@ -1138,6 +1138,7 @@ workflow VoteFlow {
     7. 사용자가 투표 옵션 선택
     8. POST /api/v1/polls/{id}/vote
     9. PollService.vote()
+       - 투표자의 Poll Circle 멤버십 확인 (비회원은 FORBIDDEN)
        - 투표 기한 확인
        - 중복 투표 확인 (voterHash)
        - 자기 자신 투표 방지

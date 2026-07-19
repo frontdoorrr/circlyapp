@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from app.core.enums import PollStatus, TemplateCategory
 from app.core.exceptions import (
+    AuthorizationError,
     BadRequestException,
     PollNotFoundError,
 )
@@ -577,12 +578,17 @@ class PollService:
 
         Raises:
             PollNotFoundError: If poll not found
+            AuthorizationError: If voter is not a member of the poll's Circle
             BadRequestException: If poll ended, self-vote, or already voted
         """
         # Verify poll exists and is active
         poll = await self.poll_repo.find_by_id(poll_id)
         if poll is None:
             raise PollNotFoundError(str(poll_id))
+
+        is_member = await self.membership_repo.exists(poll.circle_id, voter_id)
+        if not is_member:
+            raise AuthorizationError("You must be a Circle member to vote")
 
         if poll.status != PollStatus.ACTIVE:
             raise BadRequestException("Poll has ended")

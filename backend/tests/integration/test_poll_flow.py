@@ -424,9 +424,6 @@ class TestPollFlow:
         ]
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(
-        reason="TODO: Add membership check in vote endpoint - currently allows non-members"
-    )
     async def test_non_member_cannot_vote(
         self,
         client: AsyncClient,
@@ -434,11 +431,7 @@ class TestPollFlow:
         poll_template: PollTemplate,
         setup_circle_with_members: dict,
     ) -> None:
-        """Test that non-members cannot vote in a poll.
-
-        NOTE: This test is currently skipped because the vote endpoint
-        doesn't verify circle membership. This should be fixed in a future update.
-        """
+        """Test that non-members cannot vote in a poll."""
         setup = setup_circle_with_members
         circle_id = setup["circle_id"]
         owner_token = setup["owner_token"]
@@ -483,8 +476,5 @@ class TestPollFlow:
             headers={"Authorization": f"Bearer {outsider_token}"},
         )
 
-        # Should be forbidden or bad request
-        assert vote.status_code in [
-            status.HTTP_400_BAD_REQUEST,
-            status.HTTP_403_FORBIDDEN,
-        ]
+        assert vote.status_code == status.HTTP_403_FORBIDDEN
+        assert vote.json()["error"]["code"] == "FORBIDDEN"

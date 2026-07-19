@@ -960,3 +960,9 @@
   - [x] Supabase Auth 전환 후 제거된 `create_access_token` 및 `/auth/register`, `/auth/login` 참조를 현행 Supabase/dev auth 계약으로 갱신
   - [x] Poll 생성 라우트와 미인증 응답 코드 등 legacy API 기대값을 현재 라우터 계약으로 갱신
   - [x] `backend` 전체 pytest 복구: 168 passed, 1 skipped
+- [x] **18.34 비회원 투표 차단** (P0)
+  > 참고 문서: `docs/DSL.md#workflow-VoteFlow`, `docs/DSL.md#보안-고려사항`, `prd/features/01-voting-spec.md`
+  - [x] Backend TDD — Poll의 Circle 비회원이 투표하면 `FORBIDDEN`(403) 반환
+  - [x] `PollService.vote()`에서 투표 생성 전에 voter Circle 멤버십 검증
+  - [x] VoteFlow/투표 명세 보안 계약 및 전체 Backend 회귀 검증: 170 passed
+  - [x] 변경사항 커밋
