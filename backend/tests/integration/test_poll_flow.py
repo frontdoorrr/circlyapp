@@ -478,3 +478,41 @@ class TestPollFlow:
 
         assert vote.status_code == status.HTTP_403_FORBIDDEN
         assert vote.json()["error"]["code"] == "FORBIDDEN"
+
+    @pytest.mark.asyncio
+    async def test_cannot_vote_for_user_outside_circle(
+        self,
+        client: AsyncClient,
+        poll_template: PollTemplate,
+        setup_circle_with_members: dict,
+    ) -> None:
+        """A Circle member cannot submit an external user as the vote target."""
+        setup = setup_circle_with_members
+        create_poll = await client.post(
+            f"/polls/circles/{setup['circle_id']}",
+            json={
+                "template_id": str(poll_template.id),
+                "duration": "1H",
+            },
+            headers={"Authorization": f"Bearer {setup['owner_token']}"},
+        )
+        poll_id = create_poll.json()["id"]
+
+        outsider_login = await client.post(
+            "/auth/dev-login",
+            json={
+                "email": "external-target@example.com",
+                "password": "password123",
+                "username": "external-target",
+            },
+        )
+        outsider_id = outsider_login.json()["user"]["id"]
+
+        vote = await client.post(
+            f"/polls/{poll_id}/vote",
+            json={"voted_for_id": outsider_id},
+            headers={"Authorization": f"Bearer {setup['member1_token']}"},
+        )
+
+        assert vote.status_code == status.HTTP_400_BAD_REQUEST
+        assert vote.json()["error"]["code"] == "INVALID_VOTE_TARGET"

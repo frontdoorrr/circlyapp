@@ -590,6 +590,13 @@ class PollService:
         if not is_member:
             raise AuthorizationError("You must be a Circle member to vote")
 
+        is_valid_target = await self.membership_repo.exists(poll.circle_id, voted_for_id)
+        if not is_valid_target:
+            raise BadRequestException(
+                "Vote target must be a member of the poll's Circle",
+                code="INVALID_VOTE_TARGET",
+            )
+
         if poll.status != PollStatus.ACTIVE:
             raise BadRequestException("Poll has ended")
 

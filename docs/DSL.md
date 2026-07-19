@@ -1139,6 +1139,7 @@ workflow VoteFlow {
     8. POST /api/v1/polls/{id}/vote
     9. PollService.vote()
        - 투표자의 Poll Circle 멤버십 확인 (비회원은 FORBIDDEN)
+       - votedForId가 같은 Poll Circle 멤버인지 확인 (외부 사용자는 INVALID_VOTE_TARGET)
        - 투표 기한 확인
        - 중복 투표 확인 (voterHash)
        - 자기 자신 투표 방지
@@ -1475,6 +1476,7 @@ api_standards APIResponseFormat {
         POLL_003: "이미 투표에 참여하셨습니다"
         POLL_004: "자기 자신에게 투표할 수 없습니다"
         POLL_005: "동시 진행 가능한 투표 수를 초과했습니다"
+        POLL_006 (INVALID_VOTE_TARGET): "같은 Circle 멤버만 투표 대상으로 선택할 수 있습니다"
 
         // General
         VALIDATION_ERROR: "입력값 검증 실패"

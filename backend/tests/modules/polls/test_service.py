@@ -3,7 +3,7 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -369,6 +369,43 @@ class TestPollService:
             await service.vote(poll_id, voter_id, uuid.uuid4())
 
         membership_repo.exists.assert_awaited_once_with(circle_id, voter_id)
+        vote_repo.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_vote_rejects_target_outside_circle(self) -> None:
+        """A vote target must belong to the poll's Circle."""
+        poll_id = uuid.uuid4()
+        circle_id = uuid.uuid4()
+        voter_id = uuid.uuid4()
+        target_id = uuid.uuid4()
+        poll_repo = MagicMock()
+        poll_repo.find_by_id = AsyncMock(
+            return_value=SimpleNamespace(
+                id=poll_id,
+                circle_id=circle_id,
+                status=PollStatus.ACTIVE,
+            )
+        )
+        membership_repo = MagicMock()
+        membership_repo.exists = AsyncMock(side_effect=[True, False])
+        vote_repo = MagicMock()
+        vote_repo.create = AsyncMock()
+
+        service = PollService(
+            template_repo=MagicMock(),
+            poll_repo=poll_repo,
+            vote_repo=vote_repo,
+            membership_repo=membership_repo,
+        )
+
+        with pytest.raises(BadRequestException) as exc_info:
+            await service.vote(poll_id, voter_id, target_id)
+
+        assert exc_info.value.code == "INVALID_VOTE_TARGET"
+        assert membership_repo.exists.await_args_list == [
+            call(circle_id, voter_id),
+            call(circle_id, target_id),
+        ]
         vote_repo.create.assert_not_awaited()
 
     @pytest.mark.asyncio

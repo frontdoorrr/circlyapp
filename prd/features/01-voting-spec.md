@@ -77,6 +77,7 @@ MVP에서는 투표 생성자가 성별/나이 필터를 직접 고르지 않는
 - 투표 제출자는 해당 Poll이 속한 Circle의 현재 멤버여야 한다.
 - 클라이언트 화면 진입 여부와 무관하게 `POST /polls/{id}/vote`에서 서버가 멤버십을 다시 검증한다.
 - Circle 비회원의 직접 API 요청은 `FORBIDDEN`(HTTP 403)으로 거부하며 투표, 보상, 알림을 생성하지 않는다.
+- `voted_for_id` 역시 같은 Circle의 현재 멤버여야 하며, 외부 사용자 ID는 `INVALID_VOTE_TARGET`(HTTP 400)으로 거부한다.
 
 ## 📱 투표 화면 상세 구현
 

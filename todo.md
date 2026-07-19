@@ -966,3 +966,9 @@
   - [x] `PollService.vote()`에서 투표 생성 전에 voter Circle 멤버십 검증
   - [x] VoteFlow/투표 명세 보안 계약 및 전체 Backend 회귀 검증: 170 passed
   - [x] 변경사항 커밋
+- [x] **18.35 Circle 외부 사용자 대상 투표 차단** (P0)
+  > 참고 문서: `docs/DSL.md#workflow-VoteFlow`, `prd/features/01-voting-spec.md`
+  - [x] Backend TDD — `voted_for_id`가 Poll Circle 멤버가 아니면 `INVALID_VOTE_TARGET`(400) 반환
+  - [x] `PollService.vote()`에서 투표 저장 전 대상 사용자 멤버십 검증
+  - [x] DSL/투표 명세 계약 및 전체 Backend 회귀 검증: 172 passed
+  - [x] 변경사항 커밋
