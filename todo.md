@@ -14,6 +14,7 @@
 - [x] **플로팅 글라스 탭바**: 캡슐형 4탭 내비게이션과 투표 세션 퀵 액션
 - [x] **Home 배경 단순화**: 원형 오브 제거 및 저채도 그라데이션 적용
 - [x] **메인 탭 배경 통일**: 하트/Circle/프로필에 동일한 저채도 그라데이션 적용
+- [ ] **무료 핵심 가치 루프 완성**: 실제 초대 링크 → 안전한 Circle 라운드 → 받은 하트 → 결과 공유
 - [ ] **실기기 QA**: Liquid Glass/Home/받은하트/Orb 힌트/초대 CTA QA
 - [ ] **외부 결제 설정**: RevenueCat, App Store Connect, Google Play Console 상품/entitlement 설정
 - [ ] **결제 E2E 검증**: Development Build + Sandbox 구매 + Webhook 반영 확인
@@ -972,3 +973,44 @@
   - [x] `PollService.vote()`에서 투표 저장 전 대상 사용자 멤버십 검증
   - [x] DSL/투표 명세 계약 및 전체 Backend 회귀 검증: 172 passed
   - [x] 변경사항 커밋
+
+---
+
+## Phase 19: 무료 핵심 가치 루프 완성
+
+> **목표**: 결제 없이 `초대 → 첫 라운드 → 투표 → 받은 하트 → 결과 공유`를 완주할 수 있게 한다.
+> **기획 문서**: `prd/features/06-core-value-loop-improvement.md`
+> **참고 문서**: `prd/00-prd.md`, `prd/features/01-voting-spec.md`, `prd/features/02-circle-invite.md`, `prd/features/03-push-notification.md`, `prd/features/04-result-card.md`, `prd/design/04-user-flow.md`, `docs/DSL.md`
+
+- [x] **19.0 개선 계획 수립** (P0)
+  - [x] 무료 핵심 가치와 Time to First Heart 성공 기준 정의
+  - [x] 초대/라운드/후보 공정성/결과 최종화 정책 결정
+  - [x] 최소 실행단위, API 초안, E2E 출시 게이트 작성
+- [ ] **19.1 초대 계약 복구** (P0)
+  - [ ] Backend TDD — 초대 코드 24시간 만료·재발급·영구 링크 해석
+  - [ ] DB/DSL/Backend/Frontend `invite_code_expires_at` 계약 일치
+  - [ ] 만료 코드에 의존하지 않는 `POST /circles/join/link/{invite_link_id}` 직접 가입
+  - [ ] Circle 공유 메시지에 실제 `https://circly.app/join/{invite_link_id}` 포함
+  - [ ] iOS Universal Link/Android App Link 및 도메인 association 설정
+  - [ ] 로그인 전후 딥링크 컨텍스트 보존 검증
+- [ ] **19.2 안전한 Circle 라운드 생성** (P0)
+  - [ ] Backend TDD — OWNER/ADMIN, 최소 5명, ACTIVE 라운드 중복 방지, 템플릿 5개 생성
+  - [ ] 라운드 생성 API/타입/오류 코드를 `docs/DSL.md`에 확정
+  - [ ] 검수 템플릿 카테고리 분산 및 최근 질문 재사용 완화
+  - [ ] 라운드를 연 사용자도 후보가 되도록 후보 정책 정리
+  - [ ] Circle 상세에 상태별 `첫 라운드 열기`/`새 라운드 열기` CTA 연결
+- [ ] **19.3 Home 첫 가치 상태 연결** (P0)
+  - [ ] `needs-members`/`can-open-round` 상태와 역할별 주 CTA 추가
+  - [ ] 라운드 생성 직후 Home/세션 query 갱신
+  - [ ] 후보 부족과 활성 라운드 없음 안내 분리
+- [ ] **19.4 결과 최종화 신뢰성** (P0)
+  - [ ] Backend TDD — 예약 마감·중복 마감·만료 Poll sweep·알림 중복 방지
+  - [ ] `finalizeDuePolls()` 및 Celery Beat 복구 작업
+  - [ ] Worker/Beat 배포·health check·overdue ACTIVE Poll 운영 문서화
+- [ ] **19.5 무료 핵심 루프 E2E** (P0)
+  - [ ] 5개 계정으로 초대 링크 → 참여 → 라운드 → 투표 → 마감 → 받은 하트 검증
+  - [ ] iOS 실기기/시뮬레이터에서 딥링크·공유 시트·푸시 확인
+  - [ ] 결제 없이 첫 하트 확인 및 결과 공유 완주 증거 기록
+- [ ] **19.6 핵심 퍼널 계측** (P1)
+  - [ ] 초대 공유/열기/Circle 참여/5명 도달/라운드 시작/첫 투표/첫 하트/결과 공유 이벤트
+  - [ ] 가입부터 첫 하트까지 걸린 시간과 단계별 전환율 확인
